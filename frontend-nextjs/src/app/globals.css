@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body {
+  overflow: hidden;
+}
+main {
+  height: calc(100vh - 4rem);
+}
+header {
+  max-width: 100% !important;
+}
+.dark nav {
+  border-color: #cbd5e11a;
+}
+
+.dark body,
+.dark main,
+.dark header,
+.dark .sidebar,
+.dark .account,
+.dark .change-mode {
+  background-color: rgb(15 23 42/1);
+}
+.background-dark {
+  background-color: rgb(15 23 42/1);
+}
+.no-hover {
+  pointer-events: none;
+}
+
+.all-boards {
+  margin: 40px 16px 0;
+  max-width: 825px;
+  min-width: 288px;
+  width: 100%;
+}
+
+.button-add-expanded::-ms-expand {
+  background-color: #e9f2ff;
+  color: #0c66e4;
+}
