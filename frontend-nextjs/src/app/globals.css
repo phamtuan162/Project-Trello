@@ -29,7 +29,8 @@ header {
   pointer-events: none;
 }
 
-.all-boards {
+.all-boards,
+.work-space {
   margin: 40px 16px 0;
   max-width: 825px;
   min-width: 288px;

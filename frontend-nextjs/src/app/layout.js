@@ -1,7 +1,6 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import Header from "@/components/Header/Header";
-import Sidebar from "@/components/Sidebar/Sidebar";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 export const metadata = {
@@ -22,12 +21,8 @@ export default function RootLayout({ children, params }) {
         <Providers>
           <Header />
           <main className="pt-10 bg-background">
-            <div className="flex gap-x-7 justify-center">
-              <div className="w-64 shrink-0 hidden lg:block">
-                <Sidebar />
-              </div>
-              {children}
-            </div>
+            {children}
+
             <ToastContainer />
           </main>
         </Providers>

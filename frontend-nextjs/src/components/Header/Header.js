@@ -6,21 +6,18 @@ import {
   NavbarItem,
   Link,
   Input,
-  DropdownItem,
-  DropdownTrigger,
-  Dropdown,
-  DropdownMenu,
   NavbarMenu,
   NavbarMenuToggle,
-  Avatar,
-  Button,
 } from "@nextui-org/react";
 import { useTheme } from "next-themes";
 import React from "react";
 import { SearchIcon } from "../Icon/SearchIcon";
+import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
+import { NotifyIcon } from "../Icon/NotifyIcon";
 import ThemeSwitcher from "./ThemeSwitcher";
 import Sidebar from "../Sidebar/Sidebar";
 import CreateAll from "./CreateAll";
+import { User } from "./User";
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -99,61 +96,26 @@ const Header = () => {
         <NavbarItem>
           <button
             type="button"
+            aria-label="0 thông báo"
             className="relative rounded-full  p-1 text-gray-400 hover:bg-gray-500 hover:text-white "
           >
             <span className="absolute -inset-1.5"></span>
             <span className="sr-only">View notifications</span>
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-              />
-            </svg>
+            <NotifyIcon />
+          </button>
+        </NavbarItem>
+        <NavbarItem>
+          <button
+            type="button"
+            className="relative rounded-full  p-1 text-gray-400 hover:bg-gray-500 hover:text-white "
+          >
+            <HelpOutlineIcon />
           </button>
         </NavbarItem>
 
-        <NavbarItem className=" lg:flex  ">
-          <Dropdown className="account" placement="bottom-end">
-            <DropdownTrigger>
-              <Avatar
-                isBordered
-                as="button"
-                className="transition-transform"
-                color="secondary"
-                name="Jason Hughes"
-                size="sm"
-                src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-              />
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Profile Actions" variant="flat">
-              <DropdownItem key="profile" className="h-14 gap-2">
-                <p className="font-semibold">Signed in as</p>
-                <p className="font-semibold">zoey@example.com</p>
-              </DropdownItem>
-              <DropdownItem key="settings">My Settings</DropdownItem>
-              <DropdownItem key="team_settings">Team Settings</DropdownItem>
-              <DropdownItem key="analytics">Analytics</DropdownItem>
-              <DropdownItem key="system">System</DropdownItem>
-              <DropdownItem key="configurations">Configurations</DropdownItem>
-              <DropdownItem key="help_and_feedback">
-                Help & Feedback
-              </DropdownItem>
-              <DropdownItem key="logout" color="danger">
-                Log Out
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        </NavbarItem>
+        <NavbarItem className=" lg:flex  "></NavbarItem>
       </NavbarContent>
-
+      <User />
       <NavbarMenu className="sidebar">
         <Sidebar />
       </NavbarMenu>

@@ -11,8 +11,13 @@ import {
 } from "@nextui-org/react";
 import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
-export default function FormPopoverBoard({ children, placement = "bottom" }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function FormPopoverBoard({
+  children,
+  placement = "bottom",
+  open,
+  ...props
+}) {
+  const [isOpen, setIsOpen] = useState(open);
   const workspaces = [
     {
       name: "Frontend",
@@ -33,7 +38,7 @@ export default function FormPopoverBoard({ children, placement = "bottom" }) {
       className="w-[304px]"
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
-      style={{ translate: "-68px" }}
+      {...props}
     >
       <PopoverTrigger>
         {children ? (

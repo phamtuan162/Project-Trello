@@ -7,10 +7,6 @@ import {
   DropdownItem,
   DropdownSection,
   Button,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Input,
 } from "@nextui-org/react";
 
 import { BoardIcon } from "../Icon/BoardIcon";
@@ -26,11 +22,11 @@ export default function CreateAll() {
       title: "Tạo bảng",
       desc: "Sử dụng bảng để quản lý các dự án, theo dõi thông tin, hoặc tổ chức bất cứ việc gì.",
       icon: <BoardIcon />,
-      popover: <FormPopoverBoard />,
+      popover: <FormPopoverBoard open={true} />,
     },
     {
       key: "createBoardSample",
-      title: "createBoardSample",
+      title: "Bắt đầu với mẫu",
       desc: "Bắt đầu nhanh hơn với mẫu bảng.",
       icon: <BoardSampleIcon />,
     },
@@ -44,8 +40,6 @@ export default function CreateAll() {
   ];
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
   const handleItemClick = (key) => {
     setSelectedItem(key === selectedItem ? null : key);
   };
@@ -58,7 +52,7 @@ export default function CreateAll() {
             className="min-w-5 aria-expanded:bg-sky-200	 aria-expanded:text-blue-700"
             onClick={() => setSelectedItem(null)}
           >
-            <AddIcon />
+            Tạo mới
           </Button>
         </DropdownTrigger>
         <DropdownMenu

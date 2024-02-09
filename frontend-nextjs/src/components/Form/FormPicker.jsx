@@ -2,8 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "../../lib/utils";
-import { unsplash } from "../../lib/unsplash";
-import { defaultImages } from "../../constants/images";
+import { unsplash } from "@/lib/unsplash";
+import { defaultImages } from "@/constants/images";
 import { useEffect, useState, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { Check, Loader2 } from "lucide-react";
