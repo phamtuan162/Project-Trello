@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -17,6 +17,7 @@ export default function FormPopoverBoard({
   open,
   ...props
 }) {
+  const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
   const workspaces = [
     {
@@ -32,6 +33,9 @@ export default function FormPopoverBoard({
       value: "fullstack",
     },
   ];
+  const onSubmit = (formData) => {
+    console.log(formData.get("image"));
+  };
   return (
     <Popover
       placement={placement}
@@ -49,12 +53,13 @@ export default function FormPopoverBoard({
       </PopoverTrigger>
       <PopoverContent>
         {(titleProps) => (
-          <div className="px-1 py-2 w-full">
-            <div className="flex justify-between items-center	">
+          <form className="px-1 py-2 w-full" action={onSubmit}>
+            <div className="flex justify-between items-center	relative">
               <h1 className="grow text-center text-lg">Tạo Bảng</h1>
               <Button
-                className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-3"
+                className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-1 absolute right-0 h-auto"
                 onClick={() => setIsOpen(!isOpen)}
+                ref={closeRef}
               >
                 <CloseIcon />
               </Button>
@@ -130,10 +135,10 @@ export default function FormPopoverBoard({
               </div>
             </div>
 
-            <Button color="primary" className="w-full">
+            <Button color="primary" type="submit" className="w-full">
               Tạo mới
             </Button>
-          </div>
+          </form>
         )}
       </PopoverContent>
     </Popover>

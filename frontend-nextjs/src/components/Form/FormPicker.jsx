@@ -65,7 +65,7 @@ export default function FormPicker({ id, errors }) {
               ref={inputRef}
               onChange={() => {}}
               type="radio"
-              id={image.id}
+              id={id}
               name={id}
               className="hidden"
               checked={selectedImageId === image.id}

@@ -1,7 +1,7 @@
 export const AddIcon = () => (
   <svg
-    width="24"
-    height="24"
+    width="20"
+    height="20"
     role="presentation"
     focusable="false"
     viewBox="0 0 24 24"
