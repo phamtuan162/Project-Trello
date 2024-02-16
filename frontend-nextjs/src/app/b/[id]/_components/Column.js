@@ -1,10 +1,17 @@
 "use client";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
+import { useRef } from "react";
+import { Input } from "@nextui-org/react";
 import { ListCard } from "./ListCard";
 import { ListHeader } from "./ListHeader";
-export function Column({ column }) {
+import { CardForm } from "./Cardform";
+export function Column({
+  column,
+  deleteColumnDetail,
+  createNewCard,
+  updateColumn,
+}) {
   const {
     attributes,
     listeners,
@@ -16,7 +23,10 @@ export function Column({ column }) {
     id: column.id,
     data: { ...column },
   });
+
+  const inputRef = useRef(null);
   const dndKitCommonStyle = {
+    touchAction: "none",
     transform: CSS.Translate.toString(transform),
     transition,
     listStyle: "none",
@@ -29,13 +39,18 @@ export function Column({ column }) {
       ref={setNodeRef}
       style={dndKitCommonStyle}
       {...attributes}
+      key={column.id}
     >
-      <div
-        className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2"
-        {...listeners}
-      >
-        <ListHeader column={column} />
-        <ListCard cards={column.cards} />
+      <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2">
+        <div {...listeners} className="h-4"></div>
+        <ListHeader
+          column={column}
+          deleteColumnDetail={deleteColumnDetail}
+          createNewCard={createNewCard}
+          updateColumn={updateColumn}
+        />
+        <ListCard cards={column?.cards} />
+        <CardForm createNewCard={createNewCard} column={column} />
       </div>
     </li>
   );

@@ -1,12 +1,15 @@
 const { Board, Column, Card } = require("../../models/index");
 const { object, string } = require("yup");
-const { Op, Transaction } = require("sequelize");
+const { Op } = require("sequelize");
 const BoardTransformer = require("../../transformers/board.transformer");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", q } = req.query;
+    const { order = "asc", sort = "id", workspace_id, q } = req.query;
     const filters = {};
+    if (workspace_id) {
+      filters.workspace_id = workspace_id;
+    }
     const options = {
       order: [[sort, order]],
       where: filters,
@@ -65,9 +68,13 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const schema = object({
-      title: string().required("Chưa nhập tiêu đề bảng"),
-    });
+    const rules = {};
+
+    if (req.body.title) {
+      rules.title = string().required("Chưa nhập tiêu đề");
+    }
+    const schema = object(rules);
+
     const response = {};
     try {
       const body = await schema.validate(req.body, {
@@ -82,7 +89,62 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
+      );
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+        errors,
+      });
+    }
+    res.status(response.status).json(response);
+  },
+  update: async (req, res) => {
+    const { id } = req.params;
+    const method = req.method;
+    const rules = {};
+
+    if (req.body.title) {
+      rules.title = string().required("Chưa nhập tiêu đề");
+    }
+
+    const schema = object(rules);
+    const response = {};
+    //Validate
+    try {
+      let body = await schema.validate(req.body, {
+        abortEarly: false,
+      });
+
+      // if (method === "PUT") {
+      //   body = Object.assign(
+      //     {
+      //       desc: null,
+      //     },
+      //     body
+      //   );
+      // }
+      await Board.update(body, {
+        where: { id },
+      });
+      const board = await Board.findByPk(id, {
+        include: {
+          model: Column,
+          as: "columns",
+          include: {
+            model: Card,
+            as: "cards",
+          },
+        },
+      });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: new BoardTransformer(board),
+      });
+    } catch (e) {
+      const errors = Object.fromEntries(
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,

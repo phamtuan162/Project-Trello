@@ -8,8 +8,22 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
-export function BoardOptions() {
+import { toast } from "react-toastify";
+import { deleteBoard } from "@/apis";
+import { useParams, redirect } from "next/navigation";
+export function BoardOptions({ board }) {
+  const { id: boardId } = useParams();
   const [isOpen, setIsOpen] = useState(false);
+
+  const DeleteBoard = async () => {
+    toast.warning("Bạn có chắc chắn muốn xóa bảng này đi ", {
+      onClick: async () => {
+        await deleteBoard(board.id);
+        toast.success("Xóa thành công");
+        window.location.href = `/w/${board.workspace_id}`;
+      },
+    });
+  };
   return (
     <Popover
       className="min-w-[200px]"
@@ -34,6 +48,7 @@ export function BoardOptions() {
         <Button
           variant="ghost"
           className="rounded-none w-full h-auto p-2 px-5 justify-start font-normal text-sm"
+          onClick={() => DeleteBoard()}
         >
           Delete this board
         </Button>

@@ -3,6 +3,34 @@ const bcrypt = require("bcrypt");
 const { User, BlacklistToken } = require("../../models/index");
 module.exports = {
   login: async (req, res) => {
+    // const data = {
+    //   id: 3,
+    //   columnOrderIds: [9, 8],
+    //   columns: [
+    //     {
+    //       id: 8,
+    //       cardOrderIds: [8, 9],
+    //       cards: [
+    //         {
+    //           id: 8,
+    //           column_id: 8,
+    //         },
+    //         { id: 9, column_id: 8 },
+    //       ],
+    //     },
+    //     {
+    //       id: 9,
+    //       cardOrderIds: [6, 7],
+    //       cards: [
+    //         {
+    //           id: 6,
+    //           column_id: 9,
+    //         },
+    //         { id: 7, column_id: 9 },
+    //       ],
+    //     },
+    //   ],
+    // };
     //Lấy body
     const { email, password } = req.body;
     //Validate

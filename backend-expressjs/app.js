@@ -13,20 +13,26 @@ var apiRouter = require("./routes/api/index");
 
 const whitelist = require("./utils/cors");
 const cors = require("cors");
-var corsOptions = {
-  origin: function (origin, callback) {
-    const env = process.env.NODE_ENV || "development";
-    if (env === "production") {
-      if (whitelist.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-      return;
-    }
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     const env = process.env.NODE_ENV || "development";
+//     if (env === "production") {
+//       if (whitelist.indexOf(origin) !== -1) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//       return;
+//     }
 
-    callback(null, true);
-  },
+//     callback(null, true);
+//   },
+// };
+
+var corsOptions = {
+  origin: "*",
+  methods: "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+  allowedHeaders: "Content-Type,Authorization",
 };
 var app = express();
 app.use(
@@ -48,7 +54,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1", cors(corsOptions), apiRouter);
-
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 

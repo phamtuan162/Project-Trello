@@ -1,7 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getData } from "../../services/getData";
+import { getWorkspace } from "@/apis";
 export const fetchData = createAsyncThunk("fetchData", async () => {
-  const data = await getData();
-
+  const data = await getWorkspace();
   return data;
 });

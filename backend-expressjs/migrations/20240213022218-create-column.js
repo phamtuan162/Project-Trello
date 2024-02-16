@@ -11,7 +11,6 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       board_id: {
         type: Sequelize.INTEGER,

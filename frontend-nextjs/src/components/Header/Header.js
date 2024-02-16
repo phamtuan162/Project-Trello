@@ -9,6 +9,8 @@ import {
   NavbarMenu,
   NavbarMenuToggle,
 } from "@nextui-org/react";
+import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import React from "react";
 import { SearchIcon } from "../Icon/SearchIcon";
@@ -18,8 +20,12 @@ import ThemeSwitcher from "./ThemeSwitcher";
 import Sidebar from "../Sidebar/Sidebar";
 import CreateAll from "./CreateAll";
 import { User } from "./User";
+import { getWorkspace } from "@/apis";
 
 const Header = () => {
+  const { id } = useParams();
+  const [workspaces, setWorkspaces] = useState([]);
+
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const menuItems = [
@@ -28,6 +34,15 @@ const Header = () => {
     "Đã đánh dấu sao",
     "Mẫu",
   ];
+  useEffect(() => {
+    async function fetchData() {
+      const data = await getWorkspace();
+      if (data) {
+        setWorkspaces(data.data);
+      }
+    }
+    fetchData();
+  }, []);
   return (
     <Navbar
       className=" border-b-1 dark:border-slate-300/10"
@@ -39,7 +54,9 @@ const Header = () => {
           className="lg:hidden"
         />
         <NavbarBrand>
-          <p className="font-bold text-inherit">Clone Trello</p>
+          <Link href="/">
+            <p className="font-bold text-inherit">Clone Trello</p>
+          </Link>
         </NavbarBrand>
       </NavbarContent>
 

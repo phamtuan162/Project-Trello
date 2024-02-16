@@ -5,8 +5,11 @@ const WorkspaceTransformer = require("../../transformers/workspace.transformer")
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", q } = req.query;
+    const { order = "asc", sort = "id", user_id, q } = req.query;
     const filters = {};
+    if (user_id) {
+      filters.user_id = user_id;
+    }
     const options = {
       order: [[sort, order]],
       where: filters,

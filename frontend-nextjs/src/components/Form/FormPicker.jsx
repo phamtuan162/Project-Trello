@@ -65,12 +65,12 @@ export default function FormPicker({ id, errors }) {
               ref={inputRef}
               onChange={() => {}}
               type="radio"
-              id={id}
+              id={image.id}
               name={id}
               className="hidden"
               checked={selectedImageId === image.id}
               disabled={pending}
-              value={`${image.id}|${image.urls.thumb}|${image.urls.full}|${image.links.html}|${image.user.name}`}
+              value={`${image.urls.full}`}
             />
             <Image
               aria-label={image.description}

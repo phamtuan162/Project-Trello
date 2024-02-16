@@ -1,5 +1,7 @@
 "use client";
-import { useState, useRef } from "react";
+import React from "react";
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
 import {
   Popover,
   PopoverTrigger,
@@ -9,33 +11,52 @@ import {
   Select,
   SelectItem,
 } from "@nextui-org/react";
+import { toast } from "react-toastify";
+
 import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
+import { getWorkspace, getWorkspaceDetail, createBoard } from "@/apis";
 export default function FormPopoverBoard({
   children,
   placement = "bottom",
   open,
   ...props
 }) {
+  const { id: workspaceId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
-  const workspaces = [
-    {
-      name: "Frontend",
-      value: "frontend",
-    },
-    {
-      name: "Backend",
-      value: "backend",
-    },
-    {
-      name: "Fullstack",
-      value: "fullstack",
-    },
-  ];
+  const [workspaces, setWorkspaces] = useState([]);
+  const [workspace, setWorkspace] = useState(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (workspaceId) {
+        const data = await getWorkspaceDetail(workspaceId);
+        setWorkspace(data.data);
+      }
+      const data = await getWorkspace();
+      setWorkspaces(data.data);
+    }
+    fetchData();
+  }, []);
+
   const onSubmit = (formData) => {
-    console.log(formData.get("image"));
+    const image = formData.get("image");
+    const workspace_id = formData.get("workspace");
+    const title = formData.get("title");
+
+    createBoard({
+      background: image,
+      title: title,
+      workspace_id: workspace_id,
+    }).then((data) => {
+      if (data) {
+        toast.success("Thêm bảng thành công");
+        location.href = `/b/${data.data.id}`;
+      }
+    });
   };
+
   return (
     <Popover
       placement={placement}
@@ -85,7 +106,14 @@ export default function FormPopoverBoard({
                 Tiêu đề bảng<span style={{ color: "red" }}>*</span>
               </p>
               <div className="mt-2 flex flex-col gap-2 w-full">
-                <Input size="xs" variant="bordered" aria-label="input-label" />
+                <Input
+                  name="title"
+                  id="title"
+                  size="xs"
+                  variant="bordered"
+                  aria-label="input-label"
+                  isRequired
+                />
               </div>
             </div>
 
@@ -98,13 +126,19 @@ export default function FormPopoverBoard({
               </p>
               <div className="mt-2 flex flex-col gap-2 w-full">
                 <Select
-                  defaultSelectedKeys={["frontend"]}
+                  defaultSelectedKeys={workspace ? [String(workspace.id)] : []}
                   size="xs"
                   variant="bordered"
                   aria-label="input-label"
+                  name="workspace"
+                  id="workspace"
                 >
-                  {workspaces.map((workspace) => (
-                    <SelectItem key={workspace.value} value={workspace.value}>
+                  {workspaces?.map((workspace) => (
+                    <SelectItem
+                      key={workspace.id}
+                      value={workspace.id}
+                      id={`workspace_${workspace.id}`}
+                    >
                       {workspace.name}
                     </SelectItem>
                   ))}
@@ -121,16 +155,22 @@ export default function FormPopoverBoard({
               </p>
               <div className="mt-2 flex flex-col gap-2 w-full">
                 <Select
-                  defaultSelectedKeys={["backend"]}
+                  defaultSelectedKeys={["private"]}
                   size="xs"
                   variant="bordered"
                   aria-label="input-label"
+                  id="mode"
                 >
-                  {workspaces.map((workspace) => (
-                    <SelectItem key={workspace.value} value={workspace.value}>
-                      {workspace.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem
+                    key={"private"}
+                    value={"private"}
+                    id="mode_private"
+                  >
+                    Riêng tư
+                  </SelectItem>
+                  <SelectItem key={"public"} value={"public"} id="public">
+                    Công khai
+                  </SelectItem>
                 </Select>
               </div>
             </div>

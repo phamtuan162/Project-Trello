@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Providers } from "./providers";
+import ProviderRedux from "@/stores/Providers";
 import Header from "@/components/Header/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,14 +19,16 @@ export default function RootLayout({ children, params }) {
         />
       </head>
       <body>
-        <Providers>
-          <Header />
-          <main className="bg-background">
-            {children}
+        <ProviderRedux>
+          <Providers>
+            <Header />
+            <main className="bg-background">
+              {children}
 
-            <ToastContainer />
-          </main>
-        </Providers>
+              <ToastContainer />
+            </main>
+          </Providers>
+        </ProviderRedux>
       </body>
     </html>
   );

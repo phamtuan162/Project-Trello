@@ -1,15 +1,22 @@
-const { Column, Card } = require("../../models/index");
+const { Column, Card, Board } = require("../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const ColumnTransformer = require("../../transformers/column.transformer");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", q } = req.query;
+    const { order = "asc", sort = "id", q, board_id } = req.query;
     const filters = {};
+    if (board_id) {
+      filters.board_id = board_id;
+    }
     const options = {
       order: [[sort, order]],
       where: filters,
+      include: {
+        model: Card,
+        as: "cards",
+      },
     };
     const response = {};
     try {
@@ -28,7 +35,12 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const column = await Column.findByPk(id);
+      const column = await Column.findByPk(id, {
+        include: {
+          model: Card,
+          as: "cards",
+        },
+      });
       if (!column) {
         Object.assign(response, {
           status: 404,
@@ -48,15 +60,38 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const schema = object({
-      title: string().required("Chưa nhập tiêu đề column"),
-    });
+    const rules = {};
+
+    if (req.body.title) {
+      rules.title = string().required("Chưa nhập tiêu đề");
+    }
+
+    if (req.body.board_id) {
+      rules.board_id = string().required("Chưa có board_id");
+    }
+
+    const schema = object(rules);
     const response = {};
     try {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
       const column = await Column.create(body);
+      const board = await Board.findByPk(column.board_id);
+
+      if (!board) {
+        await column.destroy();
+
+        Object.assign(response, {
+          status: 404,
+          message: "Not found board",
+        });
+      }
+
+      const updatedColumnOrderIds = [...board.columnOrderIds, column.id];
+      await board.update({
+        columnOrderIds: updatedColumnOrderIds,
+      });
 
       Object.assign(response, {
         status: 201,
@@ -65,7 +100,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,
@@ -92,18 +127,23 @@ module.exports = {
         abortEarly: false,
       });
 
-      if (method === "PUT") {
-        body = Object.assign(
-          {
-            desc: null,
-          },
-          body
-        );
-      }
+      // if (method === "PUT") {
+      //   body = Object.assign(
+      //     {
+      //       desc: null,
+      //     },
+      //     body
+      //   );
+      // }
       await Column.update(body, {
         where: { id },
       });
-      const column = await Column.findByPk(id);
+      const column = await Column.findByPk(id, {
+        include: {
+          model: Card,
+          as: "cards",
+        },
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
@@ -111,7 +151,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,

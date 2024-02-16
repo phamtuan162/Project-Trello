@@ -16,7 +16,6 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { cloneDeep, isEmpty } from "lodash";
 
-import { mapOrder } from "@/utils/sorts";
 import { ListColumn } from "./ListColumn";
 import { Card } from "./Card";
 import { Column } from "./Column";
@@ -26,7 +25,17 @@ const ACTIVE_DRAG_ITEM_TYPE = {
   COLUMN: "ACTIVE_DRAG_ITEM_TYPE_COLUMN",
   CARD: "ACTIVE_DRAG_ITEM_TYPE_CARD",
 };
-export function ListContainer({ columns, boardId }) {
+export function ListContainer({
+  board,
+  boardId,
+  moveColumns,
+  moveCardInTheSameColumn,
+  moveCardToDifferentColumn,
+  deleteColumnDetail,
+  createNewColumn,
+  createNewCard,
+  updateColumn,
+}) {
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 10 },
   });
@@ -56,17 +65,11 @@ export function ListContainer({ columns, boardId }) {
 
   const lastOverId = useRef(null);
 
-  const columnOrderIds = columns?.map((column) => column.id);
-  columns.map(
-    (column) => (column.cardOrderIds = column?.cards?.map((card) => card.id))
-  );
   useEffect(() => {
-    setOrderedColumns(mapOrder(columns, columnOrderIds, "id"));
-  }, [columns]);
+    setOrderedColumns(board?.columns);
+  }, [board]);
 
-  // Tìm một cái Column theo CardId
   const findColumnByCardId = (cardId) => {
-    // Đoạn này cần lưu ý, nên dùng c.cards thay vì c.cardOrderIds bởi vì ở bước handleDragOver chúng ta sẽ làm dữ liệu cho cards hoàn chỉnh trước rồi mới tạo ra cardOrderIds mới.
     return orderedColumns.find((column) =>
       column?.cards?.some((card) => card.id === cardId)
     );
@@ -127,7 +130,7 @@ export function ListContainer({ columns, boardId }) {
 
         const rebuild_activeDraggingCardData = {
           ...activeDraggingCardData,
-          columnId: nextOverColumn.id,
+          column_id: nextOverColumn.id,
         };
         nextOverColumn.cards = nextOverColumn.cards.toSpliced(
           newCardIndex,
@@ -145,12 +148,12 @@ export function ListContainer({ columns, boardId }) {
       }
 
       if (triggerFrom === "handleDragEnd") {
-        // moveCardToDifferentColumn(
-        //   activeDraggingCardId,
-        //   oldColumnWhenDraggingCard._id,
-        //   nextOverColumn._id,
-        //   nextColumns
-        // );
+        moveCardToDifferentColumn(
+          activeDraggingCardId,
+          oldColumnWhenDraggingCard.id,
+          nextOverColumn.id,
+          nextColumns
+        );
       }
 
       return nextColumns;
@@ -238,7 +241,7 @@ export function ListContainer({ columns, boardId }) {
           oldCardIndex,
           newCardIndex
         );
-        const dndOrderedCardIds = dndOrderedCards.map((card) => card._id);
+        const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
 
         setOrderedColumns((prevColumns) => {
           const nextColumns = cloneDeep(prevColumns);
@@ -249,9 +252,13 @@ export function ListContainer({ columns, boardId }) {
 
           targetColumn.cards = dndOrderedCards;
           targetColumn.cardOrderIds = dndOrderedCardIds;
-
           return nextColumns;
         });
+        moveCardInTheSameColumn(
+          dndOrderedCards,
+          dndOrderedCardIds,
+          oldColumnWhenDraggingCard.id
+        );
       }
     }
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN) {
@@ -267,15 +274,11 @@ export function ListContainer({ columns, boardId }) {
           oldColumnIndex,
           newColumnIndex
         );
-        console.log(dndOrderedColumns);
-        // const columnsUpdated = dndOrderedColumns.map((column) => ({
-        //   column: column.column,
-        //   columnName: column.columnName,
-        //   _id: column._id,
-        // }));
 
-        // setLocalStorage("columns", columnsUpdated);
+        console.log(dndOrderedColumns);
         setOrderedColumns(dndOrderedColumns);
+
+        moveColumns(dndOrderedColumns);
       }
     }
 
@@ -329,7 +332,14 @@ export function ListContainer({ columns, boardId }) {
       onDragEnd={HandleDragEnd}
       collisionDetection={collisionDetectionStrategy}
     >
-      <ListColumn columns={orderedColumns} />
+      <ListColumn
+        columns={orderedColumns}
+        deleteColumnDetail={deleteColumnDetail}
+        createNewColumn={createNewColumn}
+        createNewCard={createNewCard}
+        updateColumn={updateColumn}
+      />
+      ;
       <DragOverlay dropAnimation={dropAnimation}>
         {!activeDragItemType && null}
         {activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN && (

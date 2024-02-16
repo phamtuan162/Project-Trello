@@ -1,5 +1,5 @@
 export const client = {
-  serverApi: "https://api-exercise-trello.vercel.app/api/v1",
+  serverApi: "https://backend-expressjs-swart.vercel.app/api/v1",
   setUrl: function (url) {
     this.serverApi = url;
   },
@@ -16,6 +16,7 @@ export const client = {
     const options = {
       method,
       headers,
+      mode: "no-cors",
     };
 
     if (body !== null) {

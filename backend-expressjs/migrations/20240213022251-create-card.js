@@ -11,11 +11,9 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       desc: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       column_id: {
         type: Sequelize.INTEGER,

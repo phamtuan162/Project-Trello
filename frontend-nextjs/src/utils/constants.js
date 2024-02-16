@@ -1,10 +1,10 @@
-let apiRoot = "";
+let apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
 
 if (process.env.BUILD_MODE === "dev") {
-  apiRoot = "http://localhost:8017";
+  apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
 }
 
 if (process.env.BUILD_MODE === "production") {
-  apiRoot = "https://trello-api-0gbu.onrender.com";
+  apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
 }
 export const API_ROOT = apiRoot;

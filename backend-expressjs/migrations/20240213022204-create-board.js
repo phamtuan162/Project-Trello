@@ -20,7 +20,6 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
-        allowNull: false,
       },
       desc: {
         type: Sequelize.STRING,

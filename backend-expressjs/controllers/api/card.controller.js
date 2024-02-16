@@ -1,12 +1,15 @@
-const { Card } = require("../../models/index");
+const { Card, Column } = require("../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../transformers/card.transformer");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", q } = req.query;
+    const { order = "asc", sort = "id", q, column_id } = req.query;
     const filters = {};
+    if (column_id) {
+      filters.column_id = column_id;
+    }
     const options = {
       order: [[sort, order]],
       where: filters,
@@ -48,15 +51,39 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const schema = object({
-      title: string().required("Chưa nhập tiêu đề bảng"),
-    });
+    const { title } = req.body;
+    const rules = {};
+
+    if (req.body.title) {
+      rules.title = string().required("Chưa nhập tiêu đề");
+    }
+
+    if (req.body.column_id) {
+      rules.title = string().required("Chưa có column_id");
+    }
+
+    const schema = object(rules);
     const response = {};
     try {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
       const card = await Card.create(body);
+      const column = await Column.findByPk(req.body.column_id);
+
+      if (!column) {
+        await card.destroy();
+
+        Object.assign(response, {
+          status: 404,
+          message: "Not found Column",
+        });
+      }
+
+      const updatedCardOrderIds = [...column.cardOrderIds, card.id];
+      await column.update({
+        cardOrderIds: updatedCardOrderIds,
+      });
 
       Object.assign(response, {
         status: 201,
@@ -65,7 +92,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,
@@ -92,14 +119,14 @@ module.exports = {
         abortEarly: false,
       });
 
-      if (method === "PUT") {
-        body = Object.assign(
-          {
-            desc: null,
-          },
-          body
-        );
-      }
+      // if (method === "PUT") {
+      //   body = Object.assign(
+      //     {
+      //       desc: null,
+      //     },
+      //     body
+      //   );
+      // }
       await Card.update(body, {
         where: { id },
       });
@@ -111,7 +138,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,
