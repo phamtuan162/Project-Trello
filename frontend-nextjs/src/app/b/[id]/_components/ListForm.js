@@ -3,7 +3,6 @@ import { Input, Button } from "@nextui-org/react";
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { useState, useRef, useEffect } from "react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { toast } from "react-toastify";
 export function ListForm({ createNewColumn }) {
   const inputRef = useRef(null);
   const btnaddRef = useRef(null);
@@ -14,8 +13,11 @@ export function ListForm({ createNewColumn }) {
     }
   }, [isCreate]);
   const createColumn = async () => {
-    createNewColumn({ title: inputRef.current.value });
-    setIsCreate(false);
+    const title = inputRef.current.value.trim();
+    if (title) {
+      createNewColumn({ title: title });
+      setIsCreate(false);
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -33,7 +35,7 @@ export function ListForm({ createNewColumn }) {
             style={{ inset: "0" }}
             onClick={() => setIsCreate(false)}
           ></div>
-          <div className="w-full rounded-md bg-[#f1f2f4] shadow-md p-2 relative  z-50">
+          <form className="w-full rounded-md bg-[#f1f2f4] shadow-md p-2 relative  z-50">
             <Input
               isRequired
               ref={inputRef}
@@ -45,6 +47,7 @@ export function ListForm({ createNewColumn }) {
             />
             <div className="flex items-center gap-x-2 mt-2">
               <Button
+                type="submit"
                 color="primary"
                 ref={btnaddRef}
                 onClick={() => createColumn()}
@@ -60,7 +63,7 @@ export function ListForm({ createNewColumn }) {
                 <CloseIcon />
               </Button>
             </div>
-          </div>
+          </form>
         </>
       ) : (
         <button

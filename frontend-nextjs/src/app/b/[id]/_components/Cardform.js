@@ -20,7 +20,6 @@ export function CardForm({ createNewCard, column }) {
     const trimmedValue = textareaRef.current.value.trim();
     if (trimmedValue) {
       createNewCard({ title: trimmedValue }, column.id);
-      toast.success("Thêm danh sách thành công");
     }
     setIsEditing(false);
   };

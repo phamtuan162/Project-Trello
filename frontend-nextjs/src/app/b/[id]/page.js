@@ -103,9 +103,9 @@ export default function BoardIdPage() {
         }
       }
     });
-    moveCardToDifferentColumnAPI(newBoard.id, newBoard);
 
     setBoard(newBoard);
+    moveCardToDifferentColumnAPI(newBoard.id, newBoard);
   };
 
   const deleteColumnDetail = async (columnId) => {
@@ -173,22 +173,17 @@ export default function BoardIdPage() {
 
   const createNewCard = async (newCardData, columnId) => {
     try {
-      const response = await createCard({
+      const data = await createCard({
         ...newCardData,
         column_id: columnId,
       });
-      const createdCard = response.data;
+      const createdCard = data.data;
       const newBoard = { ...board };
       const columnToUpdate = newBoard.columns.find(
         (column) => column.id === createdCard.column_id
       );
-
       if (columnToUpdate) {
-        const hasPlaceholderCard = columnToUpdate.cards.some(
-          (card) => card.FE_PlaceholderCard
-        );
-
-        if (hasPlaceholderCard) {
+        if (columnToUpdate.cards.some((card) => card.FE_PlaceholderCard)) {
           columnToUpdate.cards = [createdCard];
           columnToUpdate.cardOrderIds = [createdCard.id];
         } else {
@@ -196,11 +191,24 @@ export default function BoardIdPage() {
           columnToUpdate.cardOrderIds.push(createdCard.id);
         }
       }
-
       setBoard(newBoard);
       toast.success("Tạo thẻ thành công");
     } catch (error) {
-      console.error("Lỗi khi tạo thẻ mới:", error);
+      console.error("Lỗi khi tạo thẻ mới :", error);
+    }
+  };
+
+  const updateBoard = async (boardId, updateData) => {
+    try {
+      await updateBoardDetail(boardId, { ...updateData });
+      const newBoard = { ...board };
+      if (updateData.title) {
+        newBoard.title = updateData.title;
+        setBoard(newBoard);
+        toast.success("Cập nhật thành công");
+      }
+    } catch (error) {
+      console.error("Lỗi khi cập nhật bảng:", error);
     }
   };
 
@@ -215,7 +223,7 @@ export default function BoardIdPage() {
               : "",
           }}
         >
-          <BoardNavbar board={board} />
+          <BoardNavbar board={board} updateBoard={updateBoard} />
           <div className="absolute inset-0 bg-black/10" />
           <div className="relative pt-28 h-full">
             <div className="p-4 h-full overflow-x-auto">
@@ -229,6 +237,7 @@ export default function BoardIdPage() {
                 createNewColumn={createNewColumn}
                 createNewCard={createNewCard}
                 updateColumn={updateColumn}
+                updateBoard={updateBoard}
               />
             </div>
           </div>

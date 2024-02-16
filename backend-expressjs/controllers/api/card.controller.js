@@ -80,7 +80,13 @@ module.exports = {
         });
       }
 
-      const updatedCardOrderIds = [...column.cardOrderIds, card.id];
+      let updatedCardOrderIds = [];
+
+      if (column.cardOrderIds === null) {
+        updatedCardOrderIds = [card.id];
+      } else {
+        updatedCardOrderIds = column.cardOrderIds.concat(card.id);
+      }
       await column.update({
         cardOrderIds: updatedCardOrderIds,
       });

@@ -19,7 +19,7 @@ export function ListHeader({
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
-    if (title) {
+    if (title && title !== column.title.trim()) {
       updateColumn(column.id, { title: title });
     }
     setIsEditing(false);

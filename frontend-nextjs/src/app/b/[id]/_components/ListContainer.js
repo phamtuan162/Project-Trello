@@ -35,6 +35,7 @@ export function ListContainer({
   createNewColumn,
   createNewCard,
   updateColumn,
+  updateBoard,
 }) {
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 10 },
@@ -338,6 +339,7 @@ export function ListContainer({
         createNewColumn={createNewColumn}
         createNewCard={createNewCard}
         updateColumn={updateColumn}
+        updateBoard={updateBoard}
       />
       ;
       <DragOverlay dropAnimation={dropAnimation}>
