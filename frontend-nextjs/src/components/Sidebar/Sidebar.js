@@ -14,7 +14,13 @@ import { useParams } from "next/navigation";
 import { BoardIcon } from "../Icon/BoardIcon";
 import { HeartIcon } from "../Icon/HeartIcon";
 import { UserIcon } from "../Icon/UserIcon";
+import { CalendarIcon } from "../Icon/CalenderIcon";
+import { MissionIcon } from "../Icon/MissionIcon";
+import { RecentlyIcon } from "../Icon/RecentlyIcon";
+import { StarIcon } from "../Icon/StarIcon";
+import { HomeIcon } from "../Icon/HomeIcon";
 import { SettingIcon } from "../Icon/SettingIcon";
+import { MoreIcon } from "../Icon/MoreIcon";
 import { Activity } from "lucide-react";
 import { getWorkspace } from "@/apis";
 import { Skeleton } from "@nextui-org/react";
@@ -28,6 +34,44 @@ const Sidebar = () => {
     }
     fetchData();
   }, []);
+  const workspaceOptions = [
+    {
+      href: "/",
+      label: "Trang chủ",
+      icon: <HomeIcon />,
+    },
+    {
+      href: "/",
+      label: "Gần đây",
+      icon: <RecentlyIcon />,
+    },
+
+    {
+      href: "/",
+      label: "Nhiệm vụ của tôi",
+      icon: <MissionIcon />,
+    },
+    {
+      href: "/",
+      label: "Lịch",
+      icon: <CalendarIcon />,
+    },
+    {
+      href: "/",
+      label: "Có gắn dấu sao",
+      icon: <StarIcon />,
+    },
+    {
+      href: "/",
+      label: "Tất cả bảng",
+      icon: <BoardIcon />,
+    },
+    {
+      href: "/",
+      label: "Khác",
+      icon: <MoreIcon />,
+    },
+  ];
   const routes = [
     {
       href: "",
@@ -65,15 +109,29 @@ const Sidebar = () => {
   };
 
   return (
-    <div className=" sidebar h-full  w-64 shrink-0 hidden lg:block">
-      <div className="font-medium text-xs flex items-center mb-1  ">
-        <span className="pl-4">Các không gian làm việc</span>
+    <div
+      className="p-2 sidebar h-full  w-64 shrink-0 hidden lg:block overflow-x-auto"
+      style={{
+        borderRight: "1px solid rgb(232, 234, 237)",
+        maxHeight: " calc(100vh-64px)",
+      }}
+    >
+      <div
+        className="p-2"
+        style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
+      >
+        {workspaceOptions?.map((option, index) => (
+          <div
+            key={index}
+            className="flex p-2 gap-4 items-center  rounded-lg hover:bg-default-100 cursor-pointer text-lg"
+          >
+            {option.icon}
+            {option.label}
+          </div>
+        ))}
       </div>
 
-      <div
-        className="overflow-y-auto h-full"
-        style={{ maxHeight: "calc(100vh - 200px)" }}
-      >
+      <div>
         <Skeleton
           isLoaded={workspaces.length > 0 ? true : false}
           className="rounded-lg h-full"
@@ -83,7 +141,7 @@ const Sidebar = () => {
             defaultSelectedKeys={id}
             showDivider={false}
             selectionMode="multiple"
-            className="p-2 flex flex-col gap-1 w-full "
+            className=" flex flex-col gap-1 w-full "
             itemClasses={itemClasses}
           >
             {workspaces?.map((workspace) => (

@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/react";
+import { Avatar, AvatarGroup, Input } from "@nextui-org/react";
+
 import { BoardOptions } from "./BoardOptions";
 export default function BoardNavbar({ board, updateBoard }) {
   const inputRef = useRef(null);
@@ -52,7 +53,33 @@ export default function BoardNavbar({ board, updateBoard }) {
         )}
       </div>
 
-      <div className="ml-auto text-white">
+      <div className="ml-auto text-white flex gap-3 items-center">
+        <AvatarGroup isBordered max={3} total={10} size="sm">
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a042581f4e29026024d"
+          />
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a04258a2462d826712d"
+          />
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+          />
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+          />
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a04258114e29026702d"
+          />
+          <Avatar
+            size="sm"
+            src="https://i.pravatar.cc/150?u=a04258114e29026708c"
+          />
+        </AvatarGroup>
         <BoardOptions board={board} />
       </div>
     </div>

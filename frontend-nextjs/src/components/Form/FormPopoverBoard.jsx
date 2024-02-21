@@ -18,7 +18,7 @@ import { CloseIcon } from "../Icon/CloseIcon";
 import { getWorkspace, getWorkspaceDetail, createBoard } from "@/apis";
 export default function FormPopoverBoard({
   children,
-  placement = "bottom",
+  placement = "top",
   open,
   ...props
 }) {
@@ -60,7 +60,7 @@ export default function FormPopoverBoard({
   return (
     <Popover
       placement={placement}
-      className="w-[304px]"
+      className="w-[304px] border-0"
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       {...props}

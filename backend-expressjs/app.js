@@ -6,6 +6,10 @@ var path = require("path");
 var logger = require("morgan");
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
+const passport = require("passport");
+// const localPassport = require("./passports/local.passport");
+// const googlePassport = require("./passports/google.passport");
+// const githubPassport = require("./passports/github.passport");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -37,11 +41,31 @@ var corsOptions = {
 var app = express();
 app.use(
   session({
-    secret: "trello",
+    secret: "Pham Tuan",
     resave: false,
     saveUninitialized: true,
   })
 );
+
+// Cấu hình passport
+// app.use(passport.initialize());
+// app.use(passport.session());
+
+// passport.serializeUser((user, done) => {
+//   done(null, user.id);
+// });
+
+// passport.deserializeUser(async (id, done) => {
+//   const user = await User.findByPk(id);
+//   done(null, user);
+// });
+
+// passport.use("local", localPassport);
+
+// passport.use("google", googlePassport);
+
+// passport.use("github", githubPassport);
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");

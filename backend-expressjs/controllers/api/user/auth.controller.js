@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { User, BlacklistToken } = require("../../models/index");
+const { User, BlacklistToken } = require("../../../models/index");
 module.exports = {
   login: async (req, res) => {
     // const data = {

@@ -23,11 +23,11 @@ export function CardForm({ createNewCard, column }) {
     }
     setIsEditing(false);
   };
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      btnaddRef.current.click();
-    }
-  };
+  // const handleKeyDown = (event) => {
+  //   if (event.key === "Enter") {
+  //     btnaddRef.current.click();
+  //   }
+  // };
 
   return isEditing ? (
     <div className="p-2 ">
@@ -37,7 +37,7 @@ export function CardForm({ createNewCard, column }) {
         className="text-lg"
         maxRows={2}
         onBlur={() => onCreateCard()}
-        onKeyDown={handleKeyDown}
+        // onKeyDown={handleKeyDown}
       />
 
       <div className="flex items-center gap-x-2 mt-2">

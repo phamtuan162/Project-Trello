@@ -81,7 +81,7 @@ export default function BoardIdPage() {
     setBoard(newBoard);
   };
 
-  const moveCardToDifferentColumn = (
+  const moveCardToDifferentColumn = async (
     currentCardId,
     prevColumnId,
     nextColumnId,
@@ -90,22 +90,35 @@ export default function BoardIdPage() {
     const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
     const newBoard = { ...board };
     newBoard.columns = dndOrderedColumns;
+
     newBoard.columnOrderIds = dndOrderedColumnsIds;
-
-    newBoard.columns.forEach((column) => {
-      if (column.id === prevColumnId) {
-        if (
-          typeof column.cardOrderIds[0] === "string" &&
-          column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-        ) {
-          column.cardOrderIds = [];
-          column.cards = [];
-        }
-      }
-    });
-
     setBoard(newBoard);
-    moveCardToDifferentColumnAPI(newBoard.id, newBoard);
+    // newBoard.columns.forEach((column) => {
+    //   if (
+    //     column.id === prevColumnId &&
+    //     typeof column.cardOrderIds[0] === "string" &&
+    //     column.cardOrderIds[0].indexOf("placeholder-card") !== -1
+    //   ) {
+    //     column.cardOrderIds = [];
+    //     column.cards = [];
+    //   }
+    // });
+    const updatedColumns = newBoard.columns.map((column) => {
+      if (
+        column.id === prevColumnId &&
+        typeof column.cardOrderIds[0] === "string" &&
+        column.cardOrderIds[0].indexOf("placeholder-card") !== -1
+      ) {
+        return {
+          ...column,
+          cardOrderIds: [],
+          cards: [],
+        };
+      }
+      return column;
+    });
+    const updatedBoard = { ...newBoard, columns: updatedColumns };
+    moveCardToDifferentColumnAPI(newBoard.id, updatedBoard);
   };
 
   const deleteColumnDetail = async (columnId) => {
@@ -135,12 +148,14 @@ export default function BoardIdPage() {
         ...newColumnData,
         board_id: board.id,
       });
-
       const createdColumn = response.data;
       const placeholderCard = generatePlaceholderCard(createdColumn);
       createdColumn.cards = [placeholderCard];
       createdColumn.cardOrderIds = [placeholderCard.id];
       const newBoard = { ...board };
+      if (newBoard.columnOrderIds === null) {
+        newBoard.columnOrderIds = [];
+      }
       newBoard.columns.push(createdColumn);
       newBoard.columnOrderIds.push(createdColumn.id);
       setBoard(newBoard);
@@ -211,7 +226,6 @@ export default function BoardIdPage() {
       console.error("Lỗi khi cập nhật bảng:", error);
     }
   };
-
   return (
     <>
       {board ? (
@@ -226,7 +240,7 @@ export default function BoardIdPage() {
           <BoardNavbar board={board} updateBoard={updateBoard} />
           <div className="absolute inset-0 bg-black/10" />
           <div className="relative pt-28 h-full">
-            <div className="p-4 h-full overflow-x-auto">
+            <div className="p-4 h-full overflow-y-hidden overflow-x-auto">
               <ListContainer
                 board={board}
                 boardId={boardId}

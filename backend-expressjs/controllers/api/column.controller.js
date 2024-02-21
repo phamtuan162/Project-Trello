@@ -87,8 +87,14 @@ module.exports = {
           message: "Not found board",
         });
       }
+      let updatedColumnOrderIds = [];
 
-      const updatedColumnOrderIds = [...board.columnOrderIds, column.id];
+      if (board.columnOrderIds === null) {
+        updatedColumnOrderIds = [column.id];
+      } else {
+        updatedColumnOrderIds = board.columnOrderIds.concat(column.id);
+      }
+
       await board.update({
         columnOrderIds: updatedColumnOrderIds,
       });

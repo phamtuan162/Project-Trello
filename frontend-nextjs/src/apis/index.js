@@ -27,7 +27,6 @@ export const getBoard = async (workspaceId) => {
 };
 
 export const getBoardDetail = async (boardId) => {
-  console.log(boardId);
   const response = await axios.get(`${API_ROOT}/board/${boardId}`);
   return response.data;
 };

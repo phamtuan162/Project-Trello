@@ -5,7 +5,7 @@ import {
   PopoverTrigger,
   Button,
 } from "@nextui-org/react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -32,7 +32,7 @@ export function BoardOptions({ board }) {
     >
       <PopoverTrigger asChild>
         <Button className="h-auto w-auto p-2" variant="transparent">
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreIcon />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="px-0 pt-3 pb-3" side="bottom" align="start">

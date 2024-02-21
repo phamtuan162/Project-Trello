@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchData } from "../middleware/fetchData";
+import { fetchData, fetchInitialData } from "../middleware/fetchData";
 const initialState = {
   workspaces: [],
   status: "idle",
@@ -14,9 +14,8 @@ export const workspaceSlice = createSlice({
         state.status = "pending";
       })
       .addCase(fetchData.fulfilled, (state, action) => {
-        if (action.payload && action.payload) {
-          state.workspaces = action.payload.data;
-          toast.success("success");
+        if (action.payload) {
+          state.workspaces = action.payload;
           state.status = "success";
         }
       })

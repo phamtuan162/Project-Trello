@@ -1,9 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { workspaceSlice } from "./slices/workspaceSlice";
-const rootReducer = {
+
+export const store = configureStore({
   reducer: {
     workspace: workspaceSlice.reducer,
   },
-};
-
-export const store = configureStore(rootReducer);
+});

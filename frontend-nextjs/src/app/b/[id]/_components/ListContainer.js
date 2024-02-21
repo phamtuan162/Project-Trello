@@ -108,7 +108,6 @@ export function ListContainer({
       const nextOverColumn = nextColumns.find(
         (column) => column.id === overColumn.id
       );
-
       if (nextActiveColumn) {
         nextActiveColumn.cards = nextActiveColumn.cards.filter(
           (card) => card.id !== activeDraggingCardId
@@ -117,7 +116,6 @@ export function ListContainer({
         if (isEmpty(nextActiveColumn.cards)) {
           nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
         }
-
         // Cập nhật lại mảng cardOrderIds cho chuẩn dữ liệu
         nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
           (card) => card.id
@@ -160,7 +158,6 @@ export function ListContainer({
       return nextColumns;
     });
   };
-
   const HandleDragStart = (e) => {
     setActiveDragItemId(e?.active?.id);
     setActiveDragItemType(
@@ -177,6 +174,7 @@ export function ListContainer({
   const HandleDragOver = (e) => {
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN) return;
     const { active, over } = e;
+    console.log(e);
     if (!over || !active) return;
 
     const {
@@ -187,7 +185,6 @@ export function ListContainer({
 
     const activeColumn = findColumnByCardId(activeDraggingCardId);
     const overColumn = findColumnByCardId(overCardId);
-
     if (!activeColumn || !overColumn) return;
 
     if (activeColumn.id !== overColumn.id) {
@@ -206,7 +203,6 @@ export function ListContainer({
 
   const HandleDragEnd = (e) => {
     const { active, over } = e;
-
     if (!over || !active) return;
 
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.CARD) {
@@ -215,10 +211,10 @@ export function ListContainer({
         data: { current: activeDraggingCardData },
       } = active;
       const { id: overCardId } = over;
-
       const activeColumn = findColumnByCardId(activeDraggingCardId);
       const overColumn = findColumnByCardId(overCardId);
       if (!activeColumn || !overColumn) return;
+      // Kéo thả e column khác nhau
       if (oldColumnWhenDraggingCard.id !== overColumn.id) {
         moveCardBetweenDifferentColumns(
           overColumn,
@@ -276,7 +272,6 @@ export function ListContainer({
           newColumnIndex
         );
 
-        console.log(dndOrderedColumns);
         setOrderedColumns(dndOrderedColumns);
 
         moveColumns(dndOrderedColumns);

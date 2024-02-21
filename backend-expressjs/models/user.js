@@ -3,7 +3,10 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      // define association here
+      User.belongsTo(models.Provider, {
+        foreignKey: "provider_id",
+        as: "provider",
+      });
     }
   }
   User.init(
@@ -13,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      provider_id: DataTypes.INTEGER,
       name: DataTypes.STRING,
       email: DataTypes.STRING,
       password: DataTypes.STRING,
