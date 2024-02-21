@@ -4,14 +4,16 @@ const GoogleStrategy = require("passport-google-oauth20");
 module.exports = new GoogleStrategy(
   {
     clientID:
-      "194272781561-dqsmteu1d3uugf76r7cvae6fv7n8373h.apps.googleusercontent.com",
-    clientSecret: "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",
-    callbackURL: "http://localhost:3000/auth/google/callback",
+      "194272781561-3llf3aiuf1rp1ike0i5dcotlmf1picub.apps.googleusercontent.com",
+    clientSecret: "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",
+    callbackURL: "http://localhost:3000/api/v1/auth/google/callback",
     scope: ["profile", "email"],
     state: true,
   },
   async (accessToken, refreshToken, profile, cb) => {
+    console.log(profile);
     const {
+      photos: [{ value: avatar }],
       displayName: name,
       emails: [{ value: email }],
     } = profile;
@@ -34,6 +36,7 @@ module.exports = new GoogleStrategy(
         name: name,
         email: email,
         status: true,
+        avatar: avatar,
         provider_id: provider[0].id,
       },
     });

@@ -1,5 +1,5 @@
 class Transformer {
-  #data;
+  #data; //Thuộc tính private
   constructor(resource) {
     if (Array.isArray(resource)) {
       this.#data = resource.map((item) => this.response(item));

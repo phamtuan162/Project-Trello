@@ -1,4 +1,4 @@
-const Transformer = require("../core/Transformer");
+const Transformer = require("../../core/Transformer");
 const ColumnTransformer = require("./column.transformer");
 class BoardTransformer extends Transformer {
   response(instance) {

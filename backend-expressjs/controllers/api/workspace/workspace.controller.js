@@ -1,7 +1,7 @@
-const { Workspace, Board } = require("../../models/index");
+const { Workspace, Board } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
-const WorkspaceTransformer = require("../../transformers/workspace.transformer");
+const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
 
 module.exports = {
   index: async (req, res) => {

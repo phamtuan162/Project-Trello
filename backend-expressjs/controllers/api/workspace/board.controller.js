@@ -1,25 +1,33 @@
-const { Card, Column } = require("../../models/index");
+const { Board, Column, Card } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
-const CardTransformer = require("../../transformers/card.transformer");
+const BoardTransformer = require("../../../transformers/workspace/board.transformer");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", q, column_id } = req.query;
+    const { order = "asc", sort = "id", workspace_id, q } = req.query;
     const filters = {};
-    if (column_id) {
-      filters.column_id = column_id;
+    if (workspace_id) {
+      filters.workspace_id = workspace_id;
     }
     const options = {
       order: [[sort, order]],
       where: filters,
+      include: {
+        model: Column,
+        as: "columns",
+        include: {
+          model: Card,
+          as: "cards",
+        },
+      },
     };
     const response = {};
     try {
-      const cards = await Card.findAll(options);
+      const boards = await Board.findAll(options);
       response.status = 200;
       response.message = "Success";
-      response.data = new CardTransformer(cards);
+      response.data = new BoardTransformer(boards);
     } catch (e) {
       response.status = 500;
       response.message = "Server error";
@@ -31,8 +39,17 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const card = await Card.findByPk(id);
-      if (!card) {
+      const board = await Board.findByPk(id, {
+        include: {
+          model: Column,
+          as: "columns",
+          include: {
+            model: Card,
+            as: "cards",
+          },
+        },
+      });
+      if (!board) {
         Object.assign(response, {
           status: 404,
           message: "Not Found",
@@ -41,7 +58,7 @@ module.exports = {
         Object.assign(response, {
           status: 200,
           message: "Success",
-          data: new CardTransformer(card),
+          data: new BoardTransformer(board),
         });
       }
     } catch (e) {
@@ -51,50 +68,24 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const { title } = req.body;
     const rules = {};
 
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
     }
-
-    if (req.body.column_id) {
-      rules.title = string().required("Chưa có column_id");
-    }
-
     const schema = object(rules);
+
     const response = {};
     try {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
-      const card = await Card.create(body);
-      const column = await Column.findByPk(req.body.column_id);
-
-      if (!column) {
-        await card.destroy();
-
-        Object.assign(response, {
-          status: 404,
-          message: "Not found Column",
-        });
-      }
-
-      let updatedCardOrderIds = [];
-
-      if (column.cardOrderIds === null) {
-        updatedCardOrderIds = [card.id];
-      } else {
-        updatedCardOrderIds = column.cardOrderIds.concat(card.id);
-      }
-      await column.update({
-        cardOrderIds: updatedCardOrderIds,
-      });
+      const board = await Board.create(body);
 
       Object.assign(response, {
         status: 201,
         message: "Success",
-        data: new CardTransformer(card),
+        data: new BoardTransformer(board),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -133,14 +124,23 @@ module.exports = {
       //     body
       //   );
       // }
-      await Card.update(body, {
+      await Board.update(body, {
         where: { id },
       });
-      const card = await Card.findByPk(id);
+      const board = await Board.findByPk(id, {
+        include: {
+          model: Column,
+          as: "columns",
+          include: {
+            model: Card,
+            as: "cards",
+          },
+        },
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new CardTransformer(card),
+        data: new BoardTransformer(board),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -154,17 +154,70 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+  moveCard: async (req, res) => {
+    const { id } = req.params;
+    const data = req.body;
+    const response = {};
+    try {
+      const columns = data.columns;
+      const board = await Board.findByPk(id);
+      if (!board) {
+        Object.assign(response, {
+          status: 404,
+          message: "Not Found",
+        });
+      }
+
+      for (const column of columns) {
+        const cards = column.cards;
+        await Column.update(
+          {
+            cardOrderIds: column.cardOrderIds,
+          },
+          { where: { id: column.id } }
+        );
+        for (const card of cards) {
+          await Card.update(
+            { column_id: card.column_id },
+            {
+              where: {
+                id: card.id,
+              },
+            }
+          );
+        }
+      }
+
+      await board.update({ columnOrderIds: data.columnOrderIds });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (e) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+      });
+    }
+    res.status(response.status).json(response);
+  },
   delete: async (req, res) => {
     const { id } = req.params;
     try {
-      const card = await Card.findByPk(id);
-      if (card) {
-        await card.destroy();
-        res.status(204).json({
-          status: 204,
-          message: "Success",
-        });
+      const columns = await Column.findAll({ where: { board_id: id } });
+
+      for (const column of columns) {
+        await Card.destroy({ where: { column_id: column.id } });
       }
+      await Column.destroy({ where: { board_id: id } });
+
+      await Board.destroy({ where: { id }, force: true });
+
+      res.status(204).json({
+        status: 204,
+        message: "Success",
+      });
     } catch (error) {
       res.status(500).json({
         status: 500,

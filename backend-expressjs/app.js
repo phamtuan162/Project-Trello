@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { User } = require("./models/index");
 var createError = require("http-errors");
 var express = require("express");
 var cookieParser = require("cookie-parser");
@@ -7,9 +8,9 @@ var logger = require("morgan");
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
 const passport = require("passport");
-// const localPassport = require("./passports/local.passport");
-// const googlePassport = require("./passports/google.passport");
-// const githubPassport = require("./passports/github.passport");
+const localPassport = require("./passports/local.passport");
+const googlePassport = require("./passports/google.passport");
+const githubPassport = require("./passports/github.passport");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -48,23 +49,23 @@ app.use(
 );
 
 // Cấu hình passport
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.use(passport.initialize());
+app.use(passport.session());
 
-// passport.serializeUser((user, done) => {
-//   done(null, user.id);
-// });
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
 
-// passport.deserializeUser(async (id, done) => {
-//   const user = await User.findByPk(id);
-//   done(null, user);
-// });
+passport.deserializeUser(async (id, done) => {
+  const user = await User.findByPk(id);
+  done(null, user);
+});
 
-// passport.use("local", localPassport);
+passport.use("local", localPassport);
 
-// passport.use("google", googlePassport);
+passport.use("google", googlePassport);
 
-// passport.use("github", githubPassport);
+passport.use("github", githubPassport);
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

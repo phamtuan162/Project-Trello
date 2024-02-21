@@ -1,28 +1,21 @@
 var express = require("express");
-var authController = require("../../../controllers/api/auth/auth.controller");
 var router = express.Router();
-// router.post("/login", authController.login);
-// router.get("/profile", authController.profile);
-// router.get("/google", passport.authenticate("google"));
-// router.get("/google/callback", passport.authenticate("google"), (req, res) => {
-//   const accessToken = generateAccessToken(req.user.id);
-//   res.json({
-//     status: 200,
-//     message: "Success",
-//     access_token: accessToken,
-//     data: req.user,
-//   });
-// });
+const authController = require("../../../controllers/api/auth/auth.controller");
+const authMiddleware = require("../../../middlewares/api/auth.middleware");
+const passport = require("passport");
 
-// router.get("/github", passport.authenticate("github"));
-// router.get("/github/callback", passport.authenticate("github"), (req, res) => {
-//   const accessToken = generateAccessToken(req.user.id);
-//   res.json({
-//     status: 200,
-//     message: "Success",
-//     access_token: accessToken,
-//     data: req.user,
-//   });
-// });
-
+router.post("/login", authController.login);
+router.get("/google", passport.authenticate("google"));
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureFlash: true,
+    successRedirect: "/",
+  })
+);
+router.get("/github", passport.authenticate("github"));
+router.get("/github/callback", passport.authenticate("github"));
+router.get("/profile", authMiddleware, authController.profile);
+router.post("/logout", authMiddleware, authController.logout);
+router.post("/refresh", authController.refresh);
 module.exports = router;

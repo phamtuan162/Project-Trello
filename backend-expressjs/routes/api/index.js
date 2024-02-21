@@ -1,12 +1,15 @@
 var express = require("express");
 var router = express.Router();
 const authRouter = require("./auth/auth");
-const workspaceRouter = require("./workspace");
-const boardRouter = require("./board");
-const columnRouter = require("./column");
-const cardRouter = require("./card");
+const userRouter = require("./user/user");
+const workspaceRouter = require("./workspace/workspace");
+const boardRouter = require("./workspace/board");
+const columnRouter = require("./workspace/column");
+const cardRouter = require("./workspace/card");
 
 router.use("/auth", authRouter);
+
+router.use("/user", userRouter);
 
 router.use("/workspace", workspaceRouter);
 

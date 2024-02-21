@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const workspaceController = require("../../controllers/api/workspace.controller");
+const workspaceController = require("../../../controllers/api/workspace/workspace.controller");
 
 router.get("/", workspaceController.index);
 router.get("/:id", workspaceController.find);

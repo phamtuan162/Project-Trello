@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const boardController = require("../../controllers/api/board.controller");
+const boardController = require("../../../controllers/api/workspace/board.controller");
 
 router.get("/", boardController.index);
 router.get("/:id", boardController.find);

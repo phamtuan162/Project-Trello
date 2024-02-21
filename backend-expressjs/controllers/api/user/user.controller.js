@@ -1,8 +1,8 @@
-const { User } = require("../../models/index");
+const { User } = require("../../../models/index");
 const { Op } = require("sequelize");
 const { object, string } = require("yup");
 const bcrypt = require("bcrypt");
-const UserTransformer = require("../../transformers/user.transformer");
+const UserTransformer = require("../../../transformers/user/user.transformer");
 
 module.exports = {
   index: async (req, res) => {
@@ -20,7 +20,7 @@ module.exports = {
     }
     if (q) {
       filters[Op.or] = {
-        fullname: {
+        name: {
           [Op.iLike]: `%${q.trim()}%`,
         },
         email: {
@@ -82,7 +82,7 @@ module.exports = {
   },
   store: async (req, res) => {
     const schema = object({
-      fullname: string().required("Tên bắt buộc phải nhập"),
+      name: string().required("Tên bắt buộc phải nhập"),
       email: string()
         .required("Email bắt buộc phải nhập")
         .email("Email không đúng định dạng"),
@@ -120,8 +120,8 @@ module.exports = {
     const { id } = req.params;
     const method = req.method;
     const rules = {};
-    if (req.body.fullname) {
-      rules.fullname = string().min(5, "Tên phải từ 5 ký tự");
+    if (req.body.name) {
+      rules.name = string().min(5, "Tên phải từ 5 ký tự");
     }
     if (req.body.email) {
       rules.email = string().email("Email không đúng định dạng");
@@ -155,7 +155,7 @@ module.exports = {
       if (method === "PUT") {
         body = Object.assign(
           {
-            fullname: null,
+            name: null,
             password: null,
             status: null,
           },
