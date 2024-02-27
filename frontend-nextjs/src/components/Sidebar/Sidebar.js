@@ -8,7 +8,6 @@ import {
   Listbox,
   ListboxItem,
 } from "@nextui-org/react";
-import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 import { BoardIcon } from "../Icon/BoardIcon";
@@ -22,18 +21,11 @@ import { HomeIcon } from "../Icon/HomeIcon";
 import { SettingIcon } from "../Icon/SettingIcon";
 import { MoreIcon } from "../Icon/MoreIcon";
 import { Activity } from "lucide-react";
-import { getWorkspace } from "@/apis";
 import { Skeleton } from "@nextui-org/react";
 const Sidebar = () => {
   const { id } = useParams();
-  const [workspaces, setWorkspaces] = useState([]);
-  useEffect(() => {
-    async function fetchData() {
-      const data = await getWorkspace();
-      setWorkspaces(data.data);
-    }
-    fetchData();
-  }, []);
+  const workspaces = useSelector((state) => state.workspace.workspaces);
+  console.log(workspaces);
   const workspaceOptions = [
     {
       href: "/",
@@ -133,7 +125,7 @@ const Sidebar = () => {
 
       <div>
         <Skeleton
-          isLoaded={workspaces.length > 0 ? true : false}
+          isLoaded={workspaces?.length > 0 ? true : false}
           className="rounded-lg h-full"
           style={{ maxHeight: "calc(100vh - 200px)" }}
         >

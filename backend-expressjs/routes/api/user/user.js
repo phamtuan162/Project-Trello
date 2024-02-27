@@ -3,7 +3,7 @@ var router = express.Router();
 const userController = require("../../../controllers/api/user/user.controller");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
 
-router.get("/", authMiddleware, userController.index);
+router.get("/", userController.index);
 router.get("/:id", userController.find);
 router.post("/", userController.store);
 router.put("/:id", userController.update);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { updateColumnDetail } from "@/apis";
+import { updateColumnDetail } from "@/services/workspaceApi";
 import { ListOptions } from "./ListOptions";
 import { toast } from "react-toastify";
 export function ListHeader({

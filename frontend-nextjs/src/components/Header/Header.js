@@ -1,4 +1,5 @@
 "use client";
+import axios from "axios";
 import {
   Navbar,
   NavbarBrand,
@@ -11,7 +12,7 @@ import {
 } from "@nextui-org/react";
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useDispatch } from "react-redux";
 import React from "react";
 import { SearchIcon } from "../Icon/SearchIcon";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
@@ -22,7 +23,7 @@ import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import Sidebar from "../Sidebar/Sidebar";
 import FormOption from "../Form/FormOption";
 import { User } from "./User";
-import { getWorkspace } from "@/apis";
+import { fetchData } from "@/stores/middleware/fetchData";
 
 const Header = () => {
   const options = [
@@ -48,18 +49,12 @@ const Header = () => {
     },
   ];
   const { id } = useParams();
-  const [workspaces, setWorkspaces] = useState([]);
-  const { theme, setTheme } = useTheme();
+  const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   useEffect(() => {
-    async function fetchData() {
-      const data = await getWorkspace();
-      if (data) {
-        setWorkspaces(data.data);
-      }
-    }
-    fetchData();
-  }, []);
+    dispatch(fetchData());
+  }, [dispatch]);
 
   return (
     <Navbar
@@ -74,7 +69,7 @@ const Header = () => {
         />
         <NavbarBrand>
           <Link href="/">
-            <p className="font-bold text-inherit">Trello</p>
+            <p className="font-bold text-inherit">ProManage </p>
           </Link>
         </NavbarBrand>
       </NavbarContent>

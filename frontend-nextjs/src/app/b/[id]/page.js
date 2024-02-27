@@ -10,7 +10,7 @@ import {
   deleteColumn,
   createColumn,
   createCard,
-} from "@/apis";
+} from "@/services/workspaceApi";
 import BoardNavbar from "./_components/BoardNavbar";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
@@ -24,9 +24,9 @@ export default function BoardIdPage() {
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
-        const response = await getBoardDetail(boardId);
-        if (response && response.data) {
-          let boardData = response.data;
+        const board = await getBoardDetail(boardId);
+        if (board) {
+          let boardData = board;
           boardData.columns = mapOrder(
             boardData.columns,
             boardData.columnOrderIds,
@@ -52,14 +52,18 @@ export default function BoardIdPage() {
   }, []);
 
   const moveColumns = (dndOrderedColumns) => {
-    const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
-    const newBoard = { ...board };
-    newBoard.columns = dndOrderedColumns;
-    newBoard.columnOrderIds = dndOrderedColumnsIds;
-    setBoard(newBoard);
-    updateBoardDetail(newBoard.id, {
-      columnOrderIds: dndOrderedColumnsIds,
-    });
+    try {
+      const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
+      const newBoard = { ...board };
+      newBoard.columns = dndOrderedColumns;
+      newBoard.columnOrderIds = dndOrderedColumnsIds;
+      setBoard(newBoard);
+      updateBoardDetail(newBoard.id, {
+        columnOrderIds: dndOrderedColumnsIds,
+      });
+    } catch (error) {
+      console.error("Error move column:", error);
+    }
   };
 
   const moveCardInTheSameColumn = (
@@ -67,18 +71,22 @@ export default function BoardIdPage() {
     dndOrderedCardIds,
     columnId
   ) => {
-    const newBoard = { ...board };
-    const columnToUpdate = newBoard.columns.find(
-      (column) => column.id === columnId
-    );
-    if (columnToUpdate) {
-      columnToUpdate.cards = dndOrderedCards;
-      columnToUpdate.cardOrderIds = dndOrderedCardIds;
+    try {
+      const newBoard = { ...board };
+      const columnToUpdate = newBoard.columns.find(
+        (column) => column.id === columnId
+      );
+      if (columnToUpdate) {
+        columnToUpdate.cards = dndOrderedCards;
+        columnToUpdate.cardOrderIds = dndOrderedCardIds;
+      }
+
+      updateColumnDetail(columnId, { cardOrderIds: dndOrderedCardIds });
+
+      setBoard(newBoard);
+    } catch (error) {
+      console.error("Error move card in the same column:", error);
     }
-
-    updateColumnDetail(columnId, { cardOrderIds: dndOrderedCardIds });
-
-    setBoard(newBoard);
   };
 
   const moveCardToDifferentColumn = async (
@@ -87,38 +95,31 @@ export default function BoardIdPage() {
     nextColumnId,
     dndOrderedColumns
   ) => {
-    const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
-    const newBoard = { ...board };
-    newBoard.columns = dndOrderedColumns;
+    try {
+      const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
+      const newBoard = { ...board };
+      newBoard.columns = dndOrderedColumns;
 
-    newBoard.columnOrderIds = dndOrderedColumnsIds;
-    setBoard(newBoard);
-    // newBoard.columns.forEach((column) => {
-    //   if (
-    //     column.id === prevColumnId &&
-    //     typeof column.cardOrderIds[0] === "string" &&
-    //     column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-    //   ) {
-    //     column.cardOrderIds = [];
-    //     column.cards = [];
-    //   }
-    // });
-    const updatedColumns = newBoard.columns.map((column) => {
-      if (
-        column.id === prevColumnId &&
-        typeof column.cardOrderIds[0] === "string" &&
-        column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-      ) {
-        return {
-          ...column,
-          cardOrderIds: [],
-          cards: [],
-        };
-      }
-      return column;
-    });
-    const updatedBoard = { ...newBoard, columns: updatedColumns };
-    moveCardToDifferentColumnAPI(newBoard.id, updatedBoard);
+      newBoard.columnOrderIds = dndOrderedColumnsIds;
+      setBoard(newBoard);
+      const updatedColumns = newBoard.columns.map((column) => {
+        if (
+          typeof column.cardOrderIds[0] === "string" &&
+          column.cardOrderIds[0].indexOf("placeholder-card") !== -1
+        ) {
+          return {
+            ...column,
+            cardOrderIds: [],
+            cards: [],
+          };
+        }
+        return column;
+      });
+      const updatedBoard = { ...newBoard, columns: updatedColumns };
+      moveCardToDifferentColumnAPI(newBoard.id, updatedBoard);
+    } catch (error) {
+      console.error("Error move card to different column:", error);
+    }
   };
 
   const deleteColumnDetail = async (columnId) => {
@@ -144,11 +145,11 @@ export default function BoardIdPage() {
 
   const createNewColumn = async (newColumnData) => {
     try {
-      const response = await createColumn({
+      const columnNew = await createColumn({
         ...newColumnData,
         board_id: board.id,
       });
-      const createdColumn = response.data;
+      const createdColumn = columnNew;
       const placeholderCard = generatePlaceholderCard(createdColumn);
       createdColumn.cards = [placeholderCard];
       createdColumn.cardOrderIds = [placeholderCard.id];
@@ -168,8 +169,8 @@ export default function BoardIdPage() {
 
   const updateColumn = async (columnId, updateData) => {
     try {
-      const response = await updateColumnDetail(columnId, { ...updateData });
-      const updatedColumn = response.data;
+      const data = await updateColumnDetail(columnId, { ...updateData });
+      const updatedColumn = data;
       const newBoard = { ...board };
       const columnIndex = newBoard.columns.findIndex(
         (column) => column.id === updatedColumn.id
@@ -192,7 +193,7 @@ export default function BoardIdPage() {
         ...newCardData,
         column_id: columnId,
       });
-      const createdCard = data.data;
+      const createdCard = data;
       const newBoard = { ...board };
       const columnToUpdate = newBoard.columns.find(
         (column) => column.id === createdCard.column_id

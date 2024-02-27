@@ -1,0 +1,43 @@
+.login {
+  font-size: 16px;
+  margin: 0 auto;
+  margin-top: 20px;
+  h1 {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 700;
+  }
+  form {
+    margin-top: 30px;
+  }
+  input {
+    font-size: 18px;
+  }
+  .modal__line {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #eee;
+      transform: translateY(-50%);
+    }
+    span {
+      position: relative;
+      font-size: 20px;
+      display: block;
+      padding: 0 20px;
+      background: #fff none;
+      text-align: center;
+    }
+  }
+}

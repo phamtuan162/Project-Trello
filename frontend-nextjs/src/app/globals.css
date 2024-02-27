@@ -19,11 +19,16 @@ header {
 .dark header,
 .dark .sidebar,
 .dark .account,
-.dark .change-mode {
+.dark .change-mode,
+.dark .column {
   background-color: rgb(15 23 42/1);
 }
 .background-dark {
   background-color: rgb(15 23 42/1);
+}
+
+.dark .card {
+  background-color: gray;
 }
 .no-hover {
   pointer-events: none;

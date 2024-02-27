@@ -35,13 +35,13 @@ export function Column({
 
   return (
     <li
-      className="shrink-0 h-full w-[272px] select-none"
+      className="shrink-0 h-full w-[272px] select-none "
       ref={setNodeRef}
       style={dndKitCommonStyle}
       {...attributes}
       key={column.id}
     >
-      <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2">
+      <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column">
         <div {...listeners} className="h-4"></div>
         <ListHeader
           column={column}

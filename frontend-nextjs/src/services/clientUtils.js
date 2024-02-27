@@ -3,20 +3,19 @@ export const client = {
   setUrl: function (url) {
     this.serverApi = url;
   },
-  send: async function (url, method = "GET", body = null, apiKey = null) {
+  send: async function (url, method = "GET", body = null, token = null) {
     url = `${this.serverApi}${url}`;
 
     const headers = {
       "Content-Type": "application/json",
     };
 
-    if (apiKey) {
-      headers["X-Api-Key"] = apiKey;
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
     const options = {
       method,
       headers,
-      mode: "no-cors",
     };
 
     if (body !== null) {

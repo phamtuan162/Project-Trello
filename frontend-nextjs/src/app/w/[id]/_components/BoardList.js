@@ -24,7 +24,7 @@ export function BoardList({ boards }) {
           </Link>
         ))}
 
-        <FormPopoverBoard placement={"right"} open={false}>
+        <FormPopoverBoard placement={"left"} open={false}>
           <div
             role="button"
             className="aspect-video relative h-full w-full bg-muted rounded-sm flex bg-default-100 flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"

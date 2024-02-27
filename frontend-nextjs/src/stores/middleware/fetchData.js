@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getWorkspace } from "@/apis";
+import { getWorkspace } from "@/services/workspaceApi";
 
 export const fetchData = createAsyncThunk("workspace/fetchData", async () => {
   try {
-    const data = await getWorkspace();
-    return data.data;
+    const workspaces = await getWorkspace();
+    return workspaces;
   } catch (error) {
     throw Error("Failed to fetch workspace data");
   }

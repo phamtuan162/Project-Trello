@@ -8,7 +8,6 @@ var logger = require("morgan");
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
 const passport = require("passport");
-const localPassport = require("./passports/local.passport");
 const googlePassport = require("./passports/google.passport");
 const githubPassport = require("./passports/github.passport");
 
@@ -60,8 +59,6 @@ passport.deserializeUser(async (id, done) => {
   const user = await User.findByPk(id);
   done(null, user);
 });
-
-passport.use("local", localPassport);
 
 passport.use("google", googlePassport);
 

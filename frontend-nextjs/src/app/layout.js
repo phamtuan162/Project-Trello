@@ -5,8 +5,8 @@ import Header from "@/components/Header/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 export const metadata = {
-  title: "Trello",
-  description: "Clone Trello",
+  title: "ProManage ",
+  description: "Manage Project",
 };
 export default function RootLayout({ children, params }) {
   return (
@@ -24,7 +24,6 @@ export default function RootLayout({ children, params }) {
             <Header />
             <main className="bg-background">
               {children}
-
               <ToastContainer />
             </main>
           </Providers>

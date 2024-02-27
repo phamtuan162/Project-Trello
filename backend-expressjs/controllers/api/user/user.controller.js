@@ -12,7 +12,7 @@ module.exports = {
       status,
       q,
       limit,
-      page = 1,
+      page = 10,
     } = req.query;
     const filters = {};
     if (status === "true" || status === "false") {
@@ -152,16 +152,16 @@ module.exports = {
       if (body.password) {
         body.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10));
       }
-      if (method === "PUT") {
-        body = Object.assign(
-          {
-            name: null,
-            password: null,
-            status: null,
-          },
-          body
-        );
-      }
+      // if (method === "PUT") {
+      //   body = Object.assign(
+      //     {
+      //       name: null,
+      //       password: null,
+      //       status: null,
+      //     },
+      //     body
+      //   );
+      // }
       await User.update(body, {
         where: { id },
       });

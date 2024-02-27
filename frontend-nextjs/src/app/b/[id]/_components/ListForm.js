@@ -27,15 +27,15 @@ export function ListForm({ createNewColumn }) {
   };
 
   return (
-    <li className="shrink-0 h-full w-[272px] select-none  ">
+    <li className="shrink-0 h-full w-[272px] select-none   ">
       {isCreate ? (
         <>
           <div
-            className="fixed z-40"
+            className="fixed z-40 "
             style={{ inset: "0" }}
             onClick={() => setIsCreate(false)}
           ></div>
-          <form className="w-full rounded-md bg-[#f1f2f4] shadow-md p-2 relative  z-50">
+          <form className="w-full rounded-md bg-[#f1f2f4] shadow-md p-2 relative  z-50 column">
             <Input
               isRequired
               ref={inputRef}
@@ -67,7 +67,7 @@ export function ListForm({ createNewColumn }) {
         </>
       ) : (
         <button
-          className="w-full rounded-md bg-white/80 hover:bg-white/50 transition p-3 flex items-center font-medium text-sm relative  z-50"
+          className="column w-full rounded-md bg-white/80 hover:bg-white/50 transition p-3 flex items-center font-medium text-sm relative  z-50"
           onClick={() => setIsCreate(true)}
         >
           <AddIcon />

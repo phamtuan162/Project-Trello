@@ -1,17 +1,16 @@
 const { User, Provider } = require("../models/index");
-
+const jwt = require("jsonwebtoken");
 const GoogleStrategy = require("passport-google-oauth20");
 module.exports = new GoogleStrategy(
   {
     clientID:
       "194272781561-3llf3aiuf1rp1ike0i5dcotlmf1picub.apps.googleusercontent.com",
     clientSecret: "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",
-    callbackURL: "http://localhost:3000/api/v1/auth/google/callback",
+    callbackURL: "http://localhost:3000/auth/login/google/callback",
     scope: ["profile", "email"],
     state: true,
   },
   async (accessToken, refreshToken, profile, cb) => {
-    console.log(profile);
     const {
       photos: [{ value: avatar }],
       displayName: name,

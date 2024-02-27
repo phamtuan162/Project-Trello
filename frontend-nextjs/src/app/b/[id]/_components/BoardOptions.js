@@ -9,7 +9,7 @@ import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { deleteBoard } from "@/apis";
+import { deleteBoard } from "@/services/workspaceApi";
 import { useParams, redirect } from "next/navigation";
 export function BoardOptions({ board }) {
   const { id: boardId } = useParams();
@@ -41,7 +41,8 @@ export function BoardOptions({ board }) {
         </div>
         <Button
           onClick={() => setIsOpen(!isOpen)}
-          className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-1 absolute right-1 h-auto top-1"
+          variant="ghost"
+          className="min-w-3 rounded-lg border-0  hover:bg-default-300 text-xs p-1 absolute right-1 h-auto top-1"
         >
           <CloseIcon />
         </Button>

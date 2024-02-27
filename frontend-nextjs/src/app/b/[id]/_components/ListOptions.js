@@ -12,7 +12,7 @@ import { useParams } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { deleteBoard } from "@/apis";
+import { deleteBoard } from "@/services/workspaceApi";
 
 export function ListOptions({ column, deleteColumnDetail, createNewCard }) {
   const { id: boardId } = useParams();

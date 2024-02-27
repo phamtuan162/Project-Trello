@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
   Popover,
@@ -12,10 +12,10 @@ import {
   SelectItem,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
-
+import { useSelector } from "react-redux";
 import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
-import { getWorkspace, getWorkspaceDetail, createBoard } from "@/apis";
+import { createBoard } from "@/services/workspaceApi";
 export default function FormPopoverBoard({
   children,
   placement = "top",
@@ -25,20 +25,22 @@ export default function FormPopoverBoard({
   const { id: workspaceId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
-  const [workspaces, setWorkspaces] = useState([]);
-  const [workspace, setWorkspace] = useState(null);
+  const workspaces = useSelector((state) => state.workspace.workspaces);
+  const workspace = workspaces.find(
+    (workspace) => workspace.id === +workspaceId
+  );
 
-  useEffect(() => {
-    async function fetchData() {
-      if (workspaceId) {
-        const data = await getWorkspaceDetail(workspaceId);
-        setWorkspace(data.data);
-      }
-      const data = await getWorkspace();
-      setWorkspaces(data.data);
-    }
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     if (workspaceId) {
+  //       const data = await getWorkspaceDetail(workspaceId);
+  //       setWorkspace(data.data);
+  //     }
+  //     const data = await getWorkspace();
+  //     setWorkspaces(data.data);
+  //   }
+  //   fetchData();
+  // }, []);
 
   const onSubmit = (formData) => {
     const image = formData.get("image");
@@ -52,7 +54,7 @@ export default function FormPopoverBoard({
     }).then((data) => {
       if (data) {
         toast.success("Thêm bảng thành công");
-        location.href = `/b/${data.data.id}`;
+        location.href = `/b/${data.id}`;
       }
     });
   };
@@ -60,7 +62,7 @@ export default function FormPopoverBoard({
   return (
     <Popover
       placement={placement}
-      className="w-[304px] border-0"
+      className="w-[304px] border-0 -translate-y-1/4"
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       {...props}
@@ -78,9 +80,10 @@ export default function FormPopoverBoard({
             <div className="flex justify-between items-center	relative">
               <h1 className="grow text-center text-lg">Tạo Bảng</h1>
               <Button
-                className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-1 absolute right-0 h-auto"
+                className="min-w-3 rounded-lg border-0 hover:bg-default-300 text-xs p-1 absolute right-0 h-auto"
                 onClick={() => setIsOpen(!isOpen)}
                 ref={closeRef}
+                variant="ghost"
               >
                 <CloseIcon />
               </Button>

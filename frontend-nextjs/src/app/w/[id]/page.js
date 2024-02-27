@@ -1,23 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 import { BoardList } from "./_components/BoardList";
 import { Info } from "./_components/Info";
 import { Suspense } from "react";
-import { getWorkspaceDetail } from "@/apis";
 import { Skeleton } from "@nextui-org/react";
+import { getWorkspaceDetail } from "@/services/workspaceApi";
 export default function WorkspaceIdPage() {
   const { id: workspaceId } = useParams();
-  const [workspace, setWorkspace] = useState(null);
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await getWorkspaceDetail(workspaceId);
-      if (data) {
-        setWorkspace(data.data);
-      }
-    };
-    fetchData();
-  }, []);
+  const workspaces = useSelector((state) => state.workspace.workspaces);
+  const workspace = workspaces.find(
+    (workspace) => workspace.id === +workspaceId
+  );
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const data = await getWorkspaceDetail(workspaceId);
+  //     if (data) {
+  //       setWorkspace(data);
+  //     }
+  //   };
+  //   fetchData();
+  // }, []);
   return (
     <div className="w-full mb-20">
       <Skeleton isLoaded={workspace ? true : false}>
