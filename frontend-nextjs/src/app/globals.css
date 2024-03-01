@@ -9,6 +9,8 @@ main {
 }
 header {
   max-width: 100% !important;
+  height: 48px !important;
+  padding: 10px auto !important;
 }
 .dark nav {
   border-color: #cbd5e11a;

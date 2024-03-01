@@ -2,8 +2,8 @@ export const MissionIcon = () => (
   <svg
     fill="currentColor"
     strokeWidth="0"
-    width="24"
-    height="24"
+    width="18"
+    height="18"
     viewBox="0 0 20 20"
     xmlns="http://www.w3.org/2000/svg"
   >

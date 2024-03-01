@@ -31,6 +31,7 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   find: async (req, res) => {
     const { id } = req.params;
     const response = {};
@@ -88,7 +89,57 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+  update: async (req, res) => {
+    const { id } = req.params;
+    const method = req.method;
+    const rules = {};
 
+    if (req.body.title) {
+      rules.title = string().required("Chưa nhập tiêu đề");
+    }
+
+    const schema = object(rules);
+    const response = {};
+    //Validate
+    try {
+      let body = await schema.validate(req.body, {
+        abortEarly: false,
+      });
+
+      // if (method === "PUT") {
+      //   body = Object.assign(
+      //     {
+      //       desc: null,
+      //     },
+      //     body
+      //   );
+      // }
+      await Workspace.update(body, {
+        where: { id },
+      });
+      const workspace = await Workspace.findByPk(id, {
+        include: {
+          model: Board,
+          as: "boards",
+        },
+      });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: new WorkspaceTransformer(workspace),
+      });
+    } catch (e) {
+      const errors = Object.fromEntries(
+        e?.inner.map(({ path, message }) => [path, message])
+      );
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+        errors,
+      });
+    }
+    res.status(response.status).json(response);
+  },
   delete: async (req, res) => {
     const { id } = req.params;
     await Workspace.destroy({ where: { id } });

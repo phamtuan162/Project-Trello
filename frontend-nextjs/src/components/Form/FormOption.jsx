@@ -12,31 +12,33 @@ export default function FormOption({ option }) {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   return (
-    <NavbarItem className="h-full">
+    <NavbarItem className="">
       <button
         onMouseEnter={() => setIsPopoverOpen(true)}
         onMouseLeave={() => setIsPopoverOpen(false)}
-        style={{ marginRight: "-5px" }}
         type="button"
         aria-label={option.label}
-        className="relative rounded-lg   p-2 text-gray-400 hover:bg-gray-500 hover:text-white h-full  text-lg "
+        className=" rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-full  flex items-center "
       >
         {option.icon}
 
         <Popover
           showArrow
+          className="translate-y-[24px] -translate-x-[10px]"
           isOpen={isPopoverOpen}
           onOpenChange={(open) => setIsPopoverOpen(open)}
           placement="bottom"
           color="default"
           classNames={{
-            content: ["p-2 text-lg "],
+            content: ["p-2 "],
           }}
         >
           <PopoverTrigger>
             <span className=""></span>
           </PopoverTrigger>
-          <PopoverContent>{option.label}</PopoverContent>
+          <PopoverContent className="max-w-[130px] text-center">
+            {option.label}
+          </PopoverContent>
         </Popover>
       </button>
     </NavbarItem>

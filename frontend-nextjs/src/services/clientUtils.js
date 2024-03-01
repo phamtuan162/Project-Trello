@@ -3,15 +3,15 @@ export const client = {
   setUrl: function (url) {
     this.serverApi = url;
   },
-  send: async function (url, method = "GET", body = null, token = null) {
+  send: async function (url, method = "GET", body = null, access_token = null) {
     url = `${this.serverApi}${url}`;
 
     const headers = {
       "Content-Type": "application/json",
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+    if (access_token) {
+      headers["Authorization"] = `Bearer ${access_token}`;
     }
     const options = {
       method,
@@ -26,19 +26,19 @@ export const client = {
     const data = await response.json();
     return { response, data };
   },
-  get: function (url, apiKey = null) {
-    return this.send(url, "GET", null, apiKey);
+  get: function (url, access_token = null) {
+    return this.send(url, "GET", null, access_token);
   },
-  post: function (url, body = {}, apiKey = null) {
-    return this.send(url, "POST", body, apiKey);
+  post: function (url, body = {}, access_token = null) {
+    return this.send(url, "POST", body, access_token);
   },
-  put: function (url, body = {}, apiKey = null) {
-    return this.send(url, "PUT", body, apiKey);
+  put: function (url, body = {}, access_token = null) {
+    return this.send(url, "PUT", body, access_token);
   },
-  patch: function (url, body = {}, apiKey = null) {
-    return this.send(url, "PATCH", body, apiKey);
+  patch: function (url, body = {}, access_token = null) {
+    return this.send(url, "PATCH", body, access_token);
   },
-  delete: function (url, apiKey = null) {
-    return this.send(url, "DELETE", null, apiKey);
+  delete: function (url, access_token = null) {
+    return this.send(url, "DELETE", null, access_token);
   },
 };

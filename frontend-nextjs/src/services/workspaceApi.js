@@ -3,8 +3,8 @@
 import { client } from "@/services/clientUtils";
 
 /** Workspace */
-export const getWorkspace = async () => {
-  const { response, data } = await client.get(`/workspace`);
+export const getWorkspace = async (userId) => {
+  const { response, data } = await client.get(`/workspace?user_id=${userId}`);
   if (response.ok) {
     return data.data;
   }

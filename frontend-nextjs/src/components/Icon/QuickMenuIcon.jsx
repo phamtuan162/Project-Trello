@@ -2,8 +2,8 @@ export const QuickMenuIcon = () => (
   <svg
     viewBox="0 0 16 17"
     fill="currentColor"
-    width="24"
-    height="24"
+    width="18"
+    height="18"
     aria-hidden="true"
     className="icon_32ae373870"
     data-testid="icon"

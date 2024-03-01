@@ -1,8 +1,8 @@
 export const GithubIcon = () => (
   <svg
-    height="24"
     viewBox="0 0 24 24"
-    width="24"
+    width="18"
+    height="18"
     className="w-6 h-6"
     aria-hidden="true"
     focusable="false"

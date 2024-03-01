@@ -10,7 +10,7 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { deleteBoard } from "@/services/workspaceApi";
-import { useParams, redirect } from "next/navigation";
+import { useParams } from "next/navigation";
 export function BoardOptions({ board }) {
   const { id: boardId } = useParams();
   const [isOpen, setIsOpen] = useState(false);
@@ -18,9 +18,8 @@ export function BoardOptions({ board }) {
   const DeleteBoard = async () => {
     toast.warning("Bạn có chắc chắn muốn xóa bảng này đi ", {
       onClick: async () => {
-        await deleteBoard(board.id);
-        toast.success("Xóa thành công");
-        window.location.href = `/w/${board.workspace_id}`;
+        deleteBoard(board.id);
+        window.location.href = `/w/${board.workspace_id}/boards`;
       },
     });
   };

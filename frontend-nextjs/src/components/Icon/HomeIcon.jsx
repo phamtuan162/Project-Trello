@@ -2,8 +2,8 @@ export const HomeIcon = () => (
   <svg
     viewBox="0 0 20 20"
     fill="currentColor"
-    width="24"
-    height="24"
+    width="18"
+    height="18"
     aria-hidden="true"
     className="icon_38581124ed noFocusStyle_ad385b7e0c"
     data-testid="icon"

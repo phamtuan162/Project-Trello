@@ -27,9 +27,8 @@ const Login = () => {
     loginLocalApi(form).then((data) => {
       if ((data.status = 200)) {
         toast.success("Đăng nhập thành công");
-        setLocalStorage("access_token", data.access_token);
-        setLocalStorage("refresh_token", data.refresh_token);
         Cookies.set("access_token", data.access_token, { expires: 7 });
+        Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
 
         router.push("/");
       }

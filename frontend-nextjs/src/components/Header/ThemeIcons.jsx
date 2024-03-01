@@ -9,7 +9,7 @@ const DarkIcon = ({
 }) => (
   <>
     {theme === "dark" ? (
-      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -28,7 +28,7 @@ const DarkIcon = ({
         ></path>
       </svg>
     ) : (
-      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
+      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -69,7 +69,7 @@ const LightIcon = ({
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={strokeWidth}
-        className="w-6 h-6"
+        className="w-5 h-5"
       >
         <path
           d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
@@ -87,7 +87,7 @@ const LightIcon = ({
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={strokeWidth}
-        className="w-6 h-6 "
+        className="w-5 h-5 "
         {...props}
       >
         <path
@@ -116,7 +116,7 @@ const SystemIcon = ({
 }) => (
   <>
     {theme === "system" ? (
-      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" {...props}>
+      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" {...props}>
         <path
           d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z"
           strokeLinejoin="round"
@@ -132,7 +132,7 @@ const SystemIcon = ({
         ></path>
       </svg>
     ) : (
-      <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" {...props}>
+      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" {...props}>
         <path
           d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z"
           strokeLinejoin="round"

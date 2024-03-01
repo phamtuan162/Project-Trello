@@ -1,7 +1,7 @@
 import React from "react";
 import ClipLoader from "react-spinners/ClipLoader";
 
-const Loading = () => {
+const Loading = (props) => {
   return (
     <div
       style={{
@@ -12,6 +12,7 @@ const Loading = () => {
         justifyContent: "center",
         backgroundColor: "rgba(20, 184, 166, 0.1)",
         zIndex: "10",
+        ...props,
       }}
     >
       <ClipLoader color={"#29B073"} size={100} />

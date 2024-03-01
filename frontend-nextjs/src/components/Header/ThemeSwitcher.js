@@ -31,9 +31,19 @@ export default function ThemeSwitcher() {
   if (!mounted) return null;
 
   return (
-    <Dropdown className="change-mode">
+    <Dropdown
+      showArrow
+      radius="sm"
+      classNames={{
+        content:
+          "p-0 border-small border-divider bg-background min-w-[100px] -translate-x-2",
+      }}
+    >
       <DropdownTrigger>
-        <Button variant="bordered" className="capitalize min-w-5">
+        <Button
+          variant="bordered"
+          className="capitalize min-w-5 px-2 max-h-[32px]"
+        >
           <ThemeIcon theme={theme} item={theme} />
         </Button>
       </DropdownTrigger>

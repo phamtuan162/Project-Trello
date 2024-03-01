@@ -6,11 +6,7 @@ export default function FormError({ id, errors }) {
   }
 
   return (
-    <div
-      id={`${id}-error`}
-      aria-live="polite"
-      className="mt-2 text-xs text-rose-500"
-    >
+    <div id={`${id}-error`} aria-live="polite" className="mt-2  text-rose-500">
       {errors?.[id]?.map((error) => (
         <div
           key={error}

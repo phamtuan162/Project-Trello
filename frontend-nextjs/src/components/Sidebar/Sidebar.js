@@ -25,7 +25,6 @@ import { Skeleton } from "@nextui-org/react";
 const Sidebar = () => {
   const { id } = useParams();
   const workspaces = useSelector((state) => state.workspace.workspaces);
-  console.log(workspaces);
   const workspaceOptions = [
     {
       href: "/",

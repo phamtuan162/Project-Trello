@@ -20,6 +20,7 @@ export default function FormPopoverBoard({
   children,
   placement = "top",
   open,
+  length,
   ...props
 }) {
   const { id: workspaceId } = useParams();
@@ -62,7 +63,9 @@ export default function FormPopoverBoard({
   return (
     <Popover
       placement={placement}
-      className="w-[304px] border-0 -translate-y-1/4"
+      className={`w-[250px] border-0 ${
+        length >= 4 ? "-translate-y-[60px]" : ""
+      } `}
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       {...props}
@@ -78,9 +81,9 @@ export default function FormPopoverBoard({
         {(titleProps) => (
           <form className="px-1 py-2 w-full" action={onSubmit}>
             <div className="flex justify-between items-center	relative">
-              <h1 className="grow text-center text-lg">Tạo Bảng</h1>
+              <h1 className="grow text-center ">Tạo Bảng</h1>
               <Button
-                className="min-w-3 rounded-lg border-0 hover:bg-default-300 text-xs p-1 absolute right-0 h-auto"
+                className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
                 onClick={() => setIsOpen(!isOpen)}
                 ref={closeRef}
                 variant="ghost"

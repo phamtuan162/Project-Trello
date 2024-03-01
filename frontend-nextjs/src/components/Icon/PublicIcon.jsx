@@ -1,8 +1,8 @@
 export const PublicIcon = () => (
   <>
     <svg
-      width="24"
-      height="24"
+      width="18"
+      height="18"
       role="presentation"
       focusable="false"
       viewBox="0 0 24 24"

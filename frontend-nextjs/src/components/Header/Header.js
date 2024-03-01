@@ -1,5 +1,4 @@
 "use client";
-import axios from "axios";
 import {
   Navbar,
   NavbarBrand,
@@ -11,20 +10,22 @@ import {
   NavbarMenuToggle,
 } from "@nextui-org/react";
 import { useParams } from "next/navigation";
+import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { usePathname } from "next/navigation";
 import { SearchIcon } from "../Icon/SearchIcon";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
-import ThemeSwitcher from "./ThemeSwitcher";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import Sidebar from "../Sidebar/Sidebar";
 import FormOption from "../Form/FormOption";
-import { User } from "./User";
+import { UserMenu } from "./UserMenu";
 import { fetchData } from "@/stores/middleware/fetchData";
-
+import { getProfile } from "@/services/authApi";
+import { userSlice } from "@/stores/slices/userSlice";
+const { updateUser } = userSlice.actions;
 const Header = () => {
   const options = [
     {
@@ -48,17 +49,28 @@ const Header = () => {
       title: "",
     },
   ];
+  const access_token = Cookies.get("access_token");
   const { id } = useParams();
+  const pathname = usePathname();
   const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const user = useSelector((state) => state.user.user);
   useEffect(() => {
-    dispatch(fetchData());
-  }, [dispatch]);
+    console.log(1);
+    if (access_token) {
+      getProfile(access_token).then((data) => {
+        if (data.status === 200) {
+          const user = data.data.dataValues;
+          dispatch(updateUser(user));
+          dispatch(fetchData(user.id));
+        }
+      });
+    }
+  }, [pathname === ""]);
 
   return (
     <Navbar
-      className=" border-b-1 dark:border-slate-300/10 "
+      className=" border-b-1 dark:border-slate-300/10  text-md "
       onMenuOpenChange={setIsMenuOpen}
       key={"header"}
     >
@@ -74,10 +86,10 @@ const Header = () => {
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent as="div" className="items-center h-[40px]" justify="end">
+      <NavbarContent as="div" className="items-center gap-2" justify="end">
         <Input
           classNames={{
-            base: "max-w-full sm:max-w-[20rem] h-10",
+            base: "max-w-full sm:max-w-[16rem] ",
             mainWrapper: "h-full",
             input: "text-small ",
             inputWrapper:
@@ -85,18 +97,16 @@ const Header = () => {
           }}
           placeholder="Tìm kiếm..."
           size="sm"
-          startContent={<SearchIcon size={24} />}
+          startContent={<SearchIcon size={18} />}
           type="search"
         />
-        <NavbarItem>
-          <ThemeSwitcher />
-        </NavbarItem>
+
         {options?.map((option, index) => (
           <FormOption option={option} key={index} />
         ))}
 
-        <NavbarItem className="ml-6">
-          <User />
+        <NavbarItem className="ml-4">
+          <UserMenu user={user} />
         </NavbarItem>
       </NavbarContent>
 
@@ -107,81 +117,3 @@ const Header = () => {
   );
 };
 export default Header;
-// <NavbarItem>
-// <Link
-//   href="#"
-//   color="foreground"
-//   className=" hover:bg-default p-2 rounded-md	"
-// >
-//   Gần đây
-// </Link>
-// </NavbarItem>
-// <NavbarItem>
-// <Link color="foreground" className=" hover:bg-default p-2 rounded-md	">
-//   Đã đánh dấu sao
-// </Link>
-// </NavbarItem>
-// <NavbarItem>
-// <Link color="foreground" className=" hover:bg-default p-2 rounded-md	">
-//   Mẫu
-// </Link>
-// </NavbarItem>
-// <NavbarItem>
-// <button
-//   style={{ marginRight: "-10px" }}
-//   type="button"
-//   aria-label="thêm"
-//   className="relative rounded-lg  p-2 text-gray-400 hover:bg-gray-500 hover:text-white flex gap-2 items-center text-lg  "
-// >
-//   <AddIcon />
-//   New
-// </button>
-// </NavbarItem>
-// <NavbarItem className="h-full">
-// <button
-//   onMouseEnter={handleMouseEnter}
-//   onMouseLeave={handleMouseLeave}
-//   style={{ marginRight: "-10px" }}
-//   type="button"
-//   aria-label="0 thông báo"
-//   className="relative rounded-lg  p-2 text-gray-400 hover:bg-gray-500 hover:text-white h-full"
-// >
-//   <NotifyIcon />
-//   <Popover
-//     showArrow
-//     isOpen={isPopoverOpen}
-//     onOpenChange={(open) => setIsPopoverOpen(open)}
-//     placement="bottom"
-//     classNames={{
-//       base: ["before:bg-default-800"],
-//       content: [
-//         "p-2 bg-default-800 text-white text-lg",
-//         "dark:from-default-100 dark:to-default-50",
-//       ],
-//     }}
-//   >
-//     <PopoverTrigger>
-//       <span className=""></span>
-//     </PopoverTrigger>
-//     <PopoverContent>Thông báo</PopoverContent>
-//   </Popover>
-// </button>
-// </NavbarItem>
-// <NavbarItem>
-// <button
-//   style={{ marginRight: "-10px" }}
-//   type="button"
-//   className="relative rounded-lg  p-2 text-gray-400 hover:bg-gray-500 hover:text-white "
-// >
-//   <HelpOutlineIcon />
-// </button>
-// </NavbarItem>
-// <NavbarItem>
-// <button
-//   style={{ marginRight: "-10px" }}
-//   type="button"
-//   className="relative rounded-lg  p-2 text-gray-400 hover:bg-gray-500 hover:text-white "
-// >
-//   <QuickMenuIcon />
-// </button>
-// </NavbarItem>
