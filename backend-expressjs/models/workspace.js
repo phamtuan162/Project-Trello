@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "workspace_id",
         as: "boards",
       });
+      Workspace.hasOne(models.User, {
+        foreignKey: "workspace_id_active",
+        as: "users",
+      });
     }
   }
   Workspace.init(
@@ -19,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       user_id: DataTypes.INTEGER,
       name: DataTypes.STRING,
       desc: DataTypes.STRING,
+      isActive: DataTypes.BOOLEAN,
     },
     {
       sequelize,

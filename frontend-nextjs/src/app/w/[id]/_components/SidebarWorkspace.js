@@ -1,30 +1,23 @@
 "use client";
-import {
-  Accordion,
-  AccordionItem,
-  Avatar,
-  Button,
-  Listbox,
-  ListboxItem,
-  Link,
-} from "@nextui-org/react";
-import { useRouter } from "next/navigation";
+import { Avatar } from "@nextui-org/react";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import { useSelector } from "react-redux";
-import { useParams } from "next/navigation";
-import { usePathname } from "next/navigation";
-import { BoardIcon } from "../../../../components/Icon/BoardIcon";
-import { HeartIcon } from "../../../../components/Icon/HeartIcon";
-import { UserIcon } from "../../../../components/Icon/UserIcon";
-import { CalendarIcon } from "../../../../components/Icon/CalenderIcon";
-import { MissionIcon } from "../../../../components/Icon/MissionIcon";
-import { RecentlyIcon } from "../../../../components/Icon/RecentlyIcon";
-import { StarIcon } from "../../../../components/Icon/StarIcon";
-import { HomeIcon } from "../../../../components/Icon/HomeIcon";
-import { SettingIcon } from "../../../../components/Icon/SettingIcon";
-import { MoreIcon } from "../../../../components/Icon/MoreIcon";
-import { Activity } from "lucide-react";
-import { ChevronDown } from "lucide-react";
+import { BoardIcon } from "@/components/Icon/BoardIcon";
+import { HeartIcon } from "@/components/Icon/HeartIcon";
+import { UserIcon } from "@/components/Icon/UserIcon";
+import { CalendarIcon } from "@/components/Icon/CalenderIcon";
+import { MissionIcon } from "@/components/Icon/MissionIcon";
+import { RecentlyIcon } from "@/components/Icon/RecentlyIcon";
+import { StarIcon } from "@/components/Icon/StarIcon";
+import { HomeIcon } from "@/components/Icon/HomeIcon";
+import { SettingIcon } from "@/components/Icon/SettingIcon";
+import { MoreIcon } from "@/components/Icon/MoreIcon";
+import { HelpOutlineIcon } from "@/components/Icon/HelpOutlineIcon";
+import { BoardsAction } from "./BoardsAction";
+import { ChevronDown, Activity, Plus } from "lucide-react";
 import FormPopoverWorkSpace from "@/components/Form/FormPopoverWorkSpace";
+import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
+import { useEffect, useState } from "react";
 const SidebarWorkspace = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,6 +26,12 @@ const SidebarWorkspace = () => {
   const workspace = workspaces?.find(
     (workspace) => workspace.id === +workspaceId
   );
+  const [boards, setBoards] = useState([]);
+  useEffect(() => {
+    if (workspace) {
+      setBoards(workspace.boards);
+    }
+  }, [workspace]);
   const workspaceOptions = [
     {
       href: "/home",
@@ -60,11 +59,7 @@ const SidebarWorkspace = () => {
       label: "Có gắn dấu sao",
       icon: <StarIcon />,
     },
-    {
-      href: "/boards",
-      label: "Tất cả bảng",
-      icon: <BoardIcon />,
-    },
+
     {
       href: "/more",
       label: "Khác",
@@ -98,28 +93,28 @@ const SidebarWorkspace = () => {
       icon: <SettingIcon />,
     },
   ];
-  const itemClasses = {
-    base: "py-0 w-full",
-    title: "font-normal text-medium",
-    trigger:
-      "px-2 py-0 data-[hover=true]:bg-default-100 rounded-lg h-14 flex items-center",
-    indicator: "text-medium",
-    content: "text-small px-2",
-  };
+  // const itemClasses = {
+  //   base: "py-0 w-full",
+  //   title: "font-normal text-medium",
+  //   trigger:
+  //     "px-2 py-0 data-[hover=true]:bg-default-100 rounded-lg h-14 flex items-center",
+  //   indicator: "text-medium",
+  //   content: "text-small px-2",
+  // };
 
   return (
     <div
-      className="  h-full  w-64 shrink-0 hidden lg:block max-w-[250px]"
+      className="  h-full dark-border  w-64 shrink-0 hidden lg:flex max-w-[250px]  flex-col"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
     >
       <div
-        className="flex p-2 max-h-[70px] "
+        className="flex p-2 max-h-[70px] dark-border "
         style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
       >
         <FormPopoverWorkSpace workspace={workspace}>
-          <div className="flex gap-2 p-1 items-center hover:bg-default-100 rounded-lg w-auto">
+          <div className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg w-auto">
             <Avatar
               radius="md"
               size="sm"
@@ -138,11 +133,13 @@ const SidebarWorkspace = () => {
         <div className="w-6 h-6"></div>
       </div>
       <div
-        className="overflow-y-auto"
-        style={{ maxHeight: "calc(100vh - 124px)" }}
+        className="overflow-y-auto grow dark-border"
+        style={{
+          borderBottom: "1px solid rgb(232, 234, 237)",
+        }}
       >
         <div
-          className="p-2"
+          className="p-2 dark-border"
           style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
         >
           {workspaceOptions?.map((option, index) => (
@@ -161,58 +158,69 @@ const SidebarWorkspace = () => {
             </div>
           ))}
         </div>
+
+        <div className="p-2 px-4">
+          <BoardsAction
+            setBoards={setBoards}
+            boardsOrigin={workspace?.boards}
+          />
+          {boards?.slice(0, 3).map((board) => (
+            <div
+              onClick={() => router.push(`/b/${board.id}`)}
+              key={board.id}
+              className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg w-auto mb-1"
+            >
+              <Avatar
+                src={board?.background}
+                radius="md"
+                size="sm"
+                className="h-6 w-6 text-indigo-700 bg-indigo-100"
+                name={board?.name?.charAt(0).toUpperCase()}
+              />
+              <div className="flex items-center gap-2">
+                <p className="overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
+                  {board?.title}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div
+            onClick={() => router.push(`/w/${workspaceId}/boards`)}
+            className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2 text-sm  cursor-pointer ${
+              pathname.includes("boards")
+                ? "bg-indigo-100 text-indigo-700"
+                : "hover:bg-default-100"
+            }`}
+          >
+            <BoardIcon size={16} />
+            Xem tất cả bảng
+          </div>
+          <FormPopoverBoard placement="top">
+            <div className="flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2 text-sm  cursor-pointer">
+              <Plus size={16} />
+              Tạo bảng mới
+            </div>
+          </FormPopoverBoard>
+        </div>
+      </div>
+
+      <div className="p-2 flex justify-center items-center h-[50px] gap-1">
+        <button
+          className={`flex gap-1 items-center text-sm py-1.5 flex items-center justify-center rounded-lg hover:bg-default-100 flex-1 `}
+        >
+          <img
+            src="https://app-cdn.clickup.com/invite-gradient.d97ffc8ac2bc7a4f39e36f57c5c4f410.svg"
+            alt="invite"
+          />
+          <span className="invite">Mời</span>
+        </button>
+        <span className="w-px rounded-lg h-2/3 bg-default-100"></span>
+        <button className="flex gap-1 items-center text-sm py-1.5 flex items-center justify-center  rounded-lg  hover:bg-default-100 flex-1">
+          <HelpOutlineIcon />
+          Giúp đỡ
+        </button>
       </div>
     </div>
   );
 };
 export default SidebarWorkspace;
-//  <Skeleton
-//           isLoaded={workspaces?.length > 0 ? true : false}
-//           className="rounded-lg h-full"
-//           style={{ maxHeight: "calc(100vh - 200px)" }}
-//         >
-//           <Accordion
-//             defaultSelectedKeys={workspaceId}
-//             showDivider={false}
-//             selectionMode="multiple"
-//             className=" flex flex-col gap-1 w-full "
-//             itemClasses={itemClasses}
-//           >
-//             {workspaces?.map((workspace) => (
-//               <AccordionItem
-//                 key={workspace.id}
-//                 aria-label={workspace.desc}
-//                 title={workspace.name}
-//                 startContent={
-//                   <Avatar
-//                     color="success"
-//                     radius="lg"
-//                     src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-//                   />
-//                 }
-//               >
-//                 <Listbox aria-label="Listbox Variants">
-//                   {routes?.map((route, index) => {
-//                     return (
-//                       <ListboxItem
-//                         href={`/w/${workspace.id}/${route.href}`}
-//                         className="max-h-9 rounded-lg data-[hover=true]:bg-default-100 "
-//                         textValue={route.label}
-//                         key={index}
-//                         style={{ color: "#172b4d" }}
-//                       >
-//                         <Button
-//                           variant="ghost"
-//                           className="border-0 no-hover max-h-9 pl-9 "
-//                         >
-//                           {route.icon}
-//                           {route.label}
-//                         </Button>
-//                       </ListboxItem>
-//                     );
-//                   })}
-//                 </Listbox>
-//               </AccordionItem>
-//             ))}
-//           </Accordion>
-//         </Skeleton>

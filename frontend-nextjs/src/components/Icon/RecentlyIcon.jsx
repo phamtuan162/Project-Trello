@@ -1,9 +1,10 @@
-export const RecentlyIcon = () => (
+export const RecentlyIcon = ({ size = 18, props }) => (
   <svg
     fill="currentColor"
     strokeWidth="0"
-    width="18"
-    height="18"
+    width={size}
+    height={size}
+    {...props}
     viewBox="0 0 20 20"
     xmlns="http://www.w3.org/2000/svg"
   >

@@ -1,4 +1,4 @@
-export const HelpOutlineIcon = () => (
+export const HelpOutlineIcon = ({ size = 18, props }) => (
   <svg
     width="18"
     height="18"

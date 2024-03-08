@@ -9,11 +9,12 @@ import {
   User,
 } from "@nextui-org/react";
 import ThemeSwitcher from "./ThemeSwitcher";
-import { AddIcon } from "../Icon/AddIcon";
 import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 export function UserMenu({ user }) {
+  const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
       onClick: async () => {
@@ -33,7 +34,7 @@ export function UserMenu({ user }) {
       classNames={{
         base: "before:bg-default-200", // change arrow background
         content:
-          "p-0 border-small border-divider bg-background min-w-[260px] text-lg",
+          "p-0 border-small border-divider bg-background min-w-[200px] text-lg",
       }}
     >
       <DropdownTrigger>
@@ -95,13 +96,10 @@ export function UserMenu({ user }) {
               }}
             />
           </DropdownItem>
-          <DropdownItem key="dashboard">Dashboard</DropdownItem>
-          <DropdownItem key="settings">Settings</DropdownItem>
-          <DropdownItem
-            key="new_project"
-            endContent={<AddIcon className="text-large" />}
-          >
-            New Project
+          <DropdownItem key="switch_account">Chuyển đồi tài khoản</DropdownItem>
+
+          <DropdownItem onClick={() => router.push("/settings")} key="settings">
+            Cài đặt
           </DropdownItem>
         </DropdownSection>
 
@@ -115,14 +113,16 @@ export function UserMenu({ user }) {
             className="cursor-default"
             endContent={<ThemeSwitcher />}
           >
-            Theme
+            Chủ đề
           </DropdownItem>
         </DropdownSection>
 
         <DropdownSection aria-label="Help & Feedback">
-          <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
+          <DropdownItem key="help_and_feedback">
+            Trợ giúp & Phản hồi
+          </DropdownItem>
           <DropdownItem key="logout" onClick={handleLogOut}>
-            Log Out
+            Đăng xuất
           </DropdownItem>
         </DropdownSection>
       </DropdownMenu>

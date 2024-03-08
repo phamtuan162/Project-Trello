@@ -8,6 +8,7 @@ class WorkspaceTransformer extends Transformer {
       name: instance.name,
       desc: instance.desc,
       boards: instance.boards,
+      isActive: instance.isActive,
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,
     };

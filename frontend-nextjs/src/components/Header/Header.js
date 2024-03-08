@@ -8,6 +8,7 @@ import {
   Input,
   NavbarMenu,
   NavbarMenuToggle,
+  Tooltip,
 } from "@nextui-org/react";
 import { useParams } from "next/navigation";
 import Cookies from "js-cookie";
@@ -20,7 +21,6 @@ import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import Sidebar from "../Sidebar/Sidebar";
-import FormOption from "../Form/FormOption";
 import { UserMenu } from "./UserMenu";
 import { fetchData } from "@/stores/middleware/fetchData";
 import { getProfile } from "@/services/authApi";
@@ -49,24 +49,25 @@ const Header = () => {
       title: "",
     },
   ];
+
   const access_token = Cookies.get("access_token");
   const { id } = useParams();
   const pathname = usePathname();
   const dispatch = useDispatch();
+  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   useEffect(() => {
-    console.log(1);
-    if (access_token) {
+    if (!user.id && !pathname.startsWith("/auth/")) {
       getProfile(access_token).then((data) => {
-        if (data.status === 200) {
+        if (data?.status === 200) {
           const user = data.data.dataValues;
           dispatch(updateUser(user));
-          dispatch(fetchData(user.id));
+          dispatch(fetchData({ user_id: user.id }));
         }
       });
     }
-  }, [pathname === ""]);
+  }, [pathname]);
 
   return (
     <Navbar
@@ -100,11 +101,39 @@ const Header = () => {
           startContent={<SearchIcon size={18} />}
           type="search"
         />
-
         {options?.map((option, index) => (
-          <FormOption option={option} key={index} />
+          <Tooltip
+            showArrow
+            placement="bottom"
+            key={index}
+            color={"default"}
+            content={option?.label}
+            delay={0}
+            closeDelay={0}
+            motionProps={{
+              variants: {
+                exit: {
+                  opacity: 0,
+                  transition: {
+                    duration: 0.1,
+                    ease: "easeIn",
+                  },
+                },
+                enter: {
+                  opacity: 1,
+                  transition: {
+                    duration: 0.15,
+                    ease: "easeOut",
+                  },
+                },
+              },
+            }}
+          >
+            <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+              {option?.icon}
+            </button>
+          </Tooltip>
         ))}
-
         <NavbarItem className="ml-4">
           <UserMenu user={user} />
         </NavbarItem>

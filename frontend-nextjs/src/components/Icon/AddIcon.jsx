@@ -1,4 +1,4 @@
-export const AddIcon = () => (
+export const AddIcon = ({ size = 18, props }) => (
   <svg
     className="scale-110"
     fill="currentColor"

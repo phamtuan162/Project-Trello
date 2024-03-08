@@ -1,4 +1,4 @@
-export const GithubIcon = () => (
+export const GithubIcon = ({ size = 18, props }) => (
   <svg
     viewBox="0 0 24 24"
     width="18"

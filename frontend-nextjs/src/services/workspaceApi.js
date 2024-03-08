@@ -3,19 +3,40 @@
 import { client } from "@/services/clientUtils";
 
 /** Workspace */
-export const getWorkspace = async (userId) => {
+export const getWorkspace = async (query = {}) => {
+  const queryString = new URLSearchParams(query).toString();
+
+  const { response, data } = await client.get(`/workspace?${queryString}`);
+  if (response.ok) {
+    return data.data;
+  }
+};
+// export const getWorkspaceActive = async (query = {}) => {
+//   const queryString = new URLSearchParams(query).toString();
+//   const { response, data } = await client.get(`/workspace?${queryString}`);
+//   if (data.status === 200) {
+//     return data.data;
+//   }
+// };
+export const getWorkspaceDetail = async (workspaceId) => {
+  const { response, data } = await client.get(`/workspace/${workspaceId}`);
+  if (data.status === 200) {
+    return data.data;
+  }
+};
+export const searchWorkspace = async (userId) => {
   const { response, data } = await client.get(`/workspace?user_id=${userId}`);
   if (response.ok) {
     return data.data;
   }
 };
-export const getWorkspaceDetail = async (workspaceId) => {
-  const { response, data } = await client.get(`/workspace/${workspaceId}`);
+
+export const switchWorkspace = async (userId, body) => {
+  const { response, data } = await client.put(`/user/${userId}`, body);
   if (response.ok) {
     return data.data;
   }
 };
-
 /** Board */
 
 export const getBoard = async (workspaceId) => {

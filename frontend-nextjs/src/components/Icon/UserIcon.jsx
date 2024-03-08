@@ -1,7 +1,8 @@
-export const UserIcon = () => (
+export const UserIcon = ({ size = 18, props }) => (
   <svg
-    width="18"
-    height="18"
+    width={size}
+    height={size}
+    {...props}
     role="presentation"
     focusable="false"
     viewBox="0 0 24 24"

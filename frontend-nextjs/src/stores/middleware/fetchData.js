@@ -3,9 +3,9 @@ import { getWorkspace } from "@/services/workspaceApi";
 
 export const fetchData = createAsyncThunk(
   "workspace/fetchData",
-  async (userId) => {
+  async (query) => {
     try {
-      const workspaces = await getWorkspace(userId);
+      const workspaces = await getWorkspace(query);
       return workspaces;
     } catch (error) {
       throw Error("Failed to fetch workspace data");

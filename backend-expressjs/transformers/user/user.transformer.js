@@ -9,6 +9,7 @@ class UserTransformer extends Transformer {
       status: instance.status,
       avatar: instance.avatar,
       providerId: instance.provider_id,
+      workspace_id_active: instance.workspace_id_active,
       statusText: instance.status === true ? "Kích hoạt" : "Chưa kích hoạt",
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,

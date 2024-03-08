@@ -1,9 +1,10 @@
-export const NotifyIcon = () => (
+export const NotifyIcon = ({ size = 18, props }) => (
   <svg
     fill="none"
     viewBox="0 0 24 24"
-    width="18"
-    height="18"
+    width={size}
+    height={size}
+    {...props}
     strokeWidth="1.5"
     stroke="currentColor"
     aria-hidden="true"

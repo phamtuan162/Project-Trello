@@ -5,15 +5,16 @@ body {
   overflow: hidden;
 }
 main {
-  height: calc(100vh - 4rem);
+  height: calc(100vh - 48px);
 }
 header {
   max-width: 100% !important;
-  height: 48px !important;
+  max-height: 48px !important;
   padding: 10px auto !important;
 }
-.dark nav {
-  border-color: #cbd5e11a;
+.dark nav,
+.dark .dark-border {
+  border-color: #cbd5e11a !important;
 }
 
 .dark body,
@@ -45,4 +46,10 @@ header {
 .button-add-expanded::-ms-expand {
   background-color: #e9f2ff;
   color: #0c66e4;
+}
+.invite {
+  background: linear-gradient(to right, #ad2af8, #fe03f0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

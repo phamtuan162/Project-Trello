@@ -8,7 +8,6 @@ import { EyeSlashFilledIcon } from "./EyeSlashFilledIcon ";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginGoogleApi, loginLocalApi } from "@/services/authApi";
-import { setLocalStorage } from "@/utils/localStorage";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
@@ -52,7 +51,7 @@ const Login = () => {
     }
   };
   return (
-    <Card className="login max-w-full w-[500px] h-auto pb-10 ">
+    <Card className="login max-w-full w-[400px] h-auto pb-4 ">
       <CardBody className="container   ">
         <h1 className="title ">Đăng nhập</h1>
         <form
@@ -68,7 +67,7 @@ const Login = () => {
             autoComplete={"off"}
             onChange={HandleChange}
             value={email}
-            size="lg"
+            size="md"
             isRequired
           />
           <Input
@@ -79,7 +78,7 @@ const Login = () => {
             autoComplete={"off"}
             onChange={HandleChange}
             value={password}
-            size="lg"
+            size="md"
             isRequired
             endContent={
               <button
@@ -88,9 +87,9 @@ const Login = () => {
                 onClick={toggleVisibility}
               >
                 {isVisible ? (
-                  <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  <EyeSlashFilledIcon className=" text-default-400 pointer-events-none" />
                 ) : (
-                  <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  <EyeFilledIcon className=" text-default-400 pointer-events-none" />
                 )}
               </button>
             }
@@ -100,20 +99,20 @@ const Login = () => {
           <span style={{ marginLeft: "auto", fontStyle: "italic" }}>
             Quên mật khẩu?
           </span>
-          <Button type="submit" color="primary" className="w-full text-lg ">
+          <Button type="submit" color="primary" className="w-full text-md ">
             Đăng nhập
           </Button>
           <div className="modal__line">
             <span>hoặc</span>
           </div>
           <div className="flex gap-3 w-full ">
-            <Button type="button" variant="ghost" className="flex-1 text-lg ">
+            <Button type="button" variant="ghost" className="flex-1 text-md ">
               <GithubIcon /> Github
             </Button>
             <Button
               type="button"
               variant="ghost"
-              className="flex-1 text-lg"
+              className="flex-1 text-md"
               onClick={loginSocialGoogle}
             >
               <GoogleIcon /> Google

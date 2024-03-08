@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "provider_id",
         as: "provider",
       });
+      User.belongsTo(models.Workspace, {
+        foreignKey: "workspace_id_active",
+        as: "workspace",
+      });
     }
   }
   User.init(
@@ -17,10 +21,11 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
       },
       provider_id: DataTypes.INTEGER,
+      workspace_id_active: DataTypes.INTEGER,
       name: DataTypes.STRING,
       email: DataTypes.STRING,
       password: DataTypes.STRING,
-      status: DataTypes.STRING,
+      status: DataTypes.BOOLEAN,
       avatar: DataTypes.STRING,
       refresh_token: DataTypes.STRING,
     },

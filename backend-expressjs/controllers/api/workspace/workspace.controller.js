@@ -5,10 +5,21 @@ const WorkspaceTransformer = require("../../../transformers/workspace/workspace.
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "id", user_id, q } = req.query;
+    const {
+      order = "desc",
+      sort = "updated_at",
+      user_id,
+      q,
+      isActive,
+      limit,
+      page = 1,
+    } = req.query;
     const filters = {};
     if (user_id) {
       filters.user_id = user_id;
+    }
+    if (isActive) {
+      filters.isActive = isActive;
     }
     const options = {
       order: [[sort, order]],
@@ -18,9 +29,17 @@ module.exports = {
         as: "boards",
       },
     };
+    if (limit && Number.isInteger(+limit)) {
+      const offset = (page - 1) * limit;
+      options.limit = limit;
+      options.offset = offset;
+    }
+
     const response = {};
     try {
-      const workspaces = await Workspace.findAll(options);
+      const { count, rows: workspaces } = await Workspace.findAndCountAll(
+        options
+      );
       response.status = 200;
       response.message = "Success";
       response.data = new WorkspaceTransformer(workspaces);
@@ -79,7 +98,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,
@@ -148,4 +167,46 @@ module.exports = {
       message: "Success",
     });
   },
+  // switch: async (req, res) => {
+  //   const { id, user_id } = req.body;
+  //   const response = {};
+
+  //   try {
+  //     if (id && user_id) {
+  //       const workspace = await Workspace.findByPk(id);
+  //       if (!workspace) {
+  //         Object.assign(response, {
+  //           status: 404,
+  //           message: "Not Found",
+  //         });
+  //       } else {
+  //         if ((user_id = workspace.user_id)) {
+  //           await Workspace.update(user_id, {
+  //             isActive: false,
+  //           });
+  //           workspace.update({ isActive: true });
+  //           Object.assign(response, {
+  //             status: 200,
+  //             message: "Success",
+  //             data: new WorkspaceTransformer(workspace),
+  //           });
+  //         } else {
+  //           Object.assign(response, {
+  //             status: 400,
+  //             message: "Bad Request",
+  //           });
+  //         }
+  //       }
+  //     } else {
+  //       Object.assign(response, {
+  //         status: 400,
+  //         message: "Bad Request",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     response.status = 500;
+  //     response.message = "Server Error";
+  //   }
+  //   res.status(response.status).json(response);
+  // },
 };

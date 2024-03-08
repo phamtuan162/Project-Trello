@@ -1,4 +1,4 @@
-export const BoardSampleIcon = () => (
+export const BoardSampleIcon = ({ size = 18, props }) => (
   <svg
     width="18"
     height="18"

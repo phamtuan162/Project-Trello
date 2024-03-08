@@ -1,9 +1,10 @@
-export const HomeIcon = () => (
+export const HomeIcon = ({ size = 18, props }) => (
   <svg
     viewBox="0 0 20 20"
     fill="currentColor"
-    width="18"
-    height="18"
+    width={size}
+    height={size}
+    {...props}
     aria-hidden="true"
     className="icon_38581124ed noFocusStyle_ad385b7e0c"
     data-testid="icon"

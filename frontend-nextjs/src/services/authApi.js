@@ -11,12 +11,15 @@ export const getAccessToken = async () => {
       refresh_token: refresh_token,
     });
     if (data.status === 200) {
+      Cookies.set("access_token", data.access_token);
       return data.access_token;
     } else {
-      // handleRefreshTokenExpired();
+      handleRefreshTokenExpired();
+      return false;
     }
   } else {
-    // handleRefreshTokenExpired();
+    handleRefreshTokenExpired();
+    return false;
   }
 };
 
@@ -48,13 +51,15 @@ export const logoutApi = async () => {
 };
 /** Profile */
 export const getProfile = async (access_token) => {
-  if (access_token) {
-    const { data } = await client.get(`/auth/profile`, access_token);
+  const { data } = await client.get(`/auth/profile`, access_token);
 
-    if (data.status === 200) {
-      return data;
+  if (data.status === 200) {
+    return data;
+  } else {
+    const newAccessToken = await getAccessToken();
+
+    if (newAccessToken) {
+      return await getProfile(newAccessToken);
     }
   }
-  const newAccessToken = await getAccessToken();
-  return getProfile(newAccessToken);
 };

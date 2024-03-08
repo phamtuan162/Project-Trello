@@ -33,7 +33,7 @@ export function BoardList({ boards }) {
             role="button"
             className="aspect-video relative h-full w-full bg-muted rounded-sm flex bg-default-100 flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
           >
-            <p className="text-sm">Create new board</p>
+            <p className="text-sm">Tạo bảng mới</p>
 
             <HelpCircle className="absolute bottom-2 right-2 h-[14px] w-[14px]" />
           </div>

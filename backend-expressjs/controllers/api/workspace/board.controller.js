@@ -5,7 +5,7 @@ const BoardTransformer = require("../../../transformers/workspace/board.transfor
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "asc", sort = "updated_at", workspace_id, q } = req.query;
+    const { order = "desc", sort = "updated_at", workspace_id, q } = req.query;
     const filters = {};
     if (workspace_id) {
       filters.workspace_id = workspace_id;

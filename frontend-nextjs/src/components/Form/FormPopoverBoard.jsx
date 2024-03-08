@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
@@ -12,10 +12,12 @@ import {
   SelectItem,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
 import { createBoard } from "@/services/workspaceApi";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+const { updateWorkspace } = workspaceSlice.actions;
 export default function FormPopoverBoard({
   children,
   placement = "top",
@@ -23,6 +25,8 @@ export default function FormPopoverBoard({
   length,
   ...props
 }) {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const { id: workspaceId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
@@ -30,18 +34,6 @@ export default function FormPopoverBoard({
   const workspace = workspaces.find(
     (workspace) => workspace.id === +workspaceId
   );
-
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     if (workspaceId) {
-  //       const data = await getWorkspaceDetail(workspaceId);
-  //       setWorkspace(data.data);
-  //     }
-  //     const data = await getWorkspace();
-  //     setWorkspaces(data.data);
-  //   }
-  //   fetchData();
-  // }, []);
 
   const onSubmit = (formData) => {
     const image = formData.get("image");
@@ -54,8 +46,18 @@ export default function FormPopoverBoard({
       workspace_id: workspace_id,
     }).then((data) => {
       if (data) {
+        const workspacesUpdated = workspaces.map((workspace) => ({
+          ...workspace,
+          boards: [...workspace.boards],
+        }));
+        workspacesUpdated.forEach((workspace) => {
+          if (workspace.id === +workspaceId) {
+            workspace.boards.unshift(data);
+          }
+        });
+        dispatch(updateWorkspace(workspacesUpdated));
         toast.success("Thêm bảng thành công");
-        location.href = `/b/${data.id}`;
+        // router.push(`/b/${data.id}`);
       }
     });
   };

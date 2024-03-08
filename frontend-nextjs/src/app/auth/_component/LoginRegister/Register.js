@@ -39,15 +39,17 @@ const Register = () => {
 
   const { name, email, password } = form;
   return (
-    <Card className="login max-w-full w-[500px] h-auto pb-10 ">
+    <Card className="login max-w-full w-[400px] h-auto pb-4 ">
       <CardBody className="container   ">
         <h1 className="title ">Đăng ký</h1>
 
         <form
-          className="form flex flex-col justify-center items-center gap-4 w-full  px-10"
+          className="form flex flex-col justify-center items-center gap-4 w-full  px-4"
           onSubmit={HandleRegister}
         >
-          <span>Hoàn thành đăng ký, và bắt đầu trải nghiệm ngay!</span>
+          <span className="text-center">
+            Hoàn thành đăng ký, và bắt đầu trải nghiệm ngay!
+          </span>
           <Message message={errorMessage} />
           <Input
             label="Họ và tên"
@@ -58,7 +60,7 @@ const Register = () => {
             autoComplete={"off"}
             onChange={HandleChange}
             value={name}
-            size="lg"
+            size="md"
           />
           <Input
             label="Email"
@@ -69,7 +71,7 @@ const Register = () => {
             autoComplete={"off"}
             onChange={HandleChange}
             value={email}
-            size="lg"
+            size="md"
             isRequired
           />
           <Input
@@ -80,7 +82,7 @@ const Register = () => {
             autoComplete={"off"}
             onChange={HandleChange}
             value={password}
-            size="lg"
+            size="md"
             isRequired
             endContent={
               <button
@@ -89,15 +91,15 @@ const Register = () => {
                 onClick={toggleVisibility}
               >
                 {isVisible ? (
-                  <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  <EyeSlashFilledIcon className="text-md text-default-400 pointer-events-none" />
                 ) : (
-                  <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                  <EyeFilledIcon className="text-md text-default-400 pointer-events-none" />
                 )}
               </button>
             }
             type={isVisible ? "text" : "password"}
           />
-          <Button type="submit" color="primary" className="w-full text-lg ">
+          <Button type="submit" color="primary" className="w-full text-md ">
             Đăng ký
           </Button>
           <Link href="/auth/login">Bạn đã có tài khoản? Đăng nhập</Link>

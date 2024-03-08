@@ -1,4 +1,4 @@
-export const CalendarIcon = () => (
+export const CalendarIcon = ({ size = 18, props }) => (
   <svg
     fill="currentColor"
     width="18"
