@@ -1,54 +1,16 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  LogOut,
-  ArrowLeft,
-  User,
-  CreditCard,
-  Building,
-  Cloud,
-} from "lucide-react";
+import { LogOut, ArrowLeft } from "lucide-react";
 import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
-import { CalendarIcon } from "@/components/Icon/CalenderIcon";
-import { NotifyIcon } from "@/components/Icon/NotifyIcon";
-const SidebarSettings = () => {
+const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
   const pathname = usePathname();
+  const check = ProfileOptions.some((ProfileOption) => {
+    return ProfileOption.href.includes(pathname);
+  });
   const router = useRouter();
-  const SettingOptions = [
-    {
-      href: "/settings",
-      label: "Chung",
-      icon: <User size={18} />,
-    },
-    {
-      href: "/settings/billing",
-      label: "Thanh toán",
-      icon: <CreditCard size={18} />,
-    },
-    {
-      href: "/settings/notifications",
-      label: "Thông báo",
-      icon: <NotifyIcon size={18} />,
-    },
-    {
-      href: "/settings/my-workspace",
-      label: "Không gian làm việc ",
-      icon: <Building size={18} />,
-    },
-    {
-      href: "/settings/calendar",
-      label: "Lịch",
-      icon: <CalendarIcon size={18} />,
-    },
-    {
-      href: "/settings/storage",
-      label: "Lưu trữ đám mây",
-      icon: <Cloud size={18} />,
-    },
-  ];
   const handleLogOut = async () => {
     toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
       onClick: async () => {
@@ -64,7 +26,7 @@ const SidebarSettings = () => {
   };
   return (
     <div
-      className="h-full w-64 w-max-[300px] dark-border flex flex-col"
+      className="h-full md:w-64 w-max-[300px] dark-border flex flex-col justify-center md:justify-start"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
@@ -80,7 +42,8 @@ const SidebarSettings = () => {
           className="flex p-2 gap-2 items-center rounded-lg hover:bg-default-100 text-sm cursor-pointer w-full"
         >
           <ArrowLeft size={18} />
-          Trở lại không gian làm việc
+
+          <span className="md:block hidden">Trở lại không gian làm việc</span>
         </button>
       </div>
 
@@ -90,14 +53,18 @@ const SidebarSettings = () => {
             onClick={() => router.push(option.href)}
             key={index}
             color="foreground"
-            className={`flex p-2 gap-3 items-center  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
-              pathname.includes(option.href)
+            className={`flex p-2 gap-3 items-center  rounded-lg text-md  cursor-pointer justify-center md:justify-start  mb-1 ${
+              (
+                check
+                  ? pathname.includes(option.href)
+                  : option.href.includes(pathname)
+              )
                 ? "bg-indigo-100 text-indigo-700"
                 : "hover:bg-default-100"
             } `}
           >
             {option.icon}
-            {option.label}
+            <span className="md:block hidden">{option.label}</span>
           </div>
         ))}
       </div>
@@ -109,10 +76,10 @@ const SidebarSettings = () => {
       >
         <button
           onClick={() => handleLogOut()}
-          className="p-2 rounded-lg flex gap-2 items-center hover:bg-default-100 w-full text-sm"
+          className="p-2 rounded-lg flex gap-2 items-center hover:bg-default-100 w-full text-sm justify-center md:justify-start"
         >
           <LogOut size={18} />
-          Đăng xuất
+          <span className="md:block hidden">Đăng xuất</span>
         </button>
       </div>
     </div>

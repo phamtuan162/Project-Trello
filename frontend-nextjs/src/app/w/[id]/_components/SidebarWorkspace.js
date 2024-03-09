@@ -104,33 +104,35 @@ const SidebarWorkspace = () => {
 
   return (
     <div
-      className="  h-full dark-border  w-64 shrink-0 hidden lg:flex max-w-[250px]  flex-col"
+      className="  h-full dark-border  md:w-64 shrink-0  flex max-w-[250px]  flex-col"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
     >
       <div
-        className="flex p-2 max-h-[70px] dark-border "
+        className="flex p-2 max-h-[70px] dark-border justify-center md:justify-start "
         style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
       >
         <FormPopoverWorkSpace workspace={workspace}>
-          <div className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg w-auto">
+          <div className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg ">
             <Avatar
+              src={workspace?.avatar}
               radius="md"
               size="sm"
-              className="h-6 w-6 text-indigo-700 bg-indigo-100"
+              className="h-6 md:w-6 text-indigo-700 bg-indigo-100 w-6"
               name={workspace?.name?.charAt(0).toUpperCase()}
             />
             <div className="flex items-center gap-2">
-              <p className="overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[110px] text-sm ">
+              <p className="md:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[110px] text-sm ">
                 {workspace?.name}
               </p>
-
-              <ChevronDown size={14} />
+              <button className="">
+                <ChevronDown size={12} />
+              </button>
             </div>
           </div>
         </FormPopoverWorkSpace>
-        <div className="w-6 h-6"></div>
+        <div className="w-6 h-6 md:block hidden"></div>
       </div>
       <div
         className="overflow-y-auto grow dark-border"
@@ -147,14 +149,14 @@ const SidebarWorkspace = () => {
               onClick={() => router.push(`/w/${workspaceId}/${option.href}`)}
               key={index}
               color="foreground"
-              className={`flex p-2 gap-4 items-center  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
+              className={`flex  p-2 gap-4 items-center justify-center md:justify-start  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
                 pathname.includes(option.href)
                   ? "bg-indigo-100 text-indigo-700"
                   : "hover:bg-default-100"
               } `}
             >
               {option.icon}
-              {option.label}
+              <span className="md:block hidden">{option.label}</span>
             </div>
           ))}
         </div>
@@ -168,7 +170,7 @@ const SidebarWorkspace = () => {
             <div
               onClick={() => router.push(`/b/${board.id}`)}
               key={board.id}
-              className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg w-auto mb-1"
+              className="md:flex gap-2 p-1.5 items-center justify-center  md:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 hidden"
             >
               <Avatar
                 src={board?.background}
@@ -178,7 +180,7 @@ const SidebarWorkspace = () => {
                 name={board?.name?.charAt(0).toUpperCase()}
               />
               <div className="flex items-center gap-2">
-                <p className="overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
+                <p className="md:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
                   {board?.title}
                 </p>
               </div>
@@ -186,38 +188,40 @@ const SidebarWorkspace = () => {
           ))}
           <div
             onClick={() => router.push(`/w/${workspaceId}/boards`)}
-            className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2 text-sm  cursor-pointer ${
+            className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center justify-center md:justify-start gap-2 text-sm  cursor-pointer ${
               pathname.includes("boards")
                 ? "bg-indigo-100 text-indigo-700"
                 : "hover:bg-default-100"
             }`}
           >
             <BoardIcon size={16} />
-            Xem tất cả bảng
+
+            <span className="md:block hidden">Xem tất cả bảng</span>
           </div>
           <FormPopoverBoard placement="top">
-            <div className="flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2 text-sm  cursor-pointer">
+            <div className="flex p-1.5 hover:bg-default-100 rounded-lg justify-center md:justify-start items-center gap-2 text-sm  cursor-pointer">
               <Plus size={16} />
-              Tạo bảng mới
+
+              <span className="md:block hidden">Tạo bảng mới</span>
             </div>
           </FormPopoverBoard>
         </div>
       </div>
 
-      <div className="p-2 flex justify-center items-center h-[50px] gap-1">
+      <div className="p-2 flex flex-col md:flex-row justify-center items-center md:h-[50px] gap-1 ">
         <button
-          className={`flex gap-1 items-center text-sm py-1.5 flex items-center justify-center rounded-lg hover:bg-default-100 flex-1 `}
+          className={`flex gap-1 items-center text-sm py-1.5 flex items-center justify-center rounded-lg hover:bg-default-100 md:flex-1 w-full`}
         >
           <img
             src="https://app-cdn.clickup.com/invite-gradient.d97ffc8ac2bc7a4f39e36f57c5c4f410.svg"
             alt="invite"
           />
-          <span className="invite">Mời</span>
+          <span className="invite md:block hidden">Mời</span>
         </button>
-        <span className="w-px rounded-lg h-2/3 bg-default-100"></span>
-        <button className="flex gap-1 items-center text-sm py-1.5 flex items-center justify-center  rounded-lg  hover:bg-default-100 flex-1">
+        <span className="md:w-px w-2/3 h-0.5 rounded-lg md:h-2/3 bg-default-100"></span>
+        <button className="flex gap-1 items-center text-sm py-1.5 flex items-center justify-center  rounded-lg  hover:bg-default-100 md:flex-1 w-full">
           <HelpOutlineIcon />
-          Giúp đỡ
+          <span className="md:block hidden"> Giúp đỡ</span>
         </button>
       </div>
     </div>

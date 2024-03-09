@@ -22,7 +22,7 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
     }
   }, [isSearch]);
   return isSearch ? (
-    <div className="my-2">
+    <div className="my-2 md:block hidden">
       <Input
         ref={inputRef}
         onChange={(e) => handleSearchBoard(e)}
@@ -45,7 +45,7 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
     </div>
   ) : (
     <div
-      className="w-full mb-1 flex justify-between items-center "
+      className="w-full mb-1  justify-between items-center md:flex hidden"
       style={{ height: "32px" }}
       onMouseOver={() => setIsAction(true)}
       onMouseOut={() => setIsAction(false)}
@@ -57,7 +57,7 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
         Bảng
       </span>
       {isAction ? (
-        <div className="flex items-center ">
+        <div className=" items-center flex">
           <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
             <MoreIcon size={14} />
           </button>
