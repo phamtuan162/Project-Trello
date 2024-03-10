@@ -8,6 +8,11 @@ const passport = require("passport");
 router.post("/check-email", authController.checkEmail);
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.put(
+  "/change-password/:id",
+
+  authController.changePassword
+);
 router.get("/google", (req, res) => {
   const emptyResponse = new http.ServerResponse(req);
 

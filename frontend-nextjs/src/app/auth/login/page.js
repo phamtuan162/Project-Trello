@@ -10,26 +10,30 @@ import { useRouter } from "next/navigation";
 import { loginGoogleApi, loginLocalApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
-
+import { Message } from "../../../components/Message/Message";
 const PageLogin = () => {
   const router = useRouter();
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
+
     loginLocalApi(form).then((data) => {
-      if ((data.status = 200)) {
+      if (!data.error) {
         toast.success("Đăng nhập thành công");
         Cookies.set("access_token", data.access_token, { expires: 7 });
         Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
-
         router.push("/");
+      } else {
+        const error = data.error;
+        setErrorMessage(error);
       }
     });
   };
@@ -53,11 +57,13 @@ const PageLogin = () => {
   return (
     <Card className="login max-w-full w-[400px] h-auto pb-4 ">
       <CardBody className="container   ">
-        <h1 className="title ">Đăng nhập</h1>
+        <h1 className="title text-md">Đăng nhập</h1>
+
         <form
           className="form flex flex-col justify-center items-center gap-4 w-full  px-10"
           onSubmit={HandleLoginLocal}
         >
+          <Message message={errorMessage} />
           <Input
             label="Email"
             placeholder="Vui lòng nhập email của bạn..."
@@ -95,10 +101,12 @@ const PageLogin = () => {
             }
             type={isVisible ? "text" : "password"}
           />
-
-          <span style={{ marginLeft: "auto", fontStyle: "italic" }}>
+          <a
+            href="/auth/login/forgot-password"
+            style={{ marginLeft: "auto", fontStyle: "italic" }}
+          >
             Quên mật khẩu?
-          </span>
+          </a>
           <Button type="submit" color="primary" className="w-full text-md ">
             Đăng nhập
           </Button>
@@ -118,6 +126,7 @@ const PageLogin = () => {
               <GoogleIcon /> Google
             </Button>
           </div>
+
           <Link href="/auth/register">
             Bạn chưa có tài khoản? Tạo tài khoản
           </Link>

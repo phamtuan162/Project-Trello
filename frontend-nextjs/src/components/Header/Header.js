@@ -1,4 +1,14 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { usePathname } from "next/navigation";
+import Cookies from "js-cookie";
+import { getProfile } from "@/services/authApi";
+import { fetchData } from "@/stores/middleware/fetchData";
+import { userSlice } from "@/stores/slices/userSlice";
+import Loading from "../Loading/Loading";
+import Sidebar from "../Sidebar/Sidebar";
+import { UserMenu } from "./UserMenu";
 import {
   Navbar,
   NavbarBrand,
@@ -10,22 +20,13 @@ import {
   NavbarMenuToggle,
   Tooltip,
 } from "@nextui-org/react";
-import { useParams } from "next/navigation";
-import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { usePathname } from "next/navigation";
 import { SearchIcon } from "../Icon/SearchIcon";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
-import Sidebar from "../Sidebar/Sidebar";
-import { UserMenu } from "./UserMenu";
-import { fetchData } from "@/stores/middleware/fetchData";
-import { getProfile } from "@/services/authApi";
-import { userSlice } from "@/stores/slices/userSlice";
 const { updateUser } = userSlice.actions;
+
 const Header = () => {
   const options = [
     {
@@ -51,12 +52,13 @@ const Header = () => {
   ];
 
   const access_token = Cookies.get("access_token");
-  const { id } = useParams();
   const pathname = usePathname();
   const dispatch = useDispatch();
-  const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
+  const workspaces = useSelector((state) => state.workspace.workspaces);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     if (!user.id && !pathname.startsWith("/auth/")) {
       getProfile(access_token).then((data) => {
@@ -68,6 +70,20 @@ const Header = () => {
       });
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (user.id && workspaces.length > 0) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [user, workspaces]);
+
+  if (isLoading) {
+    return <Loading backgroundColor={"white"} zIndex={"100"} />;
+  }
 
   return (
     <Navbar
@@ -145,4 +161,5 @@ const Header = () => {
     </Navbar>
   );
 };
+
 export default Header;

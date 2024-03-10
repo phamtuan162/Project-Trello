@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { registerApi } from "@/services/authApi";
 import { EyeFilledIcon } from "./EyeFilledIcon";
 import { EyeSlashFilledIcon } from "./EyeSlashFilledIcon ";
-import { Message } from "./Message";
+import { Message } from "../../../../components/Message/Message";
 const Register = () => {
   const router = useRouter();
   const [form, setForm] = useState({

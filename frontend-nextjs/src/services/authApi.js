@@ -63,3 +63,12 @@ export const getProfile = async (access_token) => {
     }
   }
 };
+
+/** Password */
+export const changePasswordApi = async (userId, body) => {
+  const { response, data } = await client.put(
+    `/auth/change-password/${userId}`,
+    body
+  );
+  return data;
+};

@@ -1,8 +1,7 @@
-import React from "react";
 export const WarningIcon = (props) => (
   <svg
-    width="24"
-    height="24"
+    height="20"
+    width="20"
     viewBox="0 0 24 24"
     role="presentation"
     {...props}

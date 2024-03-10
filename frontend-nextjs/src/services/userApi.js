@@ -9,3 +9,8 @@ export const searchUser = async (query = {}) => {
   const { response, data } = await client.get(`/user?${queryString}`);
   return data;
 };
+
+export const updateProfile = async (userId, body) => {
+  const { response, data } = await client.put(`/user/${userId}`, body);
+  return data;
+};

@@ -225,4 +225,46 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
+  changePassword: async (req, res) => {
+    const { id } = req.params;
+    const { password_old, password_new } = req.body;
+    const response = {};
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      Object.assign(response, {
+        status: 404,
+        message: "Không tìm thấy user",
+      });
+    } else {
+      const { password: hash } = user;
+
+      const result = bcrypt.compareSync(password_old, hash);
+      if (!result) {
+        Object.assign(response, {
+          status: 400,
+          message: "Bad Request",
+          error: "Mật khẩu hiện tại không chính xác",
+        });
+      } else {
+        const salt = bcrypt.genSaltSync(10);
+        const hashPassword = await bcrypt.hash(password_new, salt);
+        await User.update(
+          {
+            password: hashPassword,
+          },
+          {
+            where: { id: id },
+          }
+        );
+        Object.assign(response, {
+          status: 200,
+          message: "Success",
+        });
+      }
+    }
+
+    res.status(response.status).json(response);
+  },
 };
