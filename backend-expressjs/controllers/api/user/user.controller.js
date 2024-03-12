@@ -1,4 +1,10 @@
-const { User } = require("../../../models/index");
+const {
+  User,
+  Workspace,
+  Board,
+  Column,
+  Card,
+} = require("../../../models/index");
 const { Op } = require("sequelize");
 const { object, string } = require("yup");
 const bcrypt = require("bcrypt");
@@ -181,11 +187,53 @@ module.exports = {
     res.status(response.status).json(response);
   },
   delete: async (req, res) => {
-    const { id } = req.params;
-    await User.destroy({ where: { id } });
-    res.status(204).json({
-      status: 204,
-      message: "Success",
-    });
+    const { email, id } = req.body;
+    const response = {};
+    const user = await User.findOne({ where: { email: email, id: id } });
+    if (!user) {
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+        error: "Hãy đảm bảo nhập đúng email để xóa tài khoản của bạn",
+      });
+    } else {
+      const workspaces = await Workspace.findAll({ where: { user_id: id } });
+
+      await Promise.all(
+        workspaces.map(async (workspace) => {
+          const boards = await Board.findAll({
+            where: { workspace_id: workspace.id },
+          });
+
+          await Promise.all(
+            boards.map(async (board) => {
+              const columns = await Column.findAll({
+                where: { board_id: board.id },
+              });
+
+              await Promise.all(
+                columns.map(async (column) => {
+                  await Card.destroy({ where: { column_id: column.id } });
+                })
+              );
+
+              await Column.destroy({ where: { board_id: board.id } });
+            })
+          );
+
+          await Board.destroy({ where: { workspace_id: workspace.id } });
+          await Workspace.destroy({ where: { user_id: id } });
+        })
+      );
+
+      await Device.destroy({ where: { user_id: id } });
+      await User.destroy({ where: { id } });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    }
+
+    res.status(response.status).json(response);
   },
 };

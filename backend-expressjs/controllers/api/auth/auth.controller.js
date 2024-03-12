@@ -1,11 +1,17 @@
 const jwt = require("jsonwebtoken");
-const { User, BlacklistToken } = require("../../../models/index");
+const { User, BlacklistToken, Device } = require("../../../models/index");
 const bcrypt = require("bcrypt");
+var ip = require("ip");
+const UAParser = require("ua-parser-js");
 
 module.exports = {
   login: async (req, res) => {
     //Lấy body
     const { email, password } = req.body;
+    const userAgent = req.headers["user-agent"];
+    const parser = new UAParser(userAgent);
+    const browser = parser.getBrowser();
+    const os = parser.getOS();
     //Validate
     const response = {};
     if (!email || !password) {
@@ -78,6 +84,27 @@ module.exports = {
                   where: { id: user.id },
                 }
               );
+
+              const device = await Device.findOrCreate({
+                Where: { browser: browser, system: os, ip: ip.address() },
+                defaults: {
+                  user_id: user.id,
+                  browser: browser,
+                  system: os,
+                  ip: ip.address(),
+                  time_login: new Date(),
+                  last_active: new Date(),
+                  status: true,
+                },
+              });
+              if (device.status === false) {
+                await Device.update(
+                  { status: true, time_login: new Date() },
+                  {
+                    where: { id: device.id },
+                  }
+                );
+              }
               Object.assign(response, {
                 status: 200,
                 message: "Success",
@@ -235,33 +262,40 @@ module.exports = {
     if (!user) {
       Object.assign(response, {
         status: 404,
-        message: "Không tìm thấy user",
+        message: "Not found",
       });
     } else {
       const { password: hash } = user;
-
-      const result = bcrypt.compareSync(password_old, hash);
-      if (!result) {
+      if (hash === null) {
         Object.assign(response, {
           status: 400,
           message: "Bad Request",
-          error: "Mật khẩu hiện tại không chính xác",
+          error: "Tài khoản này đăng nhập bằng mxh chưa được kích hoạt",
         });
       } else {
-        const salt = bcrypt.genSaltSync(10);
-        const hashPassword = await bcrypt.hash(password_new, salt);
-        await User.update(
-          {
-            password: hashPassword,
-          },
-          {
-            where: { id: id },
-          }
-        );
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-        });
+        const result = bcrypt.compareSync(password_old, hash);
+        if (!result) {
+          Object.assign(response, {
+            status: 400,
+            message: "Bad Request",
+            error: "Mật khẩu hiện tại không chính xác",
+          });
+        } else {
+          const salt = bcrypt.genSaltSync(10);
+          const hashPassword = await bcrypt.hash(password_new, salt);
+          await User.update(
+            {
+              password: hashPassword,
+            },
+            {
+              where: { id: id },
+            }
+          );
+          Object.assign(response, {
+            status: 200,
+            message: "Success",
+          });
+        }
       }
     }
 

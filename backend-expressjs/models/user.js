@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "workspace_id_active",
         as: "workspace",
       });
+      User.hasMany(models.Device, {
+        foreignKey: "user_id",
+        as: "devices",
+      });
     }
   }
   User.init(

@@ -8,5 +8,5 @@ router.get("/:id", userController.find);
 router.post("/", userController.store);
 router.put("/:id", userController.update);
 router.patch("/:id", userController.update);
-router.delete("/:id", userController.delete);
+router.post("/delete", userController.delete);
 module.exports = router;

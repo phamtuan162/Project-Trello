@@ -57,7 +57,7 @@ export default function FormPopoverBoard({
         });
         dispatch(updateWorkspace(workspacesUpdated));
         toast.success("Thêm bảng thành công");
-        // router.push(`/b/${data.id}`);
+        router.push(`/b/${data.id}`);
       }
     });
   };

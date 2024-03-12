@@ -14,3 +14,8 @@ export const updateProfile = async (userId, body) => {
   const { response, data } = await client.put(`/user/${userId}`, body);
   return data;
 };
+
+export const deleteUser = async (body) => {
+  const { response, data } = await client.post(`/user/delete`, body);
+  return data;
+};

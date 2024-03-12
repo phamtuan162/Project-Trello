@@ -177,7 +177,7 @@ const SidebarWorkspace = () => {
                 radius="md"
                 size="sm"
                 className="h-6 w-6 text-indigo-700 bg-indigo-100"
-                name={board?.name?.charAt(0).toUpperCase()}
+                name={board?.title?.charAt(0).toUpperCase()}
               />
               <div className="flex items-center gap-2">
                 <p className="md:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
