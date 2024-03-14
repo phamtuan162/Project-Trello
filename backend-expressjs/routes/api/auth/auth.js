@@ -1,6 +1,8 @@
 var express = require("express");
 const http = require("http");
 var router = express.Router();
+const jwt = require("jsonwebtoken");
+const { User } = require("../../../models/index");
 const authController = require("../../../controllers/api/auth/auth.controller");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
 const passport = require("passport");
@@ -13,7 +15,7 @@ router.put(
 
   authController.changePassword
 );
-router.get("/google", (req, res) => {
+router.get("/google/redirect", (req, res, next) => {
   const emptyResponse = new http.ServerResponse(req);
 
   passport.authenticate(
@@ -31,6 +33,7 @@ router.get("/google", (req, res) => {
   return res.status(200).json({
     status: 200,
     message: "Thành công",
+
     data: {
       urlRedirect: url,
     },
@@ -41,12 +44,22 @@ router.get(
   passport.authenticate("google", {
     session: false,
   }),
-  (req, res) => {
-    const data = req.user;
+  async (req, res) => {
+    // const user = await User.findOne({
+    //   where: { email: req.user.emails[0].value },
+    // });
+    // const token = jwt.sign(
+    //   {
+    //     data: user.id,
+    //   },
+    //   process.env.JWT_SECRET,
+    //   {
+    //     expiresIn: process.env.JWT_EXPIRES_IN,
+    //   }
+    // );
     return res.json({
       status: 200,
       message: "Success",
-      data: data,
     });
   }
 );

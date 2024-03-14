@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "Cài đặt không gian làm việc ",
+  description: "Cài đặt không gian làm việc",
+};
 import SidebarSettings from "./_components/SidebarSettings";
 import BreadcrumbSettings from "./_components/BreadcrumbSettings";
 import BreadcrumbProfile from "./_components/BreadcrumbProfile";

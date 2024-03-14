@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User, BlacklistToken } = require("../../models/index");
+const { User, BlacklistToken, Device } = require("../../models/index");
 module.exports = async (req, res, next) => {
   const bearer = req.get("Authorization");
   const response = {};
@@ -17,17 +17,17 @@ module.exports = async (req, res, next) => {
         throw new Error("Token blacklist");
       }
       const { data: userId } = decoded;
-      const user = await User.findOne(
-        {
-          where: {
-            id: userId,
-            status: true,
-          },
+      const user = await User.findOne({
+        where: {
+          id: userId,
+          status: true,
         },
-        {
-          attributes: { exclude: "password" },
-        }
-      );
+
+        attributes: {
+          exclude: ["password"],
+        },
+      });
+
       if (!user) {
         throw new Error("User Not Found");
       }

@@ -39,14 +39,17 @@ export default function FormPopoverWorkSpace({
 
   const options = [
     {
+      href: "./settings",
       label: "Cài đặt",
       icon: <SettingIcon />,
     },
     {
+      href: "./upgrade",
       label: "Nâng cấp",
       icon: <UpgradeIcon />,
     },
     {
+      href: "./users",
       label: "Quản lý người dùng",
       icon: <UserIcon />,
     },
@@ -116,6 +119,7 @@ export default function FormPopoverWorkSpace({
             <div>
               {options?.map((option, index) => (
                 <div
+                  onClick={() => router.push(option.href)}
                   key={index}
                   color="foreground"
                   className={`flex p-2 gap-2 items-center  rounded-lg max-h-[32px] w-full  cursor-pointer  mb-1 hover:bg-default-100`}

@@ -63,7 +63,7 @@ const Header = () => {
     if (!user.id && !pathname.startsWith("/auth/")) {
       getProfile(access_token).then((data) => {
         if (data?.status === 200) {
-          const user = data.data.dataValues;
+          const user = data.data;
           dispatch(updateUser(user));
           dispatch(fetchData({ user_id: user.id }));
         }

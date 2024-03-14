@@ -23,7 +23,7 @@ const BreadcrumbProfile = ({ options }) => {
                       ? pathname.includes(option.href)
                       : option.href.includes(pathname)
                   )
-                    ? "bg-default-100 text-black font-medium"
+                    ? "bg-default-100 text-black font-normal"
                     : " hover:text-default-900 text-default-400"
                 }
                         `}

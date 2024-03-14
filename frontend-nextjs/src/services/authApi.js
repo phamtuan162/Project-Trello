@@ -1,5 +1,6 @@
 // import axios from "axios";
 // import { API_ROOT } from "@/utils/constants";
+const MAX_RETRY = 3; // Số lần tối đa thử lại
 import { client } from "@/services/clientUtils";
 import Cookies from "js-cookie";
 import { handleRefreshTokenExpired } from "./handleRefreshTokenExpried";
@@ -29,7 +30,13 @@ export const loginLocalApi = async (body) => {
   return data;
 };
 export const loginGoogleApi = async () => {
-  const { response, data } = await client.get(`/auth/google`);
+  const { response, data } = await client.get(`/auth/google/redirect`);
+  return data;
+};
+export const loginGoogleCallbackApi = async (query) => {
+  const queryString = new URLSearchParams(query).toString();
+
+  const { data } = await client.get(`/auth/google/callback?${queryString}`);
   return data;
 };
 
@@ -50,16 +57,20 @@ export const logoutApi = async () => {
   return data;
 };
 /** Profile */
-export const getProfile = async (access_token) => {
+
+export const getProfile = async (access_token, retryCount = 0) => {
   const { data } = await client.get(`/auth/profile`, access_token);
 
   if (data.status === 200) {
     return data;
   } else {
-    const newAccessToken = await getAccessToken();
-
-    if (newAccessToken) {
-      return await getProfile(newAccessToken);
+    if (retryCount < MAX_RETRY) {
+      const newAccessToken = await getAccessToken();
+      if (newAccessToken) {
+        return await getProfile(newAccessToken, retryCount + 1);
+      }
+    } else {
+      handleRefreshTokenExpired();
     }
   }
 };

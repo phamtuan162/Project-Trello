@@ -11,6 +11,7 @@ import { loginGoogleApi, loginLocalApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
+import { setLocalStorage } from "@/utils/localStorage";
 const PageLogin = () => {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -28,6 +29,7 @@ const PageLogin = () => {
     loginLocalApi(form).then((data) => {
       if (!data.error) {
         toast.success("Đăng nhập thành công");
+        setLocalStorage("device_id_current", data.device_id_current);
         Cookies.set("access_token", data.access_token, { expires: 7 });
         Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
         router.push("/");

@@ -4,6 +4,7 @@ const {
   Board,
   Column,
   Card,
+  Device,
 } = require("../../../models/index");
 const { Op } = require("sequelize");
 const { object, string } = require("yup");
@@ -66,6 +67,10 @@ module.exports = {
     const response = {};
     try {
       const user = await User.findByPk(id, {
+        include: {
+          model: Device,
+          as: "devices",
+        },
         attributes: { exclude: ["password"] },
       });
       if (!user) {
@@ -77,7 +82,7 @@ module.exports = {
         Object.assign(response, {
           status: 200,
           message: "Success",
-          data: new UserTransformer(user),
+          data: user,
         });
       }
     } catch (e) {

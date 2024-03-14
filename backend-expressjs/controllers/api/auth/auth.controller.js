@@ -85,31 +85,43 @@ module.exports = {
                 }
               );
 
-              const device = await Device.findOrCreate({
-                Where: { browser: browser, system: os, ip: ip.address() },
+              // Tìm hoặc tạo mới thông tin thiết bị
+              const [device, created] = await Device.findOrCreate({
+                where: {
+                  user_id: user.id,
+                  browser: browser.name,
+                  system: os.name,
+                  ip: ip.address(),
+                },
                 defaults: {
                   user_id: user.id,
-                  browser: browser,
-                  system: os,
+                  browser: browser.name,
+                  system: os.name,
                   ip: ip.address(),
-                  time_login: new Date(),
-                  last_active: new Date(),
+                  login_time: new Date(),
+                  active_time: new Date(),
                   status: true,
                 },
               });
-              if (device.status === false) {
+
+              // Nếu thiết bị đã tồn tại, cập nhật lại thông tin
+              if (!created) {
                 await Device.update(
-                  { status: true, time_login: new Date() },
+                  { active_time: new Date(), status: true },
                   {
-                    where: { id: device.id },
+                    where: {
+                      id: device.id,
+                    },
                   }
                 );
               }
+
               Object.assign(response, {
                 status: 200,
                 message: "Success",
                 access_token: token,
                 refresh_token: refresh,
+                device_id_current: device.id,
               });
             }
           }
@@ -184,10 +196,20 @@ module.exports = {
   },
 
   profile: async (req, res) => {
+    const { id } = req.user.dataValues;
+    const user = await User.findByPk(id, {
+      include: {
+        model: Device,
+        as: "devices",
+      },
+      order: [[{ model: Device, as: "devices" }, "active_time", "desc"]],
+
+      attributes: { exclude: ["password"] },
+    });
     res.json({
       status: 200,
       message: "Success",
-      data: req.user,
+      data: user,
     });
   },
 

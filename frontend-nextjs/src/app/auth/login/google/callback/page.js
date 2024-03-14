@@ -1,10 +1,17 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
-export default function pageCallback() {
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { loginGoogleCallbackApi } from "@/services/authApi";
+export default function pageCallback(request) {
   const query = window.location.search;
-  const queryString = new URLSearchParams(query).toString();
-  console.log(queryString);
+
+  useEffect(() => {
+    if (query) {
+      loginGoogleCallbackApi(query).then((data) => {
+        console.log(data);
+      });
+    }
+  }, []);
 
   return <h1>Hello world</h1>;
 }
