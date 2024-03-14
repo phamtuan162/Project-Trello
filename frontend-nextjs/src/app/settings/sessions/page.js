@@ -49,7 +49,11 @@ const PageSessions = () => {
             >
               <TableCell>{device.system}</TableCell>
               <TableCell>{device.browser}</TableCell>
-              <TableCell>{formatTimeAgo(device.active_time)}</TableCell>
+              <TableCell>
+                {device.id === +device_id_current
+                  ? "Đang đăng nhập"
+                  : formatTimeAgo(device.active_time)}
+              </TableCell>
               <TableCell>
                 {device.id === +device_id_current ? (
                   "Phiên hiện tại"
