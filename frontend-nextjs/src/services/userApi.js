@@ -15,6 +15,15 @@ export const updateProfile = async (userId, body) => {
   return data;
 };
 
+export const updateAvatar = async (userId, body) => {
+  console.log(body);
+  const { response, data } = await client.put(
+    `/user/update_avatar/${userId}`,
+    body
+  );
+  return data;
+};
+
 export const deleteUser = async (body) => {
   const { response, data } = await client.post(`/user/delete`, body);
   return data;

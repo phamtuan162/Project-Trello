@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { Avatar, Input, Button, Textarea } from "@nextui-org/react";
+import { Input, Button, Textarea } from "@nextui-org/react";
 import { useDispatch } from "react-redux";
 import { userSlice } from "@/stores/slices/userSlice";
 import { updateProfile } from "@/services/userApi";

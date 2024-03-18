@@ -1,4 +1,4 @@
-const { Workspace, Board } = require("../../../models/index");
+const { Workspace, Board, Column, Card } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
@@ -161,12 +161,32 @@ module.exports = {
   },
   delete: async (req, res) => {
     const { id } = req.params;
-    await Workspace.destroy({ where: { id } });
-    res.status(204).json({
-      status: 204,
-      message: "Success",
-    });
+    try {
+      const boards = await Board.findAll({ where: { workspace_id: id } });
+
+      for (const board of boards) {
+        const columns = await Column.findAll({ where: { board_id: board.id } });
+        for (const column of columns) {
+          await Card.destroy({ where: { column_id: column.id } });
+        }
+        await Column.destroy({ where: { board_id: board.id } });
+      }
+      await Board.destroy({ where: { workspace_id: id }, force: true });
+
+      await Workspace.destroy({ where: { id } });
+
+      res.status(204).json({
+        status: 204,
+        message: "Success",
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 500,
+        message: "Server error",
+      });
+    }
   },
+
   // switch: async (req, res) => {
   //   const { id, user_id } = req.body;
   //   const response = {};

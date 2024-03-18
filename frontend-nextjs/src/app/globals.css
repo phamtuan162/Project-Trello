@@ -82,3 +82,9 @@ header {
   opacity: 1;
   z-index: 999;
 }
+.ReactCrop__child-wrapper {
+  height: 100% !important;
+}
+.ReactCrop__crop-mask {
+  border-radius: 12px;
+}

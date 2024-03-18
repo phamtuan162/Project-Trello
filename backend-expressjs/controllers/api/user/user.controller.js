@@ -10,6 +10,9 @@ const { Op } = require("sequelize");
 const { object, string } = require("yup");
 const bcrypt = require("bcrypt");
 const UserTransformer = require("../../../transformers/user/user.transformer");
+const getFileChecksum = require("../../../utils/checkDuplicateFile");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   index: async (req, res) => {
@@ -180,17 +183,64 @@ module.exports = {
       delete user.dataValues.password;
       Object.assign(response, { status: 200, message: "Success", data: user });
     } catch (e) {
-      const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
-      );
+      // const errors = Object.fromEntries(
+      //   e?.inner?.map(({ path, message }) => [path, message])
+      // );
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
-        errors,
+        e,
       });
     }
     res.status(response.status).json(response);
   },
+  updateAvatar: async (req, res) => {
+    const { id } = req.params;
+    const file = req.file;
+    const uploadDir = path.join(
+      process.cwd(),
+      "public",
+      "images",
+      "avatars",
+      "uploads"
+    );
+    const filePath = path.join(uploadDir, file.name);
+
+    const response = {};
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "Not found" });
+    }
+
+    try {
+      if (user.avatar) {
+        const oldAvatarPath = user.avatar;
+        if (fs.existsSync(oldAvatarPath)) {
+          fs.unlinkSync(oldAvatarPath);
+        }
+      }
+
+      await fs.promises.copyFile(file.path, filePath);
+
+      await User.update({ avatar: filePath }, { where: { id } });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        avatar: filePath,
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+        error: error.message,
+      });
+    }
+
+    res.status(response.status).json(response);
+  },
+
   delete: async (req, res) => {
     const { email, id } = req.body;
     const response = {};
