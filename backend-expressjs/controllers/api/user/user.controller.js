@@ -197,16 +197,9 @@ module.exports = {
   updateAvatar: async (req, res) => {
     const { id } = req.params;
     const file = req.file;
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "images",
-      "avatars",
-      "uploads"
-    );
-    const filePath = path.join(uploadDir, file.name);
-
+    const path = `http://localhost:3001/images/avatars/uploads/${file.filename}`;
     const response = {};
+
     const user = await User.findByPk(id);
 
     if (!user) {
@@ -214,21 +207,12 @@ module.exports = {
     }
 
     try {
-      if (user.avatar) {
-        const oldAvatarPath = user.avatar;
-        if (fs.existsSync(oldAvatarPath)) {
-          fs.unlinkSync(oldAvatarPath);
-        }
-      }
-
-      await fs.promises.copyFile(file.path, filePath);
-
-      await User.update({ avatar: filePath }, { where: { id } });
+      await user.update({ avatar: path });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        avatar: filePath,
+        user: user,
       });
     } catch (error) {
       Object.assign(response, {

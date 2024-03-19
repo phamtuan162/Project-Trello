@@ -37,14 +37,12 @@ const FormUpdateAvatar = ({ user }) => {
     const file = new File([blob], selectedFile.name, { type: "image/jpeg" });
     const formData = new FormData();
     formData.append("avatar", file);
-    console.log(formData);
-    // const imageUrl = URL.createObjectURL(blob);
-    // setImgSrc(imageUrl);
+
     updateAvatar(user.id, formData).then((data) => {
       if (data.status === 200) {
-        console.log(data);
-        // const user = data.data;
-        // updateUser(user);
+        const user = data.user;
+        updateUser(user);
+        setImgSrc(null);
       }
     });
   };

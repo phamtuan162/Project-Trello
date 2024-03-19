@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www",
+    "start": "set PORT=3001 && nodemon ./bin/www",
     "postinstall": "npx sequelize-cli db:migrate",
     "build": "npm run postinstall && npm run vercel-build"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cloudinary": "^2.0.3",
+    "compression": "^1.7.4",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
@@ -17,6 +19,7 @@
     "express": "^4.18.2",
     "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.18.0",
+    "helmet": "^7.1.0",
     "http-errors": "~1.6.3",
     "ip": "^2.0.1",
     "jsonwebtoken": "^9.0.2",

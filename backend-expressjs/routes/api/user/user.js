@@ -8,8 +8,11 @@ router.get("/", userController.index);
 router.get("/:id", userController.find);
 router.post("/", userController.store);
 router.put("/:id", userController.update);
-router.put("/update_avatar/:id", userController.updateAvatar);
+router.post(
+  "/update_avatar/:id",
+  multerMiddleware,
+  userController.updateAvatar
+);
 router.patch("/:id", userController.update);
 router.post("/delete", userController.delete);
 module.exports = router;
-//  multerMiddleware,

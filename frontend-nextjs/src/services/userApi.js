@@ -15,12 +15,15 @@ export const updateProfile = async (userId, body) => {
   return data;
 };
 
-export const updateAvatar = async (userId, body) => {
-  console.log(body);
-  const { response, data } = await client.put(
-    `/user/update_avatar/${userId}`,
-    body
+export const updateAvatar = async (userId, formData) => {
+  const result = await fetch(
+    `http://localhost:3001/api/v1/user/update_avatar/${userId}`,
+    {
+      method: "POST",
+      body: formData,
+    }
   );
+  const data = await result.json();
   return data;
 };
 

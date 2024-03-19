@@ -5,6 +5,9 @@ var express = require("express");
 var cookieParser = require("cookie-parser");
 var path = require("path");
 var logger = require("morgan");
+var compression = require("compression");
+var helmet = require("helmet");
+
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
 const passport = require("passport");
@@ -16,29 +19,40 @@ var usersRouter = require("./routes/users");
 var apiRouter = require("./routes/api/index");
 
 const whitelist = require("./utils/cors");
+//Cors
 const cors = require("cors");
-// var corsOptions = {
-//   origin: function (origin, callback) {
-//     const env = process.env.NODE_ENV || "development";
-//     if (env === "production") {
-//       if (whitelist.indexOf(origin) !== -1) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//       return;
-//     }
-
-//     callback(null, true);
-//   },
-// };
-
-var corsOptions = {
-  origin: "*",
-  methods: "GET,PUT,POST,DELETE,PATCH,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization",
+const corsOptions = {
+  origin: "http://localhost:3000", // Replace with your frontend's origin
+  credentials: true, // Allow cookies and authentication headers
+  optionSuccessStatus: 200, // Return 200 for preflight requests
 };
+
+// var corsOptions = {
+//   origin: "*",
+//   methods: "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+//   allowedHeaders: "Content-Type,Authorization",
+// };
 var app = express();
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next();
+});
+app.use(helmet());
+app.use(compression());
+app.use(cors(corsOptions));
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Headers", true);
+  res.header("Access-Control-Allow-Credentials", true);
+  res.header("Cross-Origin-Resource-Policy", "cross-origin");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+  );
+  next();
+});
+
 app.use(
   session({
     secret: "Pham Tuan",
@@ -75,7 +89,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/api/v1", cors(corsOptions), apiRouter);
+app.use("/api/v1", apiRouter);
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
