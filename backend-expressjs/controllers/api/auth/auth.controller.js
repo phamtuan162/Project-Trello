@@ -173,10 +173,30 @@ module.exports = {
           password: hashPassword,
           status: false,
         });
+        const userNew = await User.findOne({
+          where: { email },
+        });
+        const { JWT_SECRET } = process.env;
+
+        const token = jwt.sign(
+          {
+            data: userNew.id,
+          },
+          JWT_SECRET,
+          {
+            expiresIn: "15m",
+          }
+        );
+        const link = `http://localhost:3000/auth/register/verify?token=${token}`;
+        const html = `<a href="${link}" style="background-color: #7b68ee; color: #ffffff !important; display: inline-block;text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; line-height: 48px; margin: 0 !important; max-width: 220px; padding: 0; text-decoration: none; width: 220px !important;border-radius: 3px;
+        border-spacing: 0">Xác thực tài khoản</a>`;
+
+        await sendMail(email, "Xác thực tài khoản", html);
 
         Object.assign(response, {
           status: 200,
-          message: "Success",
+          message:
+            "Bạn đã đăng ký thành công,Vui lòng vào email để xác thực tài khoản!",
         });
       }
     }
@@ -409,6 +429,22 @@ module.exports = {
         message: "Làm mới mật khẩu thành công",
       });
     }
+    res.status(response.status).json(response);
+  },
+  verifyAccount: async (req, res) => {
+    const response = {};
+    await User.update(
+      {
+        status: true,
+      },
+      {
+        where: { id: req.user.id },
+      }
+    );
+    Object.assign(response, {
+      status: 200,
+      message: "Xác thực tài khoản thành công",
+    });
     res.status(response.status).json(response);
   },
 };

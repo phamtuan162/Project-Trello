@@ -3,8 +3,6 @@ import "../_component/LoginRegister/loginregister.scss";
 import { Input, Button, Card, CardBody, Link } from "@nextui-org/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-
 import { registerApi } from "@/services/authApi";
 import { EyeFilledIcon } from "../_component/LoginRegister/EyeFilledIcon";
 import { EyeSlashFilledIcon } from "../_component/LoginRegister/EyeSlashFilledIcon ";
@@ -16,8 +14,8 @@ const PageRegister = () => {
     email: "",
     password: "",
   });
-  const [errorMessage, setErrorMessage] = useState(null);
-
+  const [message, setMessage] = useState(null);
+  const [typeMessage, setTypeMessage] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
 
@@ -25,12 +23,15 @@ const PageRegister = () => {
     e.preventDefault();
     registerApi(form).then((data) => {
       if (!data.error) {
-        toast.success("Đăng ký thành công");
-        router.push("/auth/login");
+        const message = data.message;
+        setTypeMessage("success");
+        setMessage(message);
       } else {
         const error = data.error;
-        setErrorMessage(error);
+        setTypeMessage("warning");
+        setMessage(error);
       }
+      setForm({ name: "", email: "", password: "" });
     });
   };
   const HandleChange = (e) => {
@@ -50,7 +51,7 @@ const PageRegister = () => {
           <span className="text-center">
             Hoàn thành đăng ký, và bắt đầu trải nghiệm ngay!
           </span>
-          <Message message={errorMessage} />
+          <Message message={message} type={typeMessage} />
           <Input
             label="Họ và tên"
             placeholder="Vui lòng nhập tên của bạn..."

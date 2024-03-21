@@ -32,12 +32,12 @@ const PageResetPassword = () => {
           const message = data.message;
           setTypeMessage("success");
           setMessage(message);
-          setForm({ password_new: "", password_verify: "" });
         } else {
           const error = data.error;
           setTypeMessage("warning");
           setMessage(error);
         }
+        setForm({ password_new: "", password_verify: "" });
       });
     } else {
       setMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");

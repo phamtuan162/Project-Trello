@@ -20,6 +20,7 @@ router.put(
 );
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", tokenMiddleware, authController.resetPassword);
+router.get("/verify", tokenMiddleware, authController.verifyAccount);
 
 router.get("/google/redirect", (req, res) => {
   const emptyResponse = new http.ServerResponse(req);

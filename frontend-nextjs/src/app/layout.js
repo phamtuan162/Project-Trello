@@ -28,7 +28,6 @@ export default function RootLayout({ children, params }) {
             </main>
           </Providers>
         </ProviderRedux>
-        <script src="/socket.io/socket.io.js">const socket = io();</script>
       </body>
     </html>
   );

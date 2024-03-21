@@ -18,7 +18,6 @@ import { formatTimeAgo } from "@/utils/formatTime";
 const PageSessions = () => {
   const user = useSelector((state) => state.user.user);
   const device_id_current = getLocalStorage("device_id_current") || "";
-
   const handleLogoutDevice = async () => {
     // const socket = io("http://localhost:3001");
   };

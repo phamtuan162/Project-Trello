@@ -45,6 +45,12 @@ export const registerApi = async (body) => {
   const { response, data } = await client.post(`/auth/register`, body);
   return data;
 };
+
+export const verifyAccountApi = async (query, body) => {
+  const queryString = new URLSearchParams(query).toString();
+  const { response, data } = await client.get(`/auth/verify?${queryString}`);
+  return data;
+};
 /** Logout */
 export const logoutApi = async () => {
   const access_token = Cookies.get("access_token");
