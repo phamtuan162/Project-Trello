@@ -6,6 +6,8 @@ import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
 import { fetchData } from "@/stores/middleware/fetchData";
 import { userSlice } from "@/stores/slices/userSlice";
+import { providerSlice } from "@/stores/slices/providerSlice";
+import { getLocalStorage } from "@/utils/localStorage";
 import Loading from "../Loading/Loading";
 import Sidebar from "../Sidebar/Sidebar";
 import { UserMenu } from "./UserMenu";
@@ -26,7 +28,7 @@ import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 const { updateUser } = userSlice.actions;
-
+const { updateProvider } = providerSlice.actions;
 const Header = () => {
   const options = [
     {
@@ -50,7 +52,7 @@ const Header = () => {
       title: "",
     },
   ];
-
+  const device_id_current = getLocalStorage("device_id_current") || "";
   const access_token = Cookies.get("access_token");
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -65,6 +67,7 @@ const Header = () => {
         if (data?.status === 200) {
           const user = data.data;
           dispatch(updateUser(user));
+          dispatch(updateProvider(user.providers));
           dispatch(fetchData({ user_id: user.id }));
         }
       });

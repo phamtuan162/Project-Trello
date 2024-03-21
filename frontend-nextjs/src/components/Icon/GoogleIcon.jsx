@@ -1,8 +1,8 @@
 export const GoogleIcon = ({ size = 18, props }) => (
   <svg
     version="1.1"
-    width="18"
-    height="18"
+    width={size}
+    height={size}
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 48 48"
     className="LgbsSe-Bz112c"

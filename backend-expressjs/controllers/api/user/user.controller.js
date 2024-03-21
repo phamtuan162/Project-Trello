@@ -10,7 +10,6 @@ const { Op } = require("sequelize");
 const { object, string } = require("yup");
 const bcrypt = require("bcrypt");
 const UserTransformer = require("../../../transformers/user/user.transformer");
-const getFileChecksum = require("../../../utils/checkDuplicateFile");
 const fs = require("fs");
 const path = require("path");
 
@@ -201,9 +200,15 @@ module.exports = {
     const response = {};
 
     const user = await User.findByPk(id);
-
     if (!user) {
       return res.status(404).json({ status: 404, message: "Not found" });
+    }
+    const filePathOld = user.avatar.includes("/images")
+      ? "public" + user.avatar.slice(user.avatar.indexOf("/images"))
+      : "";
+
+    if (fs.existsSync(filePathOld)) {
+      fs.unlinkSync(filePathOld);
     }
 
     try {
@@ -212,7 +217,7 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
-        user: user,
+        user: new UserTransformer(user),
       });
     } catch (error) {
       Object.assign(response, {

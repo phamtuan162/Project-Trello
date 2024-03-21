@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const { User, Device } = require("../../../models/index");
 const authController = require("../../../controllers/api/auth/auth.controller");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
+const tokenMiddleware = require("../../../middlewares/api/token.middleware");
 const passport = require("passport");
 
 router.post("/check-email", authController.checkEmail);
@@ -17,6 +18,9 @@ router.put(
 
   authController.changePassword
 );
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", tokenMiddleware, authController.resetPassword);
+
 router.get("/google/redirect", (req, res) => {
   const emptyResponse = new http.ServerResponse(req);
 

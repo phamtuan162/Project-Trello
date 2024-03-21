@@ -2,12 +2,13 @@ require("dotenv").config();
 const { User } = require("./models/index");
 var createError = require("http-errors");
 var express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 var cookieParser = require("cookie-parser");
 var path = require("path");
 var logger = require("morgan");
 var compression = require("compression");
 var helmet = require("helmet");
-
 const expressLayouts = require("express-ejs-layouts");
 const session = require("express-session");
 const passport = require("passport");
@@ -19,6 +20,7 @@ var usersRouter = require("./routes/users");
 var apiRouter = require("./routes/api/index");
 
 const whitelist = require("./utils/cors");
+
 //Cors
 const cors = require("cors");
 const corsOptions = {
@@ -34,6 +36,18 @@ const corsOptions = {
 // };
 var app = express();
 
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", async (socket) => {
+  console.log("a user connection");
+});
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
   next();
@@ -41,6 +55,7 @@ app.use((req, res, next) => {
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));
+
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
   res.header("Access-Control-Allow-Headers", true);

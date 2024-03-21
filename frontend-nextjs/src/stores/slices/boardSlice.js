@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetchData } from "../middleware/fetchData";
-import { getLocalStorage, setLocalStorage } from "../../utils/localStorage";
 const initialState = {
   boards: {},
   status: "idle",

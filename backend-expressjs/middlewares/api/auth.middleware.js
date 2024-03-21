@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { User, BlacklistToken, Device } = require("../../models/index");
+
 module.exports = async (req, res, next) => {
   const bearer = req.get("Authorization");
   const response = {};

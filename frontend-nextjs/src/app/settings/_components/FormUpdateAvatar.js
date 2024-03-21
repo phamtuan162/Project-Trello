@@ -6,23 +6,28 @@ import ReactCrop, {
   makeAspectCrop,
 } from "react-image-crop";
 import { useState, useRef } from "react";
-import { Avatar, Button } from "@nextui-org/react";
+import { Avatar, Button, CircularProgress } from "@nextui-org/react";
 import { CameraIcon, Check, Trash2 } from "lucide-react";
 import setCanvasPreview from "@/utils/setCanvansPreview";
 import { userSlice } from "@/stores/slices/userSlice";
 import { updateAvatar } from "@/services/userApi";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
 const { updateUser } = userSlice.actions;
 const ASPECT_RATIO = 1;
 const MIN_DIMENSION = 200;
 const FormUpdateAvatar = ({ user }) => {
+  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const imgRef = useRef(null);
   const [error, setError] = useState("");
   const [imgSrc, setImgSrc] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isUpload, setIsUpload] = useState(false);
 
   const [crop, setCrop] = useState("");
   const handleUpload = async () => {
+    setIsUpload(true);
     const { width: imgWidth, height: imgHeight } = imgRef.current;
     const canvas = document.createElement("canvas");
 
@@ -41,7 +46,9 @@ const FormUpdateAvatar = ({ user }) => {
     updateAvatar(user.id, formData).then((data) => {
       if (data.status === 200) {
         const user = data.user;
-        updateUser(user);
+        dispatch(updateUser(user));
+        setIsUpload(false);
+        toast.success("Thay đổi avatar thành công");
         setImgSrc(null);
       }
     });
@@ -164,7 +171,7 @@ const FormUpdateAvatar = ({ user }) => {
                     </label>
                     <Avatar
                       src={user?.avatar}
-                      className="w-full rounded-xl h-full  text-9xl text-indigo-700 bg-indigo-100 cursor-pointer absolute opacity-50 inset-0"
+                      className="w-full rounded-xl h-full  text-9xl text-indigo-700 bg-indigo-100 cursor-pointer absolute opacity-70 inset-0"
                       name={user?.name?.charAt(0).toUpperCase()}
                     />
                   </>
@@ -174,7 +181,7 @@ const FormUpdateAvatar = ({ user }) => {
 
             <div className="flex items-center gap-3 mt-4 justify-center">
               <Button
-                isDisabled={imgSrc ? false : true}
+                isDisabled={imgSrc && !isUpload ? false : true}
                 type="button"
                 className=" text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full flex items-center justify-center px-0"
                 color="danger"
@@ -183,15 +190,23 @@ const FormUpdateAvatar = ({ user }) => {
                   setCrop("");
                 }}
               >
-                <Trash2 size={24} />
+                {isUpload ? (
+                  <CircularProgress aria-label="Loading..." size={24} />
+                ) : (
+                  <Trash2 size={24} />
+                )}
               </Button>
               <Button
-                isDisabled={imgSrc ? false : true}
+                isDisabled={imgSrc && !isUpload ? false : true}
                 className=" text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full  flex items-center justify-center px-0"
                 color="success"
                 onClick={() => handleUpload()}
               >
-                <Check size={24} />
+                {isUpload ? (
+                  <CircularProgress aria-label="Loading..." size={24} />
+                ) : (
+                  <Check size={24} />
+                )}
               </Button>
             </div>
           </div>

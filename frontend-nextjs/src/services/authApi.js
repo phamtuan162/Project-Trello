@@ -83,3 +83,17 @@ export const changePasswordApi = async (userId, body) => {
   );
   return data;
 };
+
+export const forgotPasswordApi = async (body) => {
+  const { response, data } = await client.post(`/auth/forgot-password`, body);
+  return data;
+};
+
+export const resetPasswordApi = async (query, body) => {
+  const queryString = new URLSearchParams(query).toString();
+  const { response, data } = await client.post(
+    `/auth/reset-password?${queryString}`,
+    body
+  );
+  return data;
+};

@@ -1,7 +1,3 @@
-export const metadata = {
-  title: "Đăng nhập/Đăng ký ",
-  description: "Đăng nhập/Đăng ký",
-};
 const Auth = ({ children }) => {
   return (
     <div

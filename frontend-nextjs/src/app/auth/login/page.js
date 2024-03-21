@@ -104,7 +104,7 @@ const PageLogin = () => {
             type={isVisible ? "text" : "password"}
           />
           <a
-            href="/auth/login/forgot-password"
+            href="/auth/forgot-password"
             style={{ marginLeft: "auto", fontStyle: "italic" }}
           >
             Quên mật khẩu?

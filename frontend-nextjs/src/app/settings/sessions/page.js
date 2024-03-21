@@ -1,4 +1,7 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import {
   Table,
   TableHeader,
@@ -11,10 +14,14 @@ import {
 import { useSelector } from "react-redux";
 import { getLocalStorage } from "@/utils/localStorage";
 import { formatTimeAgo } from "@/utils/formatTime";
+
 const PageSessions = () => {
   const user = useSelector((state) => state.user.user);
   const device_id_current = getLocalStorage("device_id_current") || "";
-  console.log(device_id_current);
+
+  const handleLogoutDevice = async () => {
+    // const socket = io("http://localhost:3001");
+  };
   return (
     <div className="mt-6">
       <h1 className="text-2xl font-medium mt-2">Phiên</h1>
@@ -61,6 +68,7 @@ const PageSessions = () => {
                   <Button
                     type="button"
                     className="rounded-lg h-full py-1.5 text-red-600 bg-red-100 font-medium"
+                    onClick={() => handleLogoutDevice()}
                   >
                     Thu hồi truy cập
                   </Button>

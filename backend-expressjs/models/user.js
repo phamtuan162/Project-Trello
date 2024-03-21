@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       User.belongsTo(models.Provider, {
         foreignKey: "provider_id",
-        as: "provider",
+        as: "providers",
       });
       User.belongsTo(models.Workspace, {
         foreignKey: "workspace_id_active",

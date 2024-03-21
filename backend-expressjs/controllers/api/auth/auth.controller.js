@@ -1,9 +1,19 @@
 const jwt = require("jsonwebtoken");
-const { User, BlacklistToken, Device } = require("../../../models/index");
+const {
+  User,
+  BlacklistToken,
+  Device,
+  Provider,
+} = require("../../../models/index");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 var ip = require("ip");
 const UAParser = require("ua-parser-js");
+const sendMail = require("../../../utils/mail");
 
+const generateToken = () => {
+  return crypto.randomBytes(16).toString("hex");
+};
 module.exports = {
   login: async (req, res) => {
     //Lấy body
@@ -198,10 +208,16 @@ module.exports = {
   profile: async (req, res) => {
     const { id } = req.user.dataValues;
     const user = await User.findByPk(id, {
-      include: {
-        model: Device,
-        as: "devices",
-      },
+      include: [
+        {
+          model: Device,
+          as: "devices",
+        },
+        {
+          model: Provider,
+          as: "providers",
+        },
+      ],
       order: [[{ model: Device, as: "devices" }, "active_time", "desc"]],
 
       attributes: { exclude: ["password"] },
@@ -321,6 +337,78 @@ module.exports = {
       }
     }
 
+    res.status(response.status).json(response);
+  },
+  forgotPassword: async (req, res) => {
+    const { email } = req.body;
+    const response = {};
+    if (!email) {
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+        error: "Vui lòng nhập email",
+      });
+    } else {
+      const user = await User.findOne({ where: { email } });
+      if (!user) {
+        Object.assign(response, {
+          status: 400,
+          message: "Bad Request",
+          error: "Email không tồn tại",
+        });
+      } else {
+        const { JWT_SECRET } = process.env;
+        const token = jwt.sign(
+          {
+            data: user.id,
+          },
+          JWT_SECRET,
+          {
+            expiresIn: "15m",
+          }
+        );
+        const link = `http://localhost:3000/auth/reset-password?token=${token}`;
+        const html = `<a href="${link}" style="background-color: #7b68ee; color: #ffffff !important; display: inline-block;text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; line-height: 48px; margin: 0 !important; max-width: 220px; padding: 0; text-decoration: none; width: 220px !important;border-radius: 3px;
+        border-spacing: 0">Làm mới mật khẩu</a>`;
+
+        await sendMail(email, "Làm mới mật khẩu", html);
+
+        Object.assign(response, {
+          status: 200,
+          message:
+            "Đường link đã được gửi vào email, Vui lòng vào email kiểm tra!",
+        });
+      }
+    }
+    res.status(response.status).json(response);
+  },
+  resetPassword: async (req, res) => {
+    const { password_new } = req.body;
+    const response = {};
+
+    if (!password_new) {
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+        error: "Vui lòng nhập password mới",
+      });
+    } else {
+      const salt = bcrypt.genSaltSync(10);
+      const hashPassword = await bcrypt.hash(password_new, salt);
+      await User.update(
+        {
+          password: hashPassword,
+          status: true,
+        },
+        {
+          where: { id: req.user.id },
+        }
+      );
+      Object.assign(response, {
+        status: 200,
+        message: "Làm mới mật khẩu thành công",
+      });
+    }
     res.status(response.status).json(response);
   },
 };

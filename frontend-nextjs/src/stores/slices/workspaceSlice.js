@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchData, fetchInitialData } from "../middleware/fetchData";
+import { fetchData } from "../middleware/fetchData";
 const initialState = {
   workspaces: [],
   status: "idle",
