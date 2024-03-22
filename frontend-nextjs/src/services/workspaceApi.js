@@ -37,6 +37,23 @@ export const switchWorkspace = async (userId, body) => {
     return data.data;
   }
 };
+
+export const updateWorkspaceApi = async (workspaceId, body) => {
+  const { response, data } = await client.put(
+    `/workspace/${workspaceId}`,
+    body
+  );
+  if (response.ok) {
+    return data.data;
+  }
+};
+
+export const deleteWorkspaceApi = async (workspaceId) => {
+  const { response, data } = await client.delete(`/workspace/${workspaceId}`);
+  if (response.ok) {
+    return data.data;
+  }
+};
 /** Board */
 
 export const getBoard = async (workspaceId) => {

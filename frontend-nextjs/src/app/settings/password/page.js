@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { Message } from "@/components/Message/Message";
 import { changePasswordApi } from "@/services/authApi";
 import { toast } from "react-toastify";
+import { LockKeyhole } from "lucide-react";
 const PagePassword = () => {
   const user = useSelector((state) => state.user.user);
   const [errorMessage, setErrorMessage] = useState("");
@@ -47,6 +48,7 @@ const PagePassword = () => {
         <p className="mt-1">Đảm bảo rằng nó có ít nhất 6 ký tự</p>
         <div className="pb-4 pt-5 w-1/3">
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             isRequired
             minLength={6}
             id="password_old"
@@ -64,13 +66,14 @@ const PagePassword = () => {
                 Mật khẩu hiện tại
               </label>
             }
-            placeholder=" "
+            placeholder="Nhập mật khẩu hiện tại..."
             value={password_old}
             onChange={HandleChange}
           />
         </div>
         <div className="pb-4 w-1/3">
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             isRequired
             minLength={6}
             id="password_new"
@@ -88,13 +91,14 @@ const PagePassword = () => {
                 Mật khẩu mới
               </label>
             }
-            placeholder=" "
+            placeholder="Nhập mật khẩu mới..."
             value={password_new}
             onChange={HandleChange}
           />
         </div>
         <div className="pb-4 w-1/3">
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             isRequired
             minLength={6}
             id="password_verify"
@@ -112,7 +116,7 @@ const PagePassword = () => {
                 Xác nhận mật khẩu
               </label>
             }
-            placeholder=" "
+            placeholder="Xác nhận mật khẩu mới..."
             value={password_verify}
             onChange={HandleChange}
           />

@@ -7,6 +7,7 @@ import { Message } from "../../../components/Message/Message";
 import { EyeFilledIcon } from "../_component/LoginRegister/EyeFilledIcon";
 import { EyeSlashFilledIcon } from "../_component/LoginRegister/EyeSlashFilledIcon ";
 import { resetPasswordApi } from "@/services/authApi";
+import { LockKeyhole } from "lucide-react";
 const PageResetPassword = () => {
   const router = useRouter();
   const query = window.location.search;
@@ -59,6 +60,7 @@ const PageResetPassword = () => {
         >
           <Message message={message} type={typeMessage} />
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             isRequired
             minLength={6}
             id="password_new"
@@ -94,6 +96,7 @@ const PageResetPassword = () => {
             onChange={HandleChange}
           />
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             isRequired
             minLength={6}
             id="password_verify"

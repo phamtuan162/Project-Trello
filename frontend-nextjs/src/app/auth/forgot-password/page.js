@@ -1,5 +1,6 @@
 "use client";
 import "../_component/LoginRegister/loginregister.scss";
+import { Mail } from "lucide-react";
 import { Input, Button, Card, CardBody, Link } from "@nextui-org/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,7 @@ const PageForgotPassword = () => {
           </span>
           <Message message={message} type={typeMessage} />
           <Input
+            startContent={<Mail size={20} color={"#b9bec7"} />}
             isRequired
             id="email"
             name="email"
@@ -59,7 +61,7 @@ const PageForgotPassword = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             radius="lg"
-            placeholder="Vui lòng nhập email của bạn..."
+            placeholder="Nhập email của bạn..."
           />
 
           <Button type="submit" color="primary" className="w-full text-md ">

@@ -12,13 +12,7 @@ export default function pageBoards({ params }) {
   );
   return (
     <div className="w-full mb-20">
-      <Skeleton isLoaded={workspace ? true : false}>
-        <div className="mb-4">
-          <Info workspace={workspace} />
-        </div>
-      </Skeleton>
-
-      <hr />
+      <hr className="mt-2" />
       <div className="px-2 md:px-4 mt-4">
         <Skeleton isLoaded={workspace?.boards ? true : false}>
           <Suspense fallback={<BoardList.Skeleton />}>

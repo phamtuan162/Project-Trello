@@ -93,6 +93,8 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
               key={index}
               color="foreground"
               className={`flex  p-2 gap-4 items-center justify-center md:justify-start  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
+                index > 5 ? "hidden" : ""
+              } ${
                 pathname.includes(option.href)
                   ? "bg-indigo-100 text-indigo-700"
                   : "hover:bg-default-100"

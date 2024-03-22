@@ -12,6 +12,8 @@ import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
 import { setLocalStorage } from "@/utils/localStorage";
+import { Mail, LockKeyhole, User } from "lucide-react";
+
 const PageLogin = () => {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -62,28 +64,39 @@ const PageLogin = () => {
         <h1 className="title text-md">Đăng nhập</h1>
 
         <form
-          className="form flex flex-col justify-center items-center gap-4 w-full  px-10"
+          className="form flex flex-col justify-center items-center gap-4 w-full  px-10 mt-10"
           onSubmit={HandleLoginLocal}
         >
           <Message message={errorMessage} />
           <Input
-            label="Email"
-            placeholder="Vui lòng nhập email của bạn..."
+            startContent={<Mail size={20} color={"#b9bec7"} />}
+            placeholder="Nhập email của bạn..."
+            labelPlacement="outside"
+            size="lg"
             type="email"
-            name="email"
             variant={"bordered"}
-            autoComplete={"off"}
+            label={
+              <label htmlFor="email" className="text-default-400 text-xs">
+                Email
+              </label>
+            }
+            name="email"
             onChange={HandleChange}
             value={email}
-            size="md"
+            className="bg-white"
             isRequired
           />
           <Input
+            startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
             name="password"
-            label="Mật khẩu"
-            placeholder="Vui lòng nhập mật khẩu của bạn..."
+            labelPlacement="outside"
+            placeholder="Nhập mật khẩu của bạn..."
             variant="bordered"
-            autoComplete={"off"}
+            label={
+              <label htmlFor="password" className="text-default-400 text-xs">
+                Mật khẩu
+              </label>
+            }
             onChange={HandleChange}
             value={password}
             size="md"
@@ -95,9 +108,9 @@ const PageLogin = () => {
                 onClick={toggleVisibility}
               >
                 {isVisible ? (
-                  <EyeSlashFilledIcon className=" text-default-400 pointer-events-none" />
+                  <EyeSlashFilledIcon className="text-md text-default-400 pointer-events-none" />
                 ) : (
-                  <EyeFilledIcon className=" text-default-400 pointer-events-none" />
+                  <EyeFilledIcon className="text-md text-default-400 pointer-events-none" />
                 )}
               </button>
             }

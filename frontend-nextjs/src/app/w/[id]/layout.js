@@ -8,7 +8,7 @@ import { StarIcon } from "@/components/Icon/StarIcon";
 import { HomeIcon } from "@/components/Icon/HomeIcon";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
-
+import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { UserIcon } from "@/components/Icon/UserIcon";
 import { UpgradeIcon } from "@/components/Icon/UpgradeIcon";
 export const metadata = {
@@ -49,12 +49,27 @@ export default function WorkspaceLayout({ children }) {
       label: "Khác",
       icon: <MoreIcon />,
     },
+    {
+      href: "/settings",
+      label: "Cài đặt",
+      icon: <SettingIcon />,
+    },
+    {
+      href: "/boards",
+      label: "Tất cả các bảng",
+      icon: <BoardIcon />,
+    },
+    {
+      href: "/users",
+      label: "Người dùng",
+      icon: <UserIcon />,
+    },
   ];
   return (
     <div className="flex gap-x-7 justify-center h-full ">
       <SidebarWorkspace workspaceOptions={workspaceOptions} />
       <div
-        className="work-space grow mt-5 "
+        className="work-space grow mt-5 pr-14 pl-8"
         style={{ maxHeight: "calc(100vh - 64px)", overflow: "auto" }}
       >
         <BreadcrumbWorkspace

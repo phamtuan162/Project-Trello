@@ -11,6 +11,7 @@ module.exports = {
       filters.workspace_id = workspace_id;
     }
     const options = {
+      paranoid: true,
       order: [[sort, order]],
       where: filters,
       include: {
@@ -48,6 +49,7 @@ module.exports = {
             as: "cards",
           },
         },
+        paranoid: true,
       });
       if (!board) {
         Object.assign(response, {

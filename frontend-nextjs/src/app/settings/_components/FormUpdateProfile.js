@@ -144,6 +144,7 @@ const FormUpdateProfile = ({ user }) => {
                   Mật khẩu
                 </label>
               }
+              placeholder="**********"
               onChange={HandleChange}
               defaultValue={user?.password}
             />

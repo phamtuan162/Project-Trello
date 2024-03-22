@@ -114,7 +114,7 @@ export default function WorkspaceMenu({
                   {workspace?.name}
                 </h4>
                 <div className="flex items-center text-xs text-muted-foreground ">
-                  <PrivateIcon size={16} /> {"\u2022"}
+                  <PrivateIcon size={16} /> {"\u2022"} 1 thành viên
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -9,9 +9,9 @@ const BreadcrumbWorkspace = ({ options, origin }) => {
   const router = useRouter();
   const { id: workspaceId } = useParams();
   const workspaces = useSelector((state) => state.workspace.workspaces);
-  const workspace = workspaces?.find(
-    (workspace) => workspace.id === +workspaceId
-  );
+  const workspace = useMemo(() => {
+    return workspaces?.find((workspace) => workspace.id === +workspaceId);
+  }, [workspaces, workspaceId]);
   const optionsSorted = options.filter((option) =>
     pathname.includes(option.href)
   );
