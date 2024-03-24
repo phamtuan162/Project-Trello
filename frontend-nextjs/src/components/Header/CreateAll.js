@@ -13,7 +13,7 @@ import { BoardIcon } from "../Icon/BoardIcon";
 import { UserIcon } from "../Icon/UserIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import FormPopoverBoard from "../Form/FormPopoverBoard";
-import FormPopoverWorkSpace from "../Form/FormPopoverWorkSpace";
+import FormPopoverWorkSpace from "../../app/w/[id]/_components/FormPopoverWorkSpace";
 export default function CreateAll() {
   const items = [
     // {

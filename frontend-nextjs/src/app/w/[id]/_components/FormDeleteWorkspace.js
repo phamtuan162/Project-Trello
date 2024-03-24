@@ -6,11 +6,13 @@ import {
   PopoverContent,
   Button,
 } from "@nextui-org/react";
+import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteWorkspaceApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 const FormDeleteWorkspace = ({ workspace }) => {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [message, setMessage] = useState(
     "Bằng cách xóa không gian làm việc này, bạn sẽ xóa tất cả các bảng và dự án.Tất cả dữ liệu và tín dụng thanh toán của bạn sẽ bị mất."
@@ -25,14 +27,15 @@ const FormDeleteWorkspace = ({ workspace }) => {
 
   const HandleDeleteWorkspace = async () => {
     if (name === workspace.name) {
-      // deleteWorkspaceApi(workspace.id).then((data) => {
-      //   if (data.status === 200) {
-      //     toast.success("Xóa thành công ");
-      //   } else {
-      //     const error = data.error;
-      //     setMessage(error);
-      //   }
-      // });
+      deleteWorkspaceApi(workspace.id).then((data) => {
+        if (data.status === 200) {
+          toast.success("Xóa thành công ");
+          document.location.href = "/";
+        } else {
+          const error = data.error;
+          setMessage(error);
+        }
+      });
     } else {
       setMessage(
         "Tên không gian làm việc không trừng khớp, Vui lòng nhập lại!"

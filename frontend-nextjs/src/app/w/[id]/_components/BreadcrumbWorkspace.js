@@ -1,17 +1,14 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+
 import { ChevronRight } from "lucide-react";
-import { usePathname, useParams, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { Avatar } from "@nextui-org/react";
 const BreadcrumbWorkspace = ({ options, origin }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { id: workspaceId } = useParams();
-  const workspaces = useSelector((state) => state.workspace.workspaces);
-  const workspace = useMemo(() => {
-    return workspaces?.find((workspace) => workspace.id === +workspaceId);
-  }, [workspaces, workspaceId]);
+  const workspace = useSelector((state) => state.workspace.workspace);
+
   const optionsSorted = options.filter((option) =>
     pathname.includes(option.href)
   );
@@ -23,10 +20,16 @@ const BreadcrumbWorkspace = ({ options, origin }) => {
           <div className="inline-flex items-center text-base text-gray-700 gap-2 ">
             <div className="p-1 rounded-lg  flex items-center justify-center">
               <Avatar
-                src={workspace?.avatar}
+                style={{
+                  background: `${
+                    workspace && workspace.color
+                      ? workspace.color
+                      : "bg-indigo-100"
+                  }`,
+                }}
                 radius="md"
                 size="md"
-                className="h-8 text-lg text-indigo-700 bg-indigo-100 w-8"
+                className="h-8 text-lg text-white  w-8"
                 name={workspace?.name?.charAt(0).toUpperCase()}
               />
             </div>

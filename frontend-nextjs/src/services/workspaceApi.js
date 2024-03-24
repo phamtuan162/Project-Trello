@@ -18,6 +18,10 @@ export const getWorkspace = async (query = {}) => {
 //     return data.data;
 //   }
 // };
+export const createWorkspaceApi = async (userId, body) => {
+  const { response, data } = await client.post(`/workspace/${userId}`, body);
+  return data;
+};
 export const getWorkspaceDetail = async (workspaceId) => {
   const { response, data } = await client.get(`/workspace/${workspaceId}`);
   if (data.status === 200) {
@@ -43,16 +47,14 @@ export const updateWorkspaceApi = async (workspaceId, body) => {
     `/workspace/${workspaceId}`,
     body
   );
-  if (response.ok) {
-    return data.data;
-  }
+
+  return data;
 };
 
 export const deleteWorkspaceApi = async (workspaceId) => {
   const { response, data } = await client.delete(`/workspace/${workspaceId}`);
-  if (response.ok) {
-    return data.data;
-  }
+
+  return data;
 };
 /** Board */
 

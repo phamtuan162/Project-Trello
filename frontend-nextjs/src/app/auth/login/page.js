@@ -126,11 +126,11 @@ const PageLogin = () => {
             Đăng nhập
           </Button>
           <div className="modal__line">
-            <span>hoặc</span>
+            <span className="text-sm">hoặc</span>
           </div>
           <div className="flex gap-3 w-full ">
             <Button type="button" variant="ghost" className="flex-1 text-md ">
-              <GithubIcon /> Github
+              <GithubIcon size={24} /> Github
             </Button>
             <Button
               type="button"
@@ -138,7 +138,7 @@ const PageLogin = () => {
               className="flex-1 text-md"
               onClick={loginSocialGoogle}
             >
-              <GoogleIcon /> Google
+              <GoogleIcon size={24} /> Google
             </Button>
           </div>
 

@@ -4,6 +4,7 @@ class WorkspaceTransformer extends Transformer {
   response(instance) {
     return {
       id: instance.id,
+      color: instance.color,
       userId: instance.user_id,
       name: instance.name,
       desc: instance.desc,

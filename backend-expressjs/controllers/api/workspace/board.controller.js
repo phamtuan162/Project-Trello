@@ -85,7 +85,7 @@ module.exports = {
       const board = await Board.create(body);
 
       Object.assign(response, {
-        status: 201,
+        status: 200,
         message: "Success",
         data: new BoardTransformer(board),
       });
@@ -206,6 +206,7 @@ module.exports = {
   },
   delete: async (req, res) => {
     const { id } = req.params;
+    const response = {};
     try {
       const columns = await Column.findAll({ where: { board_id: id } });
 
@@ -216,15 +217,17 @@ module.exports = {
 
       await Board.destroy({ where: { id }, force: true });
 
-      res.status(204).json({
-        status: 204,
+      Object.assign(response, {
+        status: 200,
         message: "Success",
       });
     } catch (error) {
-      res.status(500).json({
+      Object.assign(response, {
         status: 500,
-        message: "Server error",
+        message: "Sever error",
+        error: error,
       });
     }
+    res.status(response.status).json(response);
   },
 };

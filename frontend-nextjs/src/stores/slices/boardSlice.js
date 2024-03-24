@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchData } from "../middleware/fetchData";
+import { fetchData } from "../middleware/fetchWorkspace";
 const initialState = {
   boards: {},
   status: "idle",

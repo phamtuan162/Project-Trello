@@ -2,23 +2,31 @@
 import { useDispatch } from "react-redux";
 import { Textarea, Button } from "@nextui-org/react";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";
 const { updateWorkspace } = workspaceSlice.actions;
-const FormUpdateWorkspace = ({ workspace, workspaces }) => {
+const FormUpdateWorkspace = ({ workspace }) => {
+  const dispatch = useDispatch();
+
   const [form, setForm] = useState({
-    name: workspace.name,
-    desc: workspace.desc,
+    name: "",
+    desc: "",
   });
-  const { id: workspaceId } = useParams();
+  useEffect(() => {
+    if (workspace.id) {
+      setForm({
+        name: workspace.name,
+        desc: workspace.desc,
+      });
+    }
+  }, [workspace]);
 
   const HandleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-  const dispatch = useDispatch();
 
   const handleUpdateWorkspace = async (formData) => {
     const name = formData.get("name");
@@ -28,17 +36,7 @@ const FormUpdateWorkspace = ({ workspace, workspaces }) => {
       desc: desc,
     }).then((data) => {
       if (data.status === 200) {
-        const workspacesUpdate = workspaces.map((workspace) => {
-          if (workspace.id === workspaceId) {
-            return {
-              ...workspace,
-              name: name,
-              desc: desc,
-            };
-          }
-          return workspace;
-        });
-        dispatch(updateWorkspace(workspacesUpdate));
+        dispatch(updateWorkspace({ ...workspace, name: name, desc: desc }));
         toast.success("Cập nhật thành công");
       }
     });
@@ -79,8 +77,7 @@ const FormUpdateWorkspace = ({ workspace, workspaces }) => {
 
       <Button
         type="submit"
-        color="secondary"
-        className="rounded-lg w-[140px] h-[44px] mt-4 flex items-center justify-center text-md "
+        className="rounded-lg w-[140px] h-[44px] mt-4 flex items-center justify-center text-md bg-violet-400	"
       >
         Lưu
       </Button>

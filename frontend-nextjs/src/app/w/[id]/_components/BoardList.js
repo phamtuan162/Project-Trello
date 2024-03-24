@@ -1,8 +1,25 @@
+"use client";
 import { HelpCircle, User2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
+import { getWorkspace } from "@/services/workspaceApi";
+import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 export function BoardList({ boards }) {
+  const [workspaces, setWorkspaces] = useState([]);
+  const user = useSelector((state) => state.user.user);
+
+  useEffect(() => {
+    const fetchWorkspaces = async () => {
+      if (user.id) {
+        const data = await getWorkspace({ user_id: user.id });
+        setWorkspaces(data);
+      }
+    };
+
+    fetchWorkspaces();
+  }, [user]);
   return (
     <div className="space-y-4">
       <div className="flex items-center font-semibold text-lg text-neutral-700">
@@ -25,6 +42,7 @@ export function BoardList({ boards }) {
         ))}
 
         <FormPopoverBoard
+          workspaces={workspaces}
           placement={"right"}
           open={false}
           length={boards?.length}

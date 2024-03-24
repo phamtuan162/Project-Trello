@@ -11,7 +11,7 @@ export default function Home() {
   useEffect(() => {
     if (user.workspace_id_active) {
       getWorkspaceDetail(user.workspace_id_active).then((data) => {
-        router.push(`/w/${data.id}/home`);
+        router.push(`/w/${data.id}/boards`);
       });
     }
   }, [user]);

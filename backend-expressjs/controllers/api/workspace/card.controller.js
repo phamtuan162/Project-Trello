@@ -156,20 +156,24 @@ module.exports = {
   },
   delete: async (req, res) => {
     const { id } = req.params;
+    const response = {};
+
     try {
       const card = await Card.findByPk(id);
       if (card) {
         await card.destroy();
-        res.status(204).json({
-          status: 204,
+        Object.assign(response, {
+          status: 200,
           message: "Success",
         });
       }
     } catch (error) {
-      res.status(500).json({
+      Object.assign(response, {
         status: 500,
-        message: "Server error",
+        message: "Sever error",
+        error: error,
       });
     }
+    res.status(response.status).json(response);
   },
 };

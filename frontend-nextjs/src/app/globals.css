@@ -16,10 +16,9 @@ header {
 .dark .dark-border {
   border-color: #cbd5e11a !important;
 }
-
+.dark header,
 .dark body,
 .dark main,
-.dark header,
 .dark .sidebar,
 .dark .account,
 .dark .change-mode,

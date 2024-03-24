@@ -1,4 +1,10 @@
-const { Workspace, Board, Column, Card } = require("../../../models/index");
+const {
+  Workspace,
+  Board,
+  Column,
+  Card,
+  User,
+} = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
@@ -80,32 +86,44 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const schema = object({
-      name: string().required("Chưa nhập tên không gian làm việc"),
-      desc: string().required("Chưa nhập mô tả không gian làm việc"),
-    });
+    const { id } = req.params;
     const response = {};
-    try {
-      const body = await schema.validate(req.body, {
-        abortEarly: false,
-      });
-      const workspace = await Workspace.create(body);
+    const user = await User.findByPk(id);
 
+    if (!user) {
       Object.assign(response, {
-        status: 201,
-        message: "Success",
-        data: new WorkspaceTransformer(workspace),
+        status: 404,
+        message: "Not found user",
       });
-    } catch (e) {
-      const errors = Object.fromEntries(
-        e?.inner.map(({ path, message }) => [path, message])
-      );
-      Object.assign(response, {
-        status: 400,
-        message: "Bad Request",
-        errors,
+    } else {
+      const schema = object({
+        name: string().required("Chưa nhập tên không gian làm việc"),
       });
+      try {
+        const body = await schema.validate(req.body, {
+          abortEarly: false,
+        });
+        const workspace = await Workspace.create({ ...body, user_id: id });
+        await user.update({
+          workspace_id_active: workspace.id,
+        });
+        Object.assign(response, {
+          status: 200,
+          message: "Success",
+          data: new WorkspaceTransformer(workspace),
+        });
+      } catch (e) {
+        const errors = Object.fromEntries(
+          e?.inner.map(({ path, message }) => [path, message])
+        );
+        Object.assign(response, {
+          status: 400,
+          message: "Bad Request",
+          errors,
+        });
+      }
     }
+
     res.status(response.status).json(response);
   },
   update: async (req, res) => {
@@ -161,6 +179,7 @@ module.exports = {
   },
   delete: async (req, res) => {
     const { id } = req.params;
+    const response = {};
     try {
       const boards = await Board.findAll({ where: { workspace_id: id } });
 
@@ -174,17 +193,32 @@ module.exports = {
       await Board.destroy({ where: { workspace_id: id }, force: true });
 
       await Workspace.destroy({ where: { id } });
+      const user = await User.findOne({ where: { workspace_id_active: id } });
 
-      res.status(204).json({
-        status: 204,
+      if (user) {
+        const workspaces = await Workspace.findAll({
+          order: [["updated_at", "desc"]],
+          where: { user_id: user.id },
+        });
+
+        if (workspaces.length > 0) {
+          const latestWorkspace = workspaces[0];
+          await user.update({ workspace_id_active: latestWorkspace.id });
+        }
+      }
+
+      Object.assign(response, {
+        status: 200,
         message: "Success",
       });
     } catch (error) {
-      res.status(500).json({
+      Object.assign(response, {
         status: 500,
-        message: "Server error",
+        message: "Sever error",
+        error: error,
       });
     }
+    res.status(response.status).json(response);
   },
 
   // switch: async (req, res) => {

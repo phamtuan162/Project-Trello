@@ -4,10 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
-import { fetchData } from "@/stores/middleware/fetchData";
+import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
 import { userSlice } from "@/stores/slices/userSlice";
 import { providerSlice } from "@/stores/slices/providerSlice";
-import { getLocalStorage } from "@/utils/localStorage";
 import Loading from "../Loading/Loading";
 import Sidebar from "../Sidebar/Sidebar";
 import { UserMenu } from "./UserMenu";
@@ -52,13 +51,12 @@ const Header = () => {
       title: "",
     },
   ];
-  const device_id_current = getLocalStorage("device_id_current") || "";
   const access_token = Cookies.get("access_token");
   const pathname = usePathname();
   const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
-  const workspaces = useSelector((state) => state.workspace.workspaces);
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -68,21 +66,21 @@ const Header = () => {
           const user = data.data;
           dispatch(updateUser(user));
           dispatch(updateProvider(user.providers));
-          dispatch(fetchData({ user_id: user.id }));
+          dispatch(fetchWorkspace(user.workspace_id_active));
         }
       });
     }
   }, [pathname]);
 
   useEffect(() => {
-    if (user.id && workspaces.length > 0) {
+    if (user.id && workspace.id) {
       const timer = setTimeout(() => {
         setIsLoading(false);
       }, 2000);
 
       return () => clearTimeout(timer);
     }
-  }, [user, workspaces]);
+  }, [user, workspace]);
 
   if (isLoading) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;

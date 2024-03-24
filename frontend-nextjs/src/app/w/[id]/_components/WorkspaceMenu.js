@@ -13,7 +13,6 @@ import {
   Input,
 } from "@nextui-org/react";
 import { usePathname, useRouter } from "next/navigation";
-
 import { SettingIcon } from "@/components/Icon/SettingIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { SearchIcon } from "@/components/Icon/SearchIcon";
@@ -21,18 +20,21 @@ import { PrivateIcon } from "@/components/Icon/PrivateIcon";
 import { UserIcon } from "@/components/Icon/UserIcon";
 import { UpgradeIcon } from "@/components/Icon/UpgradeIcon";
 import { AddIcon } from "@/components/Icon/AddIcon";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { switchWorkspace } from "@/services/workspaceApi";
-
+import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+const { updateWorkspace } = workspaceSlice.actions;
 export default function WorkspaceMenu({
   children,
   placement = "bottom",
   workspace,
+  workspaces,
 }) {
+  const dispatch = useDispatch();
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  const workspaces = useSelector((state) => state.workspace.workspaces);
   const workspaces_switched = workspaces?.filter(
     (item) => item.id !== workspace.id
   );
@@ -65,7 +67,14 @@ export default function WorkspaceMenu({
     switchWorkspace(user.id, {
       workspace_id_active: workspace_id_witched,
     }).then((data) => {
-      router.push(`/w/${data.workspace_id_active}/home`);
+      if (data) {
+        const workspaceIdActive = data.workspace_id_active;
+        const workspace = workspaces.find(
+          (workspace) => workspace.id === workspaceIdActive
+        );
+        dispatch(updateWorkspace(workspace));
+        router.push(`/w/${data.workspace_id_active}/home`);
+      }
     });
   };
 
@@ -106,7 +115,14 @@ export default function WorkspaceMenu({
               <Avatar
                 radius="md"
                 size="sm"
-                className="h-9 w-9 text-indigo-700 bg-indigo-100"
+                style={{
+                  background: `${
+                    workspace && workspace.color
+                      ? workspace.color
+                      : "bg-indigo-100"
+                  }`,
+                }}
+                className="h-9 w-9 text-white "
                 name={workspace?.name?.charAt(0)}
               />
               <div className="flex flex-col items-start justify-center gap-1 grow">
@@ -186,7 +202,14 @@ export default function WorkspaceMenu({
                     <Avatar
                       radius="md"
                       size="sm"
-                      className="h-9 w-9 text-indigo-700 bg-indigo-100"
+                      style={{
+                        background: `${
+                          workspace_search && workspace_search.color
+                            ? workspace_search.color
+                            : "bg-indigo-100"
+                        }`,
+                      }}
+                      className="h-9 w-9 text-white "
                       name={workspace_search?.name?.charAt(0)}
                     />
                     <div className="flex flex-col items-start  gap-1">
@@ -194,7 +217,7 @@ export default function WorkspaceMenu({
                         {workspace_search?.name}
                       </h4>
                       <div className="flex items-center text-xs text-muted-foreground ">
-                        <PrivateIcon size={16} /> {"\u2022"}
+                        <PrivateIcon size={16} /> {"\u2022"} 1 thành viên
                       </div>
                     </div>
                   </div>
@@ -205,10 +228,12 @@ export default function WorkspaceMenu({
             </div>
           </CardBody>
           <CardFooter>
-            <div className="flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2">
-              <AddIcon />
-              Tạo mới không gian làm việc
-            </div>
+            <FormCreateWorkspace>
+              <div className="flex p-1.5 hover:bg-default-100 rounded-lg items-center gap-2 cursor-pointer">
+                <AddIcon />
+                Tạo mới không gian làm việc
+              </div>
+            </FormCreateWorkspace>
           </CardFooter>
         </Card>
       </PopoverContent>

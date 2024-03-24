@@ -22,7 +22,7 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
     }
   }, [isSearch]);
   return isSearch ? (
-    <div className="my-2 md:block hidden">
+    <div className="my-2 lg:block hidden">
       <Input
         ref={inputRef}
         onChange={(e) => handleSearchBoard(e)}
@@ -45,7 +45,7 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
     </div>
   ) : (
     <div
-      className="w-full mb-1  justify-between items-center md:flex hidden"
+      className="w-full mb-1  justify-between items-center lg:flex hidden"
       style={{ height: "32px" }}
       onMouseOver={() => setIsAction(true)}
       onMouseOut={() => setIsAction(false)}

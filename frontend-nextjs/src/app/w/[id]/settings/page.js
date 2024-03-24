@@ -1,17 +1,11 @@
 "use client";
-import { useSelector, useDispatch } from "react-redux";
-import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
 import { Link } from "@nextui-org/react";
 import Loading from "@/components/Loading/Loading";
 import FormDeleteWorkspace from "../_components/FormDeleteWorkspace";
-import FormUpdateWorkspace from "../_components/formUpdateWorkspace";
+import FormUpdateWorkspace from "../_components/FormUpdateWorkspace";
 export default function pageWorkspaceSetting() {
-  const { id: workspaceId } = useParams();
-  const workspaces = useSelector((state) => state.workspace.workspaces);
-
-  const workspace = workspaces?.find(
-    (workspace) => workspace.id === +workspaceId
-  );
+  const workspace = useSelector((state) => state.workspace.workspace);
 
   return workspace ? (
     <div className="pb-6">
@@ -28,7 +22,7 @@ export default function pageWorkspaceSetting() {
         </p>
       </div>
 
-      <FormUpdateWorkspace workspace={workspace} workspaces={workspaces} />
+      <FormUpdateWorkspace workspace={workspace} />
       <FormDeleteWorkspace workspace={workspace} />
     </div>
   ) : (

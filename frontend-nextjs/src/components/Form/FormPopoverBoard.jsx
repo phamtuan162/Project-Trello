@@ -10,6 +10,7 @@ import {
   Button,
   Select,
   SelectItem,
+  CircularProgress,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
@@ -20,6 +21,7 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 const { updateWorkspace } = workspaceSlice.actions;
 export default function FormPopoverBoard({
   children,
+  workspaces,
   placement = "top",
   open,
   length,
@@ -27,15 +29,14 @@ export default function FormPopoverBoard({
 }) {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { id: workspaceId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
-  const workspaces = useSelector((state) => state.workspace.workspaces);
-  const workspace = workspaces.find(
-    (workspace) => workspace.id === +workspaceId
-  );
+  const [isCreate, setIsCreate] = useState(false);
+
+  const workspace = useSelector((state) => state.workspace.workspace);
 
   const onSubmit = (formData) => {
+    setIsCreate(true);
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
     const title = formData.get("title");
@@ -46,16 +47,16 @@ export default function FormPopoverBoard({
       workspace_id: workspace_id,
     }).then((data) => {
       if (data) {
-        const workspacesUpdated = workspaces.map((workspace) => ({
-          ...workspace,
-          boards: [...workspace.boards],
-        }));
-        workspacesUpdated.forEach((workspace) => {
-          if (workspace.id === +workspaceId) {
-            workspace.boards.unshift(data);
-          }
-        });
-        dispatch(updateWorkspace(workspacesUpdated));
+        let updatedBoards = [];
+        if (Array.isArray(workspace.boards) && workspace.boards.length > 0) {
+          updatedBoards = [...workspace.boards, data];
+        } else {
+          updatedBoards = [data];
+        }
+
+        const updatedWorkspace = { ...workspace, boards: updatedBoards };
+        dispatch(updateWorkspace(updatedWorkspace));
+        setIsCreate(false);
         toast.success("Thêm bảng thành công");
         router.push(`/b/${data.id}`);
       }
@@ -183,8 +184,17 @@ export default function FormPopoverBoard({
               </div>
             </div>
 
-            <Button color="primary" type="submit" className="w-full">
-              Tạo mới
+            <Button
+              isDisabled={!isCreate ? false : true}
+              color="primary"
+              type="submit"
+              className="w-full"
+            >
+              {isCreate ? (
+                <CircularProgress aria-label="Loading..." size={22} />
+              ) : (
+                "Tạo mới"
+              )}
             </Button>
           </form>
         )}

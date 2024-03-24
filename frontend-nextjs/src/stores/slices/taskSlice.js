@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchData } from "../middleware/fetchData";
+import { fetchData } from "../middleware/fetchWorkspace";
 import { setLocalStorage, getLocalStorage } from "../../utils/localStorage";
 const initialState = {
   tasks: getLocalStorage("tasks") || [],
