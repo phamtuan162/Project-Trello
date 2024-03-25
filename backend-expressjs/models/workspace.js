@@ -7,8 +7,9 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "workspace_id",
         as: "boards",
       });
-      Workspace.hasOne(models.User, {
-        foreignKey: "workspace_id_active",
+      Workspace.belongsToMany(models.User, {
+        foreignKey: "workspace_id",
+        through: "users_workspaces_roles",
         as: "users",
       });
     }
@@ -20,7 +21,6 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      user_id: DataTypes.INTEGER,
       name: DataTypes.STRING,
       desc: DataTypes.STRING,
       isActive: DataTypes.BOOLEAN,

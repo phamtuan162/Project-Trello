@@ -60,23 +60,28 @@ export const logoutApi = async () => {
     null,
     access_token
   );
-  return data;
+  if (data.status === 200) {
+    return data;
+  } else {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await logoutApi();
+    }
+  }
 };
 /** Profile */
 
-export const getProfile = async (access_token, retryCount = 0) => {
+export const getProfile = async () => {
+  const access_token = Cookies.get("access_token");
+
   const { data } = await client.get(`/auth/profile`, access_token);
 
   if (data.status === 200) {
     return data;
   } else {
-    if (retryCount < MAX_RETRY) {
-      const newAccessToken = await getAccessToken();
-      if (newAccessToken) {
-        return await getProfile(newAccessToken, retryCount + 1);
-      }
-    } else {
-      handleRefreshTokenExpired();
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await getProfile();
     }
   }
 };

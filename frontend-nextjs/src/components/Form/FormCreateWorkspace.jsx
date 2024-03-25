@@ -54,18 +54,18 @@ export default function FormCreateWorkspace({ children }) {
   const HandleCreateWorkspace = async (e) => {
     e.preventDefault();
     setIsCreate(true);
-    createWorkspaceApi(user.id, { name: name, desc: desc, color: color }).then(
-      (data) => {
-        if (data.status === 200) {
-          const workspace = data.data;
-          toast.success("Tạo không gian mới thành công");
-          dispatch(updateWorkspace(workspace));
-          setIsCreate(false);
-          router.push(`/w/${workspace.id}/home`);
-          setForm({ name: "", desc: "", color: "#9353D3" });
-        }
+    createWorkspaceApi(user.id, {
+      ...form,
+    }).then((data) => {
+      if (data.status === 200) {
+        const workspace = data.data;
+        toast.success("Tạo không gian mới thành công");
+        dispatch(updateWorkspace(workspace));
+        router.push(`/w/${workspace.id}/home`);
+        setIsCreate(false);
+        setForm({ name: "", desc: "", color: "#9353D3" });
       }
-    );
+    });
   };
   const { name, desc, color } = form;
   return (

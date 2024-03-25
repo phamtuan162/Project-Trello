@@ -19,7 +19,10 @@ export const getWorkspace = async (query = {}) => {
 //   }
 // };
 export const createWorkspaceApi = async (userId, body) => {
-  const { response, data } = await client.post(`/workspace/${userId}`, body);
+  const { response, data } = await client.post(
+    `/workspace?user_id=${userId}`,
+    body
+  );
   return data;
 };
 export const getWorkspaceDetail = async (workspaceId) => {

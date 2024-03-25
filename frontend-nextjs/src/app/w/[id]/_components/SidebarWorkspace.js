@@ -18,23 +18,22 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
   const { id: workspaceId } = useParams();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
-  const [workspaces, setWorkspaces] = useState([]);
   const [boards, setBoards] = useState([]);
   useEffect(() => {
     if (workspace.boards) {
       setBoards(workspace.boards);
     }
   }, [workspace]);
-  useEffect(() => {
-    const fetchWorkspaces = async () => {
-      if (user.id) {
-        const data = await getWorkspace({ user_id: user.id });
-        setWorkspaces(data);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchWorkspaces = async () => {
+  //     if (user.id) {
+  //       const data = await getWorkspace({ user_id: user.id });
+  //       setWorkspaces(data);
+  //     }
+  //   };
 
-    fetchWorkspaces();
-  }, [user]);
+  //   fetchWorkspaces();
+  // }, [user]);
 
   // const routes = [
   //   {
@@ -66,14 +65,12 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
         className="flex p-2 max-h-[70px] dark-border justify-center lg:justify-start "
         style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
       >
-        <WorkspaceMenu workspace={workspace} workspaces={workspaces}>
+        <WorkspaceMenu workspace={workspace}>
           <div className="flex gap-2 p-1.5 items-center hover:bg-default-100 rounded-lg ">
             <Avatar
               style={{
                 background: `${
-                  workspace && workspace.color
-                    ? workspace.color
-                    : "bg-indigo-100"
+                  workspace && workspace.color ? workspace.color : "#9353D3"
                 }`,
               }}
               radius="md"
@@ -159,7 +156,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
 
             <span className="lg:block hidden">Xem tất cả bảng</span>
           </div>
-          <FormPopoverBoard placement="top" workspaces={workspaces}>
+          <FormPopoverBoard placement="top" workspaces={user.workspaces}>
             <div className="flex p-1.5 hover:bg-default-100 rounded-lg justify-center lg:justify-start items-center gap-2 text-sm  cursor-pointer">
               <Plus size={16} />
 

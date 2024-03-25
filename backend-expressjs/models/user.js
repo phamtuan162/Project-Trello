@@ -7,13 +7,16 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "provider_id",
         as: "providers",
       });
-      User.belongsTo(models.Workspace, {
-        foreignKey: "workspace_id_active",
-        as: "workspace",
-      });
+
       User.hasMany(models.Device, {
         foreignKey: "user_id",
         as: "devices",
+      });
+
+      User.belongsToMany(models.Workspace, {
+        foreignKey: "user_id",
+        through: "users_workspaces_roles",
+        as: "workspaces",
       });
     }
   }

@@ -22,9 +22,7 @@ const BreadcrumbWorkspace = ({ options, origin }) => {
               <Avatar
                 style={{
                   background: `${
-                    workspace && workspace.color
-                      ? workspace.color
-                      : "bg-indigo-100"
+                    workspace && workspace.color ? workspace.color : "#9353D3"
                   }`,
                 }}
                 radius="md"

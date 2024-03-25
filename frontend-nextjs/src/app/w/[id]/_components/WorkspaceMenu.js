@@ -29,13 +29,12 @@ export default function WorkspaceMenu({
   children,
   placement = "bottom",
   workspace,
-  workspaces,
 }) {
   const dispatch = useDispatch();
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  const workspaces_switched = workspaces?.filter(
+  const workspaces_switched = user?.workspaces?.filter(
     (item) => item.id !== workspace.id
   );
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
@@ -59,10 +58,10 @@ export default function WorkspaceMenu({
     },
   ];
   useEffect(() => {
-    if (workspaces_switched.length > 0) {
+    if (workspaces_switched?.length > 0) {
       setWorkspaceSearch(workspaces_switched);
     }
-  }, [workspaces]);
+  }, [user]);
   const handleSwitchWorkspace = async (workspace_id_witched) => {
     switchWorkspace(user.id, {
       workspace_id_active: workspace_id_witched,
@@ -117,9 +116,7 @@ export default function WorkspaceMenu({
                 size="sm"
                 style={{
                   background: `${
-                    workspace && workspace.color
-                      ? workspace.color
-                      : "bg-indigo-100"
+                    workspace && workspace.color ? workspace.color : "#9353D3"
                   }`,
                 }}
                 className="h-9 w-9 text-white "
@@ -206,7 +203,7 @@ export default function WorkspaceMenu({
                         background: `${
                           workspace_search && workspace_search.color
                             ? workspace_search.color
-                            : "bg-indigo-100"
+                            : "#9353D3"
                         }`,
                       }}
                       className="h-9 w-9 text-white "

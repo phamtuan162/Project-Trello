@@ -4,7 +4,7 @@ const workspaceController = require("../../../controllers/api/workspace/workspac
 
 router.get("/", workspaceController.index);
 router.get("/:id", workspaceController.find);
-router.post("/:id", workspaceController.store);
+router.post("/", workspaceController.store);
 router.put("/:id", workspaceController.update);
 router.patch("/:id", workspaceController.update);
 router.delete("/:id", workspaceController.delete);

@@ -4,6 +4,7 @@ const {
   BlacklistToken,
   Device,
   Provider,
+  Workspace,
 } = require("../../../models/index");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -232,6 +233,10 @@ module.exports = {
         {
           model: Device,
           as: "devices",
+        },
+        {
+          model: Workspace,
+          as: "workspaces",
         },
         {
           model: Provider,

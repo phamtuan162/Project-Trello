@@ -2,21 +2,17 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("workspaces", {
+    await queryInterface.createTable("permissions", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-
-      name: {
-        type: Sequelize.STRING,
+      value: {
+        type: Sequelize.STRING(100),
+        allowNull: false,
       },
-      desc: {
-        type: Sequelize.STRING,
-      },
-
       created_at: {
         type: Sequelize.DATE,
       },
@@ -26,6 +22,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("workspaces");
+    await queryInterface.dropTable("permissions");
   },
 };

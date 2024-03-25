@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("workspaces", {
+    await queryInterface.createTable("roles", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -11,10 +11,8 @@ module.exports = {
       },
 
       name: {
-        type: Sequelize.STRING,
-      },
-      desc: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(100),
+        allowNull: false,
       },
 
       created_at: {
@@ -26,6 +24,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("workspaces");
+    await queryInterface.dropTable("roles");
   },
 };

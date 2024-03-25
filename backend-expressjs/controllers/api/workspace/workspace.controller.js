@@ -4,6 +4,8 @@ const {
   Column,
   Card,
   User,
+  Role,
+  UserWorkspaceRole,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -86,9 +88,9 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const { id } = req.params;
+    const { user_id } = req.query;
     const response = {};
-    const user = await User.findByPk(id);
+    const user = await User.findByPk(user_id);
 
     if (!user) {
       Object.assign(response, {
@@ -103,18 +105,46 @@ module.exports = {
         const body = await schema.validate(req.body, {
           abortEarly: false,
         });
-        const workspace = await Workspace.create({ ...body, user_id: id });
-        await user.update({
-          workspace_id_active: workspace.id,
-        });
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-          data: new WorkspaceTransformer(workspace),
-        });
+        const workspace = await Workspace.create({ ...body });
+
+        if (workspace) {
+          const user_workspace_role = await UserWorkspaceRole.create({
+            user_id: user.id,
+            workspace_id: workspace.id,
+          });
+
+          await user.update({
+            workspace_id_active: workspace.id,
+          });
+
+          const role = await Role.findOne({
+            where: { name: { [Op.iLike]: "%Admin%" } },
+          });
+
+          if (role) {
+            await user_workspace_role.update({
+              role_id: role.id,
+            });
+            Object.assign(response, {
+              status: 200,
+              message: "Success",
+              data: new WorkspaceTransformer(workspace),
+            });
+          } else {
+            Object.assign(response, {
+              status: 500,
+              message: "Sever error",
+            });
+          }
+        } else {
+          Object.assign(response, {
+            status: 500,
+            message: "Sever error",
+          });
+        }
       } catch (e) {
         const errors = Object.fromEntries(
-          e?.inner.map(({ path, message }) => [path, message])
+          e?.inner?.map(({ path, message }) => [path, message])
         );
         Object.assign(response, {
           status: 400,
