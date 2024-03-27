@@ -19,21 +19,21 @@ module.exports = {
       order = "asc",
       sort = "id",
       status,
-      q,
+      keyword,
       limit,
-      page = 10,
+      page = 1,
     } = req.query;
     const filters = {};
     if (status === "true" || status === "false") {
       filters.status = status === "true";
     }
-    if (q) {
+    if (keyword) {
       filters[Op.or] = {
         name: {
-          [Op.iLike]: `%${q.trim()}%`,
+          [Op.iLike]: `%${keyword.trim()}%`,
         },
         email: {
-          [Op.iLike]: `%${q.trim()}%`,
+          [Op.iLike]: `%${keyword.trim()}%`,
         },
       };
     }

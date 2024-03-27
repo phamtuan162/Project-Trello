@@ -59,6 +59,12 @@ export const deleteWorkspaceApi = async (workspaceId) => {
 
   return data;
 };
+
+export const inviteUserApi = async (body) => {
+  const { response, data } = await client.post(`/workspace/invite`, body);
+
+  return data;
+};
 /** Board */
 
 export const getBoard = async (workspaceId) => {

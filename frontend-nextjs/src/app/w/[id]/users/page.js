@@ -20,21 +20,16 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon } from "lucide-react";
 import { VerticalDotsIcon } from "./VerticalDotsIcon";
-import { columns, users, statusOptions } from "./data";
-
+import { columns, statusOptions } from "./data";
+import FormInviteUser from "../_components/FormInviteUser";
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-const statusColorMap = {
-  active: "success",
-  paused: "danger",
-  vacation: "warning",
-};
-
 const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
 
 export default function PageWorkspaceUsers() {
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState(
@@ -48,7 +43,7 @@ export default function PageWorkspaceUsers() {
   });
   const [page, setPage] = React.useState(1);
 
-  const pages = Math.ceil(users.length / rowsPerPage);
+  const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -61,7 +56,9 @@ export default function PageWorkspaceUsers() {
   }, [visibleColumns]);
 
   const filteredItems = React.useMemo(() => {
-    let filteredUsers = [...users];
+    let filteredUsers = workspace?.users
+      ? workspace.users.filter((user) => user !== null && user !== undefined)
+      : [];
 
     if (hasSearchFilter) {
       filteredUsers = filteredUsers.filter((user) =>
@@ -78,7 +75,7 @@ export default function PageWorkspaceUsers() {
     }
 
     return filteredUsers;
-  }, [users, filterValue, statusFilter]);
+  }, [workspace, filterValue, statusFilter]);
 
   const items = React.useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -104,7 +101,13 @@ export default function PageWorkspaceUsers() {
       case "name":
         return (
           <User
-            avatarProps={{ radius: "full", size: "sm", src: user.avatar }}
+            avatarProps={{
+              radius: "full",
+              size: "sm",
+              src: user.avatar,
+              color: "secondary",
+              name: cellValue.charAt(0).toUpperCase(),
+            }}
             classNames={{
               description: "text-default-500",
             }}
@@ -115,19 +118,12 @@ export default function PageWorkspaceUsers() {
           </User>
         );
       case "role":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">{cellValue}</p>
-            <p className="text-bold text-tiny capitalize text-default-500">
-              {user.team}
-            </p>
-          </div>
-        );
+        return <p className="text-bold text-small capitalize ">{cellValue}</p>;
       case "status":
         return (
           <Chip
             className="capitalize border-none gap-1 text-default-600"
-            color={statusColorMap[user.status]}
+            color={user.status ? "success" : "default"}
             size="sm"
             variant="dot"
           >
@@ -136,7 +132,7 @@ export default function PageWorkspaceUsers() {
         );
       case "actions":
         return (
-          <div className="relative flex justify-end items-center gap-2">
+          <div className="relative flex justify-start items-center gap-2">
             <Dropdown className="bg-background border-1 border-default-200">
               <DropdownTrigger>
                 <Button isIconOnly radius="full" size="sm" variant="light">
@@ -144,9 +140,9 @@ export default function PageWorkspaceUsers() {
                 </Button>
               </DropdownTrigger>
               <DropdownMenu>
-                <DropdownItem>View</DropdownItem>
-                <DropdownItem>Edit</DropdownItem>
-                <DropdownItem>Delete</DropdownItem>
+                <DropdownItem>Xem</DropdownItem>
+                <DropdownItem>Sửa</DropdownItem>
+                <DropdownItem>Xóa</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </div>
@@ -258,21 +254,15 @@ export default function PageWorkspaceUsers() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <Button
-              style={{ background: "#7f77f1" }}
-              size="sm"
-              className="w-[100px] text-white text-sm"
-            >
-              Mời
-            </Button>
+            <FormInviteUser />
           </div>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Total {users.length} users
+            Tổng cộng {workspace?.users?.length.toString()} người dùng tham gia
           </span>
           <label className="flex items-center text-default-400 text-small">
-            Rows per page:
+            Hàng trên mỗi trang:
             <select
               className="bg-transparent outline-none text-default-400 text-small"
               onChange={onRowsPerPageChange}
@@ -291,7 +281,7 @@ export default function PageWorkspaceUsers() {
     visibleColumns,
     onSearchChange,
     onRowsPerPageChange,
-    users.length,
+    workspace?.users?.length,
     hasSearchFilter,
   ]);
 
@@ -301,7 +291,7 @@ export default function PageWorkspaceUsers() {
         <span className="w-[30%] text-small text-default-400">
           {selectedKeys === "all"
             ? "All items selected"
-            : `${selectedKeys.size} of ${filteredItems.length} selected`}
+            : `${selectedKeys.size} trên ${filteredItems.length} đã chọn`}
         </span>
         <Pagination
           isCompact
@@ -319,7 +309,7 @@ export default function PageWorkspaceUsers() {
             variant="flat"
             onPress={onPreviousPage}
           >
-            Previous
+            Trước
           </Button>
           <Button
             isDisabled={pages === 1}
@@ -327,7 +317,7 @@ export default function PageWorkspaceUsers() {
             variant="flat"
             onPress={onNextPage}
           >
-            Next
+            Sau
           </Button>
         </div>
       </div>
@@ -354,47 +344,58 @@ export default function PageWorkspaceUsers() {
   );
 
   return (
-    <Table
-      isCompact
-      removeWrapper
-      aria-label="Example table with custom cells, pagination and sorting"
-      bottomContent={bottomContent}
-      bottomContentPlacement="outside"
-      checkboxesProps={{
-        classNames: {
-          wrapper: "after:bg-foreground after:text-background text-background ",
-        },
-      }}
-      classNames={classNames}
-      selectedKeys={selectedKeys}
-      selectionMode="multiple"
-      sortDescriptor={sortDescriptor}
-      topContent={topContent}
-      topContentPlacement="outside"
-      onSelectionChange={setSelectedKeys}
-      onSortChange={setSortDescriptor}
-      className="mt-9 pb-8 "
-    >
-      <TableHeader columns={headerColumns}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody emptyContent={"No users found"} items={sortedItems}>
-        {(item) => (
-          <TableRow key={item.id}>
-            {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey)}</TableCell>
-            )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+    <div>
+      <h1 className="text-xl font-medium mt-4">
+        Thành viên không gian làm việc
+      </h1>
+      <p className="mt-1">
+        Các thành viên trong Không gian làm việc có thể xem và tham gia tất cả
+        các bảng Không gian làm việc hiển thị và tạo ra các bảng mới trong Không
+        gian làm việc.
+      </p>
+      <Table
+        isCompact
+        removeWrapper
+        aria-label="Example table with custom cells, pagination and sorting"
+        bottomContent={bottomContent}
+        bottomContentPlacement="outside"
+        checkboxesProps={{
+          classNames: {
+            wrapper:
+              "after:bg-foreground after:text-background text-background ",
+          },
+        }}
+        classNames={classNames}
+        selectedKeys={selectedKeys}
+        selectionMode="multiple"
+        sortDescriptor={sortDescriptor}
+        topContent={topContent}
+        topContentPlacement="outside"
+        onSelectionChange={setSelectedKeys}
+        onSortChange={setSortDescriptor}
+        className="mt-9 pb-8 "
+      >
+        <TableHeader columns={headerColumns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody emptyContent={"No users found"} items={sortedItems}>
+          {(item) => (
+            <TableRow key={item.id}>
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey)}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

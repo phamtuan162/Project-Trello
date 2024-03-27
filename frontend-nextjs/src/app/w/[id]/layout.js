@@ -34,12 +34,27 @@ export default function WorkspaceLayout({ children }) {
       icon: <MissionIcon />,
     },
 
-    // {
-    //   href: "/calendar",
-    //   label: "Lịch",
-    //   icon: <CalendarIcon />,
-    // },
+    {
+      href: "/calendar",
+      label: "Lịch",
+      icon: <CalendarIcon />,
+    },
+    {
+      href: "/star",
+      label: "Gắn dấu sao",
+      icon: <StarIcon />,
+    },
 
+    {
+      href: "/more",
+      label: "Khác",
+      icon: <MoreIcon />,
+    },
+    {
+      href: "/boards",
+      label: "Tất cả các bảng",
+      icon: <BoardIcon />,
+    },
     {
       href: "/settings",
       label: "Cài đặt",
@@ -50,16 +65,6 @@ export default function WorkspaceLayout({ children }) {
       href: "/users",
       label: "Quản lý Người dùng",
       icon: <UserIcon />,
-    },
-    {
-      href: "/more",
-      label: "Khác",
-      icon: <MoreIcon />,
-    },
-    {
-      href: "/boards",
-      label: "Tất cả các bảng",
-      icon: <BoardIcon />,
     },
   ];
   return (

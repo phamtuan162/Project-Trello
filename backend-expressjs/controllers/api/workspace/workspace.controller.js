@@ -10,6 +10,7 @@ const {
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
+const UserTransformer = require("../../../transformers/user/user.transformer");
 
 module.exports = {
   index: async (req, res) => {
@@ -64,17 +65,34 @@ module.exports = {
     const response = {};
     try {
       const workspace = await Workspace.findByPk(id, {
-        include: {
-          model: Board,
-          as: "boards",
-        },
+        include: [
+          {
+            model: Board,
+            as: "boards",
+          },
+          {
+            model: User,
+            as: "users",
+          },
+        ],
       });
+
       if (!workspace) {
         Object.assign(response, {
           status: 404,
           message: "Not Found",
         });
       } else {
+        if (workspace.users) {
+          for (const user of workspace.users) {
+            const user_workspace_role = await UserWorkspaceRole.findOne({
+              where: { workspace_id: workspace.id, user_id: user.id },
+            });
+            const role = await Role.findByPk(user_workspace_role.role_id);
+
+            user.dataValues.role = role.name;
+          }
+        }
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -248,6 +266,50 @@ module.exports = {
         error: error,
       });
     }
+    res.status(response.status).json(response);
+  },
+  inviteUser: async (req, res) => {
+    const { user_id, workspace_id, role } = req.body;
+    console.log(user_id);
+    const response = {};
+
+    try {
+      if (!user_id || !workspace_id || !role) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+
+      const user = await User.findByPk(user_id);
+      if (!user) {
+        return res.status(404).json({ status: 404, message: "User not found" });
+      }
+
+      const roleInstance = await Role.findOne({
+        where: { name: { [Op.iLike]: `%${role}%` } },
+      });
+
+      if (!roleInstance) {
+        return res.status(404).json({ status: 404, message: "Role not found" });
+      }
+
+      const user_workspace_role = await UserWorkspaceRole.create({
+        user_id: user_id,
+        workspace_id: workspace_id,
+        role_id: roleInstance.id,
+      });
+      user.dataValues.role = roleInstance.name;
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: new UserTransformer(user.dataValues),
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+        error: error,
+      });
+    }
+
     res.status(response.status).json(response);
   },
 

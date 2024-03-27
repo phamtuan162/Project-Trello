@@ -77,7 +77,7 @@ const FormUpdateWorkspace = ({ workspace }) => {
 
       <Button
         type="submit"
-        className="rounded-lg w-[140px] h-[44px] mt-4 flex items-center justify-center text-md bg-violet-400	"
+        className="rounded-lg w-[140px] h-[44px] mt-4 flex items-center justify-center text-md bg-violet-400	text-white"
       >
         Lưu
       </Button>

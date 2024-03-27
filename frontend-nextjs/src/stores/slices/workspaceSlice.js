@@ -11,6 +11,12 @@ export const workspaceSlice = createSlice({
     updateWorkspace: (state, action) => {
       state.workspace = action.payload;
     },
+    inviteUser: (state, action) => {
+      state.workspace = {
+        ...state.workspace,
+        users: [...state.workspace.users, action.payload],
+      };
+    },
   },
   extraReducers: (builder) => {
     builder
