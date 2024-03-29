@@ -89,6 +89,7 @@ const FormInviteUser = () => {
           dispatch(inviteUser(user));
           toast.success("Mời người dùng vào Không gian làm việc thành công");
           setIsInvite(false);
+          setUserInvite(null);
           setMessage(
             `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
               workspace.users ? workspace.users.length : "1"
@@ -122,6 +123,8 @@ const FormInviteUser = () => {
           <div
             onClick={() => {
               setIsInvite(false);
+              setUserInvite(null);
+
               setMessage(
                 `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
                   workspace.users ? workspace.users.length : "1"
@@ -138,6 +141,8 @@ const FormInviteUser = () => {
               <button
                 onClick={() => {
                   setIsInvite(false);
+                  setUserInvite(null);
+
                   setMessage(
                     `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
                       workspace.users ? workspace.users.length : "1"
@@ -212,6 +217,7 @@ const FormInviteUser = () => {
                           {usersSearch.length > 0
                             ? usersSearch.map((userSearch) => (
                                 <div
+                                  key={userSearch.id}
                                   className="mt-2 hover:bg-default-300 rounded-lg p-1 px-3 cursor-pointer"
                                   onClick={() =>
                                     HandleSelectUserInvite(userSearch)
@@ -245,29 +251,32 @@ const FormInviteUser = () => {
                     ""
                   )}
                 </div>
-
-                <div className="flex gap-2">
-                  <Select
-                    variant="bordered"
-                    size="xs"
-                    aria-label="Roles"
-                    classNames={{
-                      label: "group-data-[filled=true]:-translate-y-5",
-                      trigger: "w-[120px]",
-                    }}
-                    selectedKeys={role}
-                    onSelectionChange={setRole}
-                  >
-                    {roles.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  <Button type="submit" color="primary" className=" text-sm">
-                    Thêm
-                  </Button>
-                </div>
+                {userInvite ? (
+                  <div className="flex gap-2">
+                    <Select
+                      variant="bordered"
+                      size="xs"
+                      aria-label="Roles"
+                      classNames={{
+                        label: "group-data-[filled=true]:-translate-y-5",
+                        trigger: "w-[120px]",
+                      }}
+                      selectedKeys={role}
+                      onSelectionChange={setRole}
+                    >
+                      {roles.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    <Button type="submit" color="primary" className=" text-sm">
+                      Thêm
+                    </Button>
+                  </div>
+                ) : (
+                  ""
+                )}
               </form>
             </div>
           </div>

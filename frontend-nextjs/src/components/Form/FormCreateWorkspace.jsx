@@ -59,6 +59,7 @@ export default function FormCreateWorkspace({ children }) {
     }).then((data) => {
       if (data.status === 200) {
         const workspace = data.data;
+        console.log(workspace);
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
         router.push(`/w/${workspace.id}/home`);

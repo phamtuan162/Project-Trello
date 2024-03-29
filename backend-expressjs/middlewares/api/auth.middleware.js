@@ -50,5 +50,5 @@ module.exports = async (req, res, next) => {
       message: "Unauthorized",
     });
   }
-  return res.json(response);
+  res.status(response.status).json(response);
 };

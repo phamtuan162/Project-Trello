@@ -12,7 +12,7 @@ import {
   Avatar,
   Input,
 } from "@nextui-org/react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useParams } from "next/navigation";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { SearchIcon } from "@/components/Icon/SearchIcon";
@@ -31,11 +31,12 @@ export default function WorkspaceMenu({
   workspace,
 }) {
   const dispatch = useDispatch();
+  const { id: workspaceId } = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  const workspaces_switched = user?.workspaces?.filter(
-    (item) => item.id !== workspace.id
+  let workspaces_switched = user?.workspaces?.filter(
+    (item) => +item.id !== +workspaceId
   );
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -68,11 +69,12 @@ export default function WorkspaceMenu({
     }).then((data) => {
       if (data) {
         const workspaceIdActive = data.workspace_id_active;
-        const workspace = workspaces.find(
-          (workspace) => workspace.id === workspaceIdActive
+        const workspace = user.workspaces.find(
+          (workspace) => +workspace.id === +workspaceIdActive
         );
+        console.log(workspace);
         dispatch(updateWorkspace(workspace));
-        router.push(`/w/${data.workspace_id_active}/home`);
+        router.push(`/w/${data.workspace_id_active}/boards`);
       }
     });
   };
@@ -127,8 +129,7 @@ export default function WorkspaceMenu({
                   {workspace?.name}
                 </h4>
                 <div className="flex items-center text-xs text-muted-foreground ">
-                  <PrivateIcon size={16} /> {"\u2022"}{" "}
-                  {workspace?.users?.length}
+                  <PrivateIcon size={16} /> {"\u2022"} {workspace?.total_user}{" "}
                   thành viên
                 </div>
               </div>
@@ -217,7 +218,7 @@ export default function WorkspaceMenu({
                       </h4>
                       <div className="flex items-center text-xs text-muted-foreground ">
                         <PrivateIcon size={16} /> {"\u2022"}{" "}
-                        {workspace?.users?.length} thành viên
+                        {workspace_search?.total_user} thành viên
                       </div>
                     </div>
                   </div>

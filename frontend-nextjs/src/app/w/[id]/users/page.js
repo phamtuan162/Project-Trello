@@ -18,10 +18,10 @@ import {
   User,
   Pagination,
 } from "@nextui-org/react";
-import { SearchIcon, ChevronDownIcon } from "lucide-react";
-import { VerticalDotsIcon } from "./VerticalDotsIcon";
+import { SearchIcon, ChevronDownIcon, X } from "lucide-react";
 import { columns, statusOptions } from "./data";
 import FormInviteUser from "../_components/FormInviteUser";
+import LeaveWorkspace from "./LeaveWorkspace";
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -30,6 +30,8 @@ const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
 
 export default function PageWorkspaceUsers() {
   const workspace = useSelector((state) => state.workspace.workspace);
+  const userActive = useSelector((state) => state.user.user);
+
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState(
@@ -131,22 +133,7 @@ export default function PageWorkspaceUsers() {
           </Chip>
         );
       case "actions":
-        return (
-          <div className="relative flex justify-start items-center gap-2">
-            <Dropdown className="bg-background border-1 border-default-200">
-              <DropdownTrigger>
-                <Button isIconOnly radius="full" size="sm" variant="light">
-                  <VerticalDotsIcon className="text-default-400" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem>Xem</DropdownItem>
-                <DropdownItem>Sửa</DropdownItem>
-                <DropdownItem>Xóa</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </div>
-        );
+        return <LeaveWorkspace user={user} />;
       default:
         return cellValue;
     }
@@ -399,3 +386,18 @@ export default function PageWorkspaceUsers() {
     </div>
   );
 }
+// <Dropdown className="bg-background border-1 border-default-200">
+//   <DropdownTrigger>
+//     <Button isIconOnly radius="full" size="sm" variant="light">
+//       <VerticalDotsIcon className="text-default-400" />
+//     </Button>
+//   </DropdownTrigger>
+
+//   <DropdownMenu>
+//     <DropdownItem>Sửa</DropdownItem>
+
+//     <DropdownItem startContent={<X size={20} color={"#fd71af"} />}>
+//       Loại bỏ khỏi Không gian làm việc
+//     </DropdownItem>
+//   </DropdownMenu>
+// </Dropdown>;

@@ -17,6 +17,7 @@ class WorkspaceTransformer extends Transformer {
         ? instance.users.map((user) => new UserTransformer(user.dataValues))
         : [],
       isActive: instance.isActive,
+      total_user: instance.total_user,
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,
     };

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
@@ -51,13 +51,16 @@ const Header = () => {
       title: "",
     },
   ];
+  const { id } = useParams();
   const access_token = Cookies.get("access_token");
+  const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isLoading, setIsLoading] = useState(true);
+  const [check, setCheck] = useState(false);
 
   useEffect(() => {
     if (!user.id && !pathname.startsWith("/auth/")) {
@@ -67,9 +70,18 @@ const Header = () => {
           dispatch(updateUser(user));
           dispatch(updateProvider(user.providers));
           dispatch(fetchWorkspace(user.workspace_id_active));
+          // if (pathname.startsWith(`/w/${id}`)) {
+          //   dispatch(fetchWorkspace(id));
+          // } else {
+          // }
         }
       });
     }
+
+    // if (+user.workspace_id_active !== +workspace.id && !check) {
+    //   setCheck(true);
+    //   window.location.href = "/";
+    // }
   }, [pathname]);
 
   useEffect(() => {

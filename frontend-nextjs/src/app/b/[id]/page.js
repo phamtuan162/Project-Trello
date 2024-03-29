@@ -24,9 +24,9 @@ export default function BoardIdPage() {
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
-        const board = await getBoardDetail(boardId);
-        if (board) {
-          let boardData = board;
+        const data = await getBoardDetail(boardId);
+        if (data) {
+          let boardData = data.data;
           boardData.columns = mapOrder(
             boardData.columns,
             boardData.columnOrderIds,

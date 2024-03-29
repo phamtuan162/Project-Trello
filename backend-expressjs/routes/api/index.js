@@ -7,7 +7,14 @@ const boardRouter = require("./workspace/board");
 const columnRouter = require("./workspace/column");
 const cardRouter = require("./workspace/card");
 const deviceRouter = require("./device/device");
+const roleRouter = require("./auth/role");
+const permissionRouter = require("./auth/permission");
+
 router.use("/auth", authRouter);
+
+router.use("/role", roleRouter);
+
+router.use("/permission", permissionRouter);
 
 router.use("/user", userRouter);
 

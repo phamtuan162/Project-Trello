@@ -5,6 +5,7 @@ const {
   Device,
   Provider,
   Workspace,
+  Board,
 } = require("../../../models/index");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -237,6 +238,10 @@ module.exports = {
         {
           model: Workspace,
           as: "workspaces",
+          include: {
+            model: Board,
+            as: "boards",
+          },
         },
         {
           model: Provider,
@@ -247,6 +252,7 @@ module.exports = {
 
       attributes: { exclude: ["password"] },
     });
+
     res.json({
       status: 200,
       message: "Success",

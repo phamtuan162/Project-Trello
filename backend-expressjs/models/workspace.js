@@ -21,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      total_user: DataTypes.INTEGER,
       name: DataTypes.STRING,
       desc: DataTypes.STRING,
       isActive: DataTypes.BOOLEAN,

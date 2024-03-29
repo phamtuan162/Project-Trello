@@ -17,6 +17,14 @@ export const workspaceSlice = createSlice({
         users: [...state.workspace.users, action.payload],
       };
     },
+    cancelUser: (state, action) => {
+      state.workspace = {
+        ...state.workspace,
+        users: state.workspace.users.filter(
+          (user) => +user.id !== action.payload.id
+        ),
+      };
+    },
   },
   extraReducers: (builder) => {
     builder

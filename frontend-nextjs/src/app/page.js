@@ -11,7 +11,10 @@ export default function Home() {
   useEffect(() => {
     if (user.workspace_id_active) {
       getWorkspaceDetail(user.workspace_id_active).then((data) => {
-        router.push(`/w/${data.id}/boards`);
+        if (data.status === 200) {
+          const workspace = data.data;
+          router.push(`/w/${workspace.id}/boards`);
+        }
       });
     }
   }, [user]);

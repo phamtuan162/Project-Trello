@@ -89,10 +89,11 @@ module.exports = {
               where: { workspace_id: workspace.id, user_id: user.id },
             });
             const role = await Role.findByPk(user_workspace_role.role_id);
-
+            console.log(role);
             user.dataValues.role = role.name;
           }
         }
+        console.log(workspace);
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -123,7 +124,7 @@ module.exports = {
         const body = await schema.validate(req.body, {
           abortEarly: false,
         });
-        const workspace = await Workspace.create({ ...body });
+        const workspace = await Workspace.create({ ...body, total_user: 1 });
 
         if (workspace) {
           const user_workspace_role = await UserWorkspaceRole.create({
@@ -270,7 +271,6 @@ module.exports = {
   },
   inviteUser: async (req, res) => {
     const { user_id, workspace_id, role } = req.body;
-    console.log(user_id);
     const response = {};
 
     try {
@@ -282,7 +282,12 @@ module.exports = {
       if (!user) {
         return res.status(404).json({ status: 404, message: "User not found" });
       }
-
+      const workspace = await Workspace.findByPk(workspace_id);
+      if (!workspace) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Workspace not found" });
+      }
       const roleInstance = await Role.findOne({
         where: { name: { [Op.iLike]: `%${role}%` } },
       });
@@ -296,6 +301,7 @@ module.exports = {
         workspace_id: workspace_id,
         role_id: roleInstance.id,
       });
+      await workspace.update({ total_user: ++workspace.total_user });
       user.dataValues.role = roleInstance.name;
       Object.assign(response, {
         status: 200,
@@ -310,6 +316,90 @@ module.exports = {
       });
     }
 
+    res.status(response.status).json(response);
+  },
+  leaveWorkspace: async (req, res) => {
+    const { user_id, workspace_id } = req.body;
+    const response = {};
+    try {
+      if (!user_id || !workspace_id) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+      const user_workspace_role = await UserWorkspaceRole.findOne({
+        where: { user_id: user_id, workspace_id: workspace_id },
+      });
+      if (!user_workspace_role) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+      await user_workspace_role.destroy();
+      const workspace = await Workspace.findByPk(workspace_id, {
+        include: { model: User, include: "users" },
+      });
+      await workspace.update({ total_user: workspace.users.length });
+      const user = await User.findOne({
+        where: { workspace_id_active: workspace_id },
+        include: {
+          model: Workspace,
+          as: "workspaces",
+        },
+        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
+      });
+      if (user.workspaces.length > 0) {
+        user.update({ workspace_id_active: user.workspaces[0].id });
+      }
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+        error: error,
+      });
+    }
+    res.status(response.status).json(response);
+  },
+  cancelUser: async (req, res) => {
+    const { user_id, workspace_id } = req.body;
+    const response = {};
+    try {
+      if (!user_id || !workspace_id) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+      const user_workspace_role = await UserWorkspaceRole.findOne({
+        where: { user_id: user_id, workspace_id: workspace_id },
+      });
+      if (!user_workspace_role) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+      await user_workspace_role.destroy();
+      const workspace = await Workspace.findByPk(workspace_id, {
+        include: { model: User, include: "users" },
+      });
+      await workspace.update({ total_user: workspace.users.length });
+      const user = await User.findOne({
+        where: { workspace_id_active: workspace_id },
+        include: {
+          model: Workspace,
+          as: "workspaces",
+        },
+        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
+      });
+      if (user.workspaces.length > 0) {
+        user.update({ workspace_id_active: user.workspaces[0].id });
+      }
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+        error: error,
+      });
+    }
     res.status(response.status).json(response);
   },
 

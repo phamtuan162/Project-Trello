@@ -38,6 +38,9 @@ const FormUpdateWorkspace = ({ workspace }) => {
       if (data.status === 200) {
         dispatch(updateWorkspace({ ...workspace, name: name, desc: desc }));
         toast.success("Cập nhật thành công");
+      } else {
+        const message = data.error;
+        toast.error(message);
       }
     });
   };

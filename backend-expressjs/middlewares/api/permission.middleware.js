@@ -1,4 +1,10 @@
-const { UserWorkspaceRole, Role, Permission } = require("../../models/index");
+const {
+  UserWorkspaceRole,
+  Role,
+  Permission,
+  User,
+  BlacklistToken,
+} = require("../../models/index");
 const jwt = require("jsonwebtoken");
 
 module.exports = (permission) => {
@@ -11,6 +17,7 @@ module.exports = (permission) => {
 
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
+
         const blacklist = await BlacklistToken.findOne({
           where: {
             token,
@@ -19,11 +26,14 @@ module.exports = (permission) => {
         if (blacklist) {
           throw new Error("Token blacklist");
         }
+
         const { data: userId } = decoded;
+        const user = await User.findOne({ where: { id: userId } });
+
         const user_workspace_role = await UserWorkspaceRole.findOne({
-          where: { user_id: userId },
+          where: { user_id: userId, workspace_id: user.workspace_id_active },
         });
-        const roles = await Role.findOne({
+        const role = await Role.findOne({
           where: {
             id: user_workspace_role.role_id,
           },
@@ -32,16 +42,14 @@ module.exports = (permission) => {
             as: "permissions",
           },
         });
+        console.log(role.permissions);
         const permissions = [];
-        if (roles.length) {
-          roles.forEach((role) => {
-            role.permissions.forEach((permission) => {
-              !permissions.includes(permission.value) &&
-                permissions.push(permission.value);
-            });
+        if (role.permissions.length) {
+          role.permissions.forEach((permission) => {
+            !permissions.includes(permission.value) &&
+              permissions.push(permission.value);
           });
         }
-
         //Kiểm tra 1 quyền cụ thể
         req.can = (value) => {
           return permissions.includes(value);
@@ -54,7 +62,7 @@ module.exports = (permission) => {
         Object.assign(response, {
           status: 401,
           message: "Unauthorized",
-          error: "Bạn không có đủ quyền hạn thực hiện thao tác này",
+          error: "Bạn không có đủ quyền hạn để thực hiện thao tác này",
         });
       } catch (error) {
         Object.assign(response, {
@@ -68,6 +76,6 @@ module.exports = (permission) => {
         message: "Unauthorized",
       });
     }
-    return res.json(response);
+    res.status(response.status).json(response);
   };
 };
