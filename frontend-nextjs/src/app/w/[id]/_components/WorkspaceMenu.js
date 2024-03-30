@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -35,9 +35,10 @@ export default function WorkspaceMenu({
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  let workspaces_switched = user?.workspaces?.filter(
-    (item) => +item.id !== +workspaceId
-  );
+  const workspacesSwitched = useMemo(() => {
+    return user?.workspaces?.filter((item) => +item.id !== +workspaceId) || [];
+  }, [user, workspaceId]);
+
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -59,22 +60,19 @@ export default function WorkspaceMenu({
     },
   ];
   useEffect(() => {
-    if (workspaces_switched?.length > 0) {
-      setWorkspaceSearch(workspaces_switched);
+    if (workspacesSwitched?.length > 0) {
+      setWorkspaceSearch(workspacesSwitched);
     }
-  }, [user]);
+  }, [workspacesSwitched]);
   const handleSwitchWorkspace = async (workspace_id_witched) => {
-    switchWorkspace(user.id, {
-      workspace_id_active: workspace_id_witched,
+    switchWorkspace(workspace_id_witched, {
+      user_id: user.id,
     }).then((data) => {
-      if (data) {
-        const workspaceIdActive = data.workspace_id_active;
-        const workspace = user.workspaces.find(
-          (workspace) => +workspace.id === +workspaceIdActive
-        );
-        console.log(workspace);
-        dispatch(updateWorkspace(workspace));
-        router.push(`/w/${data.workspace_id_active}/boards`);
+      if (data.status === 200) {
+        const workspaceActive = data.data;
+        console.log(workspaceActive);
+        dispatch(updateWorkspace(workspaceActive));
+        router.push(`/w/${workspaceActive.id}/boards`);
       }
     });
   };
@@ -87,7 +85,7 @@ export default function WorkspaceMenu({
     setWorkspaceSearch(workspaceNeedSearch);
   };
   const handleClose = async () => {
-    setWorkspaceSearch(workspaces_switched);
+    setWorkspaceSearch(workspacesSwitched);
     setIsSearch(!isSearch);
   };
   return (

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@nextui-org/button";
 import { Avatar, AvatarGroup, Input } from "@nextui-org/react";
-
+import { toast } from "react-toastify";
 import { BoardOptions } from "./BoardOptions";
 export default function BoardNavbar({ board, updateBoard }) {
   const inputRef = useRef(null);
@@ -18,7 +18,13 @@ export default function BoardNavbar({ board, updateBoard }) {
     const title = inputRef.current.value.trim();
 
     if (title && title !== board.title.trim()) {
-      updateBoard(board.id, { title: title });
+      updateBoard(board.id, { title: title }).then((data) => {
+        if (data.status === 200) {
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
     }
     setIsEditing(false);
   };

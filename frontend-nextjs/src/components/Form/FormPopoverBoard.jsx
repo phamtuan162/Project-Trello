@@ -46,26 +46,24 @@ export default function FormPopoverBoard({
       title: title,
       workspace_id: workspace_id,
     }).then((data) => {
-      console.log(data);
-      if ((data.status = 200)) {
-        console.log(data);
-        // const board = data.data;
-        // let updatedBoards = [];
-        // if (Array.isArray(workspace.boards) && workspace.boards.length > 0) {
-        //   updatedBoards = [...workspace.boards, board];
-        // } else {
-        //   updatedBoards = [board];
-        // }
+      if (data.status === 200) {
+        const board = data.data;
+        let updatedBoards = [];
+        if (Array.isArray(workspace.boards) && workspace.boards.length > 0) {
+          updatedBoards = [...workspace.boards, board];
+        } else {
+          updatedBoards = [board];
+        }
 
-        // const updatedWorkspace = { ...workspace, boards: updatedBoards };
-        // dispatch(updateWorkspace(updatedWorkspace));
-        // setIsCreate(false);
-        // toast.success("Thêm bảng thành công");
-        // router.push(`/b/${board.id}`);
+        const updatedWorkspace = { ...workspace, boards: updatedBoards };
+        dispatch(updateWorkspace(updatedWorkspace));
+        toast.success("Thêm bảng thành công");
+        router.push(`/b/${board.id}`);
       } else {
         const error = data.error;
         toast.error(error);
       }
+      setIsCreate(false);
     });
   };
 

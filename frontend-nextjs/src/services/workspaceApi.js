@@ -2,6 +2,7 @@
 // import { API_ROOT } from "@/utils/constants";
 import { client } from "@/services/clientUtils";
 import { getAccessToken } from "./authApi";
+import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 
 /** Workspace */
@@ -54,10 +55,13 @@ export const searchWorkspace = async (userId) => {
   }
 };
 
-export const switchWorkspace = async (userId, body) => {
-  const { response, data } = await client.put(`/user/${userId}`, body);
+export const switchWorkspace = async (workspaceId, body) => {
+  const { response, data } = await client.put(
+    `/workspace/change-workspace/${workspaceId}`,
+    body
+  );
   if (response.ok) {
-    return data.data;
+    return data;
   }
 };
 
@@ -178,8 +182,6 @@ export const createBoard = async (body) => {
   const access_token = Cookies.get("access_token");
 
   const { response, data } = await client.post(`/board`, body, access_token);
-  console.log(data, response.status);
-
   if (response.ok || data.error) {
     return data;
   } else {
@@ -191,16 +193,37 @@ export const createBoard = async (body) => {
 };
 
 export const updateBoardDetail = async (boardId, updateData) => {
-  const { response, data } = await client.put(`/board/${boardId}`, updateData);
-  if (response.ok) {
-    return data.data;
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/board/${boardId}`,
+    updateData,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  } else {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateBoardDetail(boardId, updateData);
+    }
   }
 };
 
 export const deleteBoard = async (boardId) => {
-  const { response, data } = await client.delete(`/board/${boardId}`);
-  if (response.ok) {
-    return data.data;
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.delete(
+    `/board/${boardId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  } else {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteBoard(boardId);
+    }
   }
 };
 

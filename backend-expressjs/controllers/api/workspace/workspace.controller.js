@@ -402,7 +402,36 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+  changeWorkspace: async (req, res) => {
+    const { id } = req.params;
+    const { user_id } = req.body;
 
+    const response = {};
+    if (!user_id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+    const workspace = await Workspace.findOne({
+      where: { id },
+      include: [
+        { model: User, as: "users" },
+        { model: Board, as: "boards" },
+      ],
+    });
+    if (!workspace) {
+      return res.status(404).json({ status: 404, message: "Not found" });
+    }
+
+    await User.update(
+      { workspace_id_active: workspace.id },
+      { where: { id: user_id } }
+    );
+    Object.assign(response, {
+      status: 200,
+      message: "Success",
+      data: new WorkspaceTransformer(workspace),
+    });
+    res.status(response.status).json(response);
+  },
   // switch: async (req, res) => {
   //   const { id, user_id } = req.body;
   //   const response = {};

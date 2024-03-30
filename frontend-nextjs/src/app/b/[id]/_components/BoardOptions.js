@@ -10,16 +10,24 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { deleteBoard } from "@/services/workspaceApi";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+
 export function BoardOptions({ board }) {
+  const router = useRouter();
   const { id: boardId } = useParams();
   const [isOpen, setIsOpen] = useState(false);
 
   const DeleteBoard = async () => {
     toast.warning("Bạn có chắc chắn muốn xóa bảng này đi ", {
       onClick: async () => {
-        deleteBoard(board.id);
-        window.location.href = `/w/${board.workspace_id}/boards`;
+        deleteBoard(board.id).then((data) => {
+          if (data.status === 200) {
+            router.push(`/w/${board.workspace_id}/boards`);
+          } else {
+            const error = data.error;
+            toast.error(error);
+          }
+        });
       },
     });
   };

@@ -11,6 +11,8 @@ router.post(
   permission("workspace.invite"),
   workspaceController.inviteUser
 );
+router.put("/change-workspace/:id", workspaceController.changeWorkspace);
+
 router.put("/leave-workspace", workspaceController.leaveWorkspace);
 router.put(
   "/cancel-user",

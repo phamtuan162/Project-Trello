@@ -70,10 +70,14 @@ const Header = () => {
           dispatch(updateUser(user));
           dispatch(updateProvider(user.providers));
           dispatch(fetchWorkspace(user.workspace_id_active));
-          // if (pathname.startsWith(`/w/${id}`)) {
-          //   dispatch(fetchWorkspace(id));
-          // } else {
-          // }
+          if (pathname.startsWith(`/w/${id}`)) {
+            let currentURL = window.location.href;
+            currentURL = currentURL.replace(
+              id.toString(),
+              user.workspace_id_active.toString()
+            );
+            router.push(currentURL);
+          }
         }
       });
     }
