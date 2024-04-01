@@ -59,13 +59,13 @@ export default function FormCreateWorkspace({ children }) {
     }).then((data) => {
       if (data.status === 200) {
         const workspace = data.data;
-        console.log(workspace);
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
         router.push(`/w/${workspace.id}/home`);
-        setIsCreate(false);
+
         setForm({ name: "", desc: "", color: "#9353D3" });
       }
+      setIsCreate(false);
     });
   };
   const { name, desc, color } = form;
@@ -198,6 +198,7 @@ export default function FormCreateWorkspace({ children }) {
                   value={desc}
                 />
                 <Button
+                  isDisabled={isCreate ? true : false}
                   type="submit"
                   className="rounded-lg h-[52px] text-lg mt-4 w-full text lg font-medium text-white   flex items-center justify-center py-2"
                   style={{ background: "rgb(84, 196, 250)" }}

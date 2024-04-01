@@ -41,12 +41,14 @@ export const getWorkspaceDetail = async (workspaceId) => {
       window.location.href = "/";
     }
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getWorkspaceDetail(workspaceId);
     }
   }
+  return null;
 };
 export const searchWorkspace = async (userId) => {
   const { response, data } = await client.get(`/workspace?user_id=${userId}`);
@@ -76,12 +78,14 @@ export const updateWorkspaceApi = async (workspaceId, body) => {
 
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateWorkspaceApi(workspaceId, body);
     }
   }
+  return null;
 };
 
 export const deleteWorkspaceApi = async (workspaceId) => {
@@ -94,12 +98,14 @@ export const deleteWorkspaceApi = async (workspaceId) => {
 
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
-      return await deleteWorkspaceApi();
+      return await deleteWorkspaceApi(workspaceId);
     }
   }
+  return null;
 };
 
 export const inviteUserApi = async (body) => {
@@ -113,12 +119,14 @@ export const inviteUserApi = async (body) => {
 
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await inviteUserApi(body);
     }
   }
+  return null;
 };
 
 export const leaveWorkspaceApi = async (body) => {
@@ -140,12 +148,14 @@ export const cancelUserWorkspaceApi = async (body) => {
 
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await cancelUserWorkspaceApi(body);
     }
   }
+  return null;
 };
 /** Board */
 
@@ -168,14 +178,17 @@ export const getBoardDetail = async (boardId) => {
   if (response.ok || data.error) {
     if (data.status === 401) {
       window.location.href = "/";
+      return null;
     }
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getBoardDetail(boardId);
     }
   }
+  return null;
 };
 
 export const createBoard = async (body) => {
@@ -184,12 +197,14 @@ export const createBoard = async (body) => {
   const { response, data } = await client.post(`/board`, body, access_token);
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createBoard(body);
     }
   }
+  return null;
 };
 
 export const updateBoardDetail = async (boardId, updateData) => {
@@ -202,12 +217,14 @@ export const updateBoardDetail = async (boardId, updateData) => {
   );
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateBoardDetail(boardId, updateData);
     }
   }
+  return null;
 };
 
 export const deleteBoard = async (boardId) => {
@@ -219,12 +236,14 @@ export const deleteBoard = async (boardId) => {
   );
   if (response.ok || data.error) {
     return data;
-  } else {
+  }
+  if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteBoard(boardId);
     }
   }
+  return null;
 };
 
 export const moveCardToDifferentColumnAPI = async (boardId, updateData) => {
@@ -240,33 +259,73 @@ export const moveCardToDifferentColumnAPI = async (boardId, updateData) => {
 /** Column */
 
 export const createColumn = async (body) => {
-  const { response, data } = await client.post(`/column`, body);
-  if (response.ok) {
-    return data.data;
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(`/column`, body, access_token);
+  if (response.ok || data.error) {
+    return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await createColumn(body);
+    }
+  }
+  return null;
 };
 
 export const updateColumnDetail = async (columnId, updateData) => {
+  const access_token = Cookies.get("access_token");
+
   const { response, data } = await client.put(
     `/column/${columnId}`,
-    updateData
+    updateData,
+    access_token
   );
-  if (response.ok) {
-    return data.data;
+
+  if (response.ok || data.error) {
+    return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateColumnDetail(columnId, updateData);
+    }
+  }
+  return null;
 };
 
 export const deleteColumn = async (columnId) => {
-  const { response, data } = await client.delete(`/column/${columnId}`);
-  if (response.ok) {
-    return data.data;
+  const access_token = Cookies.get("access_token");
+  const { response, data } = await client.delete(
+    `/column/${columnId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteColumn(columnId);
+    }
+  }
+  return null;
 };
 
 /** Card */
 export const createCard = async (body) => {
-  const { response, data } = await client.post(`/card`, body);
-  if (response.ok) {
-    return data.data;
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(`/card`, body, access_token);
+  if (response.ok || data.error) {
+    return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await createCard(body);
+    }
+  }
+  return null;
 };

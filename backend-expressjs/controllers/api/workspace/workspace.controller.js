@@ -89,11 +89,10 @@ module.exports = {
               where: { workspace_id: workspace.id, user_id: user.id },
             });
             const role = await Role.findByPk(user_workspace_role.role_id);
-            console.log(role);
+
             user.dataValues.role = role.name;
           }
         }
-        console.log(workspace);
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -144,10 +143,23 @@ module.exports = {
             await user_workspace_role.update({
               role_id: role.id,
             });
+            const workspaceNew = await Workspace.findByPk(workspace.id, {
+              include: { model: User, as: "users" },
+            });
+            if (workspaceNew.users) {
+              for (const user of workspaceNew.users) {
+                const user_workspace_role = await UserWorkspaceRole.findOne({
+                  where: { workspace_id: workspace.id, user_id: user.id },
+                });
+                const role = await Role.findByPk(user_workspace_role.role_id);
+
+                user.dataValues.role = role.name;
+              }
+            }
             Object.assign(response, {
               status: 200,
               message: "Success",
-              data: new WorkspaceTransformer(workspace),
+              data: new WorkspaceTransformer(workspaceNew),
             });
           } else {
             Object.assign(response, {
@@ -241,17 +253,19 @@ module.exports = {
       }
       await Board.destroy({ where: { workspace_id: id }, force: true });
 
+      await UserWorkspaceRole.destroy({ where: { workspace_id: id } });
+
       await Workspace.destroy({ where: { id } });
-      const user = await User.findOne({ where: { workspace_id_active: id } });
 
-      if (user) {
-        const workspaces = await Workspace.findAll({
-          order: [["updated_at", "desc"]],
-          where: { user_id: user.id },
-        });
+      const users = await User.findAll({
+        where: { workspace_id_active: id },
+        include: [{ model: Workspace, as: "workspaces" }],
+        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
+      });
 
-        if (workspaces.length > 0) {
-          const latestWorkspace = workspaces[0];
+      for (const user of users) {
+        if (user.workspaces.length > 0) {
+          const latestWorkspace = user.workspaces[0];
           await user.update({ workspace_id_active: latestWorkspace.id });
         }
       }
@@ -264,7 +278,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Sever error",
-        error: error,
       });
     }
     res.status(response.status).json(response);
@@ -301,7 +314,7 @@ module.exports = {
         workspace_id: workspace_id,
         role_id: roleInstance.id,
       });
-      await workspace.update({ total_user: ++workspace.total_user });
+      await workspace.update({ total_user: workspace.total_user + 1 });
       user.dataValues.role = roleInstance.name;
       Object.assign(response, {
         status: 200,
@@ -420,7 +433,16 @@ module.exports = {
     if (!workspace) {
       return res.status(404).json({ status: 404, message: "Not found" });
     }
+    if (workspace.users) {
+      for (const user of workspace.users) {
+        const user_workspace_role = await UserWorkspaceRole.findOne({
+          where: { workspace_id: workspace.id, user_id: user.id },
+        });
+        const role = await Role.findByPk(user_workspace_role.role_id);
 
+        user.dataValues.role = role.name;
+      }
+    }
     await User.update(
       { workspace_id_active: workspace.id },
       { where: { id: user_id } }
@@ -432,46 +454,4 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
-  // switch: async (req, res) => {
-  //   const { id, user_id } = req.body;
-  //   const response = {};
-
-  //   try {
-  //     if (id && user_id) {
-  //       const workspace = await Workspace.findByPk(id);
-  //       if (!workspace) {
-  //         Object.assign(response, {
-  //           status: 404,
-  //           message: "Not Found",
-  //         });
-  //       } else {
-  //         if ((user_id = workspace.user_id)) {
-  //           await Workspace.update(user_id, {
-  //             isActive: false,
-  //           });
-  //           workspace.update({ isActive: true });
-  //           Object.assign(response, {
-  //             status: 200,
-  //             message: "Success",
-  //             data: new WorkspaceTransformer(workspace),
-  //           });
-  //         } else {
-  //           Object.assign(response, {
-  //             status: 400,
-  //             message: "Bad Request",
-  //           });
-  //         }
-  //       }
-  //     } else {
-  //       Object.assign(response, {
-  //         status: 400,
-  //         message: "Bad Request",
-  //       });
-  //     }
-  //   } catch (error) {
-  //     response.status = 500;
-  //     response.message = "Server Error";
-  //   }
-  //   res.status(response.status).json(response);
-  // },
 };

@@ -24,6 +24,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { switchWorkspace } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import Loading from "@/components/Loading/Loading";
 const { updateWorkspace } = workspaceSlice.actions;
 export default function WorkspaceMenu({
   children,
@@ -38,10 +39,11 @@ export default function WorkspaceMenu({
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspaceId) || [];
   }, [user, workspaceId]);
-
+  console.log(workspacesSwitched);
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
+  const [isChange, setIsChange] = useState(false);
   const options = [
     {
       href: "/settings",
@@ -65,13 +67,14 @@ export default function WorkspaceMenu({
     }
   }, [workspacesSwitched]);
   const handleSwitchWorkspace = async (workspace_id_witched) => {
+    setIsChange(true);
     switchWorkspace(workspace_id_witched, {
       user_id: user.id,
     }).then((data) => {
       if (data.status === 200) {
         const workspaceActive = data.data;
-        console.log(workspaceActive);
         dispatch(updateWorkspace(workspaceActive));
+        setIsChange(false);
         router.push(`/w/${workspaceActive.id}/boards`);
       }
     });
@@ -88,6 +91,10 @@ export default function WorkspaceMenu({
     setWorkspaceSearch(workspacesSwitched);
     setIsSearch(!isSearch);
   };
+
+  if (isChange) {
+    return <Loading backgroundColor={"white"} zIndex={"100"} />;
+  }
   return (
     <Popover
       onClose={handleClose}

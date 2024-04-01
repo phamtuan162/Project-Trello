@@ -41,6 +41,7 @@ const FormUpdateWorkspace = ({ workspace }) => {
       } else {
         const message = data.error;
         toast.error(message);
+        setForm({ ...form, name: workspace.name, desc: workspace.desc });
       }
     });
   };

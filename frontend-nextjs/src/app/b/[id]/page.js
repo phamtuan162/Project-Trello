@@ -52,18 +52,20 @@ export default function BoardIdPage() {
   }, []);
 
   const moveColumns = (dndOrderedColumns) => {
-    try {
-      const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
-      const newBoard = { ...board };
-      newBoard.columns = dndOrderedColumns;
-      newBoard.columnOrderIds = dndOrderedColumnsIds;
-      setBoard(newBoard);
-      updateBoardDetail(newBoard.id, {
-        columnOrderIds: dndOrderedColumnsIds,
-      });
-    } catch (error) {
-      console.error("Error move column:", error);
-    }
+    const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
+    const newBoard = { ...board };
+    newBoard.columns = dndOrderedColumns;
+    newBoard.columnOrderIds = dndOrderedColumnsIds;
+    updateBoardDetail(newBoard.id, {
+      columnOrderIds: dndOrderedColumnsIds,
+    }).then((data) => {
+      if (data.status === 200) {
+        setBoard(newBoard);
+      } else {
+        const error = data.error;
+        toast.error(error);
+      }
+    });
   };
 
   const moveCardInTheSameColumn = (
@@ -71,22 +73,25 @@ export default function BoardIdPage() {
     dndOrderedCardIds,
     columnId
   ) => {
-    try {
-      const newBoard = { ...board };
-      const columnToUpdate = newBoard.columns.find(
-        (column) => column.id === columnId
-      );
-      if (columnToUpdate) {
-        columnToUpdate.cards = dndOrderedCards;
-        columnToUpdate.cardOrderIds = dndOrderedCardIds;
-      }
-
-      updateColumnDetail(columnId, { cardOrderIds: dndOrderedCardIds });
-
-      setBoard(newBoard);
-    } catch (error) {
-      console.error("Error move card in the same column:", error);
+    const newBoard = { ...board };
+    const columnToUpdate = newBoard.columns.find(
+      (column) => column.id === columnId
+    );
+    if (columnToUpdate) {
+      columnToUpdate.cards = dndOrderedCards;
+      columnToUpdate.cardOrderIds = dndOrderedCardIds;
     }
+
+    updateColumnDetail(columnId, { cardOrderIds: dndOrderedCardIds }).then(
+      (data) => {
+        if (data.status === 200) {
+          setBoard(newBoard);
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      }
+    );
   };
 
   const moveCardToDifferentColumn = async (
@@ -123,54 +128,57 @@ export default function BoardIdPage() {
   };
 
   const deleteColumnDetail = async (columnId) => {
-    try {
-      const newBoard = { ...board };
-      newBoard.columns = newBoard.columns.filter((c) => c.id !== columnId);
-      newBoard.columnOrderIds = newBoard.columnOrderIds.filter(
-        (id) => id !== columnId
-      );
+    const newBoard = { ...board };
+    newBoard.columns = newBoard.columns.filter((c) => c.id !== columnId);
+    newBoard.columnOrderIds = newBoard.columnOrderIds.filter(
+      (id) => id !== columnId
+    );
 
-      await deleteColumn(columnId);
+    deleteColumn(columnId).then(async (data) => {
+      if (data.status === 200) {
+        await updateBoardDetail(newBoard.id, {
+          columnOrderIds: newBoard.columnOrderIds,
+        });
 
-      await updateBoardDetail(newBoard.id, {
-        columnOrderIds: newBoard.columnOrderIds,
-      });
-
-      setBoard(newBoard);
-      toast.success("Bạn đã xóa danh sách thành công");
-    } catch (error) {
-      console.error("Lỗi khi xóa danh sách:", error);
-    }
+        setBoard(newBoard);
+        toast.success("Bạn đã xóa danh sách thành công");
+      } else {
+        const error = data.error;
+        toast.error(error);
+      }
+    });
   };
 
   const createNewColumn = async (newColumnData) => {
-    try {
-      const columnNew = await createColumn({
-        ...newColumnData,
-        board_id: board.id,
-      });
-      const createdColumn = columnNew;
-      const placeholderCard = generatePlaceholderCard(createdColumn);
-      createdColumn.cards = [placeholderCard];
-      createdColumn.cardOrderIds = [placeholderCard.id];
-      const newBoard = { ...board };
-      if (newBoard.columnOrderIds === null) {
-        newBoard.columnOrderIds = [];
-      }
-      newBoard.columns.push(createdColumn);
-      newBoard.columnOrderIds.push(createdColumn.id);
-      setBoard(newBoard);
+    await createColumn({
+      ...newColumnData,
+      board_id: board.id,
+    }).then((data) => {
+      if (data.status === 200) {
+        const createdColumn = data.data;
+        const placeholderCard = generatePlaceholderCard(createdColumn);
+        createdColumn.cards = [placeholderCard];
+        createdColumn.cardOrderIds = [placeholderCard.id];
+        const newBoard = { ...board };
+        if (newBoard.columnOrderIds === null) {
+          newBoard.columnOrderIds = [];
+        }
+        newBoard.columns.push(createdColumn);
+        newBoard.columnOrderIds.push(createdColumn.id);
+        setBoard(newBoard);
 
-      toast.success("Tạo danh sách thành công");
-    } catch (error) {
-      console.error("Lỗi khi tạo danh sách mới:", error);
-    }
+        toast.success("Tạo danh sách thành công");
+      } else {
+        const error = data.error;
+        toast.error(error);
+      }
+    });
   };
 
   const updateColumn = async (columnId, updateData) => {
-    try {
-      const data = await updateColumnDetail(columnId, { ...updateData });
-      const updatedColumn = data;
+    const data = await updateColumnDetail(columnId, { ...updateData });
+    if (data.status === 200) {
+      const updatedColumn = data.data;
       const newBoard = { ...board };
       const columnIndex = newBoard.columns.findIndex(
         (column) => column.id === updatedColumn.id
@@ -179,21 +187,20 @@ export default function BoardIdPage() {
         newBoard.columns[columnIndex] = updatedColumn;
         setBoard(newBoard);
         toast.success("Cập nhật thành công");
-      } else {
-        console.error("Không tìm thấy thẻ cần cập nhật trong newBoard");
       }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật thẻ:", error);
+    } else {
+      const error = data.error;
+      toast.error(error);
     }
   };
 
   const createNewCard = async (newCardData, columnId) => {
-    try {
-      const data = await createCard({
-        ...newCardData,
-        column_id: columnId,
-      });
-      const createdCard = data;
+    const data = await createCard({
+      ...newCardData,
+      column_id: columnId,
+    });
+    if (data.status === 200) {
+      const createdCard = data.data;
       const newBoard = { ...board };
       const columnToUpdate = newBoard.columns.find(
         (column) => column.id === createdCard.column_id
@@ -209,22 +216,24 @@ export default function BoardIdPage() {
       }
       setBoard(newBoard);
       toast.success("Tạo thẻ thành công");
-    } catch (error) {
-      console.error("Lỗi khi tạo thẻ mới :", error);
+    } else {
+      const error = data.error;
+      toast.error(error);
     }
   };
 
   const updateBoard = async (boardId, updateData) => {
-    try {
-      await updateBoardDetail(boardId, { ...updateData });
+    const data = await updateBoardDetail(boardId, { ...updateData });
+    if (data.status === 200) {
       const newBoard = { ...board };
       if (updateData.title) {
         newBoard.title = updateData.title;
         setBoard(newBoard);
         toast.success("Cập nhật thành công");
       }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật bảng:", error);
+    } else {
+      const error = data.error;
+      toast.error(error);
     }
   };
   return (

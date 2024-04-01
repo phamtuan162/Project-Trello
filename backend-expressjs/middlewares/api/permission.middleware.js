@@ -42,7 +42,6 @@ module.exports = (permission) => {
             as: "permissions",
           },
         });
-        console.log(role.permissions);
         const permissions = [];
         if (role.permissions.length) {
           role.permissions.forEach((permission) => {

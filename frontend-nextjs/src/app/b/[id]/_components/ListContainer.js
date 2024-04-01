@@ -13,7 +13,8 @@ import {
 
 import { MouseSensor, TouchSensor } from "@/lib/DndKitSensors";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { cloneDeep, isEmpty } from "lodash";
 
 import { ListColumn } from "./ListColumn";
@@ -37,6 +38,11 @@ export function ListContainer({
   updateColumn,
   updateBoard,
 }) {
+  const user = useSelector((state) => state.user.user);
+  const checkUser = useMemo(
+    () => user.role && user.role.toLowerCase() === "guest",
+    [user]
+  );
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: { distance: 10 },
   });
@@ -159,6 +165,7 @@ export function ListContainer({
     });
   };
   const HandleDragStart = (e) => {
+    if (checkUser) return;
     setActiveDragItemId(e?.active?.id);
     setActiveDragItemType(
       e?.active?.data?.current?.column_id
@@ -172,9 +179,9 @@ export function ListContainer({
   };
 
   const HandleDragOver = (e) => {
+    if (checkUser) return;
     if (activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN) return;
     const { active, over } = e;
-    console.log(e);
     if (!over || !active) return;
 
     const {
@@ -202,6 +209,7 @@ export function ListContainer({
   };
 
   const HandleDragEnd = (e) => {
+    if (checkUser) return;
     const { active, over } = e;
     if (!over || !active) return;
 

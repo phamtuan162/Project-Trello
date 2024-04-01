@@ -27,6 +27,7 @@ const FormInviteUser = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [usersSearch, setUsersSearch] = useState([]);
   const [userInvite, setUserInvite] = useState(null);
+  const [timeoutId, setTimeoutId] = useState(null);
   const [keyword, setKeyWord] = useState("");
   const [message, setMessage] = useState(
     `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
@@ -52,24 +53,31 @@ const FormInviteUser = () => {
     },
   ];
   const HandleSearchUser = async (e) => {
-    const inputKeyword = e.target.value;
+    const inputKeyword = e.target.value.trim();
     setIsSearch(inputKeyword !== "");
+    setKeyWord(e.target.value);
 
+    // Xóa timeout trước đó (nếu có)
+    clearTimeout(timeoutId);
+
+    // Thiết lập timeout mới
     if (inputKeyword !== "" && inputKeyword.length > 2) {
-      setIsLoading(true);
-      searchUser({ keyword: inputKeyword, limit: 6 }).then((data) => {
-        if (data.status === 200) {
-          const users = data.data;
-          setIsLoading(false);
+      const newTimeoutId = setTimeout(async () => {
+        setIsLoading(true);
+        searchUser({ keyword: inputKeyword, limit: 6 }).then((data) => {
+          if (data.status === 200) {
+            const users = data.data;
+            setIsLoading(false);
+            setUsersSearch(users);
+          }
+        });
+      }, 1000); // Thời gian trễ là 2 giây
 
-          setUsersSearch(users);
-        }
-      });
+      // Lưu ID của timeout mới vào state
+      setTimeoutId(newTimeoutId);
     } else {
       setUsersSearch([]);
     }
-
-    setKeyWord(inputKeyword);
   };
   const HandleInviteUser = async (e) => {
     e.preventDefault();

@@ -6,7 +6,11 @@ const permission = require("../../../middlewares/api/permission.middleware");
 router.get("/", boardController.index);
 router.get("/:id", permission("board.read"), boardController.find);
 router.post("/", permission("board.create"), boardController.store);
-router.put("/move-card/:id", boardController.moveCard);
+router.put(
+  "/move-card/:id",
+
+  boardController.moveCard
+);
 router.put("/:id", permission("board.update"), boardController.update);
 router.patch("/:id", permission("board.update"), boardController.update);
 router.delete("/:id", permission("board.delete"), boardController.delete);

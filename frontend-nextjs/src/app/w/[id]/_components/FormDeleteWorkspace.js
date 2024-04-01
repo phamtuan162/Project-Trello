@@ -5,6 +5,7 @@ import {
   PopoverTrigger,
   PopoverContent,
   Button,
+  CircularProgress,
 } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
@@ -18,6 +19,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
     "Bằng cách xóa không gian làm việc này, bạn sẽ xóa tất cả các bảng và dự án.Tất cả dữ liệu và tín dụng thanh toán của bạn sẽ bị mất."
   );
   const [isOpen, setIsOpen] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
 
   const nameRef = useRef(null);
 
@@ -25,9 +27,12 @@ const FormDeleteWorkspace = ({ workspace }) => {
     setIsOpen(true);
   };
 
-  const HandleDeleteWorkspace = async () => {
+  const HandleDeleteWorkspace = async (e) => {
+    e.preventDefault();
+    setIsDelete(true);
     if (name === workspace.name) {
       deleteWorkspaceApi(workspace.id).then((data) => {
+        setIsDelete(false);
         if (data.status === 200) {
           toast.success("Xóa thành công ");
           document.location.href = "/";
@@ -37,6 +42,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
         }
       });
     } else {
+      setIsDelete(false);
       setMessage(
         "Tên không gian làm việc không trừng khớp, Vui lòng nhập lại!"
       );
@@ -96,42 +102,42 @@ const FormDeleteWorkspace = ({ workspace }) => {
 
               <p className="mt-4">
                 Vui lòng nhập lại
-                <span className="font-bold text-md mx-1">
-                  Không gian làm việc
-                </span>
+                <span className="font-bold text-md mx-1">{workspace.name}</span>
                 để xác nhận
               </p>
-
-              <Input
-                isRequired
-                type="text"
-                name="name"
-                id="name"
-                placeholder="Tên không gian làm việc..."
-                variant="bordered"
-                className="mt-3"
-                ref={nameRef}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <div className="flex w-full justify-end gap-3 mt-4">
-                <Button
-                  onClick={() => setIsOpen(false)}
-                  type="button"
-                  className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
-                  color="primary"
-                >
-                  Hủy bỏ
-                </Button>
-                <Button
-                  onClick={() => HandleDeleteWorkspace()}
-                  type="button"
-                  className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
-                  color="danger"
-                >
-                  Xóa bỏ
-                </Button>
-              </div>
+              <form action="" onSubmit={(e) => HandleDeleteWorkspace(e)}>
+                <Input
+                  isRequired
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="Tên không gian làm việc..."
+                  variant="bordered"
+                  className="mt-3"
+                  ref={nameRef}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <div className="flex w-full justify-end gap-3 mt-4">
+                  <Button
+                    isDisabled={isDelete ? true : false}
+                    onClick={() => setIsOpen(false)}
+                    type="button"
+                    className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
+                    color="primary"
+                  >
+                    {isDelete ? <CircularProgress size={16} /> : " Hủy bỏ"}
+                  </Button>
+                  <Button
+                    isDisabled={isDelete ? true : false}
+                    type="submit"
+                    className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
+                    color="danger"
+                  >
+                    {isDelete ? <CircularProgress size={16} /> : " Xóa bỏ"}
+                  </Button>
+                </div>
+              </form>
             </div>
           )}
         </PopoverContent>
