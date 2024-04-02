@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       desc: DataTypes.STRING,
       type: DataTypes.STRING,
       background: DataTypes.STRING,
+      status: DataTypes.STRING,
       columnOrderIds: DataTypes.ARRAY(DataTypes.INTEGER),
     },
     {

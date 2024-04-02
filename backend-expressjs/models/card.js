@@ -7,6 +7,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "column_id",
         as: "columns",
       });
+      Card.belongsToMany(models.User, {
+        foreignKey: "card_id",
+        through: "users_cards",
+        as: "users",
+      });
     }
   }
   Card.init(
@@ -19,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       column_id: DataTypes.INTEGER,
       title: DataTypes.STRING,
       desc: DataTypes.STRING,
+      background: DataTypes.STRING,
     },
     {
       sequelize,

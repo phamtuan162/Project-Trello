@@ -6,6 +6,7 @@ const permission = require("../../../middlewares/api/permission.middleware");
 router.get("/", cardController.index);
 router.get("/:id", cardController.find);
 router.post("/", permission("card.create"), cardController.store);
+router.post("/assign-user/:id", cardController.assignUser);
 router.put("/:id", permission("card.update"), cardController.update);
 router.patch("/:id", permission("card.update"), cardController.update);
 router.delete("/:id", permission("card.delete"), cardController.delete);

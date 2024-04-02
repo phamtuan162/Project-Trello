@@ -98,7 +98,7 @@ module.exports = {
       });
 
       Object.assign(response, {
-        status: 201,
+        status: 200,
         message: "Success",
         data: roleCreated,
       });

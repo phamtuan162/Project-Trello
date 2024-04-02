@@ -116,7 +116,7 @@ module.exports = {
       body.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10));
       const user = await User.create(body);
       delete user.dataValues.password;
-      Object.assign(response, { status: 201, message: "Success", data: user });
+      Object.assign(response, { status: 200, message: "Success", data: user });
     } catch (e) {
       const errors = Object.fromEntries(
         e.inner.map(({ path, message }) => [path, message])

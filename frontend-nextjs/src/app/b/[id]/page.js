@@ -248,8 +248,7 @@ export default function BoardIdPage() {
           }}
         >
           <BoardNavbar board={board} updateBoard={updateBoard} />
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="relative pt-28 h-full">
+          <div className="relative pt-20 h-full">
             <div className="p-4 h-full overflow-y-hidden overflow-x-auto">
               <ListContainer
                 board={board}

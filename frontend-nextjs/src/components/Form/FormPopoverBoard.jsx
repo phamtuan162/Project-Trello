@@ -40,11 +40,13 @@ export default function FormPopoverBoard({
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
     const title = formData.get("title");
+    const status = formData.get("status");
 
     createBoard({
       background: image,
       title: title,
       workspace_id: workspace_id,
+      status: status,
     }).then((data) => {
       if (data.status === 200) {
         const board = data.data;
@@ -168,6 +170,7 @@ export default function FormPopoverBoard({
               </p>
               <div className="mt-2 flex flex-col gap-2 w-full">
                 <Select
+                  name="status"
                   defaultSelectedKeys={["private"]}
                   size="xs"
                   variant="bordered"
@@ -175,13 +178,19 @@ export default function FormPopoverBoard({
                   id="mode"
                 >
                   <SelectItem
+                    name="status"
                     key={"private"}
                     value={"private"}
                     id="mode_private"
                   >
                     Riêng tư
                   </SelectItem>
-                  <SelectItem key={"public"} value={"public"} id="public">
+                  <SelectItem
+                    name="status"
+                    key={"public"}
+                    value={"public"}
+                    id="public"
+                  >
                     Công khai
                   </SelectItem>
                 </Select>

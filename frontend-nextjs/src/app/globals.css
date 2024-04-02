@@ -87,3 +87,15 @@ header {
 .ReactCrop__crop-mask {
   border-radius: 12px;
 }
+.group-avatar-1 > * {
+  height: 24px !important;
+  width: 24px !important;
+}
+
+.card-1 {
+  height: 176.667px;
+  max-height: 260px;
+  background-color: rgb(189, 195, 195);
+  background-image: url(https://trello-backgrounds.s3.amazonaws.com/SharedBackground/960x640/f898232…/photo-1711619034500-8f562ce7bf4f.jpg);
+  background-size: cover;
+}

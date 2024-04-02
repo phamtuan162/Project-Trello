@@ -1,4 +1,4 @@
-const { Card, Column } = require("../../../models/index");
+const { Card, Column, User } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
@@ -31,7 +31,9 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const card = await Card.findByPk(id);
+      const card = await Card.findByPk(id, {
+        include: { model: User, as: "users" },
+      });
       if (!card) {
         Object.assign(response, {
           status: 404,
@@ -174,6 +176,35 @@ module.exports = {
         error: error,
       });
     }
+    res.status(response.status).json(response);
+  },
+  assignUser: async (req, res) => {
+    const { id } = req.params;
+    const { user_id } = req.body;
+    const response = {};
+    const card = await Card.findByPk(id);
+    if (!card) {
+      return res.status(404).json({ status: 404, message: "Not found card" });
+    }
+    if (!user_id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+    const user = await User.findByPk(user_id);
+
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "Not found user" });
+    }
+
+    await card.addUser(user);
+
+    const cardAssignedUser = await Card.findByPk(id, {
+      include: { model: User, as: "users" },
+    });
+    Object.assign(response, {
+      status: 200,
+      message: "Success",
+      card: new CardTransformer(cardAssignedUser),
+    });
     res.status(response.status).json(response);
   },
 };

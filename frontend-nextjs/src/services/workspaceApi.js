@@ -329,3 +329,22 @@ export const createCard = async (body) => {
   }
   return null;
 };
+
+export const assignUserApi = async (cardId, body) => {
+  const access_token = Cookies.get("access_token");
+  const { response, data } = await client.post(
+    `/card/assign-user/${cardId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await assignUser(cardId, body);
+    }
+  }
+  return null;
+};

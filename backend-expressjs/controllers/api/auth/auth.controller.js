@@ -258,7 +258,7 @@ module.exports = {
     const user_workspace_role = await UserWorkspaceRole.findOne({
       where: { user_id: id, workspace_id: user.workspace_id_active },
     });
-    if (user_workspace_role.role_id) {
+    if (user_workspace_role?.role_id) {
       const role = await Role.findByPk(user_workspace_role.role_id);
       if (role) {
         user.dataValues.role = role.name;

@@ -18,6 +18,12 @@ module.exports = (sequelize, DataTypes) => {
         through: "users_workspaces_roles",
         as: "workspaces",
       });
+
+      User.belongsToMany(models.Card, {
+        foreignKey: "user_id",
+        through: "users_cards",
+        as: "cards",
+      });
     }
   }
   User.init(

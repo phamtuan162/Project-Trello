@@ -1,12 +1,21 @@
-const { Board, Column, Card } = require("../../../models/index");
+const { Board, Column, Card, User } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const BoardTransformer = require("../../../transformers/workspace/board.transformer");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "desc", sort = "updated_at", workspace_id, q } = req.query;
+    const {
+      order = "desc",
+      sort = "updated_at",
+      status,
+      workspace_id,
+      q,
+    } = req.query;
     const filters = {};
+    if (status) {
+      filters.status = status;
+    }
     if (workspace_id) {
       filters.workspace_id = workspace_id;
     }
@@ -47,6 +56,10 @@ module.exports = {
           include: {
             model: Card,
             as: "cards",
+            include: {
+              model: User,
+              as: "users",
+            },
           },
         },
         paranoid: true,
@@ -75,6 +88,11 @@ module.exports = {
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
     }
+
+    if (req.body.status) {
+      rules.status = string().required("Chọn trạng thái");
+    }
+
     const schema = object(rules);
 
     const response = {};
@@ -109,7 +127,9 @@ module.exports = {
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
     }
-
+    if (req.body.status) {
+      rules.status = string().required("Chọn trạng thái");
+    }
     const schema = object(rules);
     const response = {};
     //Validate

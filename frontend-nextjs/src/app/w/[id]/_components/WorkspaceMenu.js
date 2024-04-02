@@ -39,7 +39,6 @@ export default function WorkspaceMenu({
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspaceId) || [];
   }, [user, workspaceId]);
-  console.log(workspacesSwitched);
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -82,7 +81,7 @@ export default function WorkspaceMenu({
 
   const handleSearchWorkspace = async (e) => {
     const searchString = e.target.value.toLowerCase();
-    const workspaceNeedSearch = workspaces_switched.filter((item) =>
+    const workspaceNeedSearch = workspacesSwitched.filter((item) =>
       item.name.toLowerCase().includes(searchString)
     );
     setWorkspaceSearch(workspaceNeedSearch);
