@@ -17,6 +17,7 @@
     "@nextui-org/navbar": "^2.0.27",
     "@nextui-org/react": "^2.2.9",
     "@radix-ui/react-accordion": "^1.1.2",
+    "@radix-ui/react-dialog": "^1.0.5",
     "@reduxjs/toolkit": "^2.1.0",
     "@tanstack/react-query": "^5.28.4",
     "axios": "^1.6.7",
@@ -41,7 +42,8 @@
     "scss": "^0.2.4",
     "socket.io-client": "^4.7.5",
     "tailwind-merge": "^2.2.1",
-    "unsplash-js": "^7.0.19"
+    "unsplash-js": "^7.0.19",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.17",

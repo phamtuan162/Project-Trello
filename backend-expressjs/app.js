@@ -1,5 +1,7 @@
 require("dotenv").config();
 const { User } = require("./models/index");
+const cron = require("node-cron");
+const blacklist_token = require("./cronjobs/blacklist_tokens");
 var createError = require("http-errors");
 var express = require("express");
 const http = require("http");
@@ -107,6 +109,10 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/v1", apiRouter);
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+
+cron.schedule("* 0 * * *", () => {
+  blacklist_token.delete();
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

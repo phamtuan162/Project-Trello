@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -7,6 +7,7 @@ import AssignUser from "./AssignUser";
 import { CalendarCheck, Tags, Flag, Check, Pencil } from "lucide-react";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { Avatar, AvatarGroup } from "@nextui-org/react";
+import useCardModal from "@/hooks/use-card-modal";
 export function Card({ card }) {
   const {
     attributes,
@@ -20,7 +21,7 @@ export function Card({ card }) {
     data: { ...card },
   });
   const user = useSelector((state) => state.user.user);
-
+  const cardModal = useCardModal();
   const dndKitCardStyles = {
     transform: CSS.Translate.toString(transform),
     transition,
@@ -57,6 +58,14 @@ export function Card({ card }) {
   const [isEdit, setIsEdit] = useState(false);
   const [userAssigned, setUserAssigned] = useState(card.users);
   const [isAssign, setIsAssign] = useState(false);
+  const [isDrop, setIsDrop] = useState(false);
+
+  const checkRoleCard = useMemo(() => {
+    return card?.users?.some((item) => +user.id === +item.id);
+  }, [user, card]);
+  const checkRoleBoard = useMemo(() => {
+    return user?.role?.toLowerCase() === "admin";
+  }, [user]);
   useEffect(() => {
     if (card?.users) {
       setUserAssigned(card.users);
@@ -67,11 +76,12 @@ export function Card({ card }) {
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
-      {...(isAssign || user?.role?.toLowerCase() !== "admin" ? {} : listeners)}
+      {...((isAssign && isDrop) || (checkRoleBoard && isDrop) ? listeners : {})}
       key={card.id}
       role="button"
-      onMouseEnter={() => setIsEdit(true)}
-      onMouseLeave={() => setIsEdit(false)}
+      onClick={() => {
+        cardModal.onOpen(card.id);
+      }}
       className="  text-sm bg-white rounded-md shadow-sm card relative z-45"
     >
       {card?.background && (
@@ -87,7 +97,7 @@ export function Card({ card }) {
         {card.title}
         <div
           className={`${
-            !isEdit || user.role.toLowerCase() !== "admin" ? "hidden" : ""
+            !isEdit || checkRoleBoard ? "hidden" : ""
           } absolute right-2 top-1/2 -translate-y-1/2 z-50 `}
         >
           <AssignUser
@@ -99,7 +109,7 @@ export function Card({ card }) {
           />
         </div>
 
-        <AvatarGroup max={2} className="justify-start group-avatar-1 mt-2">
+        <AvatarGroup max={2} className="justify-start group-avatar-1 mt-1">
           {userAssigned?.map((user) => (
             <Avatar
               key={user.id}
@@ -111,18 +121,18 @@ export function Card({ card }) {
           ))}
         </AvatarGroup>
       </div>
-      {isEdit && (
-        <div className="border-t-1 border-solid border-default-300 p-2 flex items-center gap-3  text-default-400">
-          {actions.map((action, index) => (
-            <div
-              key={index}
-              className={`hover:text-indigo-400 ${index === 4 && "ml-auto"}`}
-            >
-              {action.icon}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
+//  {isEdit && (
+//       <div className="border-t-1 border-solid border-default-300 p-2 flex items-center gap-3  text-default-400">
+//         {actions.map((action, index) => (
+//           <div
+//             key={index}
+//             className={`hover:text-indigo-400 ${index === 4 && "ml-auto"}`}
+//           >
+//             {action.icon}
+//           </div>
+//         ))}
+//       </div>
+//     )}

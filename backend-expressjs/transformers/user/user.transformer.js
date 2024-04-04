@@ -12,6 +12,7 @@ class UserTransformer extends Transformer {
       avatar: instance.avatar,
       providerId: instance.provider_id,
       workspace_id_active: instance.workspace_id_active,
+      isOnline: instance.isOnline,
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,
       role: instance.role,

@@ -8,6 +8,7 @@ class CardTransformer extends Transformer {
       title: instance.title,
       users: instance.users || [],
       desc: instance.desc,
+      dueDate: instance.dueDate,
       background: instance.background,
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,

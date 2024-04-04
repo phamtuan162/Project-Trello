@@ -60,7 +60,6 @@ const Header = () => {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isLoading, setIsLoading] = useState(true);
-  const [check, setCheck] = useState(false);
 
   useEffect(() => {
     if (!user.id && !pathname.startsWith("/auth/")) {
@@ -81,11 +80,6 @@ const Header = () => {
         }
       });
     }
-
-    // if (+user.workspace_id_active !== +workspace.id && !check) {
-    //   setCheck(true);
-    //   window.location.href = "/";
-    // }
   }, [pathname]);
 
   useEffect(() => {
@@ -97,10 +91,19 @@ const Header = () => {
       return () => clearTimeout(timer);
     }
   }, [user, workspace]);
-
   if (isLoading) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;
   }
+  // window.addEventListener("beforeunload", function (event) {
+  //   if (user.id) {
+  //     var confirmationMessage = "Are you sure you want to leave?"; // Thông báo xác nhận
+
+  //     updateProfile(user.id, { isOnline: false });
+
+  //     (event || window.event).returnValue = confirmationMessage; // Cho phép hiển thị thông báo xác nhận rời khỏi trang
+  //     return confirmationMessage;
+  //   }
+  // });
 
   return (
     <Navbar

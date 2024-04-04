@@ -9,8 +9,10 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon, UserPlus } from "lucide-react";
 import { useSelector } from "react-redux";
-import { assignUserApi } from "@/services/workspaceApi";
+import { assignUserApi, unAssignUserApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+
 const AssignUser = ({
   isAssign,
   setIsAssign,
@@ -18,6 +20,7 @@ const AssignUser = ({
   userAssigned,
   card,
 }) => {
+  const router = useRouter();
   const [timeoutId, setTimeoutId] = useState(null);
   const [keyword, setKeyWord] = useState("");
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -34,7 +37,6 @@ const AssignUser = ({
   const HandleSearchUser = async (e) => {
     const inputKeyword = e.target.value.toLowerCase().trim();
     setKeyWord(e.target.value);
-
     // Xóa timeout trước đó (nếu có)
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -58,17 +60,34 @@ const AssignUser = ({
   };
 
   const HandleSelectUserAssigned = async (user) => {
-    assignUserApi(card.id, { user_id: user.id }).then((data) => {
-      if (data.status === 200) {
-        const userAssignedUpdate = [...userAssigned, user];
-        setUserAssigned(userAssignedUpdate);
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
-    setKeyWord("");
-    setIsAssign(false);
+    if (card.users.length > 1) {
+      toast.error("Tối đa 3 thành viên");
+    } else {
+      assignUserApi(card.id, { user_id: user.id }).then((data) => {
+        if (data.status === 200) {
+          const user = data.card.users;
+          setUserAssigned(user);
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
+      setKeyWord("");
+    }
+  };
+
+  const HandleUnAssignedCard = async (user) => {
+    if (user) {
+      unAssignUserApi(card.id, { user_id: user.id }).then((data) => {
+        if (data.status === 200) {
+          const user = data.card.users;
+          setUserAssigned(user);
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
+    }
   };
 
   useEffect(() => {
@@ -86,7 +105,7 @@ const AssignUser = ({
       placement="right"
       classNames={{
         base: ["before:bg-default-200 px-0"],
-        content: ["p-0 -translate-x-12 h-[300px] w-[280px] py-"],
+        content: ["p-0 -translate-x-12  w-[280px] "],
       }}
     >
       <PopoverTrigger>
@@ -94,11 +113,11 @@ const AssignUser = ({
           onClick={() => setIsAssign(true)}
           className="flex rounded-full items-center justify-center p-1.5  text-default-300  border-dashed border-1.5 border-default-300  hover:border-indigo-400 hover:text-indigo-400 focus-visible:outline-none "
         >
-          <UserPlus size={15} />
+          <UserPlus size={14} />
         </button>
       </PopoverTrigger>
       <PopoverContent>
-        <div className="w-full rounded-lg flex flex-col h-full">
+        <div className="w-full rounded-lg flex flex-col ">
           <div>
             <Input
               value={keyword}
@@ -117,14 +136,50 @@ const AssignUser = ({
               className="w-full "
             />
           </div>
-
-          <div className="grow overflow-x-auto p-2">
+          <div className=" p-2 pb-0">
             {userSearch?.length > 0 ? (
-              userSearch?.map((user) => (
+              <>
+                <p className="font-medium text-xs">Thành viên trong Bảng</p>
+
+                {userSearch?.map((user) => (
+                  <div
+                    key={user.id}
+                    className=" rounded-lg p-1 px-3 cursor-pointer max-h-[140px] mt-1 overflow-x-auto  hover:bg-default-300"
+                    onClick={() => HandleSelectUserAssigned(user)}
+                  >
+                    <User
+                      avatarProps={{
+                        radius: "full",
+                        size: "sm",
+                        src: user.avatar,
+                        color: "secondary",
+                        name: user.name.charAt(0).toUpperCase(),
+                      }}
+                      classNames={{
+                        description: "text-default-500",
+                      }}
+                      name={user.name}
+                      description={user.email}
+                    >
+                      {user.email}
+                    </User>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p className="w-full text-center text-md">
+                Không có thành viên nào
+              </p>
+            )}
+          </div>
+          {userAssigned?.length > 0 && (
+            <div className=" p-2 ">
+              <p className="font-medium text-xs">Thành viên trong thẻ</p>
+              {userAssigned.map((user) => (
                 <div
                   key={user.id}
-                  className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300"
-                  onClick={() => HandleSelectUserAssigned(user)}
+                  className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 max-h-[140px]  overflow-x-auto"
+                  onClick={() => HandleUnAssignedCard(user)}
                 >
                   <User
                     avatarProps={{
@@ -143,11 +198,9 @@ const AssignUser = ({
                     {user.email}
                   </User>
                 </div>
-              ))
-            ) : (
-              <p className="w-full text-center text-md">Không có user nào</p>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>

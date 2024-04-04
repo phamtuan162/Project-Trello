@@ -254,7 +254,7 @@ module.exports = {
 
       attributes: { exclude: ["password"] },
     });
-
+    await user.update({ isOnline: true });
     const user_workspace_role = await UserWorkspaceRole.findOne({
       where: { user_id: id, workspace_id: user.workspace_id_active },
     });
@@ -273,13 +273,19 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    const { accessToken } = req.user;
+    const { accessToken, id } = req.user;
     await BlacklistToken.findOrCreate({
       where: {
         token: accessToken,
       },
       defaults: { token: accessToken },
     });
+    await User.update(
+      { isOnline: false },
+      {
+        where: { id },
+      }
+    );
     res.json({
       status: 200,
       message: "Success",

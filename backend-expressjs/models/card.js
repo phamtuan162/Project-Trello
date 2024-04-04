@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       title: DataTypes.STRING,
       desc: DataTypes.STRING,
       background: DataTypes.STRING,
+      dueDate: DataTypes.DATE,
     },
     {
       sequelize,

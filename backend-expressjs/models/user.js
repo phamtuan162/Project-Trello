@@ -40,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       background: DataTypes.STRING,
       email: DataTypes.STRING,
       password: DataTypes.STRING,
+      isOnline: DataTypes.BOOLEAN,
       status: DataTypes.BOOLEAN,
       avatar: DataTypes.STRING,
       refresh_token: DataTypes.STRING,

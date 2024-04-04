@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@nextui-org/button";
 import { Avatar, AvatarGroup, Input } from "@nextui-org/react";
 import { toast } from "react-toastify";
@@ -10,12 +10,14 @@ export default function BoardNavbar({ board, updateBoard }) {
   const btnRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const userOnline = useMemo(() => {
+    return workspace?.users?.filter((user) => user.isOnline);
+  }, [workspace]);
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditing]);
-
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
@@ -57,7 +59,7 @@ export default function BoardNavbar({ board, updateBoard }) {
 
       <div className="ml-auto text-white flex gap-3 items-center">
         <AvatarGroup isBordered max={2} size="sm">
-          {workspace?.users?.map((user) => (
+          {userOnline?.map((user) => (
             <Avatar
               key={user.id}
               size="sm"
