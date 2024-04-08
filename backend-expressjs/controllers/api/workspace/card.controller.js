@@ -32,7 +32,10 @@ module.exports = {
     const response = {};
     try {
       const card = await Card.findByPk(id, {
-        include: { model: User, as: "users" },
+        include: [
+          { model: User, as: "users" },
+          { model: Column, as: "column" },
+        ],
       });
       if (!card) {
         Object.assign(response, {
@@ -138,7 +141,9 @@ module.exports = {
       await Card.update(body, {
         where: { id },
       });
-      const card = await Card.findByPk(id);
+      const card = await Card.findByPk(id, {
+        include: { model: User, as: "users" },
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",

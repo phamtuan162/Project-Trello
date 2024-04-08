@@ -1,7 +1,11 @@
 "use client";
+
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ListContainer } from "./_components/ListContainer";
+import { useSelector, useDispatch } from "react-redux";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { toast } from "react-toastify";
 import {
   getBoardDetail,
   updateBoardDetail,
@@ -15,17 +19,17 @@ import BoardNavbar from "./_components/BoardNavbar";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
 import { isEmpty } from "lodash";
-
 import Loading from "@/components/Loading/Loading";
-import { toast } from "react-toastify";
 export default function BoardIdPage() {
+  const dispatch = useDispatch();
+  const board = useSelector((state) => state.board.board);
+
   const { id: boardId } = useParams();
-  const [board, setBoard] = useState(null);
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
         const data = await getBoardDetail(boardId);
-        if (data) {
+        if (data.status === 200) {
           let boardData = data.data;
           boardData.columns = mapOrder(
             boardData.columns,
@@ -41,7 +45,7 @@ export default function BoardIdPage() {
               column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
             }
           });
-          setBoard(boardData);
+          dispatch(boardSlice.actions.updateBoard(boardData));
         }
       } catch (error) {
         console.error("Error fetching board detail:", error);
@@ -52,15 +56,19 @@ export default function BoardIdPage() {
   }, []);
 
   const moveColumns = (dndOrderedColumns) => {
-    const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
     const newBoard = { ...board };
-    newBoard.columns = dndOrderedColumns;
+    const newColumns = [...dndOrderedColumns];
+
+    const dndOrderedColumnsIds = newColumns.map((c) => c.id);
+
+    newBoard.columns = newColumns;
     newBoard.columnOrderIds = dndOrderedColumnsIds;
+
     updateBoardDetail(newBoard.id, {
       columnOrderIds: dndOrderedColumnsIds,
     }).then((data) => {
       if (data.status === 200) {
-        setBoard(newBoard);
+        dispatch(boardSlice.actions.updateBoard(newBoard));
       } else {
         const error = data.error;
         toast.error(error);
@@ -74,18 +82,23 @@ export default function BoardIdPage() {
     columnId
   ) => {
     const newBoard = { ...board };
-    const columnToUpdate = newBoard.columns.find(
+    const newColumns = [...newBoard.columns];
+
+    const columnIndex = newColumns.findIndex(
       (column) => column.id === columnId
     );
-    if (columnToUpdate) {
-      columnToUpdate.cards = dndOrderedCards;
-      columnToUpdate.cardOrderIds = dndOrderedCardIds;
+    if (columnIndex !== -1) {
+      const updatedColumn = { ...newColumns[columnIndex] };
+      updatedColumn.cards = dndOrderedCards;
+      updatedColumn.cardOrderIds = dndOrderedCardIds;
+      newColumns[columnIndex] = updatedColumn;
+      newBoard.columns = newColumns;
     }
 
     updateColumnDetail(columnId, { cardOrderIds: dndOrderedCardIds }).then(
       (data) => {
         if (data.status === 200) {
-          setBoard(newBoard);
+          dispatch(boardSlice.actions.updateBoard(newBoard));
         } else {
           const error = data.error;
           toast.error(error);
@@ -102,11 +115,13 @@ export default function BoardIdPage() {
   ) => {
     try {
       const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c.id);
-      const newBoard = { ...board };
-      newBoard.columns = dndOrderedColumns;
 
+      const newBoard = { ...board };
+      newBoard.columns = [...dndOrderedColumns];
       newBoard.columnOrderIds = dndOrderedColumnsIds;
-      setBoard(newBoard);
+
+      dispatch(boardSlice.actions.updateBoard(newBoard));
+
       const updatedColumns = newBoard.columns.map((column) => {
         if (
           typeof column.cardOrderIds[0] === "string" &&
@@ -120,6 +135,7 @@ export default function BoardIdPage() {
         }
         return column;
       });
+
       const updatedBoard = { ...newBoard, columns: updatedColumns };
       moveCardToDifferentColumnAPI(newBoard.id, updatedBoard);
     } catch (error) {
@@ -140,7 +156,7 @@ export default function BoardIdPage() {
           columnOrderIds: newBoard.columnOrderIds,
         });
 
-        setBoard(newBoard);
+        dispatch(boardSlice.actions.updateBoard(newBoard));
         toast.success("Bạn đã xóa danh sách thành công");
       } else {
         const error = data.error;
@@ -159,13 +175,9 @@ export default function BoardIdPage() {
         const placeholderCard = generatePlaceholderCard(createdColumn);
         createdColumn.cards = [placeholderCard];
         createdColumn.cardOrderIds = [placeholderCard.id];
-        const newBoard = { ...board };
-        if (newBoard.columnOrderIds === null) {
-          newBoard.columnOrderIds = [];
-        }
-        newBoard.columns.push(createdColumn);
-        newBoard.columnOrderIds.push(createdColumn.id);
-        setBoard(newBoard);
+        const newColumns = [...board.columns, createdColumn];
+        const newBoard = { ...board, columns: newColumns };
+        dispatch(boardSlice.actions.updateBoard(newBoard));
 
         toast.success("Tạo danh sách thành công");
       } else {
@@ -176,21 +188,25 @@ export default function BoardIdPage() {
   };
 
   const updateColumn = async (columnId, updateData) => {
-    const data = await updateColumnDetail(columnId, { ...updateData });
-    if (data.status === 200) {
-      const updatedColumn = data.data;
-      const newBoard = { ...board };
-      const columnIndex = newBoard.columns.findIndex(
-        (column) => column.id === updatedColumn.id
-      );
-      if (columnIndex !== -1) {
-        newBoard.columns[columnIndex] = updatedColumn;
-        setBoard(newBoard);
+    try {
+      const data = await updateColumnDetail(columnId, { ...updateData });
+      if (data.status === 200) {
+        const updatedColumn = data.data;
+        const updatedColumns = board.columns.map((column, index) => {
+          if (column.id === updatedColumn.id) {
+            return updatedColumn;
+          }
+          return column;
+        });
+        const updatedBoard = { ...board, columns: updatedColumns };
+        dispatch(boardSlice.actions.updateBoard(updatedBoard));
         toast.success("Cập nhật thành công");
+      } else {
+        const error = data.error;
+        toast.error(error);
       }
-    } else {
-      const error = data.error;
-      toast.error(error);
+    } catch (error) {
+      console.error("Error updating column:", error);
     }
   };
 
@@ -201,20 +217,28 @@ export default function BoardIdPage() {
     });
     if (data.status === 200) {
       const createdCard = data.data;
-      const newBoard = { ...board };
-      const columnToUpdate = newBoard.columns.find(
-        (column) => column.id === createdCard.column_id
-      );
-      if (columnToUpdate) {
-        if (columnToUpdate.cards.some((card) => card.FE_PlaceholderCard)) {
-          columnToUpdate.cards = [createdCard];
-          columnToUpdate.cardOrderIds = [createdCard.id];
-        } else {
-          columnToUpdate.cards.push(createdCard);
-          columnToUpdate.cardOrderIds.push(createdCard.id);
+      const updatedColumns = board.columns.map((column) => {
+        if (column.id === columnId) {
+          if (column.cards.some((card) => card.FE_PlaceholderCard)) {
+            return {
+              ...column,
+              cards: [createdCard],
+              cardOrderIds: [createdCard.id],
+            };
+          } else {
+            return {
+              ...column,
+              cards: [...column.cards, createdCard],
+              cardOrderIds: [...column.cardOrderIds, createdCard.id],
+            };
+          }
         }
-      }
-      setBoard(newBoard);
+        return column;
+      });
+
+      const updatedBoard = { ...board, columns: updatedColumns };
+      dispatch(boardSlice.actions.updateBoard(updatedBoard));
+
       toast.success("Tạo thẻ thành công");
     } else {
       const error = data.error;
@@ -228,7 +252,7 @@ export default function BoardIdPage() {
       const newBoard = { ...board };
       if (updateData.title) {
         newBoard.title = updateData.title;
-        setBoard(newBoard);
+        dispatch(boardSlice.actions.updateBoard(newBoard));
         toast.success("Cập nhật thành công");
       }
     } else {
@@ -238,7 +262,7 @@ export default function BoardIdPage() {
   };
   return (
     <>
-      {board ? (
+      {board.id ? (
         <div
           className="relative h-full bg-no-repeat bg-cover bg-center "
           style={{

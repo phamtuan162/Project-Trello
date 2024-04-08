@@ -128,6 +128,26 @@ export const inviteUserApi = async (body) => {
   }
   return null;
 };
+export const decentRoleApi = async (workspaceId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/workspace/decent-role/${workspaceId}`,
+    body,
+    access_token
+  );
+
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await decentRoleApi(workspaceId, body);
+    }
+  }
+  return null;
+};
 
 export const leaveWorkspaceApi = async (body) => {
   const { response, data } = await client.put(
@@ -329,9 +349,50 @@ export const createCard = async (body) => {
   }
   return null;
 };
+
 export const getCardDetail = async (cardId) => {
   const { response, data } = await client.get(`/card/${cardId}`);
   return data;
+};
+
+export const updateCardApi = async (cardId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/card/${cardId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateCardApi(cardId, body);
+    }
+  }
+  return null;
+};
+
+export const DateCardApi = async (cardId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/card/date-card/${cardId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await DateCardApi(cardId, body);
+    }
+  }
+  return null;
 };
 
 export const assignUserApi = async (cardId, body) => {
@@ -347,7 +408,7 @@ export const assignUserApi = async (cardId, body) => {
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
-      return await assignUser(cardId, body);
+      return await assignUserApi(cardId, body);
     }
   }
   return null;

@@ -11,6 +11,11 @@ router.post(
   permission("workspace.invite"),
   workspaceController.inviteUser
 );
+router.put(
+  "/decent-role/:id",
+  permission("workspace.decent_role"),
+  workspaceController.decentRoleUser
+);
 router.put("/change-workspace/:id", workspaceController.changeWorkspace);
 
 router.put("/leave-workspace", workspaceController.leaveWorkspace);

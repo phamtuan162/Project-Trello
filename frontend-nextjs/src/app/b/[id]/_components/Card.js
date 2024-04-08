@@ -8,7 +8,15 @@ import { CalendarCheck, Tags, Flag, Check, Pencil } from "lucide-react";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { Avatar, AvatarGroup } from "@nextui-org/react";
 import useCardModal from "@/hooks/use-card-modal";
+import { Clock } from "lucide-react";
+import { format } from "date-fns";
+import { SquareCheck } from "@/components/Icon/SquareCheck";
 export function Card({ card }) {
+  const cardData = useSelector((state) => state.card.card);
+
+  const cardUpdate = useMemo(() => {
+    return +card.id === +cardData.id ? cardData : card;
+  }, [cardData]);
   const {
     attributes,
     listeners,
@@ -17,8 +25,8 @@ export function Card({ card }) {
     transition,
     isDragging,
   } = useSortable({
-    id: card.id,
-    data: { ...card },
+    id: cardUpdate?.id,
+    data: { ...cardUpdate },
   });
   const user = useSelector((state) => state.user.user);
   const cardModal = useCardModal();
@@ -56,61 +64,90 @@ export function Card({ card }) {
     },
   ];
   const [isEdit, setIsEdit] = useState(false);
-  const [userAssigned, setUserAssigned] = useState(card.users);
   const [isAssign, setIsAssign] = useState(false);
-  const [isDrop, setIsDrop] = useState(false);
 
-  const checkRoleCard = useMemo(() => {
-    return card?.users?.some((item) => +user.id === +item.id);
-  }, [user, card]);
+  // const checkRoleCard = useMemo(() => {
+  //   return card?.users?.some((item) => +user.id === +item.id);
+  // }, [user, card]);
   const checkRoleBoard = useMemo(() => {
     return user?.role?.toLowerCase() === "admin";
   }, [user]);
-  useEffect(() => {
-    if (card?.users) {
-      setUserAssigned(card.users);
-    }
-  }, [card]);
+
   return (
     <div
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
-      {...((isAssign && isDrop) || (checkRoleBoard && isDrop) ? listeners : {})}
-      key={card.id}
-      role="button"
+      key={cardUpdate.id}
       onClick={() => {
-        cardModal.onOpen(card.id);
+        if (!isAssign && !isDragging) {
+          cardModal.onOpen(cardUpdate.id);
+        }
       }}
+      role="button"
+      onMouseEnter={() => setIsEdit(true)}
+      onMouseLeave={() => setIsEdit(false)}
       className="  text-sm bg-white rounded-md shadow-sm card relative z-45"
     >
-      {card?.background && (
-        <div
-          className={`rounded-t-md relative w-full bg-no-repeat bg-cover bg-center h-[160px] h-max-[200px]`}
-          style={{
-            backgroundImage: `url(${card.background})`,
-          }}
-        ></div>
-      )}
-
-      <div className={`p-3  relative $`}>
-        {card.title}
+      <div {...(!isAssign && checkRoleBoard ? listeners : {})} className="pb-3">
+        {cardUpdate?.background && (
+          <div
+            className={`rounded-t-md relative w-full bg-no-repeat bg-cover bg-center h-[160px] h-max-[200px]`}
+            style={{
+              backgroundImage: `url(${cardUpdate.background})`,
+            }}
+          ></div>
+        )}
+      </div>
+      <div className={`p-3 pt-0 relative $`}>
+        {cardUpdate?.title}
         <div
           className={`${
-            !isEdit || checkRoleBoard ? "hidden" : ""
-          } absolute right-2 top-1/2 -translate-y-1/2 z-50 `}
+            !isEdit || !checkRoleBoard ? "hidden" : ""
+          } absolute right-2 -top-1 z-50 `}
         >
           <AssignUser
-            setUserAssigned={setUserAssigned}
             isAssign={isAssign}
             setIsAssign={setIsAssign}
-            userAssigned={userAssigned}
-            card={card}
+            cardUpdate={cardUpdate}
           />
         </div>
+        <div
+          onClick={() => {
+            console.log(1);
+          }}
+          className={`${
+            cardUpdate.startDateTime || cardUpdate.endDateTime ? "" : "hidden"
+          } `}
+        >
+          <div
+            className={`text-xs mt-1  inline-flex items-center gap-1  ${
+              cardUpdate.status === "success" && "bg-green-700 text-white"
+            } ${
+              cardUpdate.status === "expired" && "bg-yellow-700 "
+            } rounded-sm px-1 py-0.5`}
+          >
+            {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
+              (cardUpdate.status === "success" ? (
+                <SquareCheck size={12} />
+              ) : (
+                <Clock size={12} />
+              ))}
 
-        <AvatarGroup max={2} className="justify-start group-avatar-1 mt-1">
-          {userAssigned?.map((user) => (
+            {cardUpdate?.startDateTime && (
+              <>
+                {format(cardUpdate?.startDateTime, "d 'tháng' M")}
+                {cardUpdate?.endDateTime && " - "}
+              </>
+            )}
+
+            {cardUpdate?.endDateTime &&
+              format(cardUpdate?.endDateTime, "d 'tháng' M")}
+          </div>
+        </div>
+
+        <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">
+          {cardUpdate?.users?.map((user) => (
             <Avatar
               key={user.id}
               src={user.avatar}
@@ -124,15 +161,3 @@ export function Card({ card }) {
     </div>
   );
 }
-//  {isEdit && (
-//       <div className="border-t-1 border-solid border-default-300 p-2 flex items-center gap-3  text-default-400">
-//         {actions.map((action, index) => (
-//           <div
-//             key={index}
-//             className={`hover:text-indigo-400 ${index === 4 && "ml-auto"}`}
-//           >
-//             {action.icon}
-//           </div>
-//         ))}
-//       </div>
-//     )}

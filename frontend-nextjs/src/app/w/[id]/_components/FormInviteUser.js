@@ -17,7 +17,7 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
 const { inviteUser } = workspaceSlice.actions;
-const FormInviteUser = () => {
+const FormInviteUser = ({ roles }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -35,23 +35,6 @@ const FormInviteUser = () => {
     } người `
   );
 
-  const roles = [
-    {
-      name: "Admin",
-      value: "admin",
-      desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
-    },
-    {
-      name: "Member",
-      value: "member",
-      desc: "Thao tác với các phần được chỉ định và giao cho.",
-    },
-    {
-      name: "Guest",
-      value: "guest",
-      desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
-    },
-  ];
   const HandleSearchUser = async (e) => {
     const inputKeyword = e.target.value.trim();
     setIsSearch(inputKeyword !== "");

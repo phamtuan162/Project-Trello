@@ -1,12 +1,23 @@
 "use client";
-import { CircularProgress } from "@nextui-org/react";
-import { Dialog, DialogContent } from "@/components/ui/Dialog";
+import {
+  CircularProgress,
+  Modal,
+  ModalContent,
+  ModalBody,
+} from "@nextui-org/react";
 import useCardModal from "@/hooks/use-card-modal";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCard } from "@/stores/middleware/fetchCard";
 import { getCardDetail } from "@/services/workspaceApi";
+import TitleModal from "./title";
+import DescCardModal from "./desc";
+import ActivityCard from "./activity";
+import ActionsCard from "./actions";
+import AddToCard from "./addToCard";
+import UserCard from "./users";
+import BackgroundCard from "./background";
+import DateCard from "./date";
 const { updateCard } = cardSlice.actions;
 export const CardModal = () => {
   const dispatch = useDispatch();
@@ -33,18 +44,43 @@ export const CardModal = () => {
     }
   }, [id]);
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        {isLoading ? (
+    <Modal isOpen={isOpen} onOpenChange={onClose}>
+      {isLoading ? (
+        <ModalContent className="p-3 px-4 max-w-2xl ">
           <CircularProgress />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 md:gap-4">
-            <div className="col-span-3">
-              <div className="w-full space-y-6">{card?.title}</div>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </ModalContent>
+      ) : (
+        <ModalContent className=" max-w-2xl  self-start">
+          {(onClose) => (
+            <>
+              {card?.background && <BackgroundCard />}
+
+              <ModalBody className="p-3 px-4">
+                <TitleModal />
+                <div className="grid grid-cols-1 md:grid-cols-5 md:gap-4">
+                  <div className="col-span-4">
+                    <div className="w-full space-y-6">
+                      <div className="ml-9 mt-2 flex gap-4 flex-wrap">
+                        <UserCard />
+                        {(card?.startDateTime || card?.endDateTime) && (
+                          <DateCard />
+                        )}
+                      </div>
+
+                      <DescCardModal />
+                      <ActivityCard />
+                    </div>
+                  </div>
+                  <div>
+                    <AddToCard />
+                    <ActionsCard />
+                  </div>
+                </div>
+              </ModalBody>
+            </>
+          )}
+        </ModalContent>
+      )}
+    </Modal>
   );
 };

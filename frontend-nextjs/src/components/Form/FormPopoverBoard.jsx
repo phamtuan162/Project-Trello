@@ -32,7 +32,7 @@ export default function FormPopoverBoard({
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(open);
   const [isCreate, setIsCreate] = useState(false);
-
+  const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
 
   const onSubmit = (formData) => {
@@ -148,7 +148,7 @@ export default function FormPopoverBoard({
                   name="workspace"
                   id="workspace"
                 >
-                  {workspaces?.map((workspace) => (
+                  {user?.workspaces?.map((workspace) => (
                     <SelectItem
                       key={workspace.id}
                       value={workspace.id}

@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
+  Select,
+  SelectItem,
   Table,
   TableHeader,
   TableColumn,
@@ -22,16 +24,32 @@ import { SearchIcon, ChevronDownIcon, X } from "lucide-react";
 import { columns, statusOptions } from "./data";
 import FormInviteUser from "../_components/FormInviteUser";
 import LeaveWorkspace from "./LeaveWorkspace";
+import { decentRoleApi } from "@/services/workspaceApi";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { toast } from "react-toastify";
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
-
+const { decentRoleUser } = workspaceSlice.actions;
 export default function PageWorkspaceUsers() {
+  const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
-  const userActive = useSelector((state) => state.user.user);
+  const sortedUsers = React.useMemo(() => {
+    return workspace && workspace.users
+      ? [...workspace.users].sort((a, b) => {
+          const roleA = a.role.toLowerCase();
+          const roleB = b.role.toLowerCase();
+          return roleA === "admin" ? -1 : roleB === "admin" ? 1 : 0;
+        })
+      : [];
+  }, [workspace]);
 
+  const userActive = useSelector((state) => state.user.user);
+  const checkRoleWorkspace = React.useMemo(() => {
+    return userActive?.role?.toLowerCase() === "admin";
+  }, [userActive]);
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState(
@@ -44,7 +62,23 @@ export default function PageWorkspaceUsers() {
     direction: "ascending",
   });
   const [page, setPage] = React.useState(1);
-
+  const roles = [
+    {
+      name: "Admin",
+      value: "admin",
+      desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
+    },
+    {
+      name: "Member",
+      value: "member",
+      desc: "Thao tác với các phần được chỉ định và giao cho.",
+    },
+    {
+      name: "Guest",
+      value: "guest",
+      desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
+    },
+  ];
   const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -59,7 +93,7 @@ export default function PageWorkspaceUsers() {
 
   const filteredItems = React.useMemo(() => {
     let filteredUsers = workspace?.users
-      ? workspace.users.filter((user) => user !== null && user !== undefined)
+      ? sortedUsers.filter((user) => user !== null && user !== undefined)
       : [];
 
     if (hasSearchFilter) {
@@ -95,7 +129,24 @@ export default function PageWorkspaceUsers() {
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
+  const handleDecentRole = async (role, user) => {
+    const roleNew = [...role][0];
 
+    if (roleNew) {
+      decentRoleApi(workspace.id, {
+        user_id: user.id,
+        role: roleNew,
+      }).then((data) => {
+        if (data.status === 200) {
+          const user = data.data;
+          dispatch(decentRoleUser(user));
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
+    }
+  };
   const renderCell = React.useCallback((user, columnKey) => {
     const cellValue = user[columnKey];
 
@@ -120,7 +171,27 @@ export default function PageWorkspaceUsers() {
           </User>
         );
       case "role":
-        return <p className="text-bold text-small capitalize ">{cellValue}</p>;
+        return !checkRoleWorkspace || +userActive.id === +user.id ? (
+          <p className="text-bold text-small capitalize">{cellValue}</p>
+        ) : (
+          <Select
+            variant="bordered"
+            size="xs"
+            aria-label="Roles"
+            classNames={{
+              label: "group-data-[filled=true]:-translate-y-5",
+              trigger: "w-[100px]",
+            }}
+            selectedKeys={new Set([user.role.toLowerCase()])}
+            onSelectionChange={(role) => handleDecentRole(role, user)}
+          >
+            {roles.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.name}
+              </SelectItem>
+            ))}
+          </Select>
+        );
       case "status":
         return (
           <Chip
@@ -241,7 +312,7 @@ export default function PageWorkspaceUsers() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <FormInviteUser />
+            <FormInviteUser roles={roles} />
           </div>
         </div>
         <div className="flex justify-between items-center">
@@ -281,7 +352,6 @@ export default function PageWorkspaceUsers() {
             : `${selectedKeys.size} trên ${filteredItems.length} đã chọn`}
         </span>
         <Pagination
-          isCompact
           showControls
           showShadow
           color="primary"
@@ -386,18 +456,3 @@ export default function PageWorkspaceUsers() {
     </div>
   );
 }
-// <Dropdown className="bg-background border-1 border-default-200">
-//   <DropdownTrigger>
-//     <Button isIconOnly radius="full" size="sm" variant="light">
-//       <VerticalDotsIcon className="text-default-400" />
-//     </Button>
-//   </DropdownTrigger>
-
-//   <DropdownMenu>
-//     <DropdownItem>Sửa</DropdownItem>
-
-//     <DropdownItem startContent={<X size={20} color={"#fd71af"} />}>
-//       Loại bỏ khỏi Không gian làm việc
-//     </DropdownItem>
-//   </DropdownMenu>
-// </Dropdown>;

@@ -388,9 +388,14 @@ module.exports = {
       }
       await user_workspace_role.destroy();
       const workspace = await Workspace.findByPk(workspace_id, {
-        include: { model: User, include: "users" },
+        include: { model: User, as: "users" },
       });
-      await workspace.update({ total_user: workspace.users.length });
+      await workspace.update(
+        {
+          where: { id: workspace_id },
+        },
+        { total_user: workspace.users.length }
+      );
       const user = await User.findOne({
         where: { workspace_id_active: workspace_id },
         include: {
@@ -451,6 +456,46 @@ module.exports = {
       status: 200,
       message: "Success",
       data: new WorkspaceTransformer(workspace),
+    });
+    res.status(response.status).json(response);
+  },
+  decentRoleUser: async (req, res) => {
+    const { id } = req.params;
+    const { user_id, role } = req.body;
+    const response = {};
+    if (!user_id || !role) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "User not found" });
+    }
+
+    const roleInstance = await Role.findOne({
+      where: { name: { [Op.iLike]: `%${role}%` } },
+    });
+
+    if (!roleInstance) {
+      return res.status(404).json({ status: 404, message: "Role not found" });
+    }
+    const user_workspace_role = await UserWorkspaceRole.findOne({
+      where: {
+        user_id: user_id,
+        workspace_id: id,
+      },
+    });
+
+    if (!user_workspace_role) {
+      return res.status(404).json({ status: 404, message: " Not found" });
+    }
+
+    user_workspace_role.update({ role_id: roleInstance.id });
+    user.dataValues.role = roleInstance.name;
+
+    Object.assign(response, {
+      status: 200,
+      message: "Success",
+      data: new UserTransformer(user.dataValues),
     });
     res.status(response.status).json(response);
   },

@@ -3,6 +3,7 @@
 @tailwind utilities;
 body {
   overflow: hidden;
+  color: #172b4d;
 }
 main {
   height: calc(100vh - 48px);
@@ -96,6 +97,17 @@ header {
   height: 176.667px;
   max-height: 260px;
   background-color: rgb(189, 195, 195);
-  background-image: url(https://trello-backgrounds.s3.amazonaws.com/SharedBackground/960x640/f898232…/photo-1711619034500-8f562ce7bf4f.jpg);
   background-size: cover;
+}
+.card-background-modal {
+  background-color: rgb(189, 195, 195);
+  transition: opacity 85ms;
+}
+
+.window-cover-menu-button {
+  color: #172b4d;
+}
+
+.window-cover-menu-button:hover {
+  background-color: #091e4224;
 }

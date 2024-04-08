@@ -166,7 +166,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e?.inner.map(({ path, message }) => [path, message])
+        e?.inner?.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,

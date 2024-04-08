@@ -2,6 +2,7 @@ require("dotenv").config();
 const { User } = require("./models/index");
 const cron = require("node-cron");
 const blacklist_token = require("./cronjobs/blacklist_tokens");
+const card = require("./cronjobs/card");
 var createError = require("http-errors");
 var express = require("express");
 const http = require("http");
@@ -113,7 +114,9 @@ app.use("/users", usersRouter);
 cron.schedule("* 0 * * *", () => {
   blacklist_token.delete();
 });
-
+cron.schedule("0 * * * *", () => {
+  card.HandleExpired();
+});
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

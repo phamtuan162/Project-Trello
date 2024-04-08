@@ -22,9 +22,9 @@ export default function BoardNavbar({ board, updateBoard }) {
     const title = inputRef.current.value.trim();
 
     if (title && title !== board.title.trim()) {
-      updateBoard(board.id, { title: title });
+      await updateBoard(board.id, { title: title });
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const handleKeyDown = (event) => {

@@ -6,8 +6,21 @@ const permission = require("../../../middlewares/api/permission.middleware");
 router.get("/", cardController.index);
 router.get("/:id", cardController.find);
 router.post("/", permission("card.create"), cardController.store);
-router.post("/assign-user/:id", cardController.assignUser);
-router.put("/un-assign-user/:id", cardController.unAssignUser);
+router.post(
+  "/assign-user/:id",
+  permission("card.assign_user"),
+  cardController.assignUser
+);
+router.put(
+  "/un-assign-user/:id",
+  permission("card.un_assign_user"),
+  cardController.unAssignUser
+);
+router.put(
+  "/date-card/:id",
+  permission("card.date_card"),
+  cardController.update
+);
 router.put("/:id", permission("card.update"), cardController.update);
 router.patch("/:id", permission("card.update"), cardController.update);
 router.delete("/:id", permission("card.delete"), cardController.delete);

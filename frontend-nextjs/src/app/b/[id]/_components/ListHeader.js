@@ -19,10 +19,10 @@ export function ListHeader({
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
-    if (title && title !== column.title.trim()) {
-      updateColumn(column.id, { title: title });
+    if (title) {
+      await updateColumn(column.id, { title: title });
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const handleKeyDown = (event) => {

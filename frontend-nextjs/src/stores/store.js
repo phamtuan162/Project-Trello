@@ -4,6 +4,7 @@ import { userSlice } from "./slices/userSlice";
 import { providerSlice } from "./slices/providerSlice";
 import { deviceSlice } from "./slices/deviceSlice";
 import { cardSlice } from "./slices/cardSlice";
+import { boardSlice } from "./slices/boardSlice";
 export const store = configureStore({
   reducer: {
     workspace: workspaceSlice.reducer,
@@ -11,5 +12,6 @@ export const store = configureStore({
     provider: providerSlice.reducer,
     device: deviceSlice.reducer,
     card: cardSlice.reducer,
+    board: boardSlice.reducer,
   },
 });

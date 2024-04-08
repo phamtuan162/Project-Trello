@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Card.belongsTo(models.Column, {
         foreignKey: "column_id",
-        as: "columns",
+        as: "column",
       });
       Card.belongsToMany(models.User, {
         foreignKey: "card_id",
@@ -26,6 +26,9 @@ module.exports = (sequelize, DataTypes) => {
       desc: DataTypes.STRING,
       background: DataTypes.STRING,
       dueDate: DataTypes.DATE,
+      startDateTime: DataTypes.DATE,
+      endDateTime: DataTypes.DATE,
+      status: DataTypes.STRING,
     },
     {
       sequelize,

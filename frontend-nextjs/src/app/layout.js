@@ -5,7 +5,6 @@ import Header from "@/components/Header/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ModalProvider } from "@/components/providers/modal-provider";
-import { QueryProvider } from "@/components/providers/query-provider";
 export const metadata = {
   title: "ProManage ",
   description: "Manage Project",
@@ -23,14 +22,12 @@ export default function RootLayout({ children, params }) {
       <body>
         <ProviderRedux>
           <Providers>
-            <QueryProvider>
-              <Header />
-              <main className="bg-background">
-                {children}
-                <ToastContainer />
-                <ModalProvider />
-              </main>
-            </QueryProvider>
+            <Header />
+            <main className="bg-background">
+              {children}
+              <ToastContainer />
+              <ModalProvider />
+            </main>
           </Providers>
         </ProviderRedux>
       </body>

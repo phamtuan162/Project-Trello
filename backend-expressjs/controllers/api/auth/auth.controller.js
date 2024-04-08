@@ -273,7 +273,7 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    const { accessToken, id } = req.user;
+    const { accessToken, id } = req.user.dataValues;
     await BlacklistToken.findOrCreate({
       where: {
         token: accessToken,

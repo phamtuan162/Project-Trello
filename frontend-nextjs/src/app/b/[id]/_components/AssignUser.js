@@ -8,31 +8,25 @@ import {
   User,
 } from "@nextui-org/react";
 import { SearchIcon, UserPlus } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { assignUserApi, unAssignUserApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
-
-const AssignUser = ({
-  isAssign,
-  setIsAssign,
-  setUserAssigned,
-  userAssigned,
-  card,
-}) => {
-  const router = useRouter();
+import { cardSlice } from "@/stores/slices/cardSlice";
+const { updateCard } = cardSlice.actions;
+const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
+  const dispatch = useDispatch();
   const [timeoutId, setTimeoutId] = useState(null);
   const [keyword, setKeyWord] = useState("");
   const workspace = useSelector((state) => state.workspace.workspace);
   const [userSearch, setUserSearch] = useState([]);
   const userNotAssignCard = useMemo(() => {
-    if (!workspace || !workspace.users || !userAssigned) {
+    if (!workspace || !workspace.users || !cardUpdate.users) {
       return [];
     }
 
-    const assignedUserIds = userAssigned.map((user) => user.id);
+    const assignedUserIds = cardUpdate.users.map((user) => user.id);
     return workspace.users.filter((user) => !assignedUserIds.includes(user.id));
-  }, [workspace, userAssigned]);
+  }, [workspace, cardUpdate]);
 
   const HandleSearchUser = async (e) => {
     const inputKeyword = e.target.value.toLowerCase().trim();
@@ -60,13 +54,13 @@ const AssignUser = ({
   };
 
   const HandleSelectUserAssigned = async (user) => {
-    if (card.users.length > 1) {
-      toast.error("Tối đa 3 thành viên");
+    if (cardUpdate.users.length === 4) {
+      toast.error("Tối đa 4 thành viên");
     } else {
-      assignUserApi(card.id, { user_id: user.id }).then((data) => {
+      assignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
         if (data.status === 200) {
-          const user = data.card.users;
-          setUserAssigned(user);
+          const card = data.card;
+          dispatch(updateCard(card));
         } else {
           const error = data.error;
           toast.error(error);
@@ -78,10 +72,10 @@ const AssignUser = ({
 
   const HandleUnAssignedCard = async (user) => {
     if (user) {
-      unAssignUserApi(card.id, { user_id: user.id }).then((data) => {
+      unAssignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
         if (data.status === 200) {
-          const user = data.card.users;
-          setUserAssigned(user);
+          const card = data.card;
+          dispatch(updateCard(card));
         } else {
           const error = data.error;
           toast.error(error);
@@ -109,12 +103,16 @@ const AssignUser = ({
       }}
     >
       <PopoverTrigger>
-        <button
-          onClick={() => setIsAssign(true)}
-          className="flex rounded-full items-center justify-center p-1.5  text-default-300  border-dashed border-1.5 border-default-300  hover:border-indigo-400 hover:text-indigo-400 focus-visible:outline-none "
-        >
-          <UserPlus size={14} />
-        </button>
+        {children ? (
+          children
+        ) : (
+          <button
+            onClick={() => setIsAssign(true)}
+            className="flex rounded-full items-center justify-center p-1.5  text-default-300  border-dashed border-1.5 border-default-300  hover:border-indigo-400 hover:text-indigo-400 focus-visible:outline-none "
+          >
+            <UserPlus size={14} />
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent>
         <div className="w-full rounded-lg flex flex-col ">
@@ -172,10 +170,10 @@ const AssignUser = ({
               </p>
             )}
           </div>
-          {userAssigned?.length > 0 && (
+          {cardUpdate?.users?.length > 0 && (
             <div className=" p-2 ">
-              <p className="font-medium text-xs">Thành viên trong thẻ</p>
-              {userAssigned.map((user) => (
+              <p className="font-medium text-xs">Thành viên trong Thẻ</p>
+              {cardUpdate.users.map((user) => (
                 <div
                   key={user.id}
                   className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 max-h-[140px]  overflow-x-auto"
