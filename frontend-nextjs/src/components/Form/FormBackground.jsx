@@ -9,7 +9,7 @@ import {
   CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "../Icon/CloseIcon";
-const FormBackground = ({ children, onSubmit }) => {
+const FormBackground = ({ children, HandleBackground }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
 
@@ -21,7 +21,7 @@ const FormBackground = ({ children, onSubmit }) => {
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className="w-[250px] p-2 px-3">
-        <form className="w-full" action={onSubmit}>
+        <form className="w-full" action={HandleBackground}>
           <div className="flex justify-between items-center	relative">
             <h1 className="grow text-center ">Ảnh Bìa</h1>
             <Button

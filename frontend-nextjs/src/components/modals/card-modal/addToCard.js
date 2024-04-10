@@ -3,13 +3,32 @@ import { Paperclip, User, Clock, Image } from "lucide-react";
 import { SquareCheck } from "@/components/Icon/SquareCheck";
 import { Button } from "@nextui-org/react";
 import AssignUser from "@/app/b/[id]/_components/AssignUser";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import FormBackground from "@/components/Form/FormBackground";
 import FormDate from "@/components/Form/FormDate";
+import { updateCardApi } from "@/services/workspaceApi";
+import { cardSlice } from "@/stores/slices/cardSlice";
+const { updateCard } = cardSlice.actions;
+
 const AddToCard = () => {
+  const dispatch = useDispatch();
   const [isAssign, setIsAssign] = useState(false);
   const card = useSelector((state) => state.card.card);
 
+  const HandleBackground = async (formData) => {
+    const image = formData.get("image");
+    if (image) {
+      updateCardApi(card.id, { background: image }).then((data) => {
+        if (data.status === 200) {
+          const cardUpdate = { ...card, background: image };
+          dispatch(updateCard(cardUpdate));
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
+    }
+  };
   const actions = [
     {
       label: "Thành viên",
@@ -65,7 +84,7 @@ const AddToCard = () => {
       label: "Ảnh bìa",
       icon: <Image size={16} />,
       component: (
-        <FormBackground>
+        <FormBackground HandleBackground={HandleBackground}>
           <Button
             key={4}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
@@ -98,7 +117,7 @@ const AddToCard = () => {
       <p className="text-xs font-medium" style={{ color: "#44546f" }}>
         Thêm vào thẻ
       </p>
-      {actions.map((action, index) => action.component)}
+      {actions.map((action) => action.component)}
     </div>
   );
 };

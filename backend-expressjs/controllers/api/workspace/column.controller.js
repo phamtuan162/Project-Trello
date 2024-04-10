@@ -184,9 +184,38 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Sever error",
-        error: error,
       });
     }
     res.status(response.status).json(response);
+  },
+  moveCardDiffBoard: async (req, res) => {
+    const { card_id, activeColumn, overColumn } = req.body;
+    if (!card_id || !overColumn.cardOrderIds || !activeColumn.cardOrderIds) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
+    try {
+      const card = await Card.findByPk(card_id);
+      if (!card) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      const columnOfActive = await Column.findByPk(activeColumn.id);
+      const columnOfOver = await Column.findByPk(overColumn.id);
+
+      if (!columnOfActive || !columnOfOver) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      await card.update({ column_id: columnOfOver.id });
+      await Promise.all([
+        columnOfActive.update({ cardOrderIds: activeColumn.cardOrderIds }),
+        columnOfOver.update({ cardOrderIds: overColumn.cardOrderIds }),
+      ]);
+
+      return res.status(200).json({ status: 200, message: "Success" });
+    } catch (error) {
+      return res.status(500).json({ status: 500, message: "Server error" });
+    }
   },
 };

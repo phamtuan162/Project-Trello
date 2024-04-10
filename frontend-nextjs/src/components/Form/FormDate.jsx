@@ -1,8 +1,6 @@
 "use client";
 import { useSelector, useDispatch } from "react-redux";
 
-import { Menu, Transition } from "@headlessui/react";
-import { DotsVerticalIcon } from "@heroicons/react/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
 import {
   add,

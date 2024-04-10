@@ -22,6 +22,10 @@ const { updateCard } = cardSlice.actions;
 export const CardModal = () => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
+  const user = useSelector((state) => state.user.user);
+  const checkRole = useMemo(() => {
+    return user?.role?.toLowerCase() === "admin";
+  }, [user]);
   const id = useCardModal((state) => state.id);
   const isOpen = useCardModal((state) => state.isOpen);
   const onClose = useCardModal((state) => state.onClose);
@@ -63,7 +67,7 @@ export const CardModal = () => {
                       <div className="ml-9 mt-2 flex gap-4 flex-wrap">
                         <UserCard />
                         {(card?.startDateTime || card?.endDateTime) && (
-                          <DateCard />
+                          <DateCard checkRole={checkRole} />
                         )}
                       </div>
 

@@ -4,9 +4,11 @@ export const capitalizeFirstLetter = (val) => {
 };
 
 export const generatePlaceholderCard = (column) => {
-  return {
-    id: `${column.id}-placeholder-card`,
-    column_id: column.id,
-    FE_PlaceholderCard: true,
-  };
+  return (
+    column && {
+      id: `${column.id}-placeholder-card`,
+      column_id: column.id,
+      FE_PlaceholderCard: true,
+    }
+  );
 };

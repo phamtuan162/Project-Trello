@@ -5,6 +5,11 @@ const permission = require("../../../middlewares/api/permission.middleware");
 
 router.get("/", columnController.index);
 router.get("/:id", columnController.find);
+router.put(
+  "/move-card",
+
+  columnController.moveCardDiffBoard
+);
 router.post("/", permission("column.create"), columnController.store);
 router.put("/:id", permission("column.update"), columnController.update);
 router.patch("/:id", permission("column.update"), columnController.update);

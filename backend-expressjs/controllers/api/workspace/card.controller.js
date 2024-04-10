@@ -240,4 +240,5 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
+  moveCard: async (req, res) => {},
 };

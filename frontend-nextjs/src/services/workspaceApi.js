@@ -272,7 +272,14 @@ export const moveCardToDifferentColumnAPI = async (boardId, updateData) => {
     updateData
   );
   if (response.ok) {
-    return data.data;
+    return data;
+  }
+};
+
+export const moveCardToDifferentBoardAPI = async (body) => {
+  const { response, data } = await client.put(`/column/move-card`, body);
+  if (response.ok) {
+    return data;
   }
 };
 

@@ -1,11 +1,11 @@
 const { Card } = require("../models/index");
-const { isBefore, isAfter } = require("date-fns");
+const { isAfter } = require("date-fns");
 
 module.exports = {
   HandleExpired: async () => {
     const currentTime = new Date();
 
-    const cards = await findAll();
+    const cards = await Card.findAll();
 
     for (const card of cards) {
       if (card.endDateTime && isAfter(currentTime, card.endDateTime)) {

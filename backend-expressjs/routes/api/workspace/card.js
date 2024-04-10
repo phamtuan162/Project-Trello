@@ -21,6 +21,8 @@ router.put(
   permission("card.date_card"),
   cardController.update
 );
+router.put("/move_card/:id", cardController.moveCard);
+
 router.put("/:id", permission("card.update"), cardController.update);
 router.patch("/:id", permission("card.update"), cardController.update);
 router.delete("/:id", permission("card.delete"), cardController.delete);

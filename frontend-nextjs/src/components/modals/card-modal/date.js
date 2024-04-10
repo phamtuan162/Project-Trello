@@ -10,13 +10,10 @@ import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
 const { updateCard } = cardSlice.actions;
-const DateCard = () => {
+const DateCard = ({ checkRole }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
-  const user = useSelector((state) => state.user.user);
-  const checkRoleBoard = useMemo(() => {
-    return user?.role?.toLowerCase() === "admin";
-  }, [user]);
+
   const [isSelected, setIsSelected] = useState(
     card.status === "success" && true
   );
@@ -43,7 +40,7 @@ const DateCard = () => {
         Ngày
       </p>
       <div className="items-center flex gap-2 cursor-pointer text-xs grow font-medium">
-        {checkRoleBoard && (
+        {checkRole && (
           <Checkbox
             isSelected={isSelected}
             value={isSelected}
@@ -55,7 +52,10 @@ const DateCard = () => {
         )}
 
         <FormDate>
-          <Button className="items-center flex p-1 h-full ml-2 px-2 bg-default-200">
+          <Button
+            className="items-center flex p-1 h-full ml-2 px-2 bg-gray-200 text-xs font-medium"
+            style={{ color: "#172b4d" }}
+          >
             {card?.startDateTime && (
               <>
                 {format(card?.startDateTime, "d 'tháng' M")}
@@ -75,7 +75,7 @@ const DateCard = () => {
               )
             )}
 
-            <ChevronDown size={16} />
+            <ChevronDown size={15} />
           </Button>
         </FormDate>
       </div>
