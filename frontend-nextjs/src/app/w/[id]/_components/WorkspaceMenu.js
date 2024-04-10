@@ -24,8 +24,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { switchWorkspace } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 const { updateWorkspace } = workspaceSlice.actions;
+const { updateUser } = userSlice.actions;
 export default function WorkspaceMenu({
   children,
   placement = "bottom",
@@ -36,6 +38,7 @@ export default function WorkspaceMenu({
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
+  console.log(user);
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspaceId) || [];
   }, [user, workspaceId]);
@@ -65,6 +68,7 @@ export default function WorkspaceMenu({
       setWorkspaceSearch(workspacesSwitched);
     }
   }, [workspacesSwitched]);
+
   const handleSwitchWorkspace = async (workspace_id_witched) => {
     setIsChange(true);
     switchWorkspace(workspace_id_witched, {
@@ -72,9 +76,24 @@ export default function WorkspaceMenu({
     }).then((data) => {
       if (data.status === 200) {
         const workspaceActive = data.data;
+        if (workspaceActive.users) {
+          const userNeedToFind = workspaceActive.users.find(
+            (item) => +item.id === +user.id
+          );
+
+          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
+        }
         dispatch(updateWorkspace(workspaceActive));
+        if (pathname.startsWith(`/w/${workspaceId}`)) {
+          let currentURL = window.location.href;
+          currentURL = currentURL.replace(
+            workspaceId.toString(),
+            workspace_id_witched.toString()
+          );
+          router.push(currentURL);
+        }
         setIsChange(false);
-        router.push(`/w/${workspaceActive.id}/boards`);
+        // router.push(`/w/${workspaceActive.id}/boards`);
       }
     });
   };

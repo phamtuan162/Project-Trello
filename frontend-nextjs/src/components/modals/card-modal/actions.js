@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import useCardModal from "@/hooks/use-card-modal";
 import { Button } from "@nextui-org/react";
 import MoveCard from "@/components/actions/card/moveCard";
+import CopyCard from "@/components/actions/card/copyCard";
 const ActionsCard = () => {
   const cardModal = useCardModal();
   const card = useSelector((state) => state.card.card);
@@ -29,14 +30,16 @@ const ActionsCard = () => {
       label: "Sao chép",
       icon: <Copy size={16} />,
       component: (
-        <Button
-          key={2}
-          className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
-          style={{ color: "#172b4d" }}
-        >
-          <Copy size={16} />
-          Sao chép
-        </Button>
+        <CopyCard>
+          <Button
+            key={2}
+            className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
+            style={{ color: "#172b4d" }}
+          >
+            <Copy size={16} />
+            Sao chép
+          </Button>
+        </CopyCard>
       ),
     },
     {

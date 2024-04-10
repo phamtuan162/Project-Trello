@@ -44,9 +44,7 @@ export default function FormCreateWorkspace({ children }) {
     "#936316",
     "#fbdba7",
   ];
-  const handleClick = () => {
-    setIsOpen(true);
-  };
+
   const HandleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };

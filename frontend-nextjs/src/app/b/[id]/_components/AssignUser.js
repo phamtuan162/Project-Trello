@@ -18,6 +18,8 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
   const [timeoutId, setTimeoutId] = useState(null);
   const [keyword, setKeyWord] = useState("");
   const workspace = useSelector((state) => state.workspace.workspace);
+  const user = useSelector((state) => state.user.user);
+
   const [userSearch, setUserSearch] = useState([]);
   const userNotAssignCard = useMemo(() => {
     if (!workspace || !workspace.users || !cardUpdate.users) {
@@ -53,11 +55,16 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     setTimeoutId(newTimeoutId);
   };
 
-  const HandleSelectUserAssigned = async (user) => {
+  const HandleSelectUserAssigned = async (userAssign) => {
+    if (user.role.toLowerCase() !== "admin") {
+      toast.error("Bạn không đủ quyền thực hiện thao tác này");
+      setIsAssign(false);
+      return;
+    }
     if (cardUpdate.users.length === 4) {
       toast.error("Tối đa 4 thành viên");
     } else {
-      assignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
+      assignUserApi(cardUpdate.id, { user_id: userAssign.id }).then((data) => {
         if (data.status === 200) {
           const card = data.card;
           dispatch(updateCard(card));
@@ -90,12 +97,15 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     }
   }, [userNotAssignCard]);
 
+  const HandleReset = async () => {
+    setKeyWord("");
+    setUserSearch(userNotAssignCard);
+  };
   return (
     <Popover
+      onClose={HandleReset}
       isOpen={isAssign}
-      onOpenChange={(assign) => {
-        setIsAssign(assign);
-      }}
+      onOpenChange={(assign) => setIsAssign(assign)}
       placement="right"
       classNames={{
         base: ["before:bg-default-200 px-0"],

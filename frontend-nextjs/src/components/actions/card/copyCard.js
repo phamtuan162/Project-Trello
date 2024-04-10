@@ -9,6 +9,7 @@ import {
   Select,
   SelectItem,
   SelectSection,
+  Input,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { getBoardDetail } from "@/services/workspaceApi";
@@ -26,13 +27,14 @@ import useCardModal from "@/hooks/use-card-modal";
 
 const { updateBoard } = boardSlice.actions;
 const { updateCard } = cardSlice.actions;
-const MoveCard = ({ children }) => {
+const CopyCard = ({ children }) => {
   const dispatch = useDispatch();
   const cardModal = useCardModal();
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+  const [title, setTitle] = useState(card.title);
   const [boardMove, setBoardMove] = useState(board);
   const [valueBoard, setValueBoard] = useState(board.id);
   const [valueColumn, setValueColumn] = useState(card.column_id);
@@ -253,7 +255,6 @@ const MoveCard = ({ children }) => {
     dispatch(updateBoard(boardActive));
 
     moveCardToDifferentBoardAPI({
-      user_id: user.id,
       card_id: card.id,
       activeColumn: nextActiveColumn,
       overColumn: nextOverColumn,
@@ -282,6 +283,10 @@ const MoveCard = ({ children }) => {
     setValueColumn(card.column_id);
     setColumnsCurrent(board.columns);
   };
+
+  const HandleChange = (e) => {
+    setTitle(e.target.value);
+  };
   return (
     <Popover
       placement="right"
@@ -295,7 +300,7 @@ const MoveCard = ({ children }) => {
       <PopoverContent className="w-[300px] p-2 px-3">
         <form className="w-full" onSubmit={(e) => HandleSubmit(e)}>
           <div className="flex justify-between items-center relative">
-            <h1 className="grow text-center ">Di chuyển thẻ</h1>
+            <h1 className="grow text-center ">Sao chép</h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
               onClick={() => HandleReset()}
@@ -304,12 +309,27 @@ const MoveCard = ({ children }) => {
               <CloseIcon />
             </Button>
           </div>
+          <div className="mb-2">
+            <p className="text-xs font-medium">Tiêu đề</p>
+            <div className="mt-1 flex flex-col gap-2 w-full">
+              <Input
+                onChange={HandleChange}
+                value={title}
+                name="title"
+                id="title"
+                size="xs"
+                variant="bordered"
+                aria-label="input-label"
+                isRequired
+              />
+            </div>
+          </div>
           <div className="w-full mt-3">
-            <p className="text-xs font-medium">Chọn đích đến</p>
+            <p className="text-xs font-medium">Sao chép tới...</p>
             <Select
               selectedKeys={[valueBoard.toString()]}
               label="Bảng"
-              className="mt-2 text-xs"
+              className="mt-1 text-xs"
               classNames={{
                 trigger: ["max-h-[40px] min-h-unit-10 "],
                 value: ["text-xs font-medium "],
@@ -373,11 +393,11 @@ const MoveCard = ({ children }) => {
             className="mt-2"
             isDisabled={user?.role?.toLowerCase() !== "admin"}
           >
-            Di chuyển
+            Tạo thẻ
           </Button>
         </form>
       </PopoverContent>
     </Popover>
   );
 };
-export default MoveCard;
+export default CopyCard;

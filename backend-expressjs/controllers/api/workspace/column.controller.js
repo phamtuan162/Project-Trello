@@ -1,4 +1,4 @@
-const { Column, Card, Board } = require("../../../models/index");
+const { Column, Card, Board, User } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const ColumnTransformer = require("../../../transformers/workspace/column.transformer");
@@ -189,13 +189,27 @@ module.exports = {
     res.status(response.status).json(response);
   },
   moveCardDiffBoard: async (req, res) => {
-    const { card_id, activeColumn, overColumn } = req.body;
-    if (!card_id || !overColumn.cardOrderIds || !activeColumn.cardOrderIds) {
+    const { user_id, card_id, activeColumn, overColumn } = req.body;
+    if (
+      !user_id ||
+      !card_id ||
+      !overColumn.cardOrderIds ||
+      !activeColumn.cardOrderIds
+    ) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
     try {
-      const card = await Card.findByPk(card_id);
+      const card = await Card.findOne({
+        where: { id: card_id },
+        include: {
+          model: User,
+          as: "users",
+          where: {
+            id: { [Op.ne]: user_id },
+          },
+        },
+      });
       if (!card) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
@@ -208,6 +222,9 @@ module.exports = {
       }
 
       await card.update({ column_id: columnOfOver.id });
+      if (card.users) {
+        await card.removeUsers(card.users);
+      }
       await Promise.all([
         columnOfActive.update({ cardOrderIds: activeColumn.cardOrderIds }),
         columnOfOver.update({ cardOrderIds: overColumn.cardOrderIds }),

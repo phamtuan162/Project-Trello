@@ -44,6 +44,7 @@ const FormDate = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
+  const user = useSelector((state) => state.user.user);
   let today = startOfToday();
 
   let [selectedDay, setSelectedDay] = useState(
@@ -119,20 +120,33 @@ const FormDate = ({ children }) => {
       }
     });
   };
+
+  const HandleReset = async () => {
+    setIsOpen(false);
+    setCheckFocus("");
+    setSelectedDay(card.startDateTime || card.endDateTime || today);
+    setStartDateTime(card.startDateTime ? new Date(card.startDateTime) : null);
+    setEndDateTime(
+      card.endDateTime
+        ? new Date(card.endDateTime)
+        : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
+    );
+  };
   return (
     <Popover
       placement="right"
       isOpen={isOpen}
+      onClose={HandleReset}
       onOpenChange={(open) => setIsOpen(open)}
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className=" p-2 px-3 w-[300px] ">
         <div className=" max-h-[500px] overflow-x-auto w-full">
-          <div className="flex justify-between items-center relative w-full">
+          <div className="flex justify-between items-center relative w-full pt-2">
             <h1 className="grow text-center ">Ngày</h1>
             <Button
-              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
-              onClick={() => setIsOpen(false)}
+              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto "
+              onClick={() => HandleReset()}
               variant="ghost"
             >
               <CloseIcon />
@@ -312,7 +326,12 @@ const FormDate = ({ children }) => {
               </div>
             </div>
 
-            <Button type="submit" color="primary" className="w-full mt-3">
+            <Button
+              type="submit"
+              color="primary"
+              className="w-full mt-3"
+              isDisabled={user?.role?.toLowerCase() !== "admin"}
+            >
               Lưu
             </Button>
           </form>
