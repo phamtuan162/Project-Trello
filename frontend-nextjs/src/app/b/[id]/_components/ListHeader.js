@@ -31,7 +31,7 @@ export function ListHeader({
     }
   };
   return (
-    <div className=" px-2 pt-0 pb-2 text-sm font-semibold flex justify-between items-start- gap-x-2">
+    <div className=" px-2 pt-0 pb-0 text-sm font-semibold flex justify-between items-start gap-x-2">
       <div className="h-[30px] grow">
         {isEditing ? (
           <input

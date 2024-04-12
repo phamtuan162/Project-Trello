@@ -47,7 +47,7 @@ export function ListForm({ createNewColumn }) {
             />
             <div className="flex items-center gap-x-2 mt-2">
               <Button
-                type="submit"
+                type="button"
                 color="primary"
                 ref={btnaddRef}
                 onClick={() => createColumn()}

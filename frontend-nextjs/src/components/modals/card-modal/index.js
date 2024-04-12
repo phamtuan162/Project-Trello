@@ -6,7 +6,6 @@ import {
   ModalBody,
 } from "@nextui-org/react";
 import useCardModal from "@/hooks/use-card-modal";
-import { cardSlice } from "@/stores/slices/cardSlice";
 import { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { getCardDetail } from "@/services/workspaceApi";
@@ -18,10 +17,13 @@ import AddToCard from "./addToCard";
 import UserCard from "./users";
 import BackgroundCard from "./background";
 import DateCard from "./date";
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { columnSlice } from "@/stores/slices/columnSlice";
 const { updateCard } = cardSlice.actions;
 export const CardModal = () => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
+  const board = useSelector((state) => state.board.board);
   const user = useSelector((state) => state.user.user);
   const checkRole = useMemo(() => {
     return user?.role?.toLowerCase() === "admin";
@@ -38,6 +40,7 @@ export const CardModal = () => {
         if (data.status === 200) {
           const card = data.data;
           dispatch(updateCard(card));
+          dispatch(columnSlice.actions.updateColumn(board.columns));
           setIsLoading(false);
         }
       });

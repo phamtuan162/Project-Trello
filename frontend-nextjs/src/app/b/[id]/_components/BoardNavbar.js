@@ -33,7 +33,7 @@ export default function BoardNavbar({ board, updateBoard }) {
     }
   };
   return (
-    <div className="w-full h-14 z-[40] bg-black/50 fixed  flex items-center px-6 gap-x-4 ">
+    <div className="w-full h-10 z-[40] bg-black/50 fixed  flex items-center px-6 gap-x-4 ">
       <div className="h-[40px]">
         {isEditing ? (
           <Input
@@ -57,12 +57,11 @@ export default function BoardNavbar({ board, updateBoard }) {
         )}
       </div>
 
-      <div className="ml-auto text-white flex gap-3 items-center">
-        <AvatarGroup isBordered max={2} size="sm">
+      <div className="ml-auto text-white flex gap-3 items-center ">
+        <AvatarGroup isBordered max={2} className="group-avatar-1">
           {userOnline?.map((user) => (
             <Avatar
               key={user.id}
-              size="sm"
               src={user.avatar}
               name={user.name.charAt(0).toUpperCase()}
               color="secondary"

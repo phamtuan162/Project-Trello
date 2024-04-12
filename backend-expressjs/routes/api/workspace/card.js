@@ -11,6 +11,7 @@ router.post(
   permission("card.assign_user"),
   cardController.assignUser
 );
+router.post("/copy-card", cardController.copyCard);
 router.put(
   "/un-assign-user/:id",
   permission("card.un_assign_user"),
@@ -21,7 +22,6 @@ router.put(
   permission("card.date_card"),
   cardController.update
 );
-router.put("/move_card/:id", cardController.moveCard);
 
 router.put("/:id", permission("card.update"), cardController.update);
 router.patch("/:id", permission("card.update"), cardController.update);

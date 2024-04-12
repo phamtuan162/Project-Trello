@@ -9,7 +9,7 @@ export function ListCard({ cards }) {
   return (
     <ol
       className={cn(
-        "mx-1 px-1 py-0.5 flex flex-col gap-y-2 max-h-[280px] overflow-y-auto"
+        "mx-1 px-1 py-0.5 flex flex-col gap-y-2 max-h-[280px] overflow-y-auto rounded-t-md"
       )}
     >
       <SortableContext

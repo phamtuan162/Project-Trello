@@ -26,6 +26,7 @@ import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
+import FormCreateWorkspace from "../Form/FormCreateWorkspace";
 const { updateUser } = userSlice.actions;
 const { updateProvider } = providerSlice.actions;
 const Header = () => {
@@ -34,21 +35,43 @@ const Header = () => {
       label: "Thêm không gian ",
       icon: <AddIcon />,
       title: "",
+      component: (
+        <FormCreateWorkspace>
+          <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center ml-auto">
+            <AddIcon />
+          </button>
+        </FormCreateWorkspace>
+      ),
     },
     {
       label: "Thông báo",
       icon: <NotifyIcon />,
       title: "",
+      component: (
+        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+          <NotifyIcon />
+        </button>
+      ),
     },
     {
       label: "Thông tin",
       icon: <HelpOutlineIcon />,
       title: "",
+      component: (
+        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+          <HelpOutlineIcon />
+        </button>
+      ),
     },
     {
       label: "Trình đơn thao tác nhanh",
       icon: <QuickMenuIcon />,
       title: "",
+      component: (
+        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+          <QuickMenuIcon />
+        </button>
+      ),
     },
   ];
   const { id } = useParams();
@@ -165,9 +188,7 @@ const Header = () => {
               },
             }}
           >
-            <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-              {option?.icon}
-            </button>
+            {option?.component}
           </Tooltip>
         ))}
         <NavbarItem className="ml-4">

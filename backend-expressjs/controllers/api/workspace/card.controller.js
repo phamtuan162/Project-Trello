@@ -166,9 +166,20 @@ module.exports = {
     const response = {};
 
     try {
-      const card = await Card.findByPk(id);
-      if (card) {
+      const card = await Card.findByPk(id, {
+        include: { model: User, as: "users" },
+      });
+      const column = await Column.findByPk(card.column_id);
+      if (card && column) {
+        const cardOrderIdsUpdate = column.cardOrderIds.filter(
+          (item) => +item !== +card.id
+        );
+        await column.update({ cardOrderIds: cardOrderIdsUpdate });
+
+        console.log(cardOrderIdsUpdate);
+        await card.removeUsers(card.users);
         await card.destroy();
+
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -240,5 +251,59 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
-  moveCard: async (req, res) => {},
+  copyCard: async (req, res) => {
+    const { keptItems, user_id, matchBoard, overColumn, card } = req.body;
+    console.log(keptItems);
+    const response = {};
+    try {
+      if (!keptItems || !user_id || !overColumn.cardOrderIds || !card) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+      const column = await Column.findByPk(overColumn.id);
+
+      if (!column) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      const cardNew = await Card.create(card);
+      if (cardNew && card.users.length > 0 && keptItems.length > 0) {
+        for (const keptItem of keptItems) {
+          const itemType = keptItem.toLowerCase();
+          switch (itemType) {
+            case "users":
+              if (matchBoard) {
+                for (const user of card.users) {
+                  const userInstance = await User.findByPk(user.id);
+                  await cardNew.addUser(userInstance);
+                }
+              } else {
+                const user = await User.findByPk(user_id);
+                await cardNew.addUser(user);
+              }
+              break;
+            case "comments":
+              // Xử lý trường hợp cho comments nếu cần
+              break;
+            default:
+              // Xử lý các trường hợp khác nếu cần
+              break;
+          }
+        }
+      }
+
+      await column.update({ cardOrderIds: overColumn.cardOrderIds });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
+    res.status(response.status).json(response);
+  },
 };

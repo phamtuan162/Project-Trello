@@ -23,21 +23,21 @@ export function CardForm({ createNewCard, column }) {
     }
     setIsEditing(false);
   };
-  // const handleKeyDown = (event) => {
-  //   if (event.key === "Enter") {
-  //     btnaddRef.current.click();
-  //   }
-  // };
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      textareaRef.current.blur();
+    }
+  };
 
   return isEditing ? (
-    <div className="p-2 ">
+    <div className="p-2 pb-0">
       <Textarea
         placeholder="Nhập tiêu đề cho thẻ..."
         ref={textareaRef}
         className="text-lg"
-        maxRows={2}
+        maxRows={1}
         onBlur={() => onCreateCard()}
-        // onKeyDown={handleKeyDown}
+        onKeyDown={handleKeyDown}
       />
 
       <div className="flex items-center gap-x-2 mt-2">
@@ -55,7 +55,7 @@ export function CardForm({ createNewCard, column }) {
       </div>
     </div>
   ) : (
-    <div className="pt-2 px-2">
+    <div className="pt-2 px-2 pb-0">
       <Button
         className="card bg-[#f1f2f4] hover:bg-default-300 rounded-lg h-auto px-2 py-1.5 w-full justify-start text-muted-foreground text-sm"
         size="sm"

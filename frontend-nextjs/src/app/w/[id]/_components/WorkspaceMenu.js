@@ -120,6 +120,7 @@ export default function WorkspaceMenu({
       className="max-w-[300px] w-[250px]"
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
+      style={{ zIndex: "49" }}
     >
       <PopoverTrigger>
         {children ? (

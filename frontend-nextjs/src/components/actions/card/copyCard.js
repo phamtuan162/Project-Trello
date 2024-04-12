@@ -10,23 +10,27 @@ import {
   SelectItem,
   SelectSection,
   Input,
+  CircularProgress,
+  CheckboxGroup,
+  Checkbox,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { getBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
-import { cardSlice } from "@/stores/slices/cardSlice";
-import { arrayMove } from "@dnd-kit/sortable";
-import {
-  updateColumnDetail,
-  moveCardToDifferentColumnAPI,
-  moveCardToDifferentBoardAPI,
-} from "@/services/workspaceApi";
-import { cloneDeep, isEmpty } from "lodash";
+import { columnSlice } from "@/stores/slices/columnSlice";
 import { generatePlaceholderCard } from "@/utils/formatters";
+import { copyCardWithBoardApi } from "@/services/workspaceApi";
+import { cloneDeep, isEmpty } from "lodash";
 import useCardModal from "@/hooks/use-card-modal";
-
+import { mapOrder } from "@/utils/sorts";
+import { toast } from "react-toastify";
 const { updateBoard } = boardSlice.actions;
-const { updateCard } = cardSlice.actions;
+const { updateColumn } = columnSlice.actions;
+
+function generateRandomId() {
+  return Math.floor(Math.random() * 1000);
+}
+
 const CopyCard = ({ children }) => {
   const dispatch = useDispatch();
   const cardModal = useCardModal();
@@ -34,246 +38,117 @@ const CopyCard = ({ children }) => {
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+  const columns = useSelector((state) => state.column.columns);
+  const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState(card.title);
   const [boardMove, setBoardMove] = useState(board);
   const [valueBoard, setValueBoard] = useState(board.id);
   const [valueColumn, setValueColumn] = useState(card.column_id);
   const [valueCardIndex, setValueCardIndex] = useState(card.id);
-  const [columnsCurrent, setColumnsCurrent] = useState(board.columns);
+  const [selected, setSelected] = useState([]);
   const workspaces = useMemo(() => {
     return user?.workspaces?.filter((workspace) => workspace.boards.length > 0);
   }, [user]);
-  const cardsCurrent = useMemo(() => {
-    if (+valueColumn === card.column_id) {
-      setValueCardIndex(card.id);
-    }
-    const currentColumn = columnsCurrent.find(
-      (column) => +column.id === +valueColumn
-    );
 
-    return currentColumn?.cardOrderIds?.length > 0
-      ? currentColumn.cardOrderIds
-      : [`${card.column_id}-placeholder-card`];
-  }, [valueColumn, card, columnsCurrent]);
+  const cardsCurrent = useMemo(() => {
+    const currentColumn = columns.find((column) => +column.id === +valueColumn);
+    return currentColumn?.cardOrderIds;
+  }, [valueColumn, columns]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (valueBoard) {
         const data = await getBoardDetail(+valueBoard);
-        const columns = data.data.columns || [];
-        setBoardMove(data.data);
-        setColumnsCurrent(columns);
-        setValueColumn(card.column_id);
+        if (data.status === 200) {
+          let boardData = data.data;
+
+          boardData.columns = mapOrder(
+            boardData.columns,
+            boardData.columnOrderIds,
+            "id"
+          );
+
+          boardData.columns.forEach((column) => {
+            if (isEmpty(column.cards)) {
+              column.cards = [generatePlaceholderCard(column)];
+              column.cardOrderIds = [generatePlaceholderCard(column).id];
+            } else {
+              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+            }
+          });
+          dispatch(updateColumn(boardData.columns));
+          setBoardMove(boardData);
+        }
       }
     };
 
     fetchData();
   }, [valueBoard]);
-  const moveCardWithinColumn = async (
-    newBoard,
-    newColumns,
-    columnIndex,
-    oldCardIndex,
-    newCardIndex
-  ) => {
-    const updatedColumn = { ...newColumns[columnIndex] };
-    const dndOrderedCards = arrayMove(
-      updatedColumn.cards,
-      oldCardIndex,
-      newCardIndex
-    );
-    const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
-    updatedColumn.cards = dndOrderedCards;
-    updatedColumn.cardOrderIds = dndOrderedCardIds;
-    newColumns[columnIndex] = updatedColumn;
-    newBoard.columns = newColumns;
-
-    const response = await updateColumnDetail(valueColumn, {
-      cardOrderIds: dndOrderedCardIds,
-    });
-    if (response.status === 200) {
-      dispatch(updateBoard(newBoard));
-      setColumnsCurrent(newBoard.columns);
-    } else {
-      const error = response.error;
-      toast.error(error);
-    }
-  };
-
-  const moveCardToDifferentColumn = async (
-    newBoard,
-    nextColumns,
-    nextActiveColumn,
-    nextOverColumn,
-    newCardIndex
-  ) => {
-    if (nextActiveColumn) {
-      nextActiveColumn.cards = nextActiveColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-      if (isEmpty(nextActiveColumn.cards)) {
-        nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
-      }
-      nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
-        (item) => item.id
-      );
-    }
-
-    if (nextOverColumn) {
-      nextOverColumn.cards = nextOverColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-      const rebuild_activeDraggingCardData = {
-        ...card,
-        column_id: nextOverColumn.id,
-      };
-      nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-        newCardIndex,
-        0,
-        rebuild_activeDraggingCardData
-      );
-      nextOverColumn.cards = nextOverColumn.cards.filter(
-        (card) => !card.FE_PlaceholderCard
-      );
-      nextOverColumn.cardOrderIds = nextOverColumn.cards.map((card) => card.id);
-    }
-
-    const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
-    newBoard.columns = [...nextColumns];
-    newBoard.columnOrderIds = dndOrderedColumnsIds;
-    dispatch(updateBoard(newBoard));
-
-    const updatedColumns = newBoard.columns.map((column) => {
-      if (
-        typeof column.cardOrderIds[0] === "string" &&
-        column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-      ) {
-        return { ...column, cardOrderIds: [], cards: [] };
-      }
-      return column;
-    });
-
-    const updatedBoard = { ...newBoard, columns: updatedColumns };
-    const response = await moveCardToDifferentColumnAPI(
-      newBoard.id,
-      updatedBoard
-    );
-    if (response.status === 200) {
-      dispatch(
-        updateCard({
-          ...card,
-          column_id: nextOverColumn.id,
-          column: { ...nextOverColumn },
-        })
-      );
-    } else {
-      const error = response.error;
-      toast.error(error);
-    }
-  };
-
-  const moveCardWithinBoard = async () => {
-    const newBoard = { ...boardMove };
-    const newColumns = [...newBoard.columns];
-    const columnIndex = newColumns.findIndex(
-      (column) => column.id === +valueColumn
-    );
-    const oldCardIndex = cardsCurrent.findIndex((item) => item === +card.id);
-    const newCardIndex = cardsCurrent.findIndex(
-      (item) => item === +valueCardIndex
-    );
-
-    if (+valueColumn === +card.column_id) {
-      await moveCardWithinColumn(
-        newBoard,
-        newColumns,
-        columnIndex,
-        oldCardIndex,
-        newCardIndex
-      );
-    } else {
-      const nextColumns = cloneDeep(columnsCurrent);
-      const nextOverColumn = nextColumns.find(
-        (column) => column.id === +valueColumn
-      );
-      const nextActiveColumn = nextColumns.find(
-        (column) => column.id === card.column_id
-      );
-      await moveCardToDifferentColumn(
-        newBoard,
-        nextColumns,
-        nextActiveColumn,
-        nextOverColumn,
-        newCardIndex
-      );
-    }
-  };
-
-  const moveCardToDifferentBoard = async () => {
-    const boardActive = { ...board };
-    const newCardIndex = cardsCurrent.findIndex(
-      (item) => item === +valueCardIndex
-    );
-    const activeColumns = cloneDeep(board.columns);
-    const overColumns = cloneDeep(columnsCurrent);
-
-    const nextOverColumn = overColumns.find(
-      (column) => column.id === +valueColumn
-    );
-    const nextActiveColumn = activeColumns.find(
-      (column) => column.id === card.column_id
-    );
-
-    if (nextActiveColumn) {
-      nextActiveColumn.cards = nextActiveColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-
-      nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
-        (item) => item.id
-      );
-    }
-
-    if (nextOverColumn) {
-      nextOverColumn.cards = nextOverColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-      const rebuild_activeDraggingCardData = {
-        ...card,
-        column_id: nextOverColumn.id,
-      };
-      nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-        newCardIndex,
-        0,
-        rebuild_activeDraggingCardData
-      );
-      nextOverColumn.cardOrderIds = nextOverColumn.cards.map((card) => card.id);
-    }
-
-    const dndOrderedColumnsIdsActive = activeColumns.map((c) => c.id);
-    boardActive.columns = [...activeColumns];
-    boardActive.columnOrderIds = dndOrderedColumnsIdsActive;
-    dispatch(updateBoard(boardActive));
-
-    moveCardToDifferentBoardAPI({
-      card_id: card.id,
-      activeColumn: nextActiveColumn,
-      overColumn: nextOverColumn,
-    }).then((data) => {
-      if (data.status === 200) {
-        cardModal.onClose();
-      } else {
-        const error = response.error;
-        toast.error(error);
-      }
-    });
-  };
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
-    if (+valueBoard === +board.id) {
-      await moveCardWithinBoard();
-    } else {
-      await moveCardToDifferentBoard();
+    setIsLoading(true);
+    if (valueBoard && valueColumn && valueCardIndex && title) {
+      const newBoard = { ...boardMove };
+      const nextColumns = cloneDeep(columns);
+      const nextOverColumn = nextColumns.find(
+        (column) => column.id === +valueColumn
+      );
+      const overCardIndex = cardsCurrent.findIndex(
+        (item) => item === +valueCardIndex
+      );
+      const shouldCopyUsers = selected?.includes("users");
+
+      let cardCopy = {};
+
+      if (nextOverColumn) {
+        cardCopy = {
+          ...card,
+          title: title,
+          users: shouldCopyUsers ? card.users : [],
+          id: generateRandomId(),
+          column_id: nextOverColumn.id,
+        };
+        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+          overCardIndex,
+          0,
+          cardCopy
+        );
+        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
+          (card) => card.id
+        );
+      }
+      newBoard.columns = [...nextColumns];
+      const checkBoard = +board.id === +valueBoard;
+
+      const nextOverColumnCopy = { ...nextOverColumn };
+      nextOverColumnCopy.cards = nextOverColumnCopy.cards.filter(
+        (card) => !card.FE_PlaceholderCard
+      );
+      nextOverColumnCopy.cardOrderIds = nextOverColumnCopy.cards.map(
+        (card) => card.id
+      );
+      copyCardWithBoardApi({
+        keptItems: selected,
+        user_id: user.id,
+        matchBoard: checkBoard,
+        card: cardCopy,
+        overColumn: nextOverColumnCopy,
+      }).then((data) => {
+        if (data.status === 200) {
+          setTitle(card.title);
+          if (checkBoard) {
+            dispatch(updateBoard(newBoard));
+            dispatch(updateColumn(newBoard.columns));
+            setValueCardIndex(card.id);
+          }
+          setSelected([]);
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+        setIsLoading(false);
+      });
     }
   };
 
@@ -281,7 +156,7 @@ const CopyCard = ({ children }) => {
     setIsOpen(false);
     setValueBoard(board.id);
     setValueColumn(card.column_id);
-    setColumnsCurrent(board.columns);
+    setValueCardIndex(card.id);
   };
 
   const HandleChange = (e) => {
@@ -324,6 +199,48 @@ const CopyCard = ({ children }) => {
               />
             </div>
           </div>
+
+          <div className="flex flex-col gap-1 mt-2 w-full">
+            <CheckboxGroup
+              value={selected}
+              onValueChange={setSelected}
+              label={
+                (card?.works?.length > 0 ||
+                  card?.attachments?.length > 0 ||
+                  card?.comments?.length > 0 ||
+                  card?.users?.length > 0) && (
+                  <p
+                    className="text-xs font-medium"
+                    style={{ color: "#172b4d" }}
+                  >
+                    Giữ...
+                  </p>
+                )
+              }
+            >
+              {card?.works?.length > 0 && (
+                <Checkbox value="works">
+                  Danh sách công việc ({card.works.length})
+                </Checkbox>
+              )}
+              {card?.users?.length > 0 && (
+                <Checkbox value="users">
+                  Thành viên ({card.users.length})
+                </Checkbox>
+              )}
+              {card?.attachments?.length > 0 && (
+                <Checkbox value="attachments">
+                  Tập tin đính kèm ({card.attachments.length})
+                </Checkbox>
+              )}
+              {card?.comments?.length > 0 && (
+                <Checkbox value="comments">
+                  Bình luận ({card.comments.length})
+                </Checkbox>
+              )}
+            </CheckboxGroup>
+          </div>
+
           <div className="w-full mt-3">
             <p className="text-xs font-medium">Sao chép tới...</p>
             <Select
@@ -335,7 +252,10 @@ const CopyCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
-                setValueBoard([...newValue][0]);
+                if (+[...newValue][0] === +board.id) {
+                  setValueColumn(card.column_id);
+                }
+                setValueBoard([...newValue][0] || valueBoard);
               }}
             >
               {workspaces.map((workspace) => (
@@ -359,10 +279,13 @@ const CopyCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
+                if (+[...newValue][0] === +card.column_id) {
+                  setValueCardIndex(card.id);
+                }
                 setValueColumn([...newValue][0]);
               }}
             >
-              {columnsCurrent.map((column) => (
+              {columns.map((column) => (
                 <SelectItem key={column.id} value={column.id}>
                   {column.title}
                 </SelectItem>
@@ -387,13 +310,14 @@ const CopyCard = ({ children }) => {
               ))}
             </Select>
           </div>
+
           <Button
             type="submit"
             color="primary"
             className="mt-2"
-            isDisabled={user?.role?.toLowerCase() !== "admin"}
+            isDisabled={user?.role?.toLowerCase() !== "admin" || isLoading}
           >
-            Tạo thẻ
+            {isLoading ? <CircularProgress /> : "Tạo thẻ"}
           </Button>
         </form>
       </PopoverContent>

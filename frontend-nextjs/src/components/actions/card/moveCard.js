@@ -9,11 +9,13 @@ import {
   Select,
   SelectItem,
   SelectSection,
+  CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { getBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { columnSlice } from "@/stores/slices/columnSlice";
 import { arrayMove } from "@dnd-kit/sortable";
 import {
   updateColumnDetail,
@@ -23,9 +25,11 @@ import {
 import { cloneDeep, isEmpty } from "lodash";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import useCardModal from "@/hooks/use-card-modal";
-
+import { mapOrder } from "@/utils/sorts";
+import { toast } from "react-toastify";
 const { updateBoard } = boardSlice.actions;
 const { updateCard } = cardSlice.actions;
+const { updateColumn } = columnSlice.actions;
 const MoveCard = ({ children }) => {
   const dispatch = useDispatch();
   const cardModal = useCardModal();
@@ -33,39 +37,51 @@ const MoveCard = ({ children }) => {
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+  const columns = useSelector((state) => state.column.columns);
+  const [isLoading, setIsLoading] = useState(false);
   const [boardMove, setBoardMove] = useState(board);
   const [valueBoard, setValueBoard] = useState(board.id);
   const [valueColumn, setValueColumn] = useState(card.column_id);
   const [valueCardIndex, setValueCardIndex] = useState(card.id);
-  const [columnsCurrent, setColumnsCurrent] = useState(board.columns);
   const workspaces = useMemo(() => {
     return user?.workspaces?.filter((workspace) => workspace.boards.length > 0);
   }, [user]);
-  const cardsCurrent = useMemo(() => {
-    if (+valueColumn === card.column_id) {
-      setValueCardIndex(card.id);
-    }
-    const currentColumn = columnsCurrent.find(
-      (column) => +column.id === +valueColumn
-    );
 
-    return currentColumn?.cardOrderIds?.length > 0
-      ? currentColumn.cardOrderIds
-      : [`${card.column_id}-placeholder-card`];
-  }, [valueColumn, card, columnsCurrent]);
+  const cardsCurrent = useMemo(() => {
+    const currentColumn = columns.find((column) => +column.id === +valueColumn);
+    return currentColumn?.cardOrderIds;
+  }, [valueColumn, columns]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (valueBoard) {
         const data = await getBoardDetail(+valueBoard);
-        const columns = data.data.columns || [];
-        setBoardMove(data.data);
-        setColumnsCurrent(columns);
-        setValueColumn(card.column_id);
+        if (data.status === 200) {
+          let boardData = data.data;
+
+          boardData.columns = mapOrder(
+            boardData.columns,
+            boardData.columnOrderIds,
+            "id"
+          );
+
+          boardData.columns.forEach((column) => {
+            if (isEmpty(column.cards)) {
+              column.cards = [generatePlaceholderCard(column)];
+              column.cardOrderIds = [generatePlaceholderCard(column).id];
+            } else {
+              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+            }
+          });
+          dispatch(updateColumn(boardData.columns));
+          setBoardMove(boardData);
+        }
       }
     };
 
     fetchData();
   }, [valueBoard]);
+
   const moveCardWithinColumn = async (
     newBoard,
     newColumns,
@@ -90,7 +106,8 @@ const MoveCard = ({ children }) => {
     });
     if (response.status === 200) {
       dispatch(updateBoard(newBoard));
-      setColumnsCurrent(newBoard.columns);
+      dispatch(updateColumn(newColumns));
+      setValueCardIndex(card.id);
     } else {
       const error = response.error;
       toast.error(error);
@@ -151,26 +168,26 @@ const MoveCard = ({ children }) => {
     });
 
     const updatedBoard = { ...newBoard, columns: updatedColumns };
-    const response = await moveCardToDifferentColumnAPI(
-      newBoard.id,
-      updatedBoard
-    );
-    if (response.status === 200) {
-      dispatch(
-        updateCard({
-          ...card,
-          column_id: nextOverColumn.id,
-          column: { ...nextOverColumn },
-        })
-      );
-    } else {
-      const error = response.error;
-      toast.error(error);
-    }
+    moveCardToDifferentColumnAPI(newBoard.id, updatedBoard).then((data) => {
+      if (data.status === 200) {
+        dispatch(
+          updateCard({
+            ...card,
+            column_id: nextOverColumn.id,
+            column: { ...nextOverColumn },
+          })
+        );
+        dispatch(updateColumn(updatedColumns));
+        setValueCardIndex(card.id);
+      } else {
+        const error = data.error;
+        toast.error(error);
+      }
+    });
   };
 
   const moveCardWithinBoard = async () => {
-    const newBoard = { ...boardMove };
+    const newBoard = { ...board };
     const newColumns = [...newBoard.columns];
     const columnIndex = newColumns.findIndex(
       (column) => column.id === +valueColumn
@@ -189,7 +206,7 @@ const MoveCard = ({ children }) => {
         newCardIndex
       );
     } else {
-      const nextColumns = cloneDeep(columnsCurrent);
+      const nextColumns = cloneDeep(columns);
       const nextOverColumn = nextColumns.find(
         (column) => column.id === +valueColumn
       );
@@ -212,7 +229,7 @@ const MoveCard = ({ children }) => {
       (item) => item === +valueCardIndex
     );
     const activeColumns = cloneDeep(board.columns);
-    const overColumns = cloneDeep(columnsCurrent);
+    const overColumns = cloneDeep(columns);
 
     const nextOverColumn = overColumns.find(
       (column) => column.id === +valueColumn
@@ -225,6 +242,10 @@ const MoveCard = ({ children }) => {
       nextActiveColumn.cards = nextActiveColumn.cards.filter(
         (item) => item.id !== card.id
       );
+
+      if (isEmpty(nextActiveColumn.cards)) {
+        nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
+      }
 
       nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
         (item) => item.id
@@ -252,13 +273,23 @@ const MoveCard = ({ children }) => {
     boardActive.columnOrderIds = dndOrderedColumnsIdsActive;
     dispatch(updateBoard(boardActive));
 
+    const nextActiveColumnCopy = { ...nextActiveColumn };
+    nextActiveColumnCopy.cards = nextActiveColumnCopy.cards.filter(
+      (item) => !item.FE_PlaceholderCard
+    );
+    nextActiveColumnCopy.cardOrderIds = nextActiveColumnCopy.cards.map(
+      (card) => card.id
+    );
+
     moveCardToDifferentBoardAPI({
       user_id: user.id,
       card_id: card.id,
-      activeColumn: nextActiveColumn,
+      activeColumn: nextActiveColumnCopy,
       overColumn: nextOverColumn,
     }).then((data) => {
       if (data.status === 200) {
+        dispatch(updateColumn(boardActive.columns));
+        setValueCardIndex(card.id);
         cardModal.onClose();
       } else {
         const error = response.error;
@@ -269,18 +300,19 @@ const MoveCard = ({ children }) => {
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     if (+valueBoard === +board.id) {
       await moveCardWithinBoard();
     } else {
       await moveCardToDifferentBoard();
     }
+    setIsLoading(false);
   };
 
   const HandleReset = async () => {
     setIsOpen(false);
     setValueBoard(board.id);
     setValueColumn(card.column_id);
-    setColumnsCurrent(board.columns);
   };
   return (
     <Popover
@@ -307,7 +339,7 @@ const MoveCard = ({ children }) => {
           <div className="w-full mt-3">
             <p className="text-xs font-medium">Chọn đích đến</p>
             <Select
-              selectedKeys={[valueBoard.toString()]}
+              selectedKeys={[valueBoard?.toString()]}
               label="Bảng"
               className="mt-2 text-xs"
               classNames={{
@@ -315,7 +347,10 @@ const MoveCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
-                setValueBoard([...newValue][0]);
+                if (+[...newValue][0] === +board.id) {
+                  setValueColumn(card.column_id);
+                }
+                setValueBoard([...newValue][0] || valueBoard);
               }}
             >
               {workspaces.map((workspace) => (
@@ -339,10 +374,13 @@ const MoveCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
+                if (+[...newValue][0] === card.column_id) {
+                  setValueCardIndex(card.id);
+                }
                 setValueColumn([...newValue][0]);
               }}
             >
-              {columnsCurrent.map((column) => (
+              {columns.map((column) => (
                 <SelectItem key={column.id} value={column.id}>
                   {column.title}
                 </SelectItem>
@@ -371,9 +409,9 @@ const MoveCard = ({ children }) => {
             type="submit"
             color="primary"
             className="mt-2"
-            isDisabled={user?.role?.toLowerCase() !== "admin"}
+            isDisabled={user?.role?.toLowerCase() !== "admin" || isLoading}
           >
-            Di chuyển
+            {isLoading ? <CircularProgress size={16} /> : " Di chuyển"}
           </Button>
         </form>
       </PopoverContent>

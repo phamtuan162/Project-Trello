@@ -5,9 +5,10 @@ import useCardModal from "@/hooks/use-card-modal";
 import { Button } from "@nextui-org/react";
 import MoveCard from "@/components/actions/card/moveCard";
 import CopyCard from "@/components/actions/card/copyCard";
+import DeleteCard from "@/components/actions/card/deleteCard";
 const ActionsCard = () => {
   const cardModal = useCardModal();
-  const card = useSelector((state) => state.card.card);
+  const board = useSelector((state) => state.board.board);
 
   const actions = [
     {
@@ -46,14 +47,16 @@ const ActionsCard = () => {
       label: "Xóa",
       icon: <Trash size={16} />,
       component: (
-        <Button
-          key={3}
-          className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
-          style={{ color: "#172b4d" }}
-        >
-          <Trash size={16} />
-          Xóa
-        </Button>
+        <DeleteCard>
+          <Button
+            key={3}
+            className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
+            style={{ color: "#172b4d" }}
+          >
+            <Trash size={16} />
+            Xóa
+          </Button>
+        </DeleteCard>
       ),
     },
     {

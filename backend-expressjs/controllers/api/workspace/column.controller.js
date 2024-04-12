@@ -1,4 +1,4 @@
-const { Column, Card, Board, User } = require("../../../models/index");
+const { Card, Column, User, Board } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const ColumnTransformer = require("../../../transformers/workspace/column.transformer");
@@ -171,10 +171,21 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const column = await Column.findByPk(id);
+      const column = await Column.findByPk(id, {
+        include: { model: Card, as: "cards" },
+      });
       if (column) {
-        await Card.destroy({ where: { column_id: column.id } });
-        await column.destroy();
+        for (const card of column.cards) {
+          const cardDelete = await Card.findByPk(card.id, {
+            include: { model: User, as: "users" },
+          });
+
+          if (cardDelete.users.length > 0) {
+            await cardDelete.removeUsers(cardDelete.users);
+          }
+          await cardDelete.destroy();
+        }
+        await Column.destroy({ where: { id } });
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -190,6 +201,8 @@ module.exports = {
   },
   moveCardDiffBoard: async (req, res) => {
     const { user_id, card_id, activeColumn, overColumn } = req.body;
+    const response = {};
+
     if (
       !user_id ||
       !card_id ||
@@ -200,39 +213,48 @@ module.exports = {
     }
 
     try {
-      const card = await Card.findOne({
-        where: { id: card_id },
+      const card = await Card.findByPk(card_id, {
         include: {
           model: User,
           as: "users",
-          where: {
-            id: { [Op.ne]: user_id },
-          },
         },
       });
       if (!card) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res.status(404).json({ status: 404, message: "Not found Card" });
       }
 
       const columnOfActive = await Column.findByPk(activeColumn.id);
       const columnOfOver = await Column.findByPk(overColumn.id);
 
       if (!columnOfActive || !columnOfOver) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found Column" });
       }
 
       await card.update({ column_id: columnOfOver.id });
       if (card.users) {
-        await card.removeUsers(card.users);
+        for (const user of card.users) {
+          if (+user.id !== +user_id) {
+            await card.removeUser(user);
+          }
+        }
       }
       await Promise.all([
         columnOfActive.update({ cardOrderIds: activeColumn.cardOrderIds }),
         columnOfOver.update({ cardOrderIds: overColumn.cardOrderIds }),
       ]);
 
-      return res.status(200).json({ status: 200, message: "Success" });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
     } catch (error) {
-      return res.status(500).json({ status: 500, message: "Server error" });
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
+    res.status(response.status).json(response);
   },
 };

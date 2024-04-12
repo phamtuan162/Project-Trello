@@ -439,3 +439,29 @@ export const unAssignUserApi = async (cardId, body) => {
   }
   return null;
 };
+
+export const copyCardWithBoardApi = async (body) => {
+  const { response, data } = await client.post(`/card/copy-card`, body);
+  if (response.ok) {
+    return data;
+  }
+};
+
+export const deleteCardApi = async (cardId) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.delete(
+    `/card/${cardId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteCardApi(cardId);
+    }
+  }
+  return null;
+};

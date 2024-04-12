@@ -18,7 +18,7 @@ export function ListOptions({ column, deleteColumnDetail }) {
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const onDeleteColumn = async () => {
-    toast.warning("Bạn có chắc chắn muốn xóa bảng này không", {
+    toast.warning("Bạn có chắc chắn muốn xóa trạng thái này không", {
       onClick: async () => {
         deleteColumnDetail(column.id);
       },

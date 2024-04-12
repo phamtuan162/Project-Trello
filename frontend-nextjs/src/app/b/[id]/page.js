@@ -20,6 +20,7 @@ import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
 import { isEmpty } from "lodash";
 import Loading from "@/components/Loading/Loading";
+
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
@@ -157,7 +158,7 @@ export default function BoardIdPage() {
         });
 
         dispatch(boardSlice.actions.updateBoard(newBoard));
-        toast.success("Bạn đã xóa danh sách thành công");
+        toast.success("Bạn đã xóa trạng thái này thành công");
       } else {
         const error = data.error;
         toast.error(error);
@@ -272,7 +273,7 @@ export default function BoardIdPage() {
           }}
         >
           <BoardNavbar board={board} updateBoard={updateBoard} />
-          <div className="relative pt-20 h-full">
+          <div className="relative pt-8 h-full">
             <div className="p-4 h-full overflow-y-hidden overflow-x-auto">
               <ListContainer
                 board={board}
