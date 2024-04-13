@@ -9,7 +9,8 @@ const cardRouter = require("./workspace/card");
 const deviceRouter = require("./device/device");
 const roleRouter = require("./auth/role");
 const permissionRouter = require("./auth/permission");
-
+const workRouter = require("./work/work");
+const missionRouter = require("./mission/mission");
 router.use("/auth", authRouter);
 
 router.use("/role", roleRouter);
@@ -25,6 +26,10 @@ router.use("/board", boardRouter);
 router.use("/column", columnRouter);
 
 router.use("/card", cardRouter);
+
+router.use("/work", workRouter);
+
+router.use("/mission", missionRouter);
 
 router.use("/device", deviceRouter);
 

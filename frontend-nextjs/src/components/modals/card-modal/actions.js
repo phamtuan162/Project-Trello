@@ -17,7 +17,6 @@ const ActionsCard = () => {
       component: (
         <MoveCard>
           <Button
-            key={1}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -33,7 +32,6 @@ const ActionsCard = () => {
       component: (
         <CopyCard>
           <Button
-            key={2}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -49,7 +47,6 @@ const ActionsCard = () => {
       component: (
         <DeleteCard>
           <Button
-            key={3}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -64,7 +61,6 @@ const ActionsCard = () => {
       icon: <Share2 size={16} />,
       component: (
         <Button
-          key={4}
           className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
           style={{ color: "#172b4d" }}
         >
@@ -75,11 +71,13 @@ const ActionsCard = () => {
     },
   ];
   return (
-    <div className="space-y-2 mt-6">
+    <div className="space-y-2 mt-6" key={"actions"}>
       <p className="text-xs font-medium" style={{ color: "#44546f" }}>
         Thao tác
       </p>
-      {actions.map((action) => action.component)}
+      {actions.map((action, index) => (
+        <div key={index}>{action.component}</div>
+      ))}
     </div>
   );
 };

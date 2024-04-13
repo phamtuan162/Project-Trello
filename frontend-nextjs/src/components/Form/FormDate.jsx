@@ -141,7 +141,7 @@ const FormDate = ({ children }) => {
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className=" p-2 px-3 w-[300px] ">
-        <div className=" max-h-[500px] overflow-x-auto w-full">
+        <div className=" max-h-[600px] overflow-x-auto w-full">
           <div className="flex justify-between items-center relative w-full pt-2">
             <h1 className="grow text-center ">Ngày</h1>
             <Button
@@ -181,13 +181,13 @@ const FormDate = ({ children }) => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-7 mt-2 text-sm gap-1">
+                  <div className="grid grid-cols-7 mt-1 text-sm gap-1">
                     {days.map((day, dayIdx) => (
                       <div
                         key={day.toString()}
                         className={classNames(
                           dayIdx === 0 && colStartClasses[getDay(day)],
-                          "py-1.5"
+                          "py-1"
                         )}
                       >
                         <button
@@ -289,7 +289,7 @@ const FormDate = ({ children }) => {
                 />
               </div>
             </div>
-            <div className="w-full mt-3">
+            <div className="w-full mt-2">
               <p className="text-xs font-medium">Ngày hết hạn</p>
               <div className=" flex gap-2 ">
                 <Checkbox

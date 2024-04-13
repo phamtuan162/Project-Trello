@@ -1,4 +1,4 @@
-const { Card, Column, User } = require("../../../models/index");
+const { Card, Column, User, Work, Mission } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
@@ -35,6 +35,11 @@ module.exports = {
         include: [
           { model: User, as: "users" },
           { model: Column, as: "column" },
+          {
+            model: Work,
+            as: "works",
+            include: { model: Mission, as: "missions" },
+          },
         ],
       });
       if (!card) {
@@ -61,10 +66,6 @@ module.exports = {
 
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
-    }
-
-    if (req.body.column_id) {
-      rules.title = string().required("Chưa có column_id");
     }
 
     const schema = object(rules);
@@ -167,7 +168,10 @@ module.exports = {
 
     try {
       const card = await Card.findByPk(id, {
-        include: { model: User, as: "users" },
+        include: [
+          { model: User, as: "users" },
+          { model: Work, as: "works" },
+        ],
       });
       const column = await Column.findByPk(card.column_id);
       if (card && column) {
@@ -176,8 +180,11 @@ module.exports = {
         );
         await column.update({ cardOrderIds: cardOrderIdsUpdate });
 
-        console.log(cardOrderIdsUpdate);
+        if (card.works.length > 0) {
+          await Work.destroy({ where: { card_id: card.id } });
+        }
         await card.removeUsers(card.users);
+
         await card.destroy();
 
         Object.assign(response, {
@@ -189,7 +196,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Sever error",
-        error: error,
       });
     }
     res.status(response.status).json(response);
@@ -253,7 +259,6 @@ module.exports = {
   },
   copyCard: async (req, res) => {
     const { keptItems, user_id, matchBoard, overColumn, card } = req.body;
-    console.log(keptItems);
     const response = {};
     try {
       if (!keptItems || !user_id || !overColumn.cardOrderIds || !card) {

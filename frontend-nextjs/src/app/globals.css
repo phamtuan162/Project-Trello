@@ -111,3 +111,13 @@ header {
 .window-cover-menu-button:hover {
   background-color: #091e4224;
 }
+.select label {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.select label > span:first-of-type {
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+}

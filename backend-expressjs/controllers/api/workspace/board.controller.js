@@ -1,4 +1,4 @@
-const { Board, Column, Card, User } = require("../../../models/index");
+const { Board, Column, Card, User, Work } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const BoardTransformer = require("../../../transformers/workspace/board.transformer");

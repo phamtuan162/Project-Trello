@@ -4,7 +4,7 @@ import { Avatar } from "@nextui-org/react";
 const ActivityCard = () => {
   return (
     <div className="flex items-start gap-x-4 w-full">
-      <ActivityIcon className=" mt-0.5 " size={24} />
+      <ActivityIcon size={20} />
       <div className="w-full">
         <p className="font-semibold  mb-2 text-sm">Hoạt động</p>
         <ol className="mt-2 space-y-4">

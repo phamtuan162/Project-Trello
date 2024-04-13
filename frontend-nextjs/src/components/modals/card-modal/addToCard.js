@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import FormBackground from "@/components/Form/FormBackground";
 import FormDate from "@/components/Form/FormDate";
 import { updateCardApi } from "@/services/workspaceApi";
+import AddWork from "@/components/actions/work/addWork";
 import { cardSlice } from "@/stores/slices/cardSlice";
 const { updateCard } = cardSlice.actions;
 
@@ -40,7 +41,6 @@ const AddToCard = () => {
           isAssign={isAssign}
         >
           <Button
-            key={1}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -54,14 +54,15 @@ const AddToCard = () => {
       label: "Việc cần làm",
       icon: <SquareCheck size={16} />,
       component: (
-        <Button
-          key={2}
-          className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
-          style={{ color: "#172b4d" }}
-        >
-          <SquareCheck size={16} />
-          Việc cần làm
-        </Button>
+        <AddWork>
+          <Button
+            className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
+            style={{ color: "#172b4d" }}
+          >
+            <SquareCheck size={16} />
+            Việc cần làm
+          </Button>
+        </AddWork>
       ),
     },
     {
@@ -70,7 +71,6 @@ const AddToCard = () => {
       component: (
         <FormDate>
           <Button
-            key={3}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -86,7 +86,6 @@ const AddToCard = () => {
       component: (
         <FormBackground HandleBackground={HandleBackground}>
           <Button
-            key={4}
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
           >
@@ -101,7 +100,6 @@ const AddToCard = () => {
       icon: <Paperclip size={16} />,
       component: (
         <Button
-          key={5}
           className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
           style={{ color: "#172b4d" }}
         >
@@ -113,11 +111,13 @@ const AddToCard = () => {
   ];
 
   return (
-    <div className="space-y-2 mt-2">
+    <div className="space-y-2 mt-2" key={"addToCard"}>
       <p className="text-xs font-medium" style={{ color: "#44546f" }}>
         Thêm vào thẻ
       </p>
-      {actions.map((action) => action.component)}
+      {actions.map((action, index) => (
+        <div key={index}>{action.component}</div>
+      ))}
     </div>
   );
 };

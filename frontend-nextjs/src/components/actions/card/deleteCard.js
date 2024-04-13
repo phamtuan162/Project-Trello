@@ -59,7 +59,7 @@ const DeleteCard = ({ children }) => {
   };
   return (
     <Popover
-      placement="bottom"
+      placement="right"
       showArrow
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}

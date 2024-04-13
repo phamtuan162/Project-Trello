@@ -17,6 +17,7 @@ import AddToCard from "./addToCard";
 import UserCard from "./users";
 import BackgroundCard from "./background";
 import DateCard from "./date";
+import WorksCard from "./works";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
 const { updateCard } = cardSlice.actions;
@@ -73,6 +74,7 @@ export const CardModal = () => {
                           <DateCard checkRole={checkRole} />
                         )}
                       </div>
+                      {card?.works?.length > 0 && <WorksCard />}
 
                       <DescCardModal />
                       <ActivityCard />

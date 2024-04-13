@@ -13,6 +13,7 @@ const DescCardModal = () => {
   const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const card = useSelector((state) => state.card.card);
+  const user = useSelector((state) => state.user.user);
   const formRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -54,7 +55,7 @@ const DescCardModal = () => {
   };
   return (
     <div className="flex items-start gap-x-4 w-full">
-      <AlignLeft className=" mt-0.5 " size={24} />
+      <AlignLeft size={20} />
       <div className="w-full">
         <p className="font-semibold  mb-2 text-sm">Mô tả</p>
         {isEditing ? (
@@ -62,8 +63,14 @@ const DescCardModal = () => {
             <Textarea
               id="desc"
               name="desc"
+              variant="bordered"
+              disableAnimation
+              disableAutosize
               className="w-full mt-2 text-sm font-medium"
               placeholder="Thêm mô tả chi tiết hơn..."
+              classNames={{
+                input: "resize-y min-h-[60px] ",
+              }}
               defaultValue={card?.desc || undefined}
               ref={textareaRef}
             />
@@ -84,7 +91,11 @@ const DescCardModal = () => {
           </form>
         ) : (
           <div
-            onClick={() => enableEditing()}
+            onClick={() => {
+              if (user?.role?.toLowerCase() === "admin") {
+                enableEditing();
+              }
+            }}
             role="button"
             className="min-h-[78px] bg-gray-200 text-sm font-medium py-3 px-3.5 rounded-md"
           >

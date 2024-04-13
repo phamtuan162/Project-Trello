@@ -6,7 +6,7 @@ export const SquareCheck = ({ size = 18, props }) => (
     focusable="false"
     viewBox="0 0 24 24"
     xmlns="http://www.w3.org/2000/svg"
-    className="shrink-0"
+    className=" shrink-0"
   >
     <path
       fillRule="evenodd"

@@ -128,6 +128,7 @@ export const inviteUserApi = async (body) => {
   }
   return null;
 };
+
 export const decentRoleApi = async (workspaceId, body) => {
   const access_token = Cookies.get("access_token");
 
@@ -157,6 +158,7 @@ export const leaveWorkspaceApi = async (body) => {
 
   return data;
 };
+
 export const cancelUserWorkspaceApi = async (body) => {
   const access_token = Cookies.get("access_token");
 
@@ -461,6 +463,98 @@ export const deleteCardApi = async (cardId) => {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteCardApi(cardId);
+    }
+  }
+  return null;
+};
+/** Work */
+export const createWorkApi = async (body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(`/work`, body, access_token);
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await createWorkApi(body);
+    }
+  }
+  return null;
+};
+
+export const updateWorkApi = async (workId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/work/${workId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateWorkApi(workId, body);
+    }
+  }
+  return null;
+};
+
+export const deleteWorkApi = async (workId) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.delete(
+    `/work/${workId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteWorkApi(workId);
+    }
+  }
+  return null;
+};
+
+/** Mission */
+export const createMissionApi = async (body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(`/mission`, body, access_token);
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await createMissionApi(body);
+    }
+  }
+  return null;
+};
+
+export const updateMissionApi = async (missionId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/mission/${missionId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateMissionApi(missionId, body);
     }
   }
   return null;

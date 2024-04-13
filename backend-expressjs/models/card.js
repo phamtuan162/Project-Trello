@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         through: "users_cards",
         as: "users",
       });
+      Card.hasMany(models.Work, {
+        foreignKey: "card_id",
+        as: "works",
+      });
     }
   }
   Card.init(

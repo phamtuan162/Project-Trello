@@ -7,6 +7,7 @@ class CardTransformer extends Transformer {
       column_id: instance.column_id,
       title: instance.title,
       users: instance.users || [],
+      works: instance.works || [],
       column: instance.column || [],
       desc: instance.desc,
       status: instance.status,
