@@ -17,6 +17,30 @@ export function Card({ card }) {
   const cardUpdate = useMemo(() => {
     return +card.id === +cardData.id ? cardData : card;
   }, [cardData]);
+
+  const missions = useMemo(() => {
+    const extractMissions = (works) => {
+      let allMissions = [];
+      works.forEach((work) => {
+        allMissions = [...allMissions, ...work.missions];
+        if (work.works) {
+          allMissions = [...allMissions, ...extractMissions(work.works)];
+        }
+      });
+      return allMissions;
+    };
+
+    if (!cardUpdate || !cardUpdate.works) {
+      return [];
+    }
+
+    return extractMissions(cardUpdate.works);
+  }, [cardUpdate]);
+
+  const missionSuccess = useMemo(() => {
+    return missions.filter((mission) => mission.status === 200);
+  }, [missions]);
+
   const {
     attributes,
     listeners,
@@ -66,13 +90,10 @@ export function Card({ card }) {
   const [isEdit, setIsEdit] = useState(false);
   const [isAssign, setIsAssign] = useState(false);
 
-  // const checkRoleCard = useMemo(() => {
-  //   return card?.users?.some((item) => +user.id === +item.id);
-  // }, [user, card]);
   const checkRoleBoard = useMemo(() => {
     return user?.role?.toLowerCase() === "admin";
   }, [user]);
-
+  console.log(missions, missionSuccess);
   return (
     <div
       ref={setNodeRef}
@@ -99,7 +120,7 @@ export function Card({ card }) {
           ></div>
         )}
       </div>
-      <div className={`p-3 pt-0 relative $`}>
+      <div className={`p-3 pt-0 relative `}>
         {cardUpdate?.title}
         <div
           className={`${
@@ -112,38 +133,47 @@ export function Card({ card }) {
             cardUpdate={cardUpdate}
           />
         </div>
-        <div
-          onClick={() => {
-            console.log(1);
-          }}
-          className={`${
-            cardUpdate.startDateTime || cardUpdate.endDateTime ? "" : "hidden"
-          } `}
-        >
+        <div className=" flex flex-wrap gap-2 w-full">
           <div
-            className={`text-xs mt-1  inline-flex items-center gap-1  ${
-              cardUpdate.status === "success" && "bg-green-700 text-white"
-            } ${
-              cardUpdate.status === "expired" && "bg-yellow-700 "
-            } rounded-sm px-1 py-0.5`}
+            className={`${
+              cardUpdate.startDateTime || cardUpdate.endDateTime ? "" : "hidden"
+            } `}
           >
-            {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
-              (cardUpdate.status === "success" ? (
-                <SquareCheck size={12} />
-              ) : (
-                <Clock size={12} />
-              ))}
+            <div
+              className={`text-xs mt-1  inline-flex items-center gap-1  ${
+                cardUpdate.status === "success" && "bg-green-700 text-white"
+              } ${
+                cardUpdate.status === "expired" && "bg-yellow-700 "
+              } rounded-sm px-1 py-0.5`}
+            >
+              {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
+                (cardUpdate.status === "success" ? (
+                  <SquareCheck size={12} />
+                ) : (
+                  <Clock size={12} />
+                ))}
 
-            {cardUpdate?.startDateTime && (
-              <>
-                {format(cardUpdate?.startDateTime, "d 'tháng' M")}
-                {cardUpdate?.endDateTime && " - "}
-              </>
-            )}
+              {cardUpdate?.startDateTime && (
+                <>
+                  {format(cardUpdate?.startDateTime, "d 'tháng' M")}
+                  {cardUpdate?.endDateTime && " - "}
+                </>
+              )}
 
-            {cardUpdate?.endDateTime &&
-              format(cardUpdate?.endDateTime, "d 'tháng' M")}
+              {cardUpdate?.endDateTime &&
+                format(cardUpdate?.endDateTime, "d 'tháng' M")}
+            </div>
           </div>
+          {missions.length > 0 && (
+            <div
+              className={`text-xs mt-1  inline-flex items-center gap-1  ${
+                missionSuccess.length === missions.length &&
+                "bg-green-700 text-white"
+              }  rounded-sm px-1 py-0.5`}
+            >
+              <SquareCheck /> {missionSuccess.length}/{missions.length}
+            </div>
+          )}
         </div>
 
         <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">

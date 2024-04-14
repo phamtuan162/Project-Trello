@@ -1,4 +1,11 @@
-const { Board, Column, Card, User, Work } = require("../../../models/index");
+const {
+  Board,
+  Column,
+  Card,
+  User,
+  Work,
+  Mission,
+} = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const BoardTransformer = require("../../../transformers/workspace/board.transformer");
@@ -59,6 +66,11 @@ module.exports = {
             include: {
               model: User,
               as: "users",
+            },
+            include: {
+              model: "Work",
+              as: "works",
+              include: { model: Mission, as: "missions" },
             },
           },
         },

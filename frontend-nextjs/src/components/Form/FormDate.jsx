@@ -8,14 +8,15 @@ import {
   endOfMonth,
   format,
   getDay,
+  isValid,
   isEqual,
-  isSameDay,
   isWithinInterval,
   isSameMonth,
   isToday,
   parse,
-  parseISO,
   startOfToday,
+  setHours,
+  setMinutes,
   startOfWeek,
   subDays,
   addDays,
@@ -35,14 +36,23 @@ import { CloseIcon } from "../Icon/CloseIcon";
 import { DateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
+import { Message } from "../Message/Message";
 const { updateCard } = cardSlice.actions;
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
-
+const validateHourMinute = (hour, minute) => {
+  return (
+    parseInt(hour) >= 0 &&
+    parseInt(hour) <= 23 &&
+    parseInt(minute) >= 0 &&
+    parseInt(minute) <= 59
+  );
+};
 const FormDate = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   let today = startOfToday();
@@ -69,6 +79,8 @@ const FormDate = ({ children }) => {
   );
   const inputRefStart = useRef(null);
   const inputRefEnd = useRef(null);
+  const inputRefEndHour = useRef(null);
+
   let days = eachDayOfInterval({
     start: firstDayCurrentMonth,
     end: endOfMonth(firstDayCurrentMonth),
@@ -100,30 +112,68 @@ const FormDate = ({ children }) => {
   const UpdateDate = async (formData) => {
     const startDate = formData.get("startTime");
     const endDate = formData.get("endTime");
-    DateCardApi(card.id, {
-      startDateTime: startDate && parse(startDate, "dd/MM/yyyy", new Date()),
-      endDateTime: endDate && parse(endDate, "dd/MM/yyyy", new Date()),
-      status: "pending",
-    }).then((data) => {
-      if (data.status === 200) {
+    const endDateHour = formData.get("endTimeHour");
+
+    // Kiểm tra ngày/tháng/năm không hợp lệ
+    const startDateTime =
+      startDate && parse(startDate, "dd/MM/yyyy", new Date());
+    const endDateTime = endDate && parse(endDate, "dd/MM/yyyy", new Date());
+    if (!isValid(startDateTime) || !isValid(endDateTime)) {
+      setMessage("Ngày tháng năm không hợp lệ!");
+      return;
+    }
+
+    // Kiểm tra giờ/phút không hợp lệ
+    if (endDateTime && endDateHour) {
+      const [hour, minute] = endDateHour.split(":");
+      if (!validateHourMinute(hour, minute)) {
+        setMessage("Giờ phút không hợp lệ!");
+        return;
+      }
+    }
+
+    // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
+    if (compareAsc(startDateTime, new Date()) === -1) {
+      setMessage("Ngày bắt đầu phải lớn hơn thời gian hiện tại!");
+      return;
+    }
+
+    // Kiểm tra ngày cuối phải lớn hơn ngày đầu
+    if (compareAsc(startDateTime, endDateTime) === 1) {
+      setMessage("Ngày kết thúc phải lớn hơn ngày đầu!");
+      return;
+    }
+
+    try {
+      const data = await DateCardApi(card.id, {
+        startDateTime,
+        endDateTime,
+        status: "pending",
+      });
+
+      const { status, error, data: updatedData } = data;
+      if (status === 200) {
         const cardUpdate = {
           ...card,
-          startDateTime: data.data.startDateTime,
-          endDateTime: data.data.endDateTime,
+          startDateTime: updatedData.startDateTime,
+          endDateTime: updatedData.endDateTime,
           status: "pending",
         };
         dispatch(updateCard(cardUpdate));
         setIsOpen(false);
+        setMessage("");
       } else {
-        const error = data.error;
         toast.error(error);
       }
-    });
+    } catch (error) {
+      toast.error("An error occurred while updating the date.");
+    }
   };
 
   const HandleReset = async () => {
     setIsOpen(false);
     setCheckFocus("");
+    setMessage("");
     setSelectedDay(card.startDateTime || card.endDateTime || today);
     setStartDateTime(card.startDateTime ? new Date(card.startDateTime) : null);
     setEndDateTime(
@@ -253,6 +303,7 @@ const FormDate = ({ children }) => {
           </div>
 
           <form action={UpdateDate}>
+            <Message message={message} />
             <div className="w-full mt-3">
               <p className="text-xs font-medium">Ngày bắt đầu</p>
               <div className=" flex gap-2 ">
@@ -281,10 +332,13 @@ const FormDate = ({ children }) => {
                   readOnly={isSelectStartTime ? false : true}
                   value={
                     isSelectStartTime && startDateTime
-                      ? format(startDateTime, "dd/MM/yyyy")
+                      ? isValid(startDateTime)
+                        ? format(startDateTime, "dd/MM/yyyy")
+                        : startDateTime
                       : "N/T/NNNN"
                   }
                   className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
+                  onChange={(e) => setStartDateTime(e.target.value)}
                   onFocus={() => setCheckFocus("start")}
                 />
               </div>
@@ -317,11 +371,41 @@ const FormDate = ({ children }) => {
                   readOnly={isSelectEndTime ? false : true}
                   value={
                     isSelectEndTime && endDateTime
-                      ? format(endDateTime, "dd/MM/yyyy")
+                      ? isValid(endDateTime)
+                        ? format(endDateTime, "dd/MM/yyyy")
+                        : endDateTime
                       : "N/T/NNNN"
                   }
+                  onChange={(e) => {
+                    setEndDateTime(e.target.value);
+                  }}
                   className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
                   onFocus={() => setCheckFocus("end")}
+                />
+                <Input
+                  ref={inputRefEndHour}
+                  type="text"
+                  size="xs"
+                  name="endTimeHour"
+                  variant={isSelectEndTime ? "bordered" : ""}
+                  readOnly={isSelectEndTime ? false : true}
+                  defaultValue={
+                    isSelectEndTime && endDateTime
+                      ? isValid(endDateTime)
+                        ? format(endDateTime, "HH:mm")
+                        : "00:00"
+                      : "G:pp"
+                  }
+                  onChange={(e) => {
+                    inputRefEndHour.current.value = e.target.value;
+                  }}
+                  className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
+                  onFocus={() => {
+                    setCheckFocus("end");
+                    if (inputRefEndHour.current.value === "") {
+                      inputRefEndHour.current.value = "00:00";
+                    }
+                  }}
                 />
               </div>
             </div>

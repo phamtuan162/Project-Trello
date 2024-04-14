@@ -7,9 +7,7 @@ class ColumnTransformer extends Transformer {
       board_id: instance.board_id,
       title: instance.title,
       cardOrderIds: instance.cardOrderIds,
-      cards: instance.cards
-        ? instance.cards.map((card) => new CardTransformer(card))
-        : [],
+      cards: instance.cards || [],
       createdAt: instance.created_at,
       updatedAt: instance.updated_at,
     };
