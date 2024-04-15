@@ -7,6 +7,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "work_id",
         as: "work",
       });
+      Mission.belongsTo(models.User, {
+        foreignKey: "user_id",
+        as: "user",
+      });
     }
   }
   Mission.init(
@@ -19,6 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       status: DataTypes.BOOLEAN,
       work_id: DataTypes.INTEGER,
+      user_id: DataTypes.INTEGER,
     },
     {
       sequelize,

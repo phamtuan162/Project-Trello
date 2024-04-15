@@ -74,9 +74,10 @@ export const CardModal = () => {
                           <DateCard checkRole={checkRole} />
                         )}
                       </div>
+                      <DescCardModal />
+
                       {card?.works?.length > 0 && <WorksCard />}
 
-                      <DescCardModal />
                       <ActivityCard />
                     </div>
                   </div>

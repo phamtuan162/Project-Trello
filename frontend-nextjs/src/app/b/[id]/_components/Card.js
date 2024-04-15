@@ -22,7 +22,9 @@ export function Card({ card }) {
     const extractMissions = (works) => {
       let allMissions = [];
       works.forEach((work) => {
-        allMissions = [...allMissions, ...work.missions];
+        if (Array.isArray(work.missions)) {
+          allMissions = [...allMissions, ...work.missions];
+        }
         if (work.works) {
           allMissions = [...allMissions, ...extractMissions(work.works)];
         }
@@ -38,7 +40,7 @@ export function Card({ card }) {
   }, [cardUpdate]);
 
   const missionSuccess = useMemo(() => {
-    return missions.filter((mission) => mission.status === 200);
+    return missions.filter((mission) => mission.status === true);
   }, [missions]);
 
   const {
@@ -93,7 +95,6 @@ export function Card({ card }) {
   const checkRoleBoard = useMemo(() => {
     return user?.role?.toLowerCase() === "admin";
   }, [user]);
-  console.log(missions, missionSuccess);
   return (
     <div
       ref={setNodeRef}
@@ -148,7 +149,7 @@ export function Card({ card }) {
             >
               {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
                 (cardUpdate.status === "success" ? (
-                  <SquareCheck size={12} />
+                  <SquareCheck size={14} />
                 ) : (
                   <Clock size={12} />
                 ))}
@@ -171,7 +172,8 @@ export function Card({ card }) {
                 "bg-green-700 text-white"
               }  rounded-sm px-1 py-0.5`}
             >
-              <SquareCheck /> {missionSuccess.length}/{missions.length}
+              <SquareCheck size={14} /> {missionSuccess.length}/
+              {missions.length}
             </div>
           )}
         </div>

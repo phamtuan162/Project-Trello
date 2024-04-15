@@ -1,4 +1,5 @@
 const Transformer = require("../../core/Transformer");
+const UserTransformer = require("../user/user.transformer");
 
 class CardTransformer extends Transformer {
   response(instance) {
@@ -6,7 +7,9 @@ class CardTransformer extends Transformer {
       id: instance.id,
       column_id: instance.column_id,
       title: instance.title,
-      users: instance.users || [],
+      users: instance.users
+        ? instance.users.map((user) => new UserTransformer(user.dataValues))
+        : [],
       works: instance.works || [],
       column: instance.column || [],
       desc: instance.desc,

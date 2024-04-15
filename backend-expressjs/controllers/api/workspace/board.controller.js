@@ -63,15 +63,17 @@ module.exports = {
           include: {
             model: Card,
             as: "cards",
-            include: {
-              model: User,
-              as: "users",
-            },
-            include: {
-              model: "Work",
-              as: "works",
-              include: { model: Mission, as: "missions" },
-            },
+            include: [
+              {
+                model: User,
+                as: "users",
+              },
+              {
+                model: Work,
+                as: "works",
+                include: { model: Mission, as: "missions" },
+              },
+            ],
           },
         },
         paranoid: true,

@@ -8,9 +8,6 @@ import {
   Input,
   Button,
   CircularProgress,
-  Select,
-  SelectItem,
-  SelectSection,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createWorkApi } from "@/services/workspaceApi";

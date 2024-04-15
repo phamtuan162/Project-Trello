@@ -62,7 +62,8 @@ const DateCard = ({ checkRole }) => {
                 {card?.endDateTime && " - "}
               </>
             )}
-            {card?.endDateTime && format(card?.endDateTime, "d 'tháng' M")}
+            {card?.endDateTime &&
+              format(card?.endDateTime, "d 'tháng' M 'lúc' HH':'mm")}
             {isSelected ? (
               <span className="px-1 rounded-sm h-[20px] bg-green-700 text-white font-medium text-xs flex items-center">
                 Hoàn tất

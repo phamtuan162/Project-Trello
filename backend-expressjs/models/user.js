@@ -24,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
         through: "users_cards",
         as: "cards",
       });
+
+      User.hasOne(models.Mission, {
+        foreignKey: "user_id",
+        as: "missions",
+      });
     }
   }
   User.init(

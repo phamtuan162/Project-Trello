@@ -1,15 +1,15 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { CheckboxGroup, Checkbox } from "@nextui-org/react";
+import { CheckboxGroup } from "@nextui-org/react";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { updateMissionApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+import MissionWork from "./mission";
 const { updateCard } = cardSlice.actions;
 const MissionsWork = ({ missions }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
-  console.log(missions);
   const missionsSelected = useMemo(() => {
     const missionsSuccess = missions.filter(
       (mission) => mission.status === true
@@ -52,18 +52,13 @@ const MissionsWork = ({ missions }) => {
         onValueChange={(select) => {
           HandleSelectMission(select);
         }}
-        className="select"
+        className="select flex"
       >
         {missions?.map((mission) => (
-          <Checkbox
-            value={mission.id}
-            key={mission.id}
-            onClick={() => {
-              setMissionSelected(mission);
-            }}
-          >
-            <span className="text-xs">{mission.name}</span>
-          </Checkbox>
+          <MissionWork
+            mission={mission}
+            setMissionSelected={setMissionSelected}
+          />
         ))}
       </CheckboxGroup>
     </div>

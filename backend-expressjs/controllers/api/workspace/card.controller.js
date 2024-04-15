@@ -38,7 +38,14 @@ module.exports = {
           {
             model: Work,
             as: "works",
-            include: { model: Mission, as: "missions" },
+            include: {
+              model: Mission,
+              as: "missions",
+              include: {
+                model: User,
+                as: "user",
+              },
+            },
           },
         ],
       });

@@ -1,4 +1,4 @@
-const { Mission, Work } = require("../../../models/index");
+const { Mission, Work, User } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 module.exports = {

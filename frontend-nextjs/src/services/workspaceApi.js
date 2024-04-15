@@ -559,3 +559,22 @@ export const updateMissionApi = async (missionId, body) => {
   }
   return null;
 };
+
+export const deleteMissionApi = async (missionId) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.delete(
+    `/mission/${missionId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteMissionApi(missionId);
+    }
+  }
+  return null;
+};

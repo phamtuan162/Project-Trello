@@ -144,7 +144,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               className="w-full "
             />
           </div>
-          <div className=" p-2 pb-0">
+          <div className=" p-2 pb-0 max-h-[140px] overflow-x-auto">
             {userSearch?.length > 0 ? (
               <>
                 <p className="font-medium text-xs">Thành viên trong Bảng</p>
@@ -152,7 +152,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
                 {userSearch?.map((user) => (
                   <div
                     key={user.id}
-                    className=" rounded-lg p-1 px-3 cursor-pointer max-h-[140px] mt-1 overflow-x-auto  hover:bg-default-300"
+                    className=" rounded-lg p-1 px-3 cursor-pointer mt-1   hover:bg-default-300"
                     onClick={() => HandleSelectUserAssigned(user)}
                   >
                     <User
@@ -181,12 +181,12 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
             )}
           </div>
           {cardUpdate?.users?.length > 0 && (
-            <div className=" p-2 ">
+            <div className=" p-2 max-h-[140px] overflow-x-auto">
               <p className="font-medium text-xs">Thành viên trong Thẻ</p>
               {cardUpdate.users.map((user) => (
                 <div
                   key={user.id}
-                  className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 max-h-[140px]  overflow-x-auto"
+                  className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 "
                   onClick={() => HandleUnAssignedCard(user)}
                 >
                   <User

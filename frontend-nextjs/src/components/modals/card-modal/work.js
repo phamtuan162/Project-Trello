@@ -23,9 +23,10 @@ const WorkCard = ({ work }) => {
 
   // Tiến độ danh sách việc làm
   const progressWork = useMemo(() => {
-    if (work.missions.length === 0) {
+    if (!work || !work.missions || work.missions.length === 0) {
       return 0;
     }
+
     const completedMissions = work.missions.filter(
       (mission) => mission.status === true
     );
@@ -50,6 +51,9 @@ const WorkCard = ({ work }) => {
   const onKeyDown = (e) => {
     if (e.key === "Escape") {
       disableEditing();
+    }
+    if (e.key === "Enter") {
+      formRef.current.action();
     }
   };
 

@@ -22,6 +22,16 @@ module.exports = {
           key: "id",
         },
       },
+      user_id: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: {
+            tableName: "users",
+          },
+          key: "id",
+        },
+      },
+      endDateTime: { type: Sequelize.DATE },
       status: { type: Sequelize.BOOLEAN },
       created_at: {
         type: Sequelize.DATE,

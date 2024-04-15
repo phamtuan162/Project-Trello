@@ -48,7 +48,9 @@ const AddMission = ({ work }) => {
           const missionNew = data.data;
           const worksUpdate = card.works.map((item) => {
             if (+item.id === +work.id) {
-              const missionsUpdate = item.missions.concat(missionNew);
+              const missionsUpdate = item.missions
+                ? item.missions.concat(missionNew)
+                : [missionNew];
               return { ...item, missions: missionsUpdate };
             }
             return item;
