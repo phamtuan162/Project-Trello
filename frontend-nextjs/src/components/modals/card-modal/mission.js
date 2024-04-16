@@ -60,20 +60,6 @@ const MissionWork = ({ mission, setMissionSelected }) => {
     if (name) {
       updateMissionApi(mission.id, { name: name }).then((data) => {
         if (data.status === 200) {
-          //   const missionNew = data.data;
-          //   const updatedWorks = worksUpdate.map((work) => {
-          //     if (work.missions.find((item) => item.id === mission.id)) {
-          //       const updatedMissions = work.missions.map((item) => {
-          //         if (item.id === mission.id) {
-          //           return missionNew;
-          //         }
-          //         return item;
-          //       });
-          //       return { ...work, missions: updatedMissions };
-          //     }
-          //     return work;
-          //   });
-          //   const cardUpdate = { ...card, works: updatedWorks };
           dispatch(updateCard(updatedCard));
         } else {
           const error = data.error;
@@ -159,7 +145,7 @@ const MissionWork = ({ mission, setMissionSelected }) => {
           <div className="flex items-center  w-full h-[20px]">
             <span
               className={`grow text-xs font-semibold leading-4 ${
-                mission.status && "line-through"
+                mission.status === "success" && "line-through"
               }`}
               onClick={() => {
                 if (user?.role?.toLowerCase() === "admin") {
@@ -173,7 +159,15 @@ const MissionWork = ({ mission, setMissionSelected }) => {
             <div className="flex gap-2 ">
               <SetDate mission={mission}>
                 {mission.endDateTime ? (
-                  <span className="text-xs px-1.5 flex items-center justify-center bg-gray-200 rounded-full">
+                  <span
+                    className={`${
+                      mission.status === "success" && "bg-green-700 text-white"
+                    } ${
+                      mission.status === "expired" && "bg-red-700 text-white"
+                    } ${mission.status === "pending" && "bg-gray-200"}
+                    text-xs px-1.5 flex items-center justify-center  rounded-full gap-1 `}
+                  >
+                    <Clock size={14} />
                     {format(mission?.endDateTime, "d 'tháng' M ")}
                   </span>
                 ) : (

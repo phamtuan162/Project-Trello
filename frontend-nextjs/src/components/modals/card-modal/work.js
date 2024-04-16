@@ -28,7 +28,7 @@ const WorkCard = ({ work }) => {
     }
 
     const completedMissions = work.missions.filter(
-      (mission) => mission.status === true
+      (mission) => mission.status === "success"
     );
 
     const progressPercentage =

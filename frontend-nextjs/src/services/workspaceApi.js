@@ -578,3 +578,23 @@ export const deleteMissionApi = async (missionId) => {
   }
   return null;
 };
+
+export const transferCardApi = async (missionId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(
+    `/mission/transfer-card/${missionId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await transferCardApi(missionId, body);
+    }
+  }
+  return null;
+};

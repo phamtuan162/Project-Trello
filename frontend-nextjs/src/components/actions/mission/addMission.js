@@ -43,7 +43,11 @@ const AddMission = ({ work }) => {
     setIsLoading(true);
     const name = formData.get("name");
     if (name) {
-      createMissionApi({ name: name, work_id: work.id }).then((data) => {
+      createMissionApi({
+        name: name,
+        work_id: work.id,
+        status: "pending",
+      }).then((data) => {
         if (data.status === 200) {
           const missionNew = data.data;
           const worksUpdate = card.works.map((item) => {

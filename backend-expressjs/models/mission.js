@@ -21,9 +21,10 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
       },
       name: DataTypes.STRING,
-      status: DataTypes.BOOLEAN,
+      status: DataTypes.STRING,
       work_id: DataTypes.INTEGER,
       user_id: DataTypes.INTEGER,
+      endDateTime: DataTypes.DATE,
     },
     {
       sequelize,

@@ -118,6 +118,7 @@ const SetDate = ({ children, mission }) => {
     // Kiểm tra giờ/phút không hợp lệ
     if (endDateTimeUpdate && endDateHour) {
       const [hour, minute] = endDateHour.split(":");
+
       if (!validateHourMinute(hour, minute)) {
         setMessage("Giờ phút không hợp lệ!");
         inputRefEndHour.current.focus();
@@ -204,9 +205,9 @@ const SetDate = ({ children, mission }) => {
     setIsOpen(false);
     setCheckFocus("");
     setMessage("");
-    setSelectedDay(card.startDateTime || card.endDateTime || today);
+    setSelectedDay(mission.endDateTime || addDays(today, 1));
     setEndDateTime(
-      card.endDateTime ? new Date(card.endDateTime) : addDays(today, 1)
+      mission.endDateTime ? new Date(mission.endDateTime) : addDays(today, 1)
     );
   };
   return (
@@ -370,7 +371,7 @@ const SetDate = ({ children, mission }) => {
                   name="endTimeHour"
                   variant={isSelectEndTime ? "bordered" : ""}
                   readOnly={isSelectEndTime ? false : true}
-                  value={
+                  defaultValue={
                     isSelectEndTime && endDateTime
                       ? isValid(endDateTime)
                         ? format(endDateTime, "HH:mm")

@@ -32,7 +32,8 @@ module.exports = {
         },
       },
       endDateTime: { type: Sequelize.DATE },
-      status: { type: Sequelize.BOOLEAN },
+      status: { type: Sequelize.STRING },
+      isSelected: { type: Sequelize.BOOLEAN },
       created_at: {
         type: Sequelize.DATE,
       },

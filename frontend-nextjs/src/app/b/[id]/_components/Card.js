@@ -40,7 +40,7 @@ export function Card({ card }) {
   }, [cardUpdate]);
 
   const missionSuccess = useMemo(() => {
-    return missions.filter((mission) => mission.status === true);
+    return missions.filter((mission) => mission.status === "success");
   }, [missions]);
 
   const {
