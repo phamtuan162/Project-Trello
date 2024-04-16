@@ -1,3 +1,5 @@
+"use client";
+import { useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import { ListOptions } from "./ListOptions";
 export function ListHeader({
@@ -6,6 +8,7 @@ export function ListHeader({
   createNewCard,
   updateColumn,
 }) {
+  const user = useSelector((state) => state.user.user);
   const inputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
@@ -17,10 +20,11 @@ export function ListHeader({
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
-    if (title) {
+    if (title !== column.title) {
       await updateColumn(column.id, { title: title });
       setIsEditing(false);
     }
+    setIsEditing(false);
   };
 
   const handleKeyDown = (event) => {
@@ -29,7 +33,7 @@ export function ListHeader({
     }
   };
   return (
-    <div className=" px-2 pt-0 pb-0 text-sm font-semibold flex justify-between items-start gap-x-2">
+    <div className=" px-2 pt-0 pb-1 text-sm font-semibold flex justify-between items-start gap-x-2">
       <div className="h-[30px] grow">
         {isEditing ? (
           <input
@@ -51,12 +55,13 @@ export function ListHeader({
           </span>
         )}
       </div>
-
-      <ListOptions
-        column={column}
-        deleteColumnDetail={deleteColumnDetail}
-        createNewCard={createNewCard}
-      />
+      {user?.role?.toLowerCase() === "admin" && (
+        <ListOptions
+          column={column}
+          deleteColumnDetail={deleteColumnDetail}
+          createNewCard={createNewCard}
+        />
+      )}
     </div>
   );
 }

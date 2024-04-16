@@ -11,6 +11,7 @@ router.put(
 
   boardController.moveCard
 );
+
 router.put("/:id", permission("board.update"), boardController.update);
 router.patch("/:id", permission("board.update"), boardController.update);
 router.delete("/:id", permission("board.delete"), boardController.delete);

@@ -70,7 +70,7 @@ const DeleteCard = ({ children }) => {
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent>
         <div className="py-3 rounded-lg w-[300px]">
-          <div className="relative pb-3">
+          <div className="relative pb-1">
             <p
               className="w-full text-center font-medium text-xs"
               style={{ color: "#44546f" }}

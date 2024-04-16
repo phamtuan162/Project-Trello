@@ -84,7 +84,7 @@ const CopyCard = ({ children }) => {
 
     fetchData();
   }, [valueBoard]);
-
+  console.log(selected);
   const HandleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);

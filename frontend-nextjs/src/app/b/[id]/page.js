@@ -158,7 +158,7 @@ export default function BoardIdPage() {
         });
 
         dispatch(boardSlice.actions.updateBoard(newBoard));
-        toast.success("Bạn đã xóa trạng thái này thành công");
+        toast.success("Bạn đã xóa danh sách này thành công");
       } else {
         const error = data.error;
         toast.error(error);

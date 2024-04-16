@@ -144,8 +144,8 @@ export function Card({ card }) {
               className={`text-xs mt-1  inline-flex items-center gap-1  ${
                 cardUpdate.status === "success" && "bg-green-700 text-white"
               } ${
-                cardUpdate.status === "expired" && "bg-yellow-700 "
-              } rounded-sm px-1 py-0.5`}
+                cardUpdate.status === "expired" && "bg-red-700 text-white"
+              } rounded-sm px-1 py-0.5 `}
             >
               {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
                 (cardUpdate.status === "success" ? (

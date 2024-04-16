@@ -12,13 +12,13 @@ import { useParams } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-
+import MoveColumn from "@/components/actions/column/moveColumn";
 export function ListOptions({ column, deleteColumnDetail }) {
   const { id: boardId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const onDeleteColumn = async () => {
-    toast.warning("Bạn có chắc chắn muốn xóa trạng thái này không", {
+    toast.warning("Bạn có chắc chắn muốn xóa danh sách này không", {
       onClick: async () => {
         deleteColumnDetail(column.id);
       },
@@ -27,17 +27,19 @@ export function ListOptions({ column, deleteColumnDetail }) {
 
   const options = [
     {
-      label: "Thêm thẻ",
-    },
-    {
       label: "Sao chép danh sách",
     },
     {
-      label: "Xóa bảng",
+      label: "Xóa danh sách",
       action: onDeleteColumn,
     },
     {
-      label: "Theo dõi",
+      label: "Di chuyển danh sách",
+      component: (
+        <MoveColumn column={column}>
+          <span className="block w-full">Di chuyển danh sách</span>
+        </MoveColumn>
+      ),
     },
     {
       label: "Sắp xếp",
@@ -58,7 +60,7 @@ export function ListOptions({ column, deleteColumnDetail }) {
       <PopoverContent className="p-0 pb-2">
         <div className=" w-full">
           <div className="flex justify-between items-center w-full relative py-2">
-            <h1 className="grow text-center text-lg">Thao tác</h1>
+            <h1 className="grow text-center text-sm font-medium">Thao tác</h1>
             <Button
               className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-1 absolute right-1 top-2 h-auto"
               onClick={() => setIsOpen(!isOpen)}
@@ -77,7 +79,7 @@ export function ListOptions({ column, deleteColumnDetail }) {
                   style={{ color: "#172b4d" }}
                   onClick={() => option.action && option.action()}
                 >
-                  {option.label}
+                  {option.component ? option.component : option.label}
                 </ListboxItem>
               );
             })}

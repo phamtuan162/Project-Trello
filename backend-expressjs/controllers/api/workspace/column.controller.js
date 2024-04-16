@@ -1,4 +1,11 @@
-const { Card, Column, User, Board } = require("../../../models/index");
+const {
+  Card,
+  Column,
+  User,
+  Board,
+  Work,
+  Mission,
+} = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const ColumnTransformer = require("../../../transformers/workspace/column.transformer");
@@ -177,11 +184,22 @@ module.exports = {
       if (column) {
         for (const card of column.cards) {
           const cardDelete = await Card.findByPk(card.id, {
-            include: { model: User, as: "users" },
+            include: [
+              { model: User, as: "users" },
+              { model: Work, as: "works" },
+            ],
           });
-
           if (cardDelete.users.length > 0) {
-            await cardDelete.removeUsers(cardDelete.users);
+            for (const user of cardDelete.users) {
+              const userInstance = await User.findByPk(user.id);
+              await cardDelete.removeUser(userInstance);
+            }
+          }
+          if (cardDelete.works.length > 0) {
+            for (const work of cardDelete.works) {
+              await Mission.destroy({ where: { work_id: work.id } });
+              await Work.destroy({ where: { id: work.id } });
+            }
           }
           await cardDelete.destroy();
         }
@@ -255,6 +273,79 @@ module.exports = {
         message: "Sever error",
       });
     }
+    res.status(response.status).json(response);
+  },
+
+  moveColumnDiffBoard: async (req, res) => {
+    const { id } = req.params;
+    const { boardActive, boardOver, user_id } = req.body;
+    const response = {};
+    try {
+      if (
+        !boardActive.columnOrderIds ||
+        !boardOver.columnOrderIds ||
+        !user_id
+      ) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+
+      const column = await Column.findByPk(id, {
+        include: { model: Card, as: "cards" },
+      });
+      const BoardNew = await Board.findByPk(boardOver.id);
+      const BoardOld = await Board.findByPk(boardActive.id);
+      if (!column || !BoardNew || !BoardOld) {
+        return res.status(404).json({ status: 404, message: "Not Found" });
+      }
+      await column.update({ board_id: BoardNew.id });
+      await BoardOld.update({ columnOrderIds: boardActive.columnOrderIds });
+      await BoardNew.update({ columnOrderIds: boardOver.columnOrderIds });
+      if (column.cards.length > 0) {
+        for (const card of column.cards) {
+          const cardUpdate = await Card.findByPk(card.id, {
+            include: [
+              { model: User, as: "users" },
+              { model: Work, as: "works" },
+            ],
+          });
+          if (cardUpdate.users.length > 0) {
+            for (const user of cardUpdate.users) {
+              const userInstance = await User.findByPk(user.id);
+              if (+user.id !== +user_id && userInstance) {
+                cardUpdate.removeUser(userInstance);
+              }
+            }
+          }
+          if (cardUpdate.works.length > 0) {
+            for (const work of cardUpdate.works) {
+              const workUpdate = await Work.findByPk(work.id, {
+                include: { model: Mission, as: "missions" },
+              });
+              if (workUpdate.missions.length > 0) {
+                for (const mission of workUpdate.missions) {
+                  if (mission.user_id && +mission.user_id !== +user_id) {
+                    await Mission.update(
+                      { where: { id: mission.id } },
+                      { user_id: user_id }
+                    );
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
     res.status(response.status).json(response);
   },
 };

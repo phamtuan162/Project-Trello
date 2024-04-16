@@ -277,30 +277,65 @@ module.exports = {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
 
-      const cardNew = await Card.create(card);
-      if (cardNew && card.users.length > 0 && keptItems.length > 0) {
-        for (const keptItem of keptItems) {
-          const itemType = keptItem.toLowerCase();
-          switch (itemType) {
-            case "users":
-              if (matchBoard) {
-                for (const user of card.users) {
-                  const userInstance = await User.findByPk(user.id);
-                  await cardNew.addUser(userInstance);
-                }
-              } else {
-                const user = await User.findByPk(user_id);
-                await cardNew.addUser(user);
-              }
-              break;
-            case "comments":
-              // Xử lý trường hợp cho comments nếu cần
-              break;
-            default:
-              // Xử lý các trường hợp khác nếu cần
-              break;
-          }
-        }
+      const cardNew = await Card.create({
+        id: card.id,
+        column_id: card.column_id,
+        title: card.title,
+        desc: card.desc,
+        background: card.background,
+        startDateTime: card.startDateTime,
+        endDateTime: card.endDateTime,
+        status: "pending",
+      });
+      if (cardNew && keptItems.length > 0) {
+        await Promise.all(
+          keptItems.map(async (keptItem) => {
+            const itemType = keptItem.toLowerCase().trim();
+            switch (itemType) {
+              case "users":
+                const usersToAdd = matchBoard
+                  ? card.users.map((user) => user.id)
+                  : [user_id];
+                await Promise.all(
+                  usersToAdd.map(async (userId) => {
+                    const userInstance = await User.findByPk(userId);
+                    await cardNew.addUser(userInstance);
+                    return userInstance;
+                  })
+                );
+
+                break;
+              case "works":
+                await Promise.all(
+                  card.works.map(async (work) => {
+                    const workNew = await Work.create({
+                      title: work.title,
+                      card_id: cardNew.id,
+                    });
+                    if (work.missions.length > 0) {
+                      await Promise.all(
+                        work.missions.map(async (mission) => {
+                          const missionNew = await Mission.create({
+                            name: mission.name,
+                            work_id: workNew.id,
+                            user_id: matchBoard ? mission.user_id : user_id,
+                            status: "pending",
+                            endDateTime: mission.endDateTime,
+                          });
+                          return missionNew;
+                        })
+                      );
+                    }
+                    return workNew;
+                  })
+                );
+                break;
+              default:
+                // Xử lý các trường hợp khác nếu cần
+                break;
+            }
+          })
+        );
       }
 
       await column.update({ cardOrderIds: overColumn.cardOrderIds });

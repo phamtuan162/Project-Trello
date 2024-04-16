@@ -342,6 +342,16 @@ export const deleteColumn = async (columnId) => {
   return null;
 };
 
+export const moveColumnToDifferentBoardAPI = async (columnId, body) => {
+  const { response, data } = await client.put(
+    `/column/move-column/${columnId}`,
+    body
+  );
+  if (response.ok) {
+    return data;
+  }
+};
+
 /** Card */
 export const createCard = async (body) => {
   const access_token = Cookies.get("access_token");

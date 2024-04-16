@@ -10,7 +10,11 @@ router.put(
 
   columnController.moveCardDiffBoard
 );
+router.put(
+  "/move-column/:id",
 
+  columnController.moveColumnDiffBoard
+);
 router.post("/", permission("column.create"), columnController.store);
 router.put("/:id", permission("column.update"), columnController.update);
 router.patch("/:id", permission("column.update"), columnController.update);
