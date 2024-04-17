@@ -3,7 +3,9 @@ import { Input, Button } from "@nextui-org/react";
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { useState, useRef, useEffect } from "react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
+import { useSelector } from "react-redux";
 export function ListForm({ createNewColumn }) {
+  const user = useSelector((state) => state.user.user);
   const inputRef = useRef(null);
   const btnaddRef = useRef(null);
   const [isCreate, setIsCreate] = useState(false);
@@ -25,7 +27,12 @@ export function ListForm({ createNewColumn }) {
       btnaddRef.current.click();
     }
   };
-
+  if (
+    user?.role?.toLowerCase() !== "admin" &&
+    user?.role?.toLowerCase() !== "owner"
+  ) {
+    return;
+  }
   return (
     <li className="shrink-0 h-full w-[272px] select-none   ">
       {isCreate ? (

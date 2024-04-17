@@ -93,7 +93,10 @@ export function Card({ card }) {
   const [isAssign, setIsAssign] = useState(false);
 
   const checkRoleBoard = useMemo(() => {
-    return user?.role?.toLowerCase() === "admin";
+    return (
+      user?.role?.toLowerCase() === "admin" ||
+      user?.role?.toLowerCase() === "owner"
+    );
   }, [user]);
   return (
     <div

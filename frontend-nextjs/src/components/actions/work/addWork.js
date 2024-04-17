@@ -81,7 +81,11 @@ const AddWork = ({ children }) => {
             type="submit"
             color="primary"
             className="mt-2"
-            isDisabled={user?.role?.toLowerCase() !== "admin" || isLoading}
+            isDisabled={
+              (user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner") ||
+              isLoading
+            }
           >
             {isLoading ? <CircularProgress /> : "Thêm"}
           </Button>

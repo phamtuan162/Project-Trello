@@ -6,6 +6,7 @@ import AssignUser from "@/app/b/[id]/_components/AssignUser";
 import { useState } from "react";
 const UserCard = () => {
   const card = useSelector((state) => state.card.card);
+  const user = useSelector((state) => state.user.user);
   const [isAssign, setIsAssign] = useState(false);
   if (card?.users?.length == 0) {
     return;
@@ -30,18 +31,21 @@ const UserCard = () => {
             />
           ))}
         </AvatarGroup>
-        <AssignUser
-          cardUpdate={card}
-          isAssign={isAssign}
-          setIsAssign={setIsAssign}
-        >
-          <span
-            className="h-[24px] w-[24px] rounded-full flex items-center justify-center"
-            style={{ background: "#091e420f", color: "#172B4D" }}
+        {(user?.role?.toLowerCase() === "admin" ||
+          user?.role?.toLowerCase() === "owner") && (
+          <AssignUser
+            cardUpdate={card}
+            isAssign={isAssign}
+            setIsAssign={setIsAssign}
           >
-            <Plus size={14} />
-          </span>
-        </AssignUser>
+            <span
+              className="h-[24px] w-[24px] rounded-full flex items-center justify-center"
+              style={{ background: "#091e420f", color: "#172B4D" }}
+            >
+              <Plus size={14} />
+            </span>
+          </AssignUser>
+        )}
       </div>
     </div>
   );

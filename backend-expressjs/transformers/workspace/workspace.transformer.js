@@ -18,8 +18,8 @@ class WorkspaceTransformer extends Transformer {
         : [],
       isActive: instance.isActive,
       total_user: instance.total_user,
-      createdAt: instance.created_at,
-      updatedAt: instance.updated_at,
+      created_at: instance.created_at,
+      updated_at: instance.updated_at,
     };
   }
 }

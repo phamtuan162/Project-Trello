@@ -352,6 +352,13 @@ export const moveColumnToDifferentBoardAPI = async (columnId, body) => {
   }
 };
 
+export const copyColumnApi = async (body) => {
+  const { response, data } = await client.post(`/column/copy-column`, body);
+  if (response.ok) {
+    return data;
+  }
+};
+
 /** Card */
 export const createCard = async (body) => {
   const access_token = Cookies.get("access_token");

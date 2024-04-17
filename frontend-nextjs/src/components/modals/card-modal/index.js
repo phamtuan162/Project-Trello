@@ -27,7 +27,10 @@ export const CardModal = () => {
   const board = useSelector((state) => state.board.board);
   const user = useSelector((state) => state.user.user);
   const checkRole = useMemo(() => {
-    return user?.role?.toLowerCase() === "admin";
+    return (
+      user?.role?.toLowerCase() === "admin" ||
+      user?.role?.toLowerCase() === "owner"
+    );
   }, [user]);
   const id = useCardModal((state) => state.id);
   const isOpen = useCardModal((state) => state.isOpen);

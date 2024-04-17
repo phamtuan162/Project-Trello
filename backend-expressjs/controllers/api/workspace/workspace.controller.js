@@ -136,7 +136,7 @@ module.exports = {
           });
 
           const role = await Role.findOne({
-            where: { name: { [Op.iLike]: "%Admin%" } },
+            where: { name: { [Op.iLike]: "%Owner%" } },
           });
 
           if (role) {

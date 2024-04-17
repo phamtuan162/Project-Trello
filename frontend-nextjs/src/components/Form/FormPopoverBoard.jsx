@@ -198,7 +198,10 @@ export default function FormPopoverBoard({
             </div>
 
             <Button
-              isDisabled={!isCreate ? false : true}
+              isDisabled={
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
+              }
               color="primary"
               type="submit"
               className="w-full"

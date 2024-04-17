@@ -27,6 +27,7 @@ import {
   Checkbox,
   Input,
   CheckboxGroup,
+  CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
@@ -58,6 +59,7 @@ const validateHourMinute = (hour, minute) => {
 const SetDate = ({ children, mission }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
@@ -102,6 +104,7 @@ const SetDate = ({ children, mission }) => {
   }, [selectedDay]);
 
   const UpdateDate = async (formData) => {
+    setIsLoading(true);
     const endDate = formData.get("endTime");
     const endDateHour = formData.get("endTimeHour");
 
@@ -157,11 +160,14 @@ const SetDate = ({ children, mission }) => {
       const { status, error, data: updatedData } = data;
       if (status === 200) {
         dispatch(updateCard(updatedCard));
+        setIsLoading(false);
+
         setIsOpen(false);
         setMessage("");
       } else {
         toast.error(error);
       }
+      setIsLoading(false);
     } catch (error) {
       toast.error("An error occurred while updating the date.");
     }
@@ -169,6 +175,8 @@ const SetDate = ({ children, mission }) => {
 
   const CancelDate = async () => {
     try {
+      setIsLoading(true);
+
       const updatedWorks = card.works.map((work) => {
         if (+work.id === +mission.work_id) {
           const updatedMissions = work.missions.map((item) => {
@@ -192,10 +200,13 @@ const SetDate = ({ children, mission }) => {
       const { status, error, data: updatedData } = data;
       if (status === 200) {
         dispatch(updateCard(updatedCard));
+        setIsLoading(false);
+
         setIsOpen(false);
       } else {
         toast.error(error);
       }
+      setIsLoading(false);
     } catch (error) {
       toast.error("An error occurred while updating the date.");
     }
@@ -215,7 +226,16 @@ const SetDate = ({ children, mission }) => {
       placement="right"
       onClose={HandleReset}
       isOpen={isOpen}
-      onOpenChange={(open) => setIsOpen(open)}
+      onOpenChange={(open) => {
+        if (
+          user.role.toLowerCase() === "admin" ||
+          user.role.toLowerCase() === "owner"
+        ) {
+          setIsOpen(open);
+        } else {
+          toast.error("Bạn không đủ quyền thực hiện thao tác này");
+        }
+      }}
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className=" p-2 px-3 w-[300px] ">
@@ -393,20 +413,20 @@ const SetDate = ({ children, mission }) => {
             </div>
 
             <Button
+              isDisabled={isLoading}
               type="submit"
               color="primary"
               className="w-full mt-3 font-medium"
-              isDisabled={user?.role?.toLowerCase() !== "admin"}
             >
-              Lưu
+              {isLoading ? <CircularProgress /> : "Lưu"}
             </Button>
             <Button
+              isDisabled={isLoading}
               onClick={CancelDate}
               type="button"
               className="w-full mt-1 bg-gray-200  font-medium"
-              isDisabled={user?.role?.toLowerCase() !== "admin"}
             >
-              Gỡ bỏ
+              {isLoading ? <CircularProgress /> : "Gỡ bỏ"}
             </Button>
           </form>
         </div>

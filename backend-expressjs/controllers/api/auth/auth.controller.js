@@ -14,6 +14,7 @@ const crypto = require("crypto");
 var ip = require("ip");
 const UAParser = require("ua-parser-js");
 const sendMail = require("../../../utils/mail");
+const { log } = require("console");
 
 const generateToken = () => {
   return crypto.randomBytes(16).toString("hex");
@@ -273,7 +274,7 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    const { accessToken, id } = req.user.dataValues;
+    const { accessToken } = req.user;
     await BlacklistToken.findOrCreate({
       where: {
         token: accessToken,
@@ -283,7 +284,7 @@ module.exports = {
     await User.update(
       { isOnline: false },
       {
-        where: { id },
+        where: { id: req.user.dataValues.id },
       }
     );
     res.json({

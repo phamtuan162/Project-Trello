@@ -36,20 +36,22 @@ const { decentRoleUser } = workspaceSlice.actions;
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
+  const userActive = useSelector((state) => state.user.user);
+
   const sortedUsers = React.useMemo(() => {
     return workspace && workspace.users
       ? [...workspace.users].sort((a, b) => {
           const roleA = a.role.toLowerCase();
           const roleB = b.role.toLowerCase();
-          return roleA === "admin" ? -1 : roleB === "admin" ? 1 : 0;
+          if (roleA === "owner") return -1;
+          if (roleB === "owner") return 1;
+          if (roleA === "admin") return -1;
+          if (roleB === "admin") return 1;
+          return 0; // Mặc định sắp xếp không thay đổi vị trí
         })
       : [];
   }, [workspace]);
 
-  const userActive = useSelector((state) => state.user.user);
-  const checkRoleWorkspace = React.useMemo(() => {
-    return userActive?.role?.toLowerCase() === "admin";
-  }, [userActive]);
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState(
@@ -63,6 +65,11 @@ export default function PageWorkspaceUsers() {
   });
   const [page, setPage] = React.useState(1);
   const roles = [
+    {
+      name: "Owner",
+      value: "owner",
+      desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
+    },
     {
       name: "Admin",
       value: "admin",
@@ -79,6 +86,19 @@ export default function PageWorkspaceUsers() {
       desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
     },
   ];
+  const rolesUser = React.useMemo(() => {
+    if (userActive?.role?.toLowerCase() === "admin") {
+      return roles.filter(
+        (role) =>
+          role.value.toLowerCase() !== "admin" &&
+          role.value.toLowerCase() !== "owner"
+      );
+    }
+    if (userActive?.role?.toLowerCase() === "owner") {
+      return roles.filter((role) => role.value.toLowerCase() !== "owner");
+    }
+    return roles;
+  }, [userActive]);
   const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -131,8 +151,7 @@ export default function PageWorkspaceUsers() {
   }, [sortDescriptor, items]);
   const handleDecentRole = async (role, user) => {
     const roleNew = [...role][0];
-
-    if (roleNew) {
+    if (roleNew && user.id) {
       decentRoleApi(workspace.id, {
         user_id: user.id,
         role: roleNew,
@@ -171,7 +190,10 @@ export default function PageWorkspaceUsers() {
           </User>
         );
       case "role":
-        return !checkRoleWorkspace || +userActive.id === +user.id ? (
+        return user.role.toLowerCase() === "owner" ||
+          (userActive?.role?.toLowerCase() !== "admin" &&
+            userActive?.role?.toLowerCase() !== "owner") ||
+          +userActive.id === +user.id ? (
           <p className="text-bold text-small capitalize">{cellValue}</p>
         ) : (
           <Select
@@ -185,7 +207,7 @@ export default function PageWorkspaceUsers() {
             selectedKeys={new Set([user.role.toLowerCase()])}
             onSelectionChange={(role) => handleDecentRole(role, user)}
           >
-            {roles.map((role) => (
+            {rolesUser.map((role) => (
               <SelectItem key={role.value} value={role.value}>
                 {role.name}
               </SelectItem>
@@ -196,7 +218,7 @@ export default function PageWorkspaceUsers() {
         return (
           <Chip
             className="capitalize border-none gap-1 text-default-600"
-            color={user.status ? "success" : "default"}
+            color={user.isOnline ? "success" : "default"}
             size="sm"
             variant="dot"
           >
@@ -209,6 +231,7 @@ export default function PageWorkspaceUsers() {
         return cellValue;
     }
   }, []);
+
   const onNextPage = React.useCallback(() => {
     if (page < pages) {
       setPage(page + 1);
@@ -312,7 +335,7 @@ export default function PageWorkspaceUsers() {
                 ))}
               </DropdownMenu>
             </Dropdown>
-            <FormInviteUser roles={roles} />
+            <FormInviteUser rolesUser={rolesUser} />
           </div>
         </div>
         <div className="flex justify-between items-center">

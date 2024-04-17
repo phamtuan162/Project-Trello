@@ -13,8 +13,9 @@ import { MoreHorizontal } from "lucide-react";
 import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import MoveColumn from "@/components/actions/column/moveColumn";
+import CopyColumn from "@/components/actions/column/copyColumn";
+import SortCard from "@/components/actions/column/sortCard";
 export function ListOptions({ column, deleteColumnDetail }) {
-  const { id: boardId } = useParams();
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const onDeleteColumn = async () => {
@@ -28,6 +29,11 @@ export function ListOptions({ column, deleteColumnDetail }) {
   const options = [
     {
       label: "Sao chép danh sách",
+      component: (
+        <CopyColumn column={column}>
+          <span className="block w-full">Sao chép danh sách</span>
+        </CopyColumn>
+      ),
     },
     {
       label: "Xóa danh sách",
@@ -43,6 +49,11 @@ export function ListOptions({ column, deleteColumnDetail }) {
     },
     {
       label: "Sắp xếp",
+      component: (
+        <SortCard column={column}>
+          <span className="block w-full">Sắp xếp theo...</span>
+        </SortCard>
+      ),
     },
   ];
   return (

@@ -17,8 +17,8 @@ class CardTransformer extends Transformer {
       startDateTime: instance.startDateTime,
       endDateTime: instance.endDateTime,
       background: instance.background,
-      createdAt: instance.created_at,
-      updatedAt: instance.updated_at,
+      created_at: instance.created_at,
+      updated_at: instance.updated_at,
     };
   }
 }

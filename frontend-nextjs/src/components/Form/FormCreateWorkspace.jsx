@@ -3,9 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/navigation";
 import {
   Input,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
   Button,
   Textarea,
   Avatar,
@@ -16,17 +13,16 @@ import {
   ModalContent,
 } from "@nextui-org/react";
 import { useState } from "react";
-import { CloseIcon } from "../Icon/CloseIcon";
 import { createWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
-import { AddIcon } from "../Icon/AddIcon";
+import { userSlice } from "@/stores/slices/userSlice";
+const { updateUser } = userSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
 export default function FormCreateWorkspace({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  const workspace = useSelector((state) => state.workspace.workspace);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [isCreate, setIsCreate] = useState(false);
 
@@ -62,6 +58,13 @@ export default function FormCreateWorkspace({ children }) {
     }).then((data) => {
       if (data.status === 200) {
         const workspace = data.data;
+        if (workspace.users) {
+          const userNeedToFind = workspace.users.find(
+            (item) => +item.id === +user.id
+          );
+
+          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
+        }
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
         router.push(`/w/${workspace.id}/home`);

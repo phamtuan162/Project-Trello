@@ -19,6 +19,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
   const [keyword, setKeyWord] = useState("");
   const workspace = useSelector((state) => state.workspace.workspace);
   const user = useSelector((state) => state.user.user);
+  const card = useSelector((state) => state.card.card);
 
   const [userSearch, setUserSearch] = useState([]);
   const userNotAssignCard = useMemo(() => {
@@ -56,7 +57,10 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
   };
 
   const HandleSelectUserAssigned = async (userAssign) => {
-    if (user.role.toLowerCase() !== "admin") {
+    if (
+      user.role.toLowerCase() !== "admin" &&
+      user.role.toLowerCase() !== "owner"
+    ) {
       toast.error("Bạn không đủ quyền thực hiện thao tác này");
       setIsAssign(false);
       return;
@@ -66,14 +70,15 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     } else {
       assignUserApi(cardUpdate.id, { user_id: userAssign.id }).then((data) => {
         if (data.status === 200) {
-          const card = data.card;
-          dispatch(updateCard(card));
+          const cardUpdate = data.card;
+          dispatch(updateCard({ ...card, users: cardUpdate.users }));
         } else {
           const error = data.error;
           toast.error(error);
         }
       });
       setKeyWord("");
+      setUserSearch([]);
     }
   };
 
@@ -81,8 +86,8 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     if (user) {
       unAssignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
         if (data.status === 200) {
-          const card = data.card;
-          dispatch(updateCard(card));
+          const cardUpdate = data.card;
+          dispatch(updateCard({ ...card, users: cardUpdate.users }));
         } else {
           const error = data.error;
           toast.error(error);
@@ -144,7 +149,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               className="w-full "
             />
           </div>
-          <div className=" p-2 pb-0 max-h-[140px] overflow-x-auto">
+          <div className=" p-2 pb-0 max-h-[200px] overflow-x-auto">
             {userSearch?.length > 0 ? (
               <>
                 <p className="font-medium text-xs">Thành viên trong Bảng</p>
@@ -181,7 +186,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
             )}
           </div>
           {cardUpdate?.users?.length > 0 && (
-            <div className=" p-2 max-h-[140px] overflow-x-auto">
+            <div className=" p-2 max-h-[200px] overflow-x-auto">
               <p className="font-medium text-xs">Thành viên trong Thẻ</p>
               {cardUpdate.users.map((user) => (
                 <div

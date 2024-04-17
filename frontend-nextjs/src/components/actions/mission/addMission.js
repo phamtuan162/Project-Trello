@@ -71,7 +71,10 @@ const AddMission = ({ work }) => {
     }
   };
 
-  if (user.role.toLowerCase() !== "admin") {
+  if (
+    user.role.toLowerCase() !== "admin" &&
+    user.role.toLowerCase() !== "owner"
+  ) {
     return;
   }
   return isEditing ? (

@@ -15,7 +15,7 @@ import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteWorkspaceApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
-
+import { useSelector } from "react-redux";
 const FormDeleteWorkspace = ({ workspace }) => {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -24,7 +24,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
   );
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [isDelete, setIsDelete] = useState(false);
-
+  const user = useSelector((state) => state.user.user);
   const nameRef = useRef(null);
 
   const HandleDeleteWorkspace = async () => {
@@ -54,6 +54,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
         làm việc sẽ bị xóa cùng
       </p>
       <Button
+        isDisabled={user?.role?.toLowerCase() !== "owner"}
         type="button"
         onPress={onOpen}
         color="danger"

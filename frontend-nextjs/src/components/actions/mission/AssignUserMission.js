@@ -142,7 +142,14 @@ const AssignUserMission = ({ children, mission }) => {
       onClose={HandleReset}
       isOpen={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
+        if (
+          userMain.role.toLowerCase() === "admin" ||
+          userMain.role.toLowerCase() === "owner"
+        ) {
+          setIsOpen(open);
+        } else {
+          toast.error("Bạn không đủ quyền thực hiện thao tác này");
+        }
       }}
       classNames={{}}
     >

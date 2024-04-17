@@ -2,16 +2,17 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useRef } from "react";
-import { Input } from "@nextui-org/react";
 import { ListCard } from "./ListCard";
 import { ListHeader } from "./ListHeader";
 import { CardForm } from "./Cardform";
+import { useSelector } from "react-redux";
 export function Column({
   column,
   deleteColumnDetail,
   createNewCard,
   updateColumn,
 }) {
+  const user = useSelector((state) => state.user.user);
   const {
     attributes,
     listeners,
@@ -42,7 +43,12 @@ export function Column({
       key={column.id}
     >
       <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column">
-        <div {...listeners} className="h-4"></div>
+        {user?.role?.toLowerCase() === "admin" ||
+        user?.role?.toLowerCase() === "owner" ? (
+          <div {...listeners} className="h-4"></div>
+        ) : (
+          <div className="h-4"></div>
+        )}
         <ListHeader
           column={column}
           deleteColumnDetail={deleteColumnDetail}

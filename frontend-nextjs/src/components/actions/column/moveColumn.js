@@ -22,6 +22,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { mapOrder } from "@/utils/sorts";
 import { toast } from "react-toastify";
 import { moveColumnToDifferentBoardAPI } from "@/services/workspaceApi";
+import { generatePlaceholderCard } from "@/utils/formatters";
 const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
 const MoveColumn = ({ children, column }) => {
@@ -166,7 +167,9 @@ const MoveColumn = ({ children, column }) => {
       <PopoverContent className="w-[260px] p-2 px-3">
         <form className="w-full" onSubmit={(e) => HandleSubmit(e)}>
           <div className="flex justify-between items-center relative">
-            <h1 className="grow text-center ">Di chuyển danh sách</h1>
+            <h1 className="grow text-center font-medium text-xs">
+              Di chuyển danh sách
+            </h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
               variant="ghost"
@@ -225,7 +228,11 @@ const MoveColumn = ({ children, column }) => {
             type="submit"
             color="primary"
             className="mt-2"
-            isDisabled={user?.role?.toLowerCase() !== "admin" || isLoading}
+            isDisabled={
+              (user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner") ||
+              isLoading
+            }
           >
             {isLoading ? <CircularProgress size={16} /> : " Di chuyển"}
           </Button>

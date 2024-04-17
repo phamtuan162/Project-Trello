@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Select,
   SelectItem,
@@ -17,7 +17,7 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
 const { inviteUser } = workspaceSlice.actions;
-const FormInviteUser = ({ roles }) => {
+const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -102,6 +102,12 @@ const FormInviteUser = ({ roles }) => {
   return (
     <div>
       <Button
+        isDisabled={
+          !(
+            user?.role?.toLowerCase() === "admin" ||
+            user?.role?.toLowerCase() === "owner"
+          )
+        }
         onClick={() => setIsInvite(true)}
         style={{ background: "#7f77f1" }}
         size="sm"
@@ -255,7 +261,7 @@ const FormInviteUser = ({ roles }) => {
                       selectedKeys={role}
                       onSelectionChange={setRole}
                     >
-                      {roles.map((item) => (
+                      {rolesUser.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
                           {item.name}
                         </SelectItem>

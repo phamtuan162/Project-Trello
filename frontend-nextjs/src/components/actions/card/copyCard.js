@@ -84,7 +84,6 @@ const CopyCard = ({ children }) => {
 
     fetchData();
   }, [valueBoard]);
-  console.log(selected);
   const HandleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -315,7 +314,11 @@ const CopyCard = ({ children }) => {
             type="submit"
             color="primary"
             className="mt-2"
-            isDisabled={user?.role?.toLowerCase() !== "admin" || isLoading}
+            isDisabled={
+              (user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner") ||
+              isLoading
+            }
           >
             {isLoading ? <CircularProgress /> : "Tạo thẻ"}
           </Button>

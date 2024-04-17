@@ -13,8 +13,8 @@ class BoardTransformer extends Transformer {
       desc: instance.desc,
       type: instance.type,
       background: instance.background,
-      createdAt: instance.created_at,
-      updatedAt: instance.updated_at,
+      created_at: instance.created_at,
+      updated_at: instance.updated_at,
       deletedAt: instance.deleted_at,
     };
   }

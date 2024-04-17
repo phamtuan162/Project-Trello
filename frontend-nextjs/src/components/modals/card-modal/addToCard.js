@@ -9,6 +9,7 @@ import FormDate from "@/components/Form/FormDate";
 import { updateCardApi } from "@/services/workspaceApi";
 import AddWork from "@/components/actions/work/addWork";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import AttachmentFile from "@/components/actions/card/attchmentFile";
 const { updateCard } = cardSlice.actions;
 
 const AddToCard = () => {
@@ -99,13 +100,15 @@ const AddToCard = () => {
       label: "Đính kèm",
       icon: <Paperclip size={16} />,
       component: (
-        <Button
-          className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
-          style={{ color: "#172b4d" }}
-        >
-          <Paperclip size={16} />
-          Đính kèm
-        </Button>
+        <AttachmentFile>
+          <Button
+            className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
+            style={{ color: "#172b4d" }}
+          >
+            <Paperclip size={16} />
+            Đính kèm
+          </Button>
+        </AttachmentFile>
       ),
     },
   ];

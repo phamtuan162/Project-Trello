@@ -455,7 +455,10 @@ const FormDate = ({ children }) => {
               type="submit"
               color="primary"
               className="w-full mt-3"
-              isDisabled={user?.role?.toLowerCase() !== "admin"}
+              isDisabled={
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
+              }
             >
               Lưu
             </Button>
@@ -463,7 +466,10 @@ const FormDate = ({ children }) => {
               onClick={() => CancelDate()}
               type="button"
               className="w-full mt-1 bg-gray-200"
-              isDisabled={user?.role?.toLowerCase() !== "admin"}
+              isDisabled={
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
+              }
             >
               Gỡ bỏ
             </Button>

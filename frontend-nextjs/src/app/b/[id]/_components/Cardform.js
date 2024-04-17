@@ -1,13 +1,13 @@
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/react";
 import { useRef, useState, useEffect } from "react";
-import { toast } from "react-toastify";
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-
+import { useSelector } from "react-redux";
 export function CardForm({ createNewCard, column }) {
   const textareaRef = useRef(null);
   const btnaddRef = useRef(null);
+  const user = useSelector((state) => state.user.user);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -28,7 +28,12 @@ export function CardForm({ createNewCard, column }) {
       textareaRef.current.blur();
     }
   };
-
+  if (
+    user?.role?.toLowerCase() !== "admin" &&
+    user?.role?.toLowerCase() !== "owner"
+  ) {
+    return;
+  }
   return isEditing ? (
     <div className="p-2 pb-0">
       <Textarea

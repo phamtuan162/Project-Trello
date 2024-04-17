@@ -3,6 +3,8 @@ const { User } = require("./models/index");
 const cron = require("node-cron");
 const blacklist_token = require("./cronjobs/blacklist_tokens");
 const card = require("./cronjobs/card");
+const mission = require("./cronjobs/mission");
+
 var createError = require("http-errors");
 var express = require("express");
 const http = require("http");
@@ -116,6 +118,9 @@ cron.schedule("* 0 * * *", () => {
 });
 cron.schedule("0 * * * *", () => {
   card.HandleExpired();
+});
+cron.schedule("0 * * * *", () => {
+  mission.HandleExpired();
 });
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

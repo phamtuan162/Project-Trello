@@ -49,12 +49,14 @@ module.exports = (permission) => {
               permissions.push(permission.value);
           });
         }
+        console.log(permissions);
         //Kiểm tra 1 quyền cụ thể
         req.can = (value) => {
           return permissions.includes(value);
         };
 
         if (permissions.includes(permission)) {
+          console.log(1);
           return next();
         }
 

@@ -15,6 +15,11 @@ router.put(
 
   columnController.moveColumnDiffBoard
 );
+router.post(
+  "/copy-column",
+
+  columnController.copyColumn
+);
 router.post("/", permission("column.create"), columnController.store);
 router.put("/:id", permission("column.update"), columnController.update);
 router.patch("/:id", permission("column.update"), columnController.update);

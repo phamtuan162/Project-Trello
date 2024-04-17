@@ -6,10 +6,9 @@ const {
   Work,
   Mission,
 } = require("../../../models/index");
-const { object, string } = require("yup");
+const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
 const ColumnTransformer = require("../../../transformers/workspace/column.transformer");
-
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, board_id } = req.query;
@@ -338,6 +337,111 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
+    res.status(response.status).json(response);
+  },
+
+  copyColumn: async (req, res) => {
+    const { column, board_id, title } = req.body;
+    const response = {};
+    let transaction;
+
+    try {
+      if (!column || !board_id) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
+      }
+
+      const BoardActive = await Board.findByPk(board_id);
+      if (!column || !BoardActive) {
+        return res.status(404).json({ status: 404, message: "Not Found" });
+      }
+
+      const columnNew = await Column.create({
+        title: title,
+        board_id: board_id,
+      });
+      console.log(2);
+      if (column.cards.length > 0) {
+        let cardOrderIdsNew = [];
+
+        for (const card of column.cards) {
+          const cardNew = await Card.create({
+            column_id: columnNew.id,
+            title: card.title,
+            desc: card.desc,
+            background: card.background,
+            startDateTime: card.startDateTime,
+            endDateTime: card.endDateTime,
+            status: card.status,
+          });
+          cardOrderIdsNew.push(cardNew.id);
+          if (card.users.length > 0) {
+            for (const user of card.users) {
+              const userInstance = await User.findByPk(user.id);
+              if (userInstance) {
+                await cardNew.addUser(userInstance);
+              }
+            }
+          }
+          if (card.works.length > 0) {
+            for (const work of card.works) {
+              const workNew = await Work.create(
+                {
+                  title: work.title,
+                  card_id: cardNew.id,
+                },
+                { transaction }
+              );
+              if (work.missions.length > 0) {
+                for (const mission of work.missions) {
+                  const missionNew = await Mission.create({
+                    name: mission.name,
+                    work_id: workNew.id,
+                    user_id: mission.user_id,
+                    status: mission.status,
+                    endDateTime: mission.endDateTime,
+                  });
+                }
+              }
+            }
+          }
+        }
+        await columnNew.update({ cardOrderIds: cardOrderIdsNew });
+      }
+      const newColumnOrderIds = [columnNew.id, ...BoardActive.columnOrderIds];
+
+      await BoardActive.update({
+        columnOrderIds: newColumnOrderIds,
+      });
+      const columnUpdate = await Column.findByPk(columnNew.id, {
+        include: {
+          model: Card,
+          as: "cards",
+          include: [
+            {
+              model: User,
+              as: "users",
+            },
+            {
+              model: Work,
+              as: "works",
+              include: { model: Mission, as: "missions" },
+            },
+          ],
+        },
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: columnUpdate,
       });
     } catch (error) {
       Object.assign(response, {

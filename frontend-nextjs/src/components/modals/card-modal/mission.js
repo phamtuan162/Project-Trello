@@ -71,13 +71,19 @@ const MissionWork = ({ mission, setMissionSelected }) => {
   };
   return (
     <div className="flex gap-1 items-start ">
-      <Checkbox
-        value={mission.id}
-        key={mission.id}
-        onClick={() => {
-          setMissionSelected(mission);
-        }}
-      ></Checkbox>
+      {user?.role?.toLowerCase() === "admin" ||
+      user?.role?.toLowerCase() === "owner" ? (
+        <Checkbox
+          value={mission.id}
+          key={mission.id}
+          onClick={() => {
+            setMissionSelected(mission);
+          }}
+        ></Checkbox>
+      ) : (
+        <span className="w-[26px]"></span>
+      )}
+
       <div
         className={`hover:bg-default-100 rounded-lg p-2 grow cursor-pointer ${
           isEditing && "bg-default-100"
@@ -142,13 +148,16 @@ const MissionWork = ({ mission, setMissionSelected }) => {
             </div>
           </form>
         ) : (
-          <div className="flex items-center  w-full h-[20px]">
+          <div className="flex items-center   w-full h-[20px]">
             <span
               className={`grow text-xs font-semibold leading-4 ${
                 mission.status === "success" && "line-through"
               }`}
               onClick={() => {
-                if (user?.role?.toLowerCase() === "admin") {
+                if (
+                  user?.role?.toLowerCase() === "admin" ||
+                  user?.role?.toLowerCase() === "owner"
+                ) {
                   enableEditing();
                 }
               }}
@@ -164,7 +173,10 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                       mission.status === "success" && "bg-green-700 text-white"
                     } ${
                       mission.status === "expired" && "bg-red-700 text-white"
-                    } ${mission.status === "pending" && "bg-gray-200"}
+                    } ${
+                      (mission.status === "pending" || !mission.status) &&
+                      "bg-gray-200"
+                    }
                     text-xs px-1.5 flex items-center justify-center  rounded-full gap-1 `}
                   >
                     <Clock size={14} />
@@ -193,12 +205,14 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                   </button>
                 )}
               </AssignUserMission>
-
-              <DeleteAndTransferMission mission={mission}>
-                <button className="focus-visible:outline-0 h-[24px] w-[24px] flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
-                  <MoreHorizontal size={14} />
-                </button>
-              </DeleteAndTransferMission>
+              {(user?.role?.toLowerCase() === "admin" ||
+                user?.role?.toLowerCase() === "owner") && (
+                <DeleteAndTransferMission mission={mission}>
+                  <button className="focus-visible:outline-0 h-[24px] w-[24px] flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
+                    <MoreHorizontal size={14} />
+                  </button>
+                </DeleteAndTransferMission>
+              )}
             </div>
           </div>
         )}

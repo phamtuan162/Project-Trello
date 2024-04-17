@@ -73,10 +73,12 @@ const MissionsWork = ({ missions }) => {
         className="select flex"
       >
         {missions?.map((mission) => (
-          <MissionWork
-            mission={mission}
-            setMissionSelected={setMissionSelected}
-          />
+          <div key={mission.id}>
+            <MissionWork
+              mission={mission}
+              setMissionSelected={setMissionSelected}
+            />
+          </div>
         ))}
       </CheckboxGroup>
     </div>

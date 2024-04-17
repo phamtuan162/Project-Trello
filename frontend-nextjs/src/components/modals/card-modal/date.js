@@ -46,14 +46,14 @@ const DateCard = ({ checkRole }) => {
             value={isSelected}
             onValueChange={(selected) => HandleChangeStatusDate(selected)}
             classNames={{
-              base: cn("inline-flex max-w-md w-3  bg-content1 m-0 p-0"),
+              base: cn("inline-flex max-w-md w-3  bg-content1 m-0 p-0 mr-2"),
             }}
           ></Checkbox>
         )}
 
         <FormDate>
           <Button
-            className="items-center flex p-1 h-full ml-2 px-2 bg-gray-200 text-xs font-medium"
+            className="items-center flex p-1 h-full  px-2 bg-gray-200 text-xs font-medium"
             style={{ color: "#172b4d" }}
           >
             {card?.startDateTime && (

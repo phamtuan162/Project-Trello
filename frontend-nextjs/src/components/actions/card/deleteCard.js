@@ -100,7 +100,11 @@ const DeleteCard = ({ children }) => {
               type="button"
               className="w-full h-[40px] mt-2"
               color="danger"
-              isDisabled={user.role.toLowerCase() !== "admin" || isLoading}
+              isDisabled={
+                (user?.role?.toLowerCase() !== "admin" &&
+                  user?.role?.toLowerCase() !== "owner") ||
+                isLoading
+              }
               onClick={() => HandleDeleteCard()}
             >
               {isLoading ? <CircularProgress /> : "Xóa thẻ"}

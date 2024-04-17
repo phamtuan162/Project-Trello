@@ -92,7 +92,10 @@ const DescCardModal = () => {
         ) : (
           <div
             onClick={() => {
-              if (user?.role?.toLowerCase() === "admin") {
+              if (
+                user?.role?.toLowerCase() === "admin" ||
+                user?.role?.toLowerCase() === "owner"
+              ) {
                 enableEditing();
               }
             }}

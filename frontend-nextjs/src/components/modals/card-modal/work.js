@@ -109,11 +109,14 @@ const WorkCard = ({ work }) => {
             </div>
           </form>
         ) : (
-          <div className="flex items-center  w-full">
+          <div className="flex items-center mt-1  w-full">
             <span
               className="grow text-xs font-semibold"
               onClick={() => {
-                if (user?.role?.toLowerCase() === "admin") {
+                if (
+                  user?.role?.toLowerCase() === "admin" ||
+                  user?.role?.toLowerCase() === "owner"
+                ) {
                   enableEditing();
                 }
               }}

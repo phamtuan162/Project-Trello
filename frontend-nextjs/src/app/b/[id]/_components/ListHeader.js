@@ -55,7 +55,8 @@ export function ListHeader({
           </span>
         )}
       </div>
-      {user?.role?.toLowerCase() === "admin" && (
+      {(user?.role?.toLowerCase() === "admin" ||
+        user?.role?.toLowerCase() === "owner") && (
         <ListOptions
           column={column}
           deleteColumnDetail={deleteColumnDetail}

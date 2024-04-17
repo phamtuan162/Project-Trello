@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
+import { updateProfile } from "@/services/userApi";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
 import { userSlice } from "@/stores/slices/userSlice";
 import { providerSlice } from "@/stores/slices/providerSlice";
@@ -117,16 +118,11 @@ const Header = () => {
   if (isLoading) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;
   }
-  // window.addEventListener("beforeunload", function (event) {
-  //   if (user.id) {
-  //     var confirmationMessage = "Are you sure you want to leave?"; // Thông báo xác nhận
-
-  //     updateProfile(user.id, { isOnline: false });
-
-  //     (event || window.event).returnValue = confirmationMessage; // Cho phép hiển thị thông báo xác nhận rời khỏi trang
-  //     return confirmationMessage;
-  //   }
-  // });
+  window.addEventListener("beforeunload", function (event) {
+    if (user.id) {
+      updateProfile(user.id, { isOnline: false });
+    }
+  });
 
   return (
     <Navbar
@@ -140,7 +136,9 @@ const Header = () => {
           className="lg:hidden"
         />
         <NavbarBrand>
-          <Link href="/">
+          <Link
+            onClick={() => router.push(`/w/${user.workspace_id_active}/home`)}
+          >
             <p className="font-bold text-inherit">ProManage </p>
           </Link>
         </NavbarBrand>

@@ -41,6 +41,16 @@ const LeaveWorkspace = ({ user }) => {
       });
     }
   };
+  if (user?.role?.toLowerCase() === "owner" && +userActive?.id !== +user.id) {
+    return;
+  }
+  if (
+    userActive?.role?.toLowerCase() !== "admin" &&
+    userActive?.role?.toLowerCase() !== "owner" &&
+    +userActive?.id !== +user.id
+  ) {
+    return;
+  }
   return (
     <Popover
       placement="bottom"

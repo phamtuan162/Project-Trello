@@ -13,8 +13,8 @@ class UserTransformer extends Transformer {
       providerId: instance.provider_id,
       workspace_id_active: instance.workspace_id_active,
       isOnline: instance.isOnline,
-      createdAt: instance.created_at,
-      updatedAt: instance.updated_at,
+      created_at: instance.created_at,
+      updated_at: instance.updated_at,
       role: instance.role,
     };
   }

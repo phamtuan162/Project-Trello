@@ -11,7 +11,6 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { deleteBoard } from "@/services/workspaceApi";
 import { useParams, useRouter } from "next/navigation";
-
 export function BoardOptions({ board }) {
   const router = useRouter();
   const { id: boardId } = useParams();
