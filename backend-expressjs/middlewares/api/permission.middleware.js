@@ -29,7 +29,13 @@ module.exports = (permission) => {
 
         const { data: userId } = decoded;
         const user = await User.findOne({ where: { id: userId } });
-
+        if (!user) {
+          throw new Error("User Not Found");
+        }
+        req.user = {
+          ...user,
+          accessToken: token,
+        };
         const user_workspace_role = await UserWorkspaceRole.findOne({
           where: { user_id: userId, workspace_id: user.workspace_id_active },
         });
@@ -49,14 +55,12 @@ module.exports = (permission) => {
               permissions.push(permission.value);
           });
         }
-        console.log(permissions);
         //Kiểm tra 1 quyền cụ thể
         req.can = (value) => {
           return permissions.includes(value);
         };
 
         if (permissions.includes(permission)) {
-          console.log(1);
           return next();
         }
 

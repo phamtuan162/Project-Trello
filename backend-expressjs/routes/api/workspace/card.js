@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 const cardController = require("../../../controllers/api/workspace/card.controller");
 const permission = require("../../../middlewares/api/permission.middleware");
-
+const authMiddleware = require("../../../middlewares/api/auth.middleware");
 router.get("/", cardController.index);
 router.get("/:id", cardController.find);
 router.post("/", permission("card.create"), cardController.store);
@@ -20,7 +20,7 @@ router.put(
 router.put(
   "/date-card/:id",
   permission("card.date_card"),
-  cardController.update
+  cardController.dateCard
 );
 
 router.put("/:id", permission("card.update"), cardController.update);

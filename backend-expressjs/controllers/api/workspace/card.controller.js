@@ -1,8 +1,15 @@
-const { Card, Column, User, Work, Mission } = require("../../../models/index");
+const {
+  Card,
+  Column,
+  User,
+  Work,
+  Mission,
+  Activity,
+} = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
-
+const { format } = require("date-fns");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -33,6 +40,7 @@ module.exports = {
     try {
       const card = await Card.findByPk(id, {
         include: [
+          { model: Activity, as: "activities" },
           { model: User, as: "users" },
           { model: Column, as: "column" },
           {
@@ -68,9 +76,9 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
+    const user = req.user.dataValues;
     const { title } = req.body;
     const rules = {};
-
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
     }
@@ -103,6 +111,16 @@ module.exports = {
       await column.update({
         cardOrderIds: updatedCardOrderIds,
       });
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: card.id,
+        title: title,
+        action: "create",
+        workspace_id: user.workspace_id_active,
+        desc: `vào danh sách ${column.title}`,
+      });
 
       Object.assign(response, {
         status: 200,
@@ -122,6 +140,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   update: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const method = req.method;
     const rules = {};
@@ -132,30 +151,42 @@ module.exports = {
 
     const schema = object(rules);
     const response = {};
-    //Validate
     try {
       let body = await schema.validate(req.body, {
         abortEarly: false,
       });
+      const card = await Card.findByPk(id);
+      if (!card) {
+        return res.status(404).json({ status: 404, message: "Not found card" });
+      }
+      await card.update(body);
 
-      // if (method === "PUT") {
-      //   body = Object.assign(
-      //     {
-      //       desc: null,
-      //     },
-      //     body
-      //   );
-      // }
-      await Card.update(body, {
-        where: { id },
+      if (req.body.status) {
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          card_id: id,
+          title: card.title,
+          action: "status_card",
+          workspace_id: user.workspace_id_active,
+          desc:
+            req.body.status.toLowerCase() === "success"
+              ? "đã đánh dấu ngày hết hạn là hoàn thành"
+              : "đã đánh dấu ngày hết hạn là chưa hoàn thành",
+        });
+      }
+      const cardUpdate = await Card.findByPk(id, {
+        include: [
+          { model: User, as: "users" },
+          { model: Activity, as: "activities" },
+        ],
       });
-      const card = await Card.findByPk(id, {
-        include: { model: User, as: "users" },
-      });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new CardTransformer(card),
+        data: new CardTransformer(cardUpdate),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -170,6 +201,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   delete: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
 
@@ -191,7 +223,16 @@ module.exports = {
           await Work.destroy({ where: { card_id: card.id } });
         }
         await card.removeUsers(card.users);
-
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          card_id: card.id,
+          title: card.title,
+          action: "delete",
+          workspace_id: user.workspace_id_active,
+          desc: `đã xóa thẻ ${card.title} khỏi danh sách ${column.title}`,
+        });
         await card.destroy();
 
         Object.assign(response, {
@@ -208,6 +249,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   assignUser: async (req, res) => {
+    const userMain = req.user.dataValues;
     const { id } = req.params;
     const { user_id } = req.body;
     const response = {};
@@ -223,11 +265,23 @@ module.exports = {
     if (!user) {
       return res.status(404).json({ status: 404, message: "Not found user" });
     }
-
     await card.addUser(user);
-
+    await Activity.create({
+      user_id: userMain.id,
+      userName: userMain.name,
+      userAvatar: userMain.avatar,
+      card_id: card.id,
+      title: card.title,
+      action: "assign_user",
+      workspace_id: userMain.workspace_id_active,
+      desc:
+        +userMain.id === +user_id ? `đã tham gia` : `đã thêm ${user.name} vào`,
+    });
     const cardAssignedUser = await Card.findByPk(id, {
-      include: { model: User, as: "users" },
+      include: [
+        { model: User, as: "users" },
+        { model: Activity, as: "activities" },
+      ],
     });
     Object.assign(response, {
       status: 200,
@@ -237,6 +291,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   unAssignUser: async (req, res) => {
+    const userMain = req.user.dataValues;
     const { id } = req.params;
     const { user_id } = req.body;
     const response = {};
@@ -254,8 +309,22 @@ module.exports = {
     }
 
     await card.removeUser(user);
+    await Activity.create({
+      user_id: userMain.id,
+      userName: userMain.name,
+      userAvatar: userMain.avatar,
+      card_id: card.id,
+      title: card.title,
+      action: "un_assign_user",
+      workspace_id: userMain.workspace_id_active,
+      desc:
+        +userMain.id === +user_id ? `đã rời khỏi` : `đã loại ${user.name} khỏi`,
+    });
     const cardAssignedUser = await Card.findByPk(id, {
-      include: { model: User, as: "users" },
+      include: [
+        { model: User, as: "users" },
+        { model: Activity, as: "activities" },
+      ],
     });
     Object.assign(response, {
       status: 200,
@@ -343,6 +412,69 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
+    res.status(response.status).json(response);
+  },
+
+  dateCard: async (req, res) => {
+    const user = req.user.dataValues;
+    const { id } = req.params;
+    const { endDateTime, startDateTime } = req.body;
+    const response = {};
+    try {
+      const card = await Card.findByPk(id);
+      if (!card) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+      await card.update(req.body);
+
+      if (endDateTime) {
+        const endDateTimeUpdate = format(
+          new Date(card.endDateTime),
+          "'Ngày' d 'tháng' M 'lúc' H:mm"
+        );
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          card_id: card.id,
+          title: card.title,
+          action: "date_card",
+          workspace_id: user.workspace_id_active,
+          desc: card.endDateTime
+            ? `đã chuyển ngày hết hạn thẻ ${card.title} sang ${endDateTimeUpdate}`
+            : `đã đặt ngày hết hạn cho thẻ ${card.title} là ${endDateTimeUpdate}`,
+        });
+      }
+      if (endDateTime === null) {
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          card_id: card.id,
+          title: card.title,
+          action: "date_card",
+          workspace_id: user.workspace_id_active,
+          desc: `đã bỏ ngày hết hạn của thẻ này`,
+        });
+      }
+      const cardUpdate = await Card.findByPk(id, {
+        include: [
+          { model: User, as: "users" },
+          { model: Activity, as: "activities" },
+        ],
+      });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: new CardTransformer(cardUpdate),
       });
     } catch (error) {
       Object.assign(response, {

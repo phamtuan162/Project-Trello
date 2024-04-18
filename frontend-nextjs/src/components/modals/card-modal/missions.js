@@ -55,7 +55,9 @@ const MissionsWork = ({ missions }) => {
     updateMissionApi(missionSelected.id, { status: statusMission }).then(
       (data) => {
         if (data.status === 200) {
-          dispatch(updateCard(updatedCard));
+          dispatch(
+            updateCard({ ...updateCard, activities: data.data.activities })
+          );
         } else {
           const error = data.error;
           toast.error(error);

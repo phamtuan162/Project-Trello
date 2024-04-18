@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useSelector } from "react-redux";
+
 export function CardForm({ createNewCard, column }) {
   const textareaRef = useRef(null);
   const btnaddRef = useRef(null);

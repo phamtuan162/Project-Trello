@@ -47,7 +47,9 @@ let colStartClasses = [
   "col-start-6",
   "col-start-7",
 ];
-
+function truncateTimeFromDate(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 const validateHourMinute = (hour, minute) => {
   return (
     parseInt(hour) >= 0 &&
@@ -142,7 +144,7 @@ const SetDate = ({ children, mission }) => {
           if (+item.id === +mission.id) {
             return {
               ...mission,
-              endDateTime: endDateTimeUpdate,
+              endDateTime: endDateTimeUpdate.getTime(),
             };
           }
           return mission;
@@ -321,8 +323,10 @@ const SetDate = ({ children, mission }) => {
                             (isEqual(day, selectedDay) || isToday(day)) &&
                               "font-semibold",
 
-                            isEqual(day, endDateTime) &&
-                              "font-semibold bg-blue-100 text-indigo-400",
+                            isEqual(
+                              truncateTimeFromDate(day),
+                              truncateTimeFromDate(new Date(endDateTime))
+                            ) && "font-semibold bg-blue-100 text-indigo-400",
                             "mx-auto flex h-8 w-full items-center justify-center rounded-md"
                           )}
                         >

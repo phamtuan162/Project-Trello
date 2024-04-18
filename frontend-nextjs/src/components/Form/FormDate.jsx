@@ -37,6 +37,9 @@ import { DateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
 import { Message } from "../Message/Message";
+function truncateTimeFromDate(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 const { updateCard } = cardSlice.actions;
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -57,9 +60,7 @@ const FormDate = ({ children }) => {
   const user = useSelector((state) => state.user.user);
   let today = startOfToday();
 
-  let [selectedDay, setSelectedDay] = useState(
-    card.startDateTime || card.endDateTime || today
-  );
+  let [selectedDay, setSelectedDay] = useState(today);
   const [checkFocus, setCheckFocus] = useState("");
   let [currentMonth, setCurrentMonth] = useState(format(today, "MMM-yyyy"));
   let firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
@@ -73,6 +74,7 @@ const FormDate = ({ children }) => {
       ? new Date(card.endDateTime)
       : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
   );
+
   const [isSelectEndTime, setIsSelectEndTime] = useState(true);
   const [isSelectStartTime, setIsSelectStartTime] = useState(
     card?.startDateTime
@@ -172,6 +174,7 @@ const FormDate = ({ children }) => {
           ...card,
           startDateTime: updatedData.startDateTime,
           endDateTime: updatedData.endDateTime,
+          activities: updatedData.activities,
           status: "pending",
         };
         dispatch(updateCard(cardUpdate));
@@ -199,6 +202,7 @@ const FormDate = ({ children }) => {
           ...card,
           startDateTime: null,
           endDateTime: null,
+          activities: data.data.activities,
           status: null,
         };
         dispatch(updateCard(cardUpdate));
@@ -316,7 +320,6 @@ const FormDate = ({ children }) => {
                               "hover:bg-default-200",
                             (isEqual(day, selectedDay) || isToday(day)) &&
                               "font-semibold",
-
                             startDateTime &&
                               endDateTime &&
                               isWithinInterval(day, {
@@ -324,10 +327,12 @@ const FormDate = ({ children }) => {
                                 end: endDateTime,
                               }) &&
                               "font-semibold bg-blue-100 ",
-                            isEqual(day, startDateTime) &&
+                            isEqual(day, new Date(startDateTime)) &&
                               "font-semibold bg-blue-100 text-indigo-400",
-                            isEqual(day, endDateTime) &&
-                              "font-semibold bg-blue-100 text-indigo-400",
+                            isEqual(
+                              truncateTimeFromDate(day),
+                              truncateTimeFromDate(new Date(endDateTime))
+                            ) && "font-semibold bg-blue-100 text-indigo-400",
                             "mx-auto flex h-8 w-full items-center justify-center rounded-md"
                           )}
                         >
@@ -430,7 +435,7 @@ const FormDate = ({ children }) => {
                   name="endTimeHour"
                   variant={isSelectEndTime ? "bordered" : ""}
                   readOnly={isSelectEndTime ? false : true}
-                  value={
+                  defaultValue={
                     isSelectEndTime && endDateTime
                       ? isValid(endDateTime)
                         ? format(endDateTime, "HH:mm")

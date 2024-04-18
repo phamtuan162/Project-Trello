@@ -1,5 +1,5 @@
-const { Card, Work, Mission } = require("../../../models/index");
-const { object, string } = require("yup");
+const { Card, Work, Mission, Activity } = require("../../../models/index");
+const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
 module.exports = {
   index: async (req, res) => {
@@ -54,7 +54,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const { title, card_id } = req.body;
+    const user = req.user.dataValues;
     const rules = {};
 
     if (req.body.title) {
@@ -73,11 +73,21 @@ module.exports = {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
       const work = await Work.create(body);
+      const activity = await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: card.id,
+        title: card.title,
+        action: "add_mission",
+        workspace_id: user.workspace_id_active,
+        desc: `đã thêm danh sách công việc ${work.title} vào thẻ này`,
+      });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: work,
+        data: activity,
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -92,8 +102,8 @@ module.exports = {
     res.status(response.status).json(response);
   },
   update: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
-    const method = req.method;
     const rules = {};
 
     if (req.body.title) {
@@ -107,19 +117,12 @@ module.exports = {
       let body = await schema.validate(req.body, {
         abortEarly: false,
       });
-
-      // if (method === "PUT") {
-      //   body = Object.assign(
-      //     {
-      //       desc: null,
-      //     },
-      //     body
-      //   );
-      // }
-      await Work.update(body, {
-        where: { id },
-      });
       const work = await Work.findByPk(id);
+      if (!work) {
+        return res.status(404).json({ status: 404, message: "Not found " });
+      }
+      await work.update(body);
+
       Object.assign(response, {
         status: 200,
         message: "Success",
@@ -138,6 +141,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   delete: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
     try {
@@ -158,10 +162,20 @@ module.exports = {
 
       await card.removeWork(work);
       await work.destroy();
-
+      const activity = await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: card.id,
+        title: card.title,
+        action: "delete_mission",
+        workspace_id: user.workspace_id_active,
+        desc: `đã bỏ danh sách công việc ${work.title} khỏi thẻ này`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: activity,
       });
     } catch (error) {
       Object.assign(response, {

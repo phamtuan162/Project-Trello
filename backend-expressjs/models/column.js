@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "column_id",
         as: "cards",
       });
+      Column.hasMany(models.Activity, {
+        foreignKey: "column_id",
+        as: "activities",
+      });
     }
   }
   Column.init(

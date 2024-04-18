@@ -1,4 +1,11 @@
-const { Mission, Work, User, Card, Column } = require("../../../models/index");
+const {
+  Mission,
+  Work,
+  User,
+  Card,
+  Column,
+  Activity,
+} = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
@@ -91,8 +98,8 @@ module.exports = {
     res.status(response.status).json(response);
   },
   update: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
-    const method = req.method;
     const rules = {};
 
     if (req.body.name) {
@@ -106,23 +113,36 @@ module.exports = {
       let body = await schema.validate(req.body, {
         abortEarly: false,
       });
-
-      // if (method === "PUT") {
-      //   body = Object.assign(
-      //     {
-      //       desc: null,
-      //     },
-      //     body
-      //   );
-      // }
-      await Mission.update(body, {
-        where: { id },
-      });
       const mission = await Mission.findByPk(id);
+      if (!mission) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+      await mission.update(body);
+      const work = await Work.findByPk(mission.work_id);
+      const card = await Card.findByPk(work.card_id);
+      if (req.body.status) {
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          card_id: card.id,
+          title: card.title,
+          action: "status_mission",
+          workspace_id: user.workspace_id_active,
+          desc:
+            req.body.status.toLowerCase() === "success"
+              ? `đã hoàn tất ${mission.name} ở thẻ này`
+              : `đã đánh dấu ${mission.name} là chưa hoàn tất ở thẻ này`,
+        });
+      }
+      const cardUpdate = await Card.findByPk(card.id, {
+        include: { model: Activity, as: "activities" },
+      });
+      console.log(2);
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: mission,
+        data: cardUpdate,
       });
     } catch (e) {
       const errors = Object.fromEntries(

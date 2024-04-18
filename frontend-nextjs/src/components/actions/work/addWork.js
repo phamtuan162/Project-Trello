@@ -29,8 +29,21 @@ const AddWork = ({ children }) => {
     setIsLoading(true);
     createWorkApi({ card_id: card.id, title: title }).then((data) => {
       if (data.status === 200) {
-        const updatedWorks = [...card.works, data.data];
-        const cardUpdate = { ...card, works: updatedWorks };
+        const activities =
+          card.activities && card.activities.length > 0
+            ? [data.data, ...card.activities]
+            : [data.data];
+
+        const updatedWorks =
+          card.works && card.works.length > 0
+            ? [...card.works, { card_id: card.id, title: title }]
+            : [{ card_id: card.id, title: title }];
+
+        const cardUpdate = {
+          ...card,
+          works: updatedWorks,
+          activities: activities,
+        };
         dispatch(updateCard(cardUpdate));
       } else {
         const error = data.error;

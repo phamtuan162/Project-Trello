@@ -25,9 +25,14 @@ module.exports = (sequelize, DataTypes) => {
         as: "cards",
       });
 
-      User.hasOne(models.Mission, {
+      User.hasMany(models.Mission, {
         foreignKey: "user_id",
         as: "missions",
+      });
+
+      User.hasMany(models.Activity, {
+        foreignKey: "user_id",
+        as: "activities",
       });
     }
   }

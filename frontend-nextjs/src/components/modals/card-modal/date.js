@@ -5,10 +5,11 @@ import { format } from "date-fns";
 import FormDate from "@/components/Form/FormDate";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
+
 const { updateCard } = cardSlice.actions;
 const DateCard = ({ checkRole }) => {
   const dispatch = useDispatch();
@@ -23,7 +24,11 @@ const DateCard = ({ checkRole }) => {
     const statusCard = selected ? "success" : card.status;
     updateCardApi(card.id, { status: statusCard }).then((data) => {
       if (data.status === 200) {
-        const cardUpdate = { ...card, status: statusCard };
+        const cardUpdate = {
+          ...card,
+          status: statusCard,
+          activities: data.data.activities,
+        };
         dispatch(updateCard(cardUpdate));
       } else {
         const error = data.error;

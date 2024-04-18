@@ -76,7 +76,7 @@ export default function FormCreateWorkspace({ children }) {
   };
   const { name, desc, color } = form;
   return (
-    <div className="w-full">
+    <div className="">
       <div onClick={onOpen}>{children}</div>
 
       <Modal

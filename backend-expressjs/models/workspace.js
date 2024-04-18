@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         through: "users_workspaces_roles",
         as: "users",
       });
+      Workspace.hasMany(models.Activity, {
+        foreignKey: "workspace_id",
+        as: "activities",
+      });
     }
   }
   Workspace.init(

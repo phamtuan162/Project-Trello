@@ -41,7 +41,7 @@ const TitleModal = () => {
   };
   return (
     <div className="flex items-start gap-x-3  w-full flex mt-2">
-      <Layout className=" mt-2.5 text-neutral-700" size={20} />
+      <Layout className=" mt-2.5 text-neutral-700" size={24} />
       <div className="w-full flex flex-col items-start gap-1">
         {isEditing ? (
           <input

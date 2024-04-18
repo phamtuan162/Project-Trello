@@ -55,7 +55,7 @@ const DescCardModal = () => {
   };
   return (
     <div className="flex items-start gap-x-4 w-full">
-      <AlignLeft size={20} />
+      <AlignLeft size={24} />
       <div className="w-full">
         <p className="font-semibold  mb-2 text-sm">Mô tả</p>
         {isEditing ? (

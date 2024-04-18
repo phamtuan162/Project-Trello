@@ -11,6 +11,7 @@ class CardTransformer extends Transformer {
         ? instance.users.map((user) => new UserTransformer(user.dataValues))
         : [],
       works: instance.works || [],
+      activities: instance.activities || [],
       column: instance.column || [],
       desc: instance.desc,
       status: instance.status,

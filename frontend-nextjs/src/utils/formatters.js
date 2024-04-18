@@ -12,3 +12,21 @@ export const generatePlaceholderCard = (column) => {
     }
   );
 };
+
+export const generateActivityMessage = (activity, from) => {
+  const { action, title, desc } = activity;
+  switch (action) {
+    case "create":
+      return `đã thêm thẻ này ${desc}`;
+    case "assign_user":
+      return `${desc} thẻ này`;
+    case "un_assign_user":
+      return `${desc} thẻ này`;
+    case "date_card":
+      return `${desc}`;
+    case "status_card":
+      return `${desc}`;
+    default:
+      return `${desc}`;
+  }
+};

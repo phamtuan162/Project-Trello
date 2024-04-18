@@ -71,7 +71,13 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       assignUserApi(cardUpdate.id, { user_id: userAssign.id }).then((data) => {
         if (data.status === 200) {
           const cardUpdate = data.card;
-          dispatch(updateCard({ ...card, users: cardUpdate.users }));
+          dispatch(
+            updateCard({
+              ...card,
+              activities: cardUpdate.activities,
+              users: cardUpdate.users,
+            })
+          );
         } else {
           const error = data.error;
           toast.error(error);
@@ -87,7 +93,13 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       unAssignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
         if (data.status === 200) {
           const cardUpdate = data.card;
-          dispatch(updateCard({ ...card, users: cardUpdate.users }));
+          dispatch(
+            updateCard({
+              ...card,
+              users: cardUpdate.users,
+              activities: cardUpdate.activities,
+            })
+          );
         } else {
           const error = data.error;
           toast.error(error);

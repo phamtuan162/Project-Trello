@@ -4,13 +4,10 @@ import BreadcrumbWorkspace from "./_components/BreadcrumbWorkspace";
 import { CalendarIcon } from "@/components/Icon/CalenderIcon";
 import { MissionIcon } from "@/components/Icon/MissionIcon";
 import { RecentlyIcon } from "@/components/Icon/RecentlyIcon";
-import { StarIcon } from "@/components/Icon/StarIcon";
 import { HomeIcon } from "@/components/Icon/HomeIcon";
-import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { UserIcon } from "@/components/Icon/UserIcon";
-import { UpgradeIcon } from "@/components/Icon/UpgradeIcon";
 export const metadata = {
   title: "Không gian làm việc ",
   description: "Chi tiết Không gian làm việc",
@@ -39,22 +36,7 @@ export default function WorkspaceLayout({ children }) {
       label: "Lịch",
       icon: <CalendarIcon />,
     },
-    {
-      href: "/star",
-      label: "Gắn dấu sao",
-      icon: <StarIcon />,
-    },
 
-    {
-      href: "/more",
-      label: "Khác",
-      icon: <MoreIcon />,
-    },
-    {
-      href: "/boards",
-      label: "Tất cả các bảng",
-      icon: <BoardIcon />,
-    },
     {
       href: "/settings",
       label: "Cài đặt",
@@ -63,7 +45,7 @@ export default function WorkspaceLayout({ children }) {
 
     {
       href: "/users",
-      label: "Quản lý Người dùng",
+      label: "Thành viên",
       icon: <UserIcon />,
     },
   ];

@@ -24,8 +24,16 @@ const DeleteWork = ({ work }) => {
     setIsLoading(true);
     deleteWorkApi(work.id).then((data) => {
       if (data.status === 200) {
+        const activities =
+          card.activities && card.activities.length > 0
+            ? [data.data, ...card.activities]
+            : [data.data];
         const worksUpdate = card.works.filter((item) => +item.id !== +work.id);
-        const cardUpdate = { ...card, works: worksUpdate };
+        const cardUpdate = {
+          ...card,
+          works: worksUpdate,
+          activities: activities,
+        };
         dispatch(updateCard(cardUpdate));
       } else {
         const error = data.error;
@@ -34,7 +42,10 @@ const DeleteWork = ({ work }) => {
       setIsLoading(false);
     });
   };
-  if (user.role.toLowerCase() !== "admin") {
+  if (
+    user?.role?.toLowerCase() !== "admin" &&
+    user?.role?.toLowerCase() !== "owner"
+  ) {
     return;
   }
 
@@ -82,11 +93,7 @@ const DeleteWork = ({ work }) => {
               type="button"
               className="w-full h-[40px] mt-2"
               color="danger"
-              isDisabled={
-                (user?.role?.toLowerCase() !== "admin" &&
-                  user?.role?.toLowerCase() !== "owner") ||
-                isLoading
-              }
+              isDisabled={isLoading}
               onClick={() => HandleDeleteWork()}
             >
               {isLoading ? <CircularProgress /> : "Xóa danh sách công việc"}

@@ -24,29 +24,34 @@ import Loading from "@/components/Loading/Loading";
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
-
   const { id: boardId } = useParams();
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
-        const data = await getBoardDetail(boardId);
-        if (data.status === 200) {
-          let boardData = data.data;
-          boardData.columns = mapOrder(
-            boardData.columns,
-            boardData.columnOrderIds,
-            "id"
-          );
+        if (!board.id) {
+          const data = await getBoardDetail(boardId);
+          if (data.status === 200) {
+            let boardData = data.data;
+            boardData.columns = mapOrder(
+              boardData.columns,
+              boardData.columnOrderIds,
+              "id"
+            );
 
-          boardData.columns.forEach((column) => {
-            if (isEmpty(column.cards)) {
-              column.cards = [generatePlaceholderCard(column)];
-              column.cardOrderIds = [generatePlaceholderCard(column).id];
-            } else {
-              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-            }
-          });
-          dispatch(boardSlice.actions.updateBoard(boardData));
+            boardData.columns.forEach((column) => {
+              if (isEmpty(column.cards)) {
+                column.cards = [generatePlaceholderCard(column)];
+                column.cardOrderIds = [generatePlaceholderCard(column).id];
+              } else {
+                column.cards = mapOrder(
+                  column.cards,
+                  column.cardOrderIds,
+                  "id"
+                );
+              }
+            });
+            dispatch(boardSlice.actions.updateBoard(boardData));
+          }
         }
       } catch (error) {
         console.error("Error fetching board detail:", error);

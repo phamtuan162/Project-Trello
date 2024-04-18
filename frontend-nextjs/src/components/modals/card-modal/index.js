@@ -55,7 +55,13 @@ export const CardModal = () => {
     }
   }, [id]);
   return (
-    <Modal isOpen={isOpen} onOpenChange={onClose}>
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onClose}
+      classNames={{
+        closeButton: ["z-50"],
+      }}
+    >
       {isLoading ? (
         <ModalContent className="p-3 px-4 max-w-2xl ">
           <CircularProgress />

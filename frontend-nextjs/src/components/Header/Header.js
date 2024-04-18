@@ -38,7 +38,7 @@ const Header = () => {
       title: "",
       component: (
         <FormCreateWorkspace>
-          <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center ml-auto">
+          <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center ">
             <AddIcon />
           </button>
         </FormCreateWorkspace>
@@ -147,7 +147,7 @@ const Header = () => {
       <NavbarContent as="div" className="items-center gap-2" justify="end">
         <Input
           classNames={{
-            base: "max-w-full sm:max-w-[16rem] ",
+            base: "max-w-full sm:max-w-[16rem] ml-auto",
             mainWrapper: "h-full",
             input: "text-small ",
             inputWrapper:

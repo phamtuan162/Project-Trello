@@ -30,9 +30,6 @@ const AddMission = ({ work }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-    if (e.key === "Enter") {
-      formRef.current.action();
-    }
   };
 
   useEventListener("keydown", onKeyDown);
