@@ -57,10 +57,18 @@ export default function FormPopoverBoard({
           updatedBoards = [board];
         }
 
-        const updatedWorkspace = { ...workspace, boards: updatedBoards };
+        const updatedWorkspace = {
+          ...workspace,
+          boards: updatedBoards,
+          activities:
+            workspace.activities.length > 0
+              ? [...workspace.activities, board.activities]
+              : [board.activities],
+        };
+        console.log(updateWorkspace.activities);
         dispatch(updateWorkspace(updatedWorkspace));
         toast.success("Thêm bảng thành công");
-        router.push(`/b/${board.id}`);
+        // router.push(`/b/${board.id}`);
       } else {
         const error = data.error;
         toast.error(error);

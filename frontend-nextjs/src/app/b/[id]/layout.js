@@ -3,5 +3,5 @@ export const metadata = {
   description: "Chi tiết Bảng",
 };
 export default function BoardLayout({ children }) {
-  return <div className="relative h-full">{children};</div>;
+  return <div className="relative h-full flex">{children}</div>;
 }

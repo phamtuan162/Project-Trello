@@ -6,6 +6,7 @@ class BoardTransformer extends Transformer {
       id: instance.id,
       workspace_id: instance.workspace_id,
       columnOrderIds: instance.columnOrderIds,
+      activities: instance.activities || [],
       columns: instance.columns
         ? instance.columns.map((column) => new ColumnTransformer(column))
         : [],

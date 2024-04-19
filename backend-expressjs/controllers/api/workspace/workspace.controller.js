@@ -6,6 +6,7 @@ const {
   User,
   Role,
   UserWorkspaceRole,
+  Activity,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -73,6 +74,10 @@ module.exports = {
           {
             model: User,
             as: "users",
+          },
+          {
+            model: Activity,
+            as: "activities",
           },
         ],
       });
@@ -283,6 +288,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   inviteUser: async (req, res) => {
+    const userMain = req.user.dataValues;
     const { user_id, workspace_id, role } = req.body;
     const response = {};
 
@@ -315,11 +321,20 @@ module.exports = {
         role_id: roleInstance.id,
       });
       await workspace.update({ total_user: workspace.total_user + 1 });
-      user.dataValues.role = roleInstance.name;
+
+      const activity = await Activity.create({
+        user_id: userMain.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        title: workspace.name,
+        action: "invite_user",
+        workspace_id: workspace_id,
+        desc: `đã thêm ${user.name} vào Không gian làm việc này`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new UserTransformer(user.dataValues),
+        data: activity,
       });
     } catch (error) {
       Object.assign(response, {
@@ -360,9 +375,20 @@ module.exports = {
       if (user.workspaces.length > 0) {
         user.update({ workspace_id_active: user.workspaces[0].id });
       }
+
+      const activity = await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        title: workspace.name,
+        action: "leave_user",
+        workspace_id: workspace_id,
+        desc: `đã rời khỏi Không gian làm việc này`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: activity,
       });
     } catch (error) {
       Object.assign(response, {
@@ -374,6 +400,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   cancelUser: async (req, res) => {
+    const userMain = req.user.dataValues;
     const { user_id, workspace_id } = req.body;
     const response = {};
     try {
@@ -407,9 +434,20 @@ module.exports = {
       if (user.workspaces.length > 0) {
         user.update({ workspace_id_active: user.workspaces[0].id });
       }
+
+      const activity = await Activity.create({
+        user_id: userMain.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        title: workspace.name,
+        action: "cancel_user",
+        workspace_id: workspace_id,
+        desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: activity,
       });
     } catch (error) {
       Object.assign(response, {
@@ -460,6 +498,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   decentRoleUser: async (req, res) => {
+    const userMain = req.user.dataValues;
     const { id } = req.params;
     const { user_id, role } = req.body;
     const response = {};
@@ -490,12 +529,20 @@ module.exports = {
     }
 
     user_workspace_role.update({ role_id: roleInstance.id });
-    user.dataValues.role = roleInstance.name;
+
+    const activity = await Activity.create({
+      user_id: userMain.id,
+      userName: userMain.name,
+      userAvatar: userMain.avatar,
+      action: "decent_role",
+      workspace_id: id,
+      desc: `đã chuyển chức vụ ${user.name} thành ${roleInstance.name} trong Không gian làm việc này`,
+    });
 
     Object.assign(response, {
       status: 200,
       message: "Success",
-      data: new UserTransformer(user.dataValues),
+      data: activity,
     });
     res.status(response.status).json(response);
   },

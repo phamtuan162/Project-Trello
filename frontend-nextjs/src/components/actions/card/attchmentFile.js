@@ -9,15 +9,25 @@ import {
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
+import { attachmentFileApi } from "@/services/workspaceApi";
+import { cardSlice } from "@/stores/slices/cardSlice";
+const { updateCard } = cardSlice.actions;
 const AttachmentFile = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
-  const board = useSelector((state) => state.board.board);
-  const [selectedFile, setSelectedFile] = useState(null);
-  console.log(selectedFile);
+
+  const HandleUploadFile = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    attachmentFileApi(card.id, formData).then((data) => {
+      if (data.status === 200) {
+        setIsOpen(false);
+      }
+    });
+  };
   return (
     <Popover
       placement="right"
@@ -54,7 +64,7 @@ const AttachmentFile = ({ children }) => {
               Đính kèm tệp từ máy tính của bạn
             </p>
             <input
-              onChange={(e) => setSelectedFile(e.target.files[0])}
+              onChange={(e) => HandleUploadFile(e)}
               type="file"
               accept="*/*"
               hidden
@@ -64,7 +74,7 @@ const AttachmentFile = ({ children }) => {
             />
             <label
               htmlFor="upl_file"
-              className="bg-default-200  rounded-lg text-sm font-medium  mt-4   flex items-center justify-center py-2 px-6 relative z-50 data-[hover=true]:opacity-100"
+              className="bg-default-100 hover:bg-default-200 cursor-pointer  rounded-lg text-sm font-medium  mt-4   flex items-center justify-center py-2 px-6 relative z-50 data-[hover=true]:opacity-100"
             >
               Chọn tệp
             </label>

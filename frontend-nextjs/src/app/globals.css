@@ -123,3 +123,17 @@ header {
   height: 16px;
   margin-left: 4px;
 }
+
+.board-menu {
+  background-color: #fff;
+
+  transition-duration: 0.1s;
+  transition-property: width;
+  transition-timing-function: ease-in;
+  width: 0;
+  padding: 0;
+}
+.board-menu-event {
+  width: 300px;
+  padding: 12px;
+}

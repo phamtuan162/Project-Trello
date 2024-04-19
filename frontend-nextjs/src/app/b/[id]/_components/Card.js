@@ -17,7 +17,6 @@ export function Card({ card }) {
   const cardUpdate = useMemo(() => {
     return +card.id === +cardData.id ? cardData : card;
   }, [cardData]);
-
   const missions = useMemo(() => {
     const extractMissions = (works) => {
       let allMissions = [];
@@ -51,8 +50,8 @@ export function Card({ card }) {
     transition,
     isDragging,
   } = useSortable({
-    id: cardUpdate?.id,
-    data: { ...cardUpdate },
+    id: card.id,
+    data: { ...card },
   });
   const user = useSelector((state) => state.user.user);
   const cardModal = useCardModal();
@@ -103,7 +102,7 @@ export function Card({ card }) {
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
-      key={cardUpdate.id}
+      key={card.id}
       onClick={() => {
         if (!isAssign && !isDragging) {
           cardModal.onOpen(cardUpdate.id);
@@ -137,7 +136,7 @@ export function Card({ card }) {
             cardUpdate={cardUpdate}
           />
         </div>
-        <div className=" flex flex-wrap gap-2 w-full">
+        <div className=" mt-1 flex flex-wrap gap-2 w-full">
           <div
             className={`${
               cardUpdate.startDateTime || cardUpdate.endDateTime ? "" : "hidden"

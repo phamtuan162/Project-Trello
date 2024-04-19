@@ -12,6 +12,7 @@ class CardTransformer extends Transformer {
         : [],
       works: instance.works || [],
       activities: instance.activities || [],
+      attachments: instance.attachments || [],
       column: instance.column || [],
       desc: instance.desc,
       status: instance.status,

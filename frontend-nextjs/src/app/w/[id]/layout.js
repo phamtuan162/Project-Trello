@@ -1,6 +1,6 @@
 import SidebarWorkspace from "./_components/SidebarWorkspace";
 import BreadcrumbWorkspace from "./_components/BreadcrumbWorkspace";
-
+import { ActivityIcon } from "lucide-react";
 import { CalendarIcon } from "@/components/Icon/CalenderIcon";
 import { MissionIcon } from "@/components/Icon/MissionIcon";
 import { RecentlyIcon } from "@/components/Icon/RecentlyIcon";
@@ -20,9 +20,9 @@ export default function WorkspaceLayout({ children }) {
       icon: <HomeIcon />,
     },
     {
-      href: "/recent",
-      label: "Gần đây",
-      icon: <RecentlyIcon />,
+      href: "/activity",
+      label: "Hoạt động",
+      icon: <ActivityIcon size={16} />,
     },
 
     {

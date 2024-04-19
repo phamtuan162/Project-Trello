@@ -9,9 +9,8 @@ import {
   CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "../Icon/CloseIcon";
-const FormBackground = ({ children, HandleBackground }) => {
+const FormBackground = ({ children, HandleBackground, isLoading }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isUpdate, setIsUpdate] = useState(false);
 
   return (
     <Popover
@@ -44,9 +43,9 @@ const FormBackground = ({ children, HandleBackground }) => {
             type="submit"
             color="primary"
             className="w-full"
-            isDisabled={!isUpdate ? false : true}
+            isDisabled={isLoading}
           >
-            {isUpdate ? (
+            {isLoading ? (
               <CircularProgress aria-label="Loading..." size={22} />
             ) : (
               "Thay đổi"

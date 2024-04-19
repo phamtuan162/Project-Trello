@@ -151,7 +151,6 @@ export function ListContainer({
           (card) => card.id
         );
       }
-
       if (triggerFrom === "handleDragEnd") {
         moveCardToDifferentColumn(
           activeDraggingCardId,
@@ -331,6 +330,7 @@ export function ListContainer({
 
   return (
     <DndContext
+      sensors={sensors}
       onDragStart={HandleDragStart}
       onDragOver={HandleDragOver}
       onDragEnd={HandleDragEnd}

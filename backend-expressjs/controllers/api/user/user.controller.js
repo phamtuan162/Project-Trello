@@ -196,17 +196,15 @@ module.exports = {
   updateAvatar: async (req, res) => {
     const { id } = req.params;
     const file = req.file;
-    const path = `http://localhost:3001/images/avatars/uploads/${file.filename}`;
+    const path = `http://localhost:3001/uploads/${file.filename}`;
     const response = {};
 
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({ status: 404, message: "Not found" });
     }
-    const filePathOld = user.avatar.includes("/images")
-      ? "public" + user.avatar.slice(user.avatar.indexOf("/images"))
-      : "";
-
+    const filePathOld =
+      "public" + user.avatar.slice(user.avatar.indexOf("/uploads"));
     if (fs.existsSync(filePathOld)) {
       fs.unlinkSync(filePathOld);
     }
@@ -223,7 +221,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Server error",
-        error: error.message,
       });
     }
 

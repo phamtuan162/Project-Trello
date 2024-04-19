@@ -16,7 +16,7 @@ import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
-const { inviteUser } = workspaceSlice.actions;
+const { inviteUser, updateWorkspace } = workspaceSlice.actions;
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
@@ -76,8 +76,15 @@ const FormInviteUser = ({ rolesUser }) => {
         workspace_id: workspace.id,
       }).then((data) => {
         if (data.status === 200) {
-          const user = data.data;
-          dispatch(inviteUser(user));
+          const workspaceUpdate = {
+            ...workspace,
+            users: [...workspace.users, { ...userInvite, role: [...role][0] }],
+            activities:
+              workspace.activities.length > 0
+                ? [...workspace.activities, data.data]
+                : [data.data],
+          };
+          dispatch(updateWorkspace(workspaceUpdate));
           toast.success("Mời người dùng vào Không gian làm việc thành công");
           setIsInvite(false);
           setUserInvite(null);

@@ -18,6 +18,7 @@ import UserCard from "./users";
 import BackgroundCard from "./background";
 import DateCard from "./date";
 import WorksCard from "./works";
+import AttachmentList from "./attachments";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
 const { updateCard } = cardSlice.actions;
@@ -74,8 +75,8 @@ export const CardModal = () => {
 
               <ModalBody className="p-3 px-4">
                 <TitleModal />
-                <div className="grid grid-cols-1 md:grid-cols-5 md:gap-4">
-                  <div className="col-span-4">
+                <div className="grid grid-cols-1 md:grid-cols-8 md:gap-4">
+                  <div className="col-span-6">
                     <div className="w-full space-y-6">
                       <div className="ml-9 mt-2 flex gap-4 flex-wrap">
                         <UserCard />
@@ -84,13 +85,13 @@ export const CardModal = () => {
                         )}
                       </div>
                       <DescCardModal />
-
+                      {card?.attachments?.length > 0 && <AttachmentList />}
                       {card?.works?.length > 0 && <WorksCard />}
 
                       <ActivityCard />
                     </div>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <AddToCard />
                     <ActionsCard />
                   </div>

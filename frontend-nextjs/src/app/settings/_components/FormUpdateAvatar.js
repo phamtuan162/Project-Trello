@@ -41,7 +41,7 @@ const FormUpdateAvatar = ({ user }) => {
     const blob = await fetch(dataUrl).then((res) => res.blob());
     const file = new File([blob], selectedFile.name, { type: "image/jpeg" });
     const formData = new FormData();
-    formData.append("avatar", file);
+    formData.append("file", file);
 
     updateAvatar(user.id, formData).then((data) => {
       if (data.status === 200) {

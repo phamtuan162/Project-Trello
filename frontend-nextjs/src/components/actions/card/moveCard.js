@@ -168,13 +168,22 @@ const MoveCard = ({ children }) => {
     });
 
     const updatedBoard = { ...newBoard, columns: updatedColumns };
-    moveCardToDifferentColumnAPI(newBoard.id, updatedBoard).then((data) => {
+    moveCardToDifferentColumnAPI({
+      updateBoard: updatedBoard,
+      card_id: card.id,
+      prevColumnId: nextActiveColumn.id,
+      nextColumnId: nextOverColumn.id,
+    }).then((data) => {
       if (data.status === 200) {
         dispatch(
           updateCard({
             ...card,
             column_id: nextOverColumn.id,
             column: { ...nextOverColumn },
+            activities:
+              card.activities.length > 0
+                ? [data.data, ...card.activities]
+                : [data.data],
           })
         );
         dispatch(updateColumn(updatedColumns));
@@ -353,7 +362,7 @@ const MoveCard = ({ children }) => {
                 setValueBoard([...newValue][0] || valueBoard);
               }}
             >
-              {workspaces.map((workspace) => (
+              {workspaces?.map((workspace) => (
                 <SelectSection key={workspace.id} title={workspace.name}>
                   {workspace.boards.map((board) => (
                     <SelectItem key={board.id} value={board.id}>

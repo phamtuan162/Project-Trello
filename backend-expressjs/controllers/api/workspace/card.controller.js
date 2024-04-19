@@ -1,10 +1,12 @@
 const {
+  Board,
   Card,
   Column,
   User,
   Work,
   Mission,
   Activity,
+  Attachment,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -40,6 +42,7 @@ module.exports = {
     try {
       const card = await Card.findByPk(id, {
         include: [
+          { model: Attachment, as: "attachments" },
           { model: Activity, as: "activities" },
           { model: User, as: "users" },
           { model: Column, as: "column" },
@@ -334,6 +337,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   copyCard: async (req, res) => {
+    const user = req.user.dataValues;
     const { keptItems, user_id, matchBoard, overColumn, card } = req.body;
     const response = {};
     try {
@@ -365,10 +369,27 @@ module.exports = {
                 const usersToAdd = matchBoard
                   ? card.users.map((user) => user.id)
                   : [user_id];
+                usersToAdd.sort((a, b) =>
+                  a === user_id ? -1 : b === user_id ? 1 : 0
+                );
+
                 await Promise.all(
                   usersToAdd.map(async (userId) => {
                     const userInstance = await User.findByPk(userId);
                     await cardNew.addUser(userInstance);
+                    await Activity.create({
+                      user_id: user.id,
+                      userName: user.name,
+                      userAvatar: user.avatar,
+                      card_id: cardNew.id,
+                      title: cardNew.title,
+                      action: "assign_user",
+                      workspace_id: user.workspace_id_active,
+                      desc:
+                        +userId === +user_id
+                          ? "đã tham gia thẻ này"
+                          : `đã thêm ${userInstance.name} vào thẻ này`,
+                    });
                     return userInstance;
                   })
                 );
@@ -408,7 +429,23 @@ module.exports = {
       }
 
       await column.update({ cardOrderIds: overColumn.cardOrderIds });
-
+      const oldColumn =
+        +card.column_id === +overColumn.id
+          ? overColumn
+          : await Column.findByPk(card.column_id);
+      const board = !matchBoard && (await Board.findByPk(overColumn.board_id));
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: cardNew.id,
+        title: cardNew.title,
+        action: "copy_card",
+        workspace_id: user.workspace_id_active,
+        desc: `đã sao chép thẻ này từ ${card.title} trong danh sách ${
+          oldColumn.title
+        } ${!matchBoard ? board.title : ""}`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
@@ -483,6 +520,34 @@ module.exports = {
       });
     }
 
+    res.status(response.status).json(response);
+  },
+
+  uploads: async (req, res) => {
+    const { id } = req.params;
+    const user = req.user.dataValues;
+    const file = req.file;
+    const path = `http://localhost:3001/uploads/${file.filename}`;
+    const response = {};
+    try {
+      const attachment = await Attachment.create({
+        user_id: user.id,
+        path: path,
+        card_id: id,
+        fileName: file.filename,
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: attachment,
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Server error",
+      });
+    }
     res.status(response.status).json(response);
   },
 };

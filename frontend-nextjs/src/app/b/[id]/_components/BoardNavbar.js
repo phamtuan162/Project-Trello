@@ -2,10 +2,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@nextui-org/button";
 import { Avatar, AvatarGroup, Input } from "@nextui-org/react";
-import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { BoardOptions } from "./BoardOptions";
-export default function BoardNavbar({ board, updateBoard }) {
+export default function BoardNavbar({ board, updateBoard, setIsActivity }) {
   const inputRef = useRef(null);
   const btnRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -33,7 +32,7 @@ export default function BoardNavbar({ board, updateBoard }) {
     }
   };
   return (
-    <div className="w-full h-10 z-[40] bg-black/50 fixed  flex items-center px-6 gap-x-4 ">
+    <div className="w-full h-10 z-[40] bg-black/50 absolute  flex items-center px-6 gap-x-4 ">
       <div className="h-[40px]">
         {isEditing ? (
           <Input
@@ -68,7 +67,7 @@ export default function BoardNavbar({ board, updateBoard }) {
             />
           ))}
         </AvatarGroup>
-        <BoardOptions board={board} />
+        <BoardOptions setIsActivity={setIsActivity} board={board} />
       </div>
     </div>
   );

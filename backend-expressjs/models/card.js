@@ -20,6 +20,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "card_id",
         as: "activities",
       });
+      Card.hasMany(models.Attachment, {
+        foreignKey: "card_id",
+        as: "attachments",
+      });
     }
   }
   Card.init(

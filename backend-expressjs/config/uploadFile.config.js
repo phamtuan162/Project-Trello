@@ -2,7 +2,7 @@
 var mime = require("mime-types");
 
 // Hàm tạo tên file duy nhất cho avatar
-const generateAvatarName = (mimetype) => {
+const generateUniqueFileName = (mimetype) => {
   // Tạo một phần tử đuôi file ngẫu nhiên để tránh trùng lặp
   const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
   // Sử dụng thư viện mime-types để lấy phần mở rộng của loại MIME
@@ -15,10 +15,30 @@ module.exports = {
     // Đường dẫn đích cho avatar tải lên
     destination: "public/images/avatars/uploads/",
     // Hàm tạo tên file cho avatar
-    name: generateAvatarName,
+    name: generateUniqueFileName,
     // Các loại tệp cho phép
     allowedTypes: ["image/jpeg", "image/png"],
     // Kích thước tệp tối đa (2MB)
     fileSize: 1024 * 1024 * 2,
+  },
+  uploadFile: {
+    // Đường dẫn đích cho tệp tải lên
+    destination: "public/uploads/",
+    // Hàm tạo tên file cho tệp
+    name: (mimetype, filename) => filename,
+    // Các loại tệp cho phép
+    allowedTypes: [
+      // Ảnh
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      // Tệp văn bản
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      // Thêm các loại MIME của các tệp khác bạn muốn chấp nhận ở đây
+    ],
+    // Kích thước tệp tối đa (5MB)
+    fileSize: 1024 * 1024 * 5,
   },
 };

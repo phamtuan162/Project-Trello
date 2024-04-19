@@ -9,7 +9,7 @@ import {
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
-const { cancelUser } = workspaceSlice.actions;
+const { cancelUser, updateWorkspace } = workspaceSlice.actions;
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -31,7 +31,15 @@ const LeaveWorkspace = ({ user }) => {
         workspace_id: workspace.id,
       }).then((data) => {
         if (data.status === 200) {
-          dispatch(cancelUser(user));
+          const workspaceUpdate = {
+            ...workspace,
+            users: workspace.users.filter((item) => +item.id !== +user.id),
+            activities:
+              workspace.activities.length > 0
+                ? [...workspace.activities, data.data]
+                : [data.data],
+          };
+          dispatch(updateWorkspace(workspaceUpdate));
 
           toast.success("Loại bỏ thành viên thành công");
         } else {

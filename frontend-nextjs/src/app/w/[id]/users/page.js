@@ -32,7 +32,7 @@ function capitalize(str) {
 }
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
-const { decentRoleUser } = workspaceSlice.actions;
+const { decentRoleUser, updateWorkspace } = workspaceSlice.actions;
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -51,7 +51,6 @@ export default function PageWorkspaceUsers() {
         })
       : [];
   }, [workspace]);
-
   const [filterValue, setFilterValue] = React.useState("");
   const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = React.useState(
@@ -126,7 +125,7 @@ export default function PageWorkspaceUsers() {
       Array.from(statusFilter).length !== statusOptions.length
     ) {
       filteredUsers = filteredUsers.filter((user) =>
-        Array.from(statusFilter).includes(user.status)
+        Array.from(statusFilter).includes(user.isOnline ? "online" : "offline")
       );
     }
 
@@ -157,8 +156,22 @@ export default function PageWorkspaceUsers() {
         role: roleNew,
       }).then((data) => {
         if (data.status === 200) {
-          const user = data.data;
-          dispatch(decentRoleUser(user));
+          const updatedUsers = workspace.users.map((item) => {
+            return +item.id === user.id ? { ...item, role: roleNew } : item;
+          });
+
+          const newActivities =
+            workspace.activities.length > 0
+              ? workspace.activities.concat(data.data)
+              : [data.data];
+
+          const workspaceUpdate = {
+            ...workspace,
+            users: updatedUsers,
+            activities: newActivities,
+          };
+
+          dispatch(updateWorkspace(workspaceUpdate));
         } else {
           const error = data.error;
           toast.error(error);
@@ -243,6 +256,7 @@ export default function PageWorkspaceUsers() {
       setPage(page - 1);
     }
   }, [page]);
+
   const onRowsPerPageChange = React.useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);

@@ -1,10 +1,12 @@
 const {
+  Workspace,
   Board,
   Column,
   Card,
   User,
   Work,
   Mission,
+  Activity,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -97,6 +99,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
+    const user = req.user.dataValues;
     const rules = {};
 
     if (req.body.title) {
@@ -115,11 +118,26 @@ module.exports = {
         abortEarly: false,
       });
       const board = await Board.create(body);
-
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        board_id: board.id,
+        title: board.title,
+        action: "add_board",
+        workspace_id: user.workspace_id_active,
+        desc: `đã thêm bảng ${board.title} vào Không gian làm việc này`,
+      });
+      const boardNew = await Board.findByPk(board.id, {
+        include: {
+          model: Activity,
+          as: "activities",
+        },
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new BoardTransformer(board),
+        data: new BoardTransformer(boardNew),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -191,44 +209,64 @@ module.exports = {
     res.status(response.status).json(response);
   },
   moveCard: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
-    const data = req.body;
+    const { updateBoard, card_id, prevColumnId, nextColumnId } = req.body;
     const response = {};
     try {
-      const columns = data.columns;
-      const board = await Board.findByPk(id);
-      if (!board) {
-        Object.assign(response, {
-          status: 404,
-          message: "Not Found",
-        });
+      const columns = updateBoard.columns;
+      if (!columns.length > 0 || !card_id || !prevColumnId || !nextColumnId) {
+        return res.status(400).json({ status: 400, message: "Bad request" });
       }
+      const cardCurrent = await Card.findByPk(card_id);
+      const nextColumn = await Column.findByPk(nextColumnId);
+      const prevColumn = await Column.findByPk(prevColumnId);
 
+      if (!cardCurrent || !nextColumn || !prevColumn) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+      if (nextColumn.cardOrderIds.find((item) => +item === +card_id)) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
       for (const column of columns) {
         const cards = column.cards;
-        await Column.update(
-          {
-            cardOrderIds: column.cardOrderIds,
-          },
-          { where: { id: column.id } }
-        );
-        for (const card of cards) {
-          await Card.update(
-            { column_id: card.column_id },
+        if (+column.id === prevColumnId || +column.id === +nextColumnId) {
+          await Column.update(
             {
-              where: {
-                id: card.id,
-              },
-            }
+              cardOrderIds: column.cardOrderIds,
+            },
+            { where: { id: column.id } }
           );
+        }
+
+        for (const card of cards) {
+          if (+card.id === card_id) {
+            await Card.update(
+              { column_id: card.column_id },
+              {
+                where: {
+                  id: card.id,
+                },
+              }
+            );
+          }
         }
       }
 
-      await board.update({ columnOrderIds: data.columnOrderIds });
-
+      const activity = await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: cardCurrent.id,
+        title: cardCurrent.title,
+        action: "move_card",
+        workspace_id: user.workspace_id_active,
+        desc: `đã di chuyển thẻ này từ danh sách ${prevColumn.title} tới danh sách ${nextColumn.title}`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: activity,
       });
     } catch (e) {
       Object.assign(response, {
@@ -240,9 +278,15 @@ module.exports = {
   },
 
   delete: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
     try {
+      const board = await Board.findByPk(id);
+      if (!board) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
       const columns = await Column.findAll({ where: { board_id: id } });
 
       for (const column of columns) {
@@ -250,7 +294,17 @@ module.exports = {
       }
       await Column.destroy({ where: { board_id: id } });
 
-      await Board.destroy({ where: { id }, force: true });
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        board_id: board.id,
+        title: board.title,
+        action: "add_board",
+        workspace_id: user.workspace_id_active,
+        desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
+      });
+      await board.destroy({ force: true });
 
       Object.assign(response, {
         status: 200,

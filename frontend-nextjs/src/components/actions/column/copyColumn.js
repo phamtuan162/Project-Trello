@@ -29,6 +29,7 @@ const CopyColumn = ({ children, column }) => {
     e.preventDefault();
     const columnCopy = columns.find((item) => +item.id === +column.id);
     if (columnCopy) {
+      setIsLoading(true);
       copyColumnApi({
         column: columnCopy,
         board_id: board.id,
@@ -42,11 +43,13 @@ const CopyColumn = ({ children, column }) => {
           };
           dispatch(updateBoard(newBoard));
           toast.success("Sao chép danh sách thành công");
-
+          setIsLoading(false);
+          setIsOpen(false);
           dispatch(updateColumn(newBoard.columns));
         } else {
           const error = data.error;
           toast.error(error);
+          setIsLoading(false);
         }
       });
     }

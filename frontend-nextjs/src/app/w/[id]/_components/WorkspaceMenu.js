@@ -117,7 +117,7 @@ export default function WorkspaceMenu({
     <Popover
       onClose={handleClose}
       placement={placement}
-      className="max-w-[300px] w-[250px]"
+      className="max-w-[300px] w-[270px]"
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       style={{ zIndex: "49" }}
@@ -204,7 +204,9 @@ export default function WorkspaceMenu({
               </div>
             ) : (
               <div className="flex items-center justify-between p-2 select-none">
-                <span className=" text-md font-medium">Chuyển đổi</span>
+                <span className=" text-md font-medium">
+                  Chuyển Không gian làm việc
+                </span>
                 <button
                   className="rounded-lg p-1.5 hover:bg-default-300"
                   onClick={() => setIsSearch(!isSearch)}

@@ -56,7 +56,7 @@ const MissionsWork = ({ missions }) => {
       (data) => {
         if (data.status === 200) {
           dispatch(
-            updateCard({ ...updateCard, activities: data.data.activities })
+            updateCard({ ...updatedCard, activities: data.data.activities })
           );
         } else {
           const error = data.error;

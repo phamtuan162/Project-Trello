@@ -20,10 +20,15 @@ import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
 import { isEmpty } from "lodash";
 import Loading from "@/components/Loading/Loading";
-
+import { cardSlice } from "@/stores/slices/cardSlice";
+import ActivityBoard from "./_components/ActivityBoard";
+const { updateCard } = cardSlice.actions;
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
+  const card = useSelector((state) => state.card.card);
+  const [isActivity, setIsActivity] = useState(false);
+
   const { id: boardId } = useParams();
   useEffect(() => {
     const fetchBoardDetail = async () => {
@@ -143,7 +148,23 @@ export default function BoardIdPage() {
       });
 
       const updatedBoard = { ...newBoard, columns: updatedColumns };
-      moveCardToDifferentColumnAPI(newBoard.id, updatedBoard);
+      const data = await moveCardToDifferentColumnAPI({
+        updateBoard: updatedBoard,
+        card_id: currentCardId,
+        prevColumnId: prevColumnId,
+        nextColumnId: nextColumnId,
+      });
+      if (data.status === 200) {
+        dispatch(
+          updateCard({
+            ...card,
+            activities:
+              card.activities.length > 0
+                ? [data.data, ...card.activities]
+                : [data.data],
+          })
+        );
+      }
     } catch (error) {
       console.error("Error move card to different column:", error);
     }
@@ -270,16 +291,20 @@ export default function BoardIdPage() {
     <>
       {board.id ? (
         <div
-          className="relative h-full bg-no-repeat bg-cover bg-center "
+          className="relative h-full bg-no-repeat bg-cover bg-center grow overflow-x-auto"
           style={{
             backgroundImage: board?.background
               ? `url(${board.background})`
               : "",
           }}
         >
-          <BoardNavbar board={board} updateBoard={updateBoard} />
-          <div className="relative pt-8 h-full">
-            <div className="p-4 h-full overflow-y-hidden overflow-x-auto">
+          <BoardNavbar
+            board={board}
+            updateBoard={updateBoard}
+            setIsActivity={setIsActivity}
+          />
+          <div className="relative pt-8 h-full ">
+            <div className="p-4 h-full overflow-y-hidden ">
               <ListContainer
                 board={board}
                 boardId={boardId}
@@ -298,6 +323,7 @@ export default function BoardIdPage() {
       ) : (
         <Loading />
       )}
+      <ActivityBoard isActivity={isActivity} setIsActivity={setIsActivity} />
     </>
   );
 }

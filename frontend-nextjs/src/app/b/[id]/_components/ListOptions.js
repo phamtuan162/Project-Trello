@@ -7,8 +7,6 @@ import {
   ListboxItem,
 } from "@nextui-org/react";
 import { useState, useRef } from "react";
-import { useParams } from "next/navigation";
-
 import { MoreHorizontal } from "lucide-react";
 import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";

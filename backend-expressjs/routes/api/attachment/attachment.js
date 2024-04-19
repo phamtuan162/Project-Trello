@@ -1,0 +1,18 @@
+var express = require("express");
+var router = express.Router();
+const attachmentController = require("../../../controllers/api/attachment/attachment.controller");
+const authMiddleware = require("../../../middlewares/api/auth.middleware");
+
+router.get("/", attachmentController.index);
+router.get("/download/:id", attachmentController.downloadFile);
+
+router.get("/:id", attachmentController.find);
+
+router.put(
+  "/:id",
+
+  attachmentController.update
+);
+router.patch("/:id", attachmentController.update);
+router.delete("/:id", attachmentController.delete);
+module.exports = router;

@@ -1,7 +1,27 @@
 const { Activity, User, Workspace } = require("../../../models/index");
 
 module.exports = {
-  index: async (req, res) => {},
+  index: async (req, res) => {
+    const { order = "desc", sort = "created_at" } = req.query;
+    const filters = {};
+
+    const options = {
+      order: [[sort, order]],
+      where: filters,
+    };
+    const response = {};
+    try {
+      const activities = await Activity.findAll(options);
+      response.status = 200;
+      response.message = "Success";
+      response.data = activities;
+    } catch (e) {
+      response.status = 500;
+      response.message = "Server error";
+    }
+
+    res.status(response.status).json(response);
+  },
   find: async (req, res) => {},
   store: async (req, res) => {
     const { user_id, action, workspace_id, board_id, column_id, card_id } =

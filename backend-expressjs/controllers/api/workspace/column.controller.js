@@ -5,6 +5,7 @@ const {
   Board,
   Work,
   Mission,
+  Activity,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
@@ -66,6 +67,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
+    const user = req.user.dataValues;
     const rules = {};
 
     if (req.body.title) {
@@ -104,7 +106,16 @@ module.exports = {
       await board.update({
         columnOrderIds: updatedColumnOrderIds,
       });
-
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        column_id: column.id,
+        title: column.title,
+        action: "add_column",
+        workspace_id: user.workspace_id_active,
+        desc: `đã thêm danh sách ${column.title} vào bảng ${board.title}`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",
@@ -174,6 +185,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   delete: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
     try {
@@ -202,7 +214,19 @@ module.exports = {
           }
           await cardDelete.destroy();
         }
+        const title = column.title;
         await Column.destroy({ where: { id } });
+        const board = await Board.findByPk(column.board_id);
+        await Activity.create({
+          user_id: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          column_id: column.id,
+          title: title,
+          action: "delete_column",
+          workspace_id: user.workspace_id_active,
+          desc: `đã xóa danh sách ${column.title} ra khỏi bảng ${board.title}`,
+        });
         Object.assign(response, {
           status: 200,
           message: "Success",
@@ -349,6 +373,7 @@ module.exports = {
   },
 
   copyColumn: async (req, res) => {
+    const user = req.user.dataValues;
     const { column, board_id, title } = req.body;
     const response = {};
     let transaction;
@@ -367,7 +392,16 @@ module.exports = {
         title: title,
         board_id: board_id,
       });
-      console.log(2);
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        column_id: columnNew.id,
+        title: title,
+        action: "add_column",
+        workspace_id: user.workspace_id_active,
+        desc: `đã thêm danh sách ${title} vào bảng ${BoardActive.title}`,
+      });
       if (column.cards.length > 0) {
         let cardOrderIdsNew = [];
 
@@ -381,12 +415,38 @@ module.exports = {
             endDateTime: card.endDateTime,
             status: card.status,
           });
+          await Activity.create({
+            user_id: user.id,
+            userName: user.name,
+            userAvatar: user.avatar,
+            card_id: cardNew.id,
+            title: cardNew.title,
+            action: "copy_card",
+            workspace_id: user.workspace_id_active,
+            desc: `đã sao chép thẻ này từ ${card.title} trong danh sách ${column.title}`,
+          });
           cardOrderIdsNew.push(cardNew.id);
           if (card.users.length > 0) {
-            for (const user of card.users) {
-              const userInstance = await User.findByPk(user.id);
+            card.users.sort((a, b) =>
+              a === user.id ? -1 : b === user.id ? 1 : 0
+            );
+            for (const userCopy of card.users) {
+              const userInstance = await User.findByPk(userCopy.id);
               if (userInstance) {
                 await cardNew.addUser(userInstance);
+                await Activity.create({
+                  user_id: user.id,
+                  userName: user.name,
+                  userAvatar: user.avatar,
+                  card_id: cardNew.id,
+                  title: cardNew.title,
+                  action: "assign_user",
+                  workspace_id: user.workspace_id_active,
+                  desc:
+                    +userInstance.id === +user.id
+                      ? ` đã tham gia thẻ này`
+                      : ` đã thêm ${userInstance.name} vào thẻ này`,
+                });
               }
             }
           }
@@ -420,6 +480,7 @@ module.exports = {
       await BoardActive.update({
         columnOrderIds: newColumnOrderIds,
       });
+
       const columnUpdate = await Column.findByPk(columnNew.id, {
         include: {
           model: Card,

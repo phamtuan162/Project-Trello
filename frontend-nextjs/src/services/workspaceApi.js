@@ -4,7 +4,7 @@ import { client } from "@/services/clientUtils";
 import { getAccessToken } from "./authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
-
+import axios from "axios";
 /** Workspace */
 export const getWorkspace = async (query = {}) => {
   const queryString = new URLSearchParams(query).toString();
@@ -268,14 +268,24 @@ export const deleteBoard = async (boardId) => {
   return null;
 };
 
-export const moveCardToDifferentColumnAPI = async (boardId, updateData) => {
+export const moveCardToDifferentColumnAPI = async (body) => {
+  const access_token = Cookies.get("access_token");
+
   const { response, data } = await client.put(
-    `/board/move-card/${boardId}`,
-    updateData
+    `/board/move-card`,
+    body,
+    access_token
   );
-  if (response.ok) {
+  if (response.ok || data.error) {
     return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await moveCardToDifferentColumnAPI(body);
+    }
+  }
+  return null;
 };
 
 export const moveCardToDifferentBoardAPI = async (body) => {
@@ -353,10 +363,23 @@ export const moveColumnToDifferentBoardAPI = async (columnId, body) => {
 };
 
 export const copyColumnApi = async (body) => {
-  const { response, data } = await client.post(`/column/copy-column`, body);
-  if (response.ok) {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(
+    `/column/copy-column`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
     return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await copyColumnApi(body);
+    }
+  }
+  return null;
 };
 
 /** Card */
@@ -460,10 +483,23 @@ export const unAssignUserApi = async (cardId, body) => {
 };
 
 export const copyCardWithBoardApi = async (body) => {
-  const { response, data } = await client.post(`/card/copy-card`, body);
-  if (response.ok) {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.post(
+    `/card/copy-card`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
     return data;
   }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await copyCardWithBoardApi(body);
+    }
+  }
+  return null;
 };
 
 export const deleteCardApi = async (cardId) => {
@@ -614,4 +650,50 @@ export const transferCardApi = async (missionId, body) => {
     }
   }
   return null;
+};
+/** Attachment */
+
+export const attachmentFileApi = async (cardId, formData) => {
+  const access_token = Cookies.get("access_token");
+
+  const result = await fetch(
+    `http://localhost:3001/api/v1/card/uploads-file/${cardId}`,
+    {
+      method: "POST",
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    }
+  );
+
+  const data = await result.json(); // Lấy dữ liệu từ kết quả fetch
+
+  if (result.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await attachmentFileApi(cardId, formData);
+    }
+  }
+  return null;
+};
+export const downloadFileApi = async (attachmentId) => {
+  try {
+    const res = await axios.get(
+      `http://localhost:3001/api/v1/attachment/download/${attachmentId}`,
+      { responseType: "blob" }
+    );
+    const blob = new Blob([res.data], { type: res.data.type });
+    console.log(blob);
+    // const link = document.createElement("a");
+    // link.href = window.URL.createObjectURL(blob);
+    // link.download = `${blob.fileName}`;
+    // link.download = res.headers["content-disposition"].split("filename=")[1];
+    // link.click();
+  } catch (error) {
+    console.log(error);
+  }
 };

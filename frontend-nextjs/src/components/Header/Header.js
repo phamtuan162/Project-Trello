@@ -137,9 +137,9 @@ const Header = () => {
         />
         <NavbarBrand>
           <Link
-            onClick={() => router.push(`/w/${user.workspace_id_active}/home`)}
+            onClick={() => router.push(`/w/${user.workspace_id_active}/boards`)}
           >
-            <p className="font-bold text-inherit">ProManage </p>
+            <p className="font-bold text-inherit cursor-pointer">ProManage</p>
           </Link>
         </NavbarBrand>
       </NavbarContent>
