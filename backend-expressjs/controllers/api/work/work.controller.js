@@ -83,11 +83,17 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã thêm danh sách công việc ${work.title} vào thẻ này`,
       });
+      const cardUpdate = await Card.findByPk(card.id, {
+        include: [
+          { model: Activity, as: "activities" },
+          { model: Work, as: "works" },
+        ],
+      });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        data: cardUpdate,
       });
     } catch (e) {
       const errors = Object.fromEntries(

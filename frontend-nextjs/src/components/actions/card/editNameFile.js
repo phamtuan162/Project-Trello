@@ -13,26 +13,34 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createWorkApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { updateFileApi } from "@/services/workspaceApi";
 const { updateCard } = cardSlice.actions;
-const AddWork = ({ children }) => {
+const EditNameFile = ({ children, attachment }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState(attachment.fileName);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   const HandleChange = (e) => {
-    setTitle(e.target.value);
+    setName(e.target.value);
   };
   const HandleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    createWorkApi({ card_id: card.id, title: title }).then((data) => {
+
+    updateFileApi(attachment.id, { fileName: name }).then((data) => {
       if (data.status === 200) {
+        const attachmentUpdates = card.attachments.map((attachment) => {
+          if (+attachment.id === +data.data.id) {
+            return data.data;
+          }
+          return attachment;
+        });
+
         const cardUpdate = {
           ...card,
-          works: data.data.works,
-          activities: data.data.activities,
+          attachments: attachmentUpdates,
         };
         dispatch(updateCard(cardUpdate));
         setIsLoading(false);
@@ -42,7 +50,6 @@ const AddWork = ({ children }) => {
         toast.error(error);
         setIsLoading(false);
       }
-      setTitle("");
     });
   };
   return (
@@ -57,7 +64,7 @@ const AddWork = ({ children }) => {
       <PopoverContent className="w-[300px] p-2 px-3">
         <form className="w-full" onSubmit={(e) => HandleSubmit(e)}>
           <div className="flex justify-between items-center relative">
-            <h1 className="grow text-center ">Thêm danh sách công việc</h1>
+            <h1 className="grow text-center ">Sửa Tệp đính kèm</h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
               onClick={() => setIsOpen(false)}
@@ -67,13 +74,13 @@ const AddWork = ({ children }) => {
             </Button>
           </div>
           <div className="mb-2 pt-2">
-            <p className="text-xs font-medium">Tiêu đề</p>
+            <p className="text-xs font-medium">Liên kết tên</p>
             <div className="mt-1 flex flex-col gap-2 w-full">
               <Input
                 onChange={HandleChange}
-                value={title}
-                name="title"
-                id="title"
+                value={name}
+                name="name"
+                id="name"
                 size="xs"
                 variant="bordered"
                 aria-label="input-label"
@@ -92,11 +99,11 @@ const AddWork = ({ children }) => {
               isLoading
             }
           >
-            {isLoading ? <CircularProgress /> : "Thêm"}
+            {isLoading ? <CircularProgress /> : "Cập nhật"}
           </Button>
         </form>
       </PopoverContent>
     </Popover>
   );
 };
-export default AddWork;
+export default EditNameFile;

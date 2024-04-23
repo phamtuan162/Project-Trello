@@ -6,6 +6,7 @@ const {
   Work,
   Mission,
   Activity,
+  Attachment,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
@@ -470,6 +471,18 @@ module.exports = {
                   });
                 }
               }
+            }
+          }
+          if (card.attachments.length > 0) {
+            for (const attachment of card.attachment) {
+              const attachmentNew = await Attachment.create({
+                fileName: attachment.fileName,
+                path: attachment.path,
+                created_at: attachment.created_at,
+                updated_at: attachment.updated_at,
+                card_id: cardNew.id,
+                user_id: attachment.user_id,
+              });
             }
           }
         }

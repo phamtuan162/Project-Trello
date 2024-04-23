@@ -6,6 +6,8 @@ import { deviceSlice } from "./slices/deviceSlice";
 import { cardSlice } from "./slices/cardSlice";
 import { boardSlice } from "./slices/boardSlice";
 import { columnSlice } from "./slices/columnSlice";
+import { missionSlice } from "./slices/missionSlice";
+
 export const store = configureStore({
   reducer: {
     workspace: workspaceSlice.reducer,
@@ -15,5 +17,6 @@ export const store = configureStore({
     card: cardSlice.reducer,
     board: boardSlice.reducer,
     column: columnSlice.reducer,
+    mission: missionSlice.reducer,
   },
 });

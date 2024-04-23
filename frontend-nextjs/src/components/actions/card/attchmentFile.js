@@ -1,16 +1,11 @@
 "use client";
 import { useState } from "react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Button,
-  Input,
-} from "@nextui-org/react";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { attachmentFileApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { toast } from "react-toastify";
 const { updateCard } = cardSlice.actions;
 const AttachmentFile = ({ children }) => {
   const dispatch = useDispatch();
@@ -22,9 +17,19 @@ const AttachmentFile = ({ children }) => {
     const file = e.target.files[0];
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("name", file.name);
     attachmentFileApi(card.id, formData).then((data) => {
       if (data.status === 200) {
+        const cardUpdate = {
+          ...card,
+          activities: data.data.activities,
+          attachments: data.data.attachments,
+        };
+        dispatch(updateCard(cardUpdate));
         setIsOpen(false);
+      } else {
+        const error = data.error;
+        toast.error(error);
       }
     });
   };

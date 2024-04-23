@@ -12,10 +12,23 @@ const CardTransformer = require("../../../transformers/workspace/card.transforme
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "desc", sort = "created_at", q, work_id } = req.query;
+    const {
+      order = "desc",
+      sort = "created_at",
+      q,
+      work_id,
+      user_id,
+      workspace_id,
+    } = req.query;
     const filters = {};
     if (work_id) {
       filters.work_id = work_id;
+    }
+    if (user_id) {
+      filters.user_id = user_id;
+    }
+    if (workspace_id) {
+      filters.workspace_id = workspace_id;
     }
     const options = {
       order: [[sort, order]],
@@ -24,6 +37,21 @@ module.exports = {
     const response = {};
     try {
       const missions = await Mission.findAll(options);
+      if (missions.length > 0) {
+        for (const mission of missions) {
+          const work = await Work.findByPk(mission.work_id, {
+            include: {
+              model: Card,
+              as: "card",
+              include: { model: Column, as: "column" },
+            },
+          });
+
+          if (work.card.column.board_id) {
+            mission.dataValues.board_id = work.card.column.board_id;
+          }
+        }
+      }
       response.status = 200;
       response.message = "Success";
       response.data = missions;
@@ -60,7 +88,7 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const { name, work_id } = req.body;
+    const user = req.user.dataValues;
     const rules = {};
 
     if (req.body.title) {
@@ -78,7 +106,10 @@ module.exports = {
       if (!work) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-      const mission = await Mission.create(body);
+      const mission = await Mission.create({
+        ...body,
+        workspace_id: user.workspace_id_active,
+      });
 
       Object.assign(response, {
         status: 200,
@@ -138,7 +169,6 @@ module.exports = {
       const cardUpdate = await Card.findByPk(card.id, {
         include: { model: Activity, as: "activities" },
       });
-      console.log(2);
       Object.assign(response, {
         status: 200,
         message: "Success",

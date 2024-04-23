@@ -11,6 +11,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "user_id",
         as: "user",
       });
+      Mission.belongsTo(models.Workspace, {
+        foreignKey: "workspace_id",
+        as: "workspace",
+      });
     }
   }
   Mission.init(
@@ -24,6 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.STRING,
       work_id: DataTypes.INTEGER,
       user_id: DataTypes.INTEGER,
+      workspace_id: DataTypes.INTEGER,
       endDateTime: DataTypes.DATE,
     },
     {

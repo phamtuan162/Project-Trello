@@ -13,26 +13,27 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createWorkApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { deleteFileApi } from "@/services/workspaceApi";
 const { updateCard } = cardSlice.actions;
-const AddWork = ({ children }) => {
+const DeleteFile = ({ children, attachment }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [title, setTitle] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
-  const HandleChange = (e) => {
-    setTitle(e.target.value);
-  };
-  const HandleSubmit = async (e) => {
-    e.preventDefault();
+
+  const HandleDeleteFile = async () => {
     setIsLoading(true);
-    createWorkApi({ card_id: card.id, title: title }).then((data) => {
+
+    deleteFileApi(attachment.id).then((data) => {
       if (data.status === 200) {
+        const attachmentsUpdate = card.attachments.filter(
+          (item) => +item.id !== +attachment.id
+        );
         const cardUpdate = {
           ...card,
-          works: data.data.works,
-          activities: data.data.activities,
+          attachments: attachmentsUpdate,
+          activities: [data.data, ...card.activities],
         };
         dispatch(updateCard(cardUpdate));
         setIsLoading(false);
@@ -42,7 +43,6 @@ const AddWork = ({ children }) => {
         toast.error(error);
         setIsLoading(false);
       }
-      setTitle("");
     });
   };
   return (
@@ -54,49 +54,45 @@ const AddWork = ({ children }) => {
       }}
     >
       <PopoverTrigger>{children}</PopoverTrigger>
-      <PopoverContent className="w-[300px] p-2 px-3">
-        <form className="w-full" onSubmit={(e) => HandleSubmit(e)}>
+      <PopoverContent className="w-[300px] p-3 px-3">
+        <div className="w-full">
           <div className="flex justify-between items-center relative">
-            <h1 className="grow text-center ">Thêm danh sách công việc</h1>
+            <h1 className="grow text-center ">
+              Bạn muốn xóa tập tin đính kèm?
+            </h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
               onClick={() => setIsOpen(false)}
               variant="ghost"
             >
-              <CloseIcon />
+              <CloseIcon size={16} />
             </Button>
           </div>
-          <div className="mb-2 pt-2">
-            <p className="text-xs font-medium">Tiêu đề</p>
-            <div className="mt-1 flex flex-col gap-2 w-full">
-              <Input
-                onChange={HandleChange}
-                value={title}
-                name="title"
-                id="title"
-                size="xs"
-                variant="bordered"
-                aria-label="input-label"
-                isRequired
-              />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            color="primary"
-            className="mt-2"
-            isDisabled={
-              (user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner") ||
-              isLoading
-            }
+          <div
+            className="px-3  p-1 cursor-pointer"
+            style={{ color: "#44546f" }}
           >
-            {isLoading ? <CircularProgress /> : "Thêm"}
-          </Button>
-        </form>
+            <p className="text-xs mt-1">
+              Tập tin đính kèm sẽ bị xoá vĩnh viễn và bạn sẽ không thể hoàn tác.
+            </p>
+
+            <Button
+              onClick={() => HandleDeleteFile()}
+              type="button"
+              color="danger"
+              className="mt-2 w-full"
+              isDisabled={
+                (user?.role?.toLowerCase() !== "admin" &&
+                  user?.role?.toLowerCase() !== "owner") ||
+                isLoading
+              }
+            >
+              {isLoading ? <CircularProgress /> : "Xóa"}
+            </Button>
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );
 };
-export default AddWork;
+export default DeleteFile;

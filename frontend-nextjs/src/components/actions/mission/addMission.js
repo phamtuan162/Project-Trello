@@ -58,12 +58,14 @@ const AddMission = ({ work }) => {
           });
           const cardUpdate = { ...card, works: worksUpdate };
           dispatch(updateCard(cardUpdate));
+          setIsEditing(false);
+          setIsLoading(false);
         } else {
           const error = data.error;
           toast.error(error);
+
+          setIsLoading(false);
         }
-        setIsEditing(false);
-        setIsLoading(false);
       });
     }
   };

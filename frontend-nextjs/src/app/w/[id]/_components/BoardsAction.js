@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@nextui-org/react";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
-
+import SortBoard from "@/components/actions/board/sortBoard";
 import { Plus } from "lucide-react";
 import { Search } from "lucide-react";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
-export function BoardsAction({ setBoards, boardsOrigin }) {
+export function BoardsAction({ setBoards, boardsOrigin, boards }) {
   const [isSearch, setIsSearch] = useState(false);
   const [isAction, setIsAction] = useState(false);
   const inputRef = useRef(null);
@@ -58,9 +58,12 @@ export function BoardsAction({ setBoards, boardsOrigin }) {
       </span>
       {isAction ? (
         <div className=" items-center flex">
-          <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
-            <MoreIcon size={14} />
-          </button>
+          <SortBoard setBoards={setBoards} boards={boards}>
+            <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
+              <MoreIcon size={14} />
+            </button>
+          </SortBoard>
+
           <button
             className="outline-0 p-1 rounded-lg hover:bg-default-100"
             onClick={() => setIsSearch(!isSearch)}

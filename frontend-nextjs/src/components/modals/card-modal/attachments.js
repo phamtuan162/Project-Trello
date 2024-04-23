@@ -7,12 +7,13 @@ const AttachmentList = () => {
   const card = useSelector((state) => state.card.card);
   return (
     <div className="flex items-start gap-x-4 w-full">
-      <Paperclip size={22} />
-      <div className="w-full flex flex-col gap-4">
-        <div className="flex">
-          <p className="font-semibold grow  mb-2 text-sm">
-            Các tập tin đính kèm
-          </p>
+      <span className="mt-0.5">
+        <Paperclip size={22} />
+      </span>
+
+      <div className="w-full flex flex-col gap-2">
+        <div className="flex items-center">
+          <p className="font-semibold grow   text-sm">Các tập tin đính kèm</p>
           <AttachmentFile>
             <button className="text-xs p-1 px-2  rounded-sm bg-gray-200">
               Thêm

@@ -26,11 +26,10 @@ export default function WorkspaceLayout({ children }) {
     },
 
     {
-      href: "/mission",
+      href: "/missions",
       label: "Nhiệm vụ của tôi",
       icon: <MissionIcon />,
     },
-
     {
       href: "/calendar",
       label: "Lịch",
@@ -53,7 +52,7 @@ export default function WorkspaceLayout({ children }) {
     <div className="flex gap-x-7 justify-center h-full ">
       <SidebarWorkspace workspaceOptions={workspaceOptions} />
       <div
-        className="work-space grow mt-5 pr-14 pl-8"
+        className="work-space grow mt-5 pr-14 pl-8 "
         style={{ maxHeight: "calc(100vh - 64px)", overflow: "auto" }}
       >
         <BreadcrumbWorkspace

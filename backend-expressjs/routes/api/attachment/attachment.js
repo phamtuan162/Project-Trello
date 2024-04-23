@@ -8,11 +8,7 @@ router.get("/download/:id", attachmentController.downloadFile);
 
 router.get("/:id", attachmentController.find);
 
-router.put(
-  "/:id",
-
-  attachmentController.update
-);
+router.put("/:id", authMiddleware, attachmentController.update);
 router.patch("/:id", attachmentController.update);
-router.delete("/:id", attachmentController.delete);
+router.delete("/:id", authMiddleware, attachmentController.delete);
 module.exports = router;

@@ -137,3 +137,10 @@ header {
   width: 300px;
   padding: 12px;
 }
+
+.attachment-thumbnail-details-title-options::before {
+  content: " • ";
+}
+.file-img img {
+  object-fit: contain;
+}

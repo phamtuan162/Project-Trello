@@ -20,7 +20,6 @@ const WorkCard = ({ work }) => {
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
   const formRef = useRef(null);
-
   // Tiến độ danh sách việc làm
   const progressWork = useMemo(() => {
     if (!work || !work.missions || work.missions.length === 0) {
@@ -31,8 +30,12 @@ const WorkCard = ({ work }) => {
       (mission) => mission.status === "success"
     );
 
-    const progressPercentage =
+    let progressPercentage =
       (completedMissions.length / work.missions.length) * 100;
+
+    if (progressPercentage % 1 !== 0) {
+      return progressPercentage.toFixed(2);
+    }
 
     return progressPercentage;
   }, [work]);
@@ -83,9 +86,12 @@ const WorkCard = ({ work }) => {
   };
 
   return (
-    <div className="flex flex-col gap-2" key={work.id}>
+    <div className="flex flex-col gap-2">
       <div className="flex items-start gap-x-4 w-full">
-        <SquareCheck size={22} />
+        <span className="mt-1">
+          <SquareCheck size={22} />
+        </span>
+
         {isEditing ? (
           <form
             className="flex flex-col gap-4 w-full"
@@ -128,7 +134,7 @@ const WorkCard = ({ work }) => {
         )}
       </div>
       <div className="flex items-center gap-x-4 w-full ">
-        <span className="text-xs w-[22px] shrink-0 pl-1">{progressWork}%</span>
+        <span className="text-xs w-[22px] shrink-0 ">{progressWork}%</span>
         <Progress size="md" radius="md" value={progressWork} />
       </div>
       {work?.missions?.length > 0 && <MissionsWork missions={work.missions} />}

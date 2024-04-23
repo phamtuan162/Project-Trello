@@ -41,7 +41,7 @@ const AssignUserMission = ({ children, mission }) => {
 
   const HandleSelectUserAssigned = async (userAssigned) => {
     const userIdUpdate =
-      +userAssigned.id === mission.user_id ? null : userAssigned.id;
+      +userAssigned.id === +mission.user_id ? null : userAssigned.id;
     const updatedWorks = card.works.map((work) => {
       if (+work.id === +mission.work_id) {
         const updatedMissions = work.missions.map((item) => {
@@ -49,10 +49,10 @@ const AssignUserMission = ({ children, mission }) => {
             return {
               ...mission,
               user_id: userIdUpdate,
-              user: userIdUpdate && userAssigned,
+              user: userIdUpdate ? userAssigned : item.user,
             };
           }
-          return mission;
+          return item;
         });
         return { ...work, missions: updatedMissions };
       }

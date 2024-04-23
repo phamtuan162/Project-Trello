@@ -56,19 +56,6 @@ const ActionsCard = () => {
         </DeleteCard>
       ),
     },
-    {
-      label: "Chia sẻ",
-      icon: <Share2 size={16} />,
-      component: (
-        <Button
-          className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
-          style={{ color: "#172b4d" }}
-        >
-          <Share2 size={16} />
-          Chia sẻ
-        </Button>
-      ),
-    },
   ];
   return (
     <div className="space-y-2 mt-6" key={"actions"}>

@@ -408,6 +408,7 @@ module.exports = {
                           const missionNew = await Mission.create({
                             name: mission.name,
                             work_id: workNew.id,
+                            workspace_id: user.workspace_id_active,
                             user_id: matchBoard ? mission.user_id : user_id,
                             status: "pending",
                             endDateTime: mission.endDateTime,
@@ -417,6 +418,22 @@ module.exports = {
                       );
                     }
                     return workNew;
+                  })
+                );
+                break;
+              case "attachments":
+                await Promise.all(
+                  card.attachments.map(async (attachment) => {
+                    const attachmentNew = await Attachment.create({
+                      fileName: attachment.fileName,
+                      path: attachment.path,
+                      created_at: attachment.created_at,
+                      updated_at: attachment.updated_at,
+                      card_id: cardNew.id,
+                      user_id: attachment.user_id,
+                    });
+
+                    return attachmentNew;
                   })
                 );
                 break;
@@ -526,21 +543,45 @@ module.exports = {
   uploads: async (req, res) => {
     const { id } = req.params;
     const user = req.user.dataValues;
+    const { name } = req.body;
     const file = req.file;
     const path = `http://localhost:3001/uploads/${file.filename}`;
     const response = {};
     try {
+      const card = await Card.findByPk(id);
+
+      if (!card) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
       const attachment = await Attachment.create({
         user_id: user.id,
         path: path,
-        card_id: id,
-        fileName: file.filename,
+        card_id: card.id,
+        fileName: name,
+      });
+
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: card.id,
+        title: card.title,
+        action: "attachment_file",
+        workspace_id: user.workspace_id_active,
+        desc: `đã đính kèm tập tin ${name} vào thẻ này`,
+      });
+
+      const cardUpdate = await Card.findByPk(id, {
+        include: [
+          { model: Activity, as: "activities" },
+          { model: Attachment, as: "attachments" },
+        ],
       });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: attachment,
+        data: cardUpdate,
       });
     } catch (error) {
       Object.assign(response, {

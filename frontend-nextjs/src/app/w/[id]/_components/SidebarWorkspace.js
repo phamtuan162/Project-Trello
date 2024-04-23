@@ -21,35 +21,6 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
       setBoards(workspace.boards);
     }
   }, [workspace]);
-  // useEffect(() => {
-  //   const fetchWorkspaces = async () => {
-  //     if (user.id) {
-  //       const data = await getWorkspace({ user_id: user.id });
-  //       setWorkspaces(data);
-  //     }
-  //   };
-
-  //   fetchWorkspaces();
-  // }, [user]);
-
-  // const routes = [
-  //   {
-  //     href: "/highlight",
-  //     label: "Highlights",
-  //     icon: <HeartIcon />,
-  //   },
-
-  //   {
-  //     href: "/activity",
-  //     label: "Activity",
-  //     icon: <Activity className="h-4 w-4 mr-2" />,
-  //   },
-  //   {
-  //     href: "/setting",
-  //     label: "Settings",
-  //     icon: <SettingIcon />,
-  //   },
-  // ];
 
   return (
     <div
@@ -120,6 +91,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
           <BoardsAction
             setBoards={setBoards}
             boardsOrigin={workspace?.boards}
+            boards={boards}
           />
           {boards?.slice(0, 3).map((board) => (
             <div

@@ -25,7 +25,7 @@ module.exports = {
     // Đường dẫn đích cho tệp tải lên
     destination: "public/uploads/",
     // Hàm tạo tên file cho tệp
-    name: (mimetype, filename) => filename,
+    name: generateUniqueFileName,
     // Các loại tệp cho phép
     allowedTypes: [
       // Ảnh

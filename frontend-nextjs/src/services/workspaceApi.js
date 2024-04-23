@@ -577,6 +577,12 @@ export const deleteWorkApi = async (workId) => {
 };
 
 /** Mission */
+
+export const getMissionsApi = async (query = {}) => {
+  const queryString = new URLSearchParams(query).toString();
+  const { response, data } = await client.get(`/mission?${queryString}`);
+  return data;
+};
 export const createMissionApi = async (body) => {
   const access_token = Cookies.get("access_token");
 
@@ -696,4 +702,43 @@ export const downloadFileApi = async (attachmentId) => {
   } catch (error) {
     console.log(error);
   }
+};
+
+export const updateFileApi = async (attachmentId, body) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.put(
+    `/attachment/${attachmentId}`,
+    body,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await updateFileApi(attachmentId, body);
+    }
+  }
+  return null;
+};
+
+export const deleteFileApi = async (attachmentId) => {
+  const access_token = Cookies.get("access_token");
+
+  const { response, data } = await client.delete(
+    `/attachment/${attachmentId}`,
+    access_token
+  );
+  if (response.ok || data.error) {
+    return data;
+  }
+  if (data.status === 401) {
+    const newAccessToken = await getAccessToken();
+    if (newAccessToken) {
+      return await deleteFileApi(attachmentId);
+    }
+  }
+  return null;
 };
