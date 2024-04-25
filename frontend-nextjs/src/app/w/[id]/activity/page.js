@@ -133,13 +133,7 @@ export default function pageActivity() {
           </Dropdown>
         </div>
 
-        {filteredItems.length > 0 ? (
-          <ActivityList activities={filteredItems} />
-        ) : (
-          <p className="hidden last:block text-xs  text-center text-muted-foreground mt-2">
-            Không tìm thấy hoạt động của người này
-          </p>
-        )}
+        <ActivityList activities={filteredItems} />
       </div>
     </div>
   ) : (

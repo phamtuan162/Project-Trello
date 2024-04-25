@@ -55,9 +55,6 @@ const WorkCard = ({ work }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-    if (e.key === "Enter") {
-      formRef.current.action();
-    }
   };
 
   useEventListener("keydown", onKeyDown);
@@ -134,7 +131,9 @@ const WorkCard = ({ work }) => {
         )}
       </div>
       <div className="flex items-center gap-x-4 w-full ">
-        <span className="text-xs w-[22px] shrink-0 ">{progressWork}%</span>
+        <span style={{ fontSize: "10px" }} className=" w-[22px] shrink-0 ">
+          {progressWork}%
+        </span>
         <Progress size="md" radius="md" value={progressWork} />
       </div>
       {work?.missions?.length > 0 && <MissionsWork missions={work.missions} />}

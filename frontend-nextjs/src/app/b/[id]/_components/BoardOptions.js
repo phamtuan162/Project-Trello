@@ -16,8 +16,10 @@ import { useRouter } from "next/navigation";
 import FormBackground from "@/components/Form/FormBackground";
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { useDispatch, useSelector } from "react-redux";
 const { updateBoard } = boardSlice.actions;
+const { updateWorkspace } = workspaceSlice.actions;
 export function BoardOptions({ setIsActivity }) {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -25,19 +27,33 @@ export function BoardOptions({ setIsActivity }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const board = useSelector((state) => state.board.board);
+  const workspace = useSelector((state) => state.workspace.workspace);
+  const user = useSelector((state) => state.user.user);
   const DeleteBoard = async () => {
-    toast.warning("Bạn có chắc chắn muốn xóa bảng này đi ", {
-      onClick: async () => {
-        deleteBoard(board.id).then((data) => {
-          if (data.status === 200) {
-            router.push(`/w/${board.workspace_id}/boards`);
-          } else {
-            const error = data.error;
-            toast.error(error);
-          }
-        });
-      },
-    });
+    toast.warning(
+      "Xin vui lòng nhấn vào đây nếu bạn chắc chắn muốn xóa bảng này! ",
+      {
+        onClick: async () => {
+          deleteBoard(board.id).then((data) => {
+            if (data.status === 200) {
+              const boardsUpdate =
+                workspace.boards.length > 0
+                  ? workspace.boards.filter((item) => +item.id !== +board.id)
+                  : [];
+              const workspaceUpdate = {
+                ...workspace,
+                boards: boardsUpdate,
+              };
+              dispatch(updateWorkspace(workspaceUpdate));
+              router.push(`/w/${board.workspace_id}/boards`);
+            } else {
+              const error = data.error;
+              toast.error(error);
+            }
+          });
+        },
+      }
+    );
   };
   const HandleBackground = async (formData) => {
     setIsLoading(true);
@@ -74,13 +90,15 @@ export function BoardOptions({ setIsActivity }) {
         >
           <CloseIcon />
         </Button>
-        <Button
-          style={{ color: "#172b4d" }}
-          className="text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
-          onClick={() => DeleteBoard()}
-        >
-          <Trash size={16} /> Xoá Bảng
-        </Button>
+        {user?.role?.toLowerCase() === "owner" && (
+          <Button
+            style={{ color: "#172b4d" }}
+            className="text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
+            onClick={() => DeleteBoard()}
+          >
+            <Trash size={16} /> Xoá Bảng
+          </Button>
+        )}
 
         <FormBackground
           HandleBackground={HandleBackground}

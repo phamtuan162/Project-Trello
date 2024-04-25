@@ -14,12 +14,13 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { SearchIcon, Check } from "lucide-react";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { updateMissionApi } from "@/services/workspaceApi";
-
+import { missionSlice } from "@/stores/slices/missionSlice";
+const { updateMission } = missionSlice.actions;
 const { updateCard } = cardSlice.actions;
 const AssignUserMission = ({ children, mission }) => {
   const dispatch = useDispatch();
   const [timeoutId, setTimeoutId] = useState(null);
-
+  const missions = useSelector((state) => state.mission.missions);
   const [isOpen, setIsOpen] = useState(false);
   const [keyword, setKeyWord] = useState("");
   const card = useSelector((state) => state.card.card);
@@ -40,6 +41,12 @@ const AssignUserMission = ({ children, mission }) => {
   }, [workspace, card]);
 
   const HandleSelectUserAssigned = async (userAssigned) => {
+    if (userAssigned?.role?.toLowerCase() === "guest") {
+      toast.error("Người này là khách không chỉ định được!");
+
+      setIsOpen(false);
+      return;
+    }
     const userIdUpdate =
       +userAssigned.id === +mission.user_id ? null : userAssigned.id;
     const updatedWorks = card.works.map((work) => {
@@ -62,6 +69,11 @@ const AssignUserMission = ({ children, mission }) => {
     updateMissionApi(mission.id, { user_id: userIdUpdate }).then((data) => {
       if (data.status === 200) {
         dispatch(updateCard(updatedCard));
+        if (+userAssigned.id === +userMain.id) {
+          const updateMissions =
+            missions.length > 0 ? [mission, ...missions] : [mission];
+          dispatch(updateMission(updateMissions));
+        }
       } else {
         const error = data.error;
         toast.error(error);
@@ -90,6 +102,12 @@ const AssignUserMission = ({ children, mission }) => {
     updateMissionApi(mission.id, { user_id: null }).then((data) => {
       if (data.status === 200) {
         dispatch(updateCard(updatedCard));
+        if (+userAssigned.id === +userMain.id) {
+          const updateMissions = missions.filter(
+            (item) => +item.id !== +mission.id
+          );
+          dispatch(updateMission(updateMissions));
+        }
         setKeyWord("");
       } else {
         const error = data.error;

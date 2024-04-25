@@ -4,11 +4,10 @@ const ActivityList = ({ activities }) => {
   return (
     <ol className="space-y-4 mt-4 pb-2">
       <p className="hidden last:block text-xs  text-center text-muted-foreground">
-        Không có hoạt động nào trong không gian làm việc
+        Không có hoạt động nào
       </p>
-      {activities?.map((activity) => (
-        <ActivityItem activity={activity} />
-      ))}
+      {activities?.length > 0 &&
+        activities.map((activity) => <ActivityItem activity={activity} />)}
     </ol>
   );
 };

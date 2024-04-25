@@ -393,6 +393,7 @@ module.exports = {
         title: title,
         board_id: board_id,
       });
+      const newColumnOrderIds = [columnNew.id, ...BoardActive.columnOrderIds];
       await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -426,6 +427,7 @@ module.exports = {
             workspace_id: user.workspace_id_active,
             desc: `đã sao chép thẻ này từ ${card.title} trong danh sách ${column.title}`,
           });
+
           cardOrderIdsNew.push(cardNew.id);
           if (card.users.length > 0) {
             card.users.sort((a, b) =>
@@ -451,6 +453,7 @@ module.exports = {
               }
             }
           }
+
           if (card.works.length > 0) {
             for (const work of card.works) {
               const workNew = await Work.create(
@@ -470,11 +473,13 @@ module.exports = {
                     endDateTime: mission.endDateTime,
                   });
                 }
+                console.log(2);
               }
             }
           }
+
           if (card.attachments.length > 0) {
-            for (const attachment of card.attachment) {
+            for (const attachment of card.attachments) {
               const attachmentNew = await Attachment.create({
                 fileName: attachment.fileName,
                 path: attachment.path,
@@ -488,8 +493,7 @@ module.exports = {
         }
         await columnNew.update({ cardOrderIds: cardOrderIdsNew });
       }
-      const newColumnOrderIds = [columnNew.id, ...BoardActive.columnOrderIds];
-
+      console.log(newColumnOrderIds);
       await BoardActive.update({
         columnOrderIds: newColumnOrderIds,
       });
@@ -499,6 +503,7 @@ module.exports = {
           model: Card,
           as: "cards",
           include: [
+            { model: Attachment, as: "attachments" },
             {
               model: User,
               as: "users",

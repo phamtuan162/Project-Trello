@@ -7,11 +7,13 @@ const {
   Mission,
   Activity,
   Attachment,
+  Workspace,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
 const { format } = require("date-fns");
+const workspace = require("../../../models/workspace");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -92,17 +94,12 @@ module.exports = {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
-      const card = await Card.create(body);
       const column = await Column.findByPk(req.body.column_id);
-
-      if (!column) {
-        await card.destroy();
-
-        Object.assign(response, {
-          status: 404,
-          message: "Not found Column",
-        });
+      const workspace = await Workspace.findByPk(req.body.workspace_id);
+      if (!column || !workspace) {
+        return res.status(404).json({ status: 404, message: "Not found" });
       }
+      const card = await Card.create(body);
 
       let updatedCardOrderIds = [];
 
@@ -352,6 +349,7 @@ module.exports = {
 
       const cardNew = await Card.create({
         id: card.id,
+        workspace_id: card.workspace_id,
         column_id: card.column_id,
         title: card.title,
         desc: card.desc,

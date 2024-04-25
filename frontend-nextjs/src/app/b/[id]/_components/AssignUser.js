@@ -65,6 +65,13 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       setIsAssign(false);
       return;
     }
+
+    if (userAssign.role.toLowerCase() === "guest") {
+      toast.error("Người này là khách không không thêm vào được");
+
+      setIsAssign(false);
+      return;
+    }
     if (cardUpdate.users.length === 4) {
       toast.error("Tối đa 4 thành viên");
     } else {
@@ -78,13 +85,13 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               users: cardUpdate.users,
             })
           );
+          setKeyWord("");
+          setUserSearch([]);
         } else {
           const error = data.error;
           toast.error(error);
         }
       });
-      setKeyWord("");
-      setUserSearch([]);
     }
   };
 
@@ -161,7 +168,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               className="w-full "
             />
           </div>
-          <div className=" p-2 pb-0 max-h-[200px] overflow-x-auto">
+          <div className=" p-2 pb-1 max-h-[200px] overflow-x-auto">
             {userSearch?.length > 0 ? (
               <>
                 <p className="font-medium text-xs">Thành viên trong Bảng</p>

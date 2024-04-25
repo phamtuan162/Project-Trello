@@ -7,6 +7,8 @@ const {
   Role,
   UserWorkspaceRole,
   Activity,
+  Work,
+  Mission,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -80,6 +82,7 @@ module.exports = {
             as: "activities",
           },
         ],
+        order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
       });
 
       if (!workspace) {
@@ -444,6 +447,24 @@ module.exports = {
         workspace_id: workspace_id,
         desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
       });
+      const userCancel = await User.findByPk(user_id);
+      const cards = await Card.findAll({
+        where: { workspace_id: workspace_id },
+      });
+      if (cards.length > 0) {
+        for (const card of cards) {
+          await card.removeUser(userCancel);
+        }
+      }
+      await Mission.update(
+        { user_id: null },
+        {
+          where: {
+            workspace_id: workspace_id,
+            user_id: user_id,
+          },
+        }
+      );
       Object.assign(response, {
         status: 200,
         message: "Success",

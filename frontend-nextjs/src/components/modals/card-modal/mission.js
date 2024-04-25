@@ -17,7 +17,6 @@ const MissionWork = ({ mission, setMissionSelected }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
-
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
   const formRef = useRef(null);

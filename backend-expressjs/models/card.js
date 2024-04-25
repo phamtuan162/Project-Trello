@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "card_id",
         as: "attachments",
       });
+      Card.belongsTo(models.Workspace, {
+        foreignKey: "workspace_id",
+        as: "workspace",
+      });
     }
   }
   Card.init(
@@ -33,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      workspace_id: DataTypes.INTEGER,
       column_id: DataTypes.INTEGER,
       title: DataTypes.STRING,
       desc: DataTypes.STRING,

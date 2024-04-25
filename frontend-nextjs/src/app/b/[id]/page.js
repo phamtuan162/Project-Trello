@@ -26,6 +26,8 @@ const { updateCard } = cardSlice.actions;
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
+  const workspace = useSelector((state) => state.workspace.workspace);
+  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
   const [isActivity, setIsActivity] = useState(false);
 
@@ -33,30 +35,28 @@ export default function BoardIdPage() {
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
-        if (!board.id) {
-          const data = await getBoardDetail(boardId);
-          if (data.status === 200) {
-            let boardData = data.data;
-            boardData.columns = mapOrder(
-              boardData.columns,
-              boardData.columnOrderIds,
-              "id"
-            );
+        setIsLoading(true);
+        dispatch(updateCard({}));
+        const data = await getBoardDetail(boardId);
+        if (data.status === 200) {
+          let boardData = data.data;
+          boardData.columns = mapOrder(
+            boardData.columns,
+            boardData.columnOrderIds,
+            "id"
+          );
 
-            boardData.columns.forEach((column) => {
-              if (isEmpty(column.cards)) {
-                column.cards = [generatePlaceholderCard(column)];
-                column.cardOrderIds = [generatePlaceholderCard(column).id];
-              } else {
-                column.cards = mapOrder(
-                  column.cards,
-                  column.cardOrderIds,
-                  "id"
-                );
-              }
-            });
-            dispatch(boardSlice.actions.updateBoard(boardData));
-          }
+          boardData.columns.forEach((column) => {
+            if (isEmpty(column.cards)) {
+              column.cards = [generatePlaceholderCard(column)];
+              column.cardOrderIds = [generatePlaceholderCard(column).id];
+            } else {
+              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+            }
+          });
+
+          dispatch(boardSlice.actions.updateBoard(boardData));
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching board detail:", error);
@@ -240,6 +240,7 @@ export default function BoardIdPage() {
   const createNewCard = async (newCardData, columnId) => {
     const data = await createCard({
       ...newCardData,
+      workspace_id: workspace.id,
       column_id: columnId,
     });
     if (data.status === 200) {
@@ -289,7 +290,7 @@ export default function BoardIdPage() {
   };
   return (
     <>
-      {board.id ? (
+      {!isLoading ? (
         <div
           className="relative h-full bg-no-repeat bg-cover bg-center grow overflow-x-auto"
           style={{

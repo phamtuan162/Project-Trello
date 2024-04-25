@@ -7,6 +7,7 @@ const {
   Work,
   Mission,
   Activity,
+  Attachment,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -66,6 +67,7 @@ module.exports = {
             model: Card,
             as: "cards",
             include: [
+              { model: Attachment, as: "attachments" },
               {
                 model: User,
                 as: "users",
@@ -294,16 +296,17 @@ module.exports = {
       }
       await Column.destroy({ where: { board_id: id } });
 
-      await Activity.create({
-        user_id: user.id,
-        userName: user.name,
-        userAvatar: user.avatar,
-        board_id: board.id,
-        title: board.title,
-        action: "add_board",
-        workspace_id: user.workspace_id_active,
-        desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
-      });
+      const title = board.title;
+      // await Activity.create({
+      //   user_id: user.id,
+      //   userName: user.name,
+      //   userAvatar: user.avatar,
+      //   board_id: 9999,
+      //   title: title,
+      //   action: "add_board",
+      //   workspace_id: user.workspace_id_active,
+      //   desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
+      // });
       await board.destroy({ force: true });
 
       Object.assign(response, {

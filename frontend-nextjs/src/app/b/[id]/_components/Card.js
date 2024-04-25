@@ -4,7 +4,14 @@ import { useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import AssignUser from "./AssignUser";
-import { CalendarCheck, Tags, Flag, Check, Pencil } from "lucide-react";
+import {
+  CalendarCheck,
+  Paperclip,
+  Tags,
+  Flag,
+  Check,
+  Pencil,
+} from "lucide-react";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { Avatar, AvatarGroup } from "@nextui-org/react";
 import useCardModal from "@/hooks/use-card-modal";
@@ -167,7 +174,7 @@ export function Card({ card }) {
                 format(cardUpdate?.endDateTime, "d 'tháng' M")}
             </div>
           </div>
-          {missions.length > 0 && (
+          {missions?.length > 0 && (
             <div
               className={`text-xs mt-1  inline-flex items-center gap-1  ${
                 missionSuccess.length === missions.length &&
@@ -176,6 +183,11 @@ export function Card({ card }) {
             >
               <SquareCheck size={14} /> {missionSuccess.length}/
               {missions.length}
+            </div>
+          )}
+          {cardUpdate?.attachments?.length > 0 && (
+            <div className="flex gap-1 items-center">
+              <Paperclip size={12} /> {cardUpdate.attachments.length}
             </div>
           )}
         </div>

@@ -16,15 +16,16 @@ const ActivityItem = ({ activity }) => {
       <div className="flex flex-col space-y-0.5">
         <p className="text-xs text-muted-foreground">
           <span className="font-semibold  text-neutral-700">
-            {activity.userName}
+            {activity?.userName}
           </span>
           {generateActivityMessage(activity)}
         </p>
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(activity.created_at), {
-            addSuffix: true,
-            locale: vi,
-          })}
+          {activity?.created_at &&
+            formatDistanceToNow(new Date(activity.created_at), {
+              addSuffix: true,
+              locale: vi,
+            })}
         </p>
       </div>
     </li>

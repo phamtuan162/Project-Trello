@@ -14,6 +14,7 @@ const AddMission = ({ work }) => {
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef(null);
   const formRef = useRef(null);
+  const btnRef = useRef();
 
   const enableEditing = () => {
     setIsEditing(true);
@@ -29,6 +30,9 @@ const AddMission = ({ work }) => {
   const onKeyDown = (e) => {
     if (e.key === "Escape") {
       disableEditing();
+    }
+    if (e.key === "Enter") {
+      btnRef.current.click();
     }
   };
 
@@ -95,7 +99,13 @@ const AddMission = ({ work }) => {
         }}
       />
       <div className="flex items-center gap-x-2">
-        <Button type="submit" size="sm" radius="lg" color="primary">
+        <Button
+          ref={btnRef}
+          type="submit"
+          size="sm"
+          radius="lg"
+          color="primary"
+        >
           {isLoading ? <CircularProgress size={20} /> : "Thêm"}
         </Button>
         <Button

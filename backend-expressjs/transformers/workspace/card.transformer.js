@@ -1,4 +1,5 @@
 const Transformer = require("../../core/Transformer");
+const workspace = require("../../models/workspace");
 const UserTransformer = require("../user/user.transformer");
 
 class CardTransformer extends Transformer {
@@ -6,6 +7,7 @@ class CardTransformer extends Transformer {
     return {
       id: instance.id,
       column_id: instance.column_id,
+      workspace_id: instance.workspace_id,
       title: instance.title,
       users: instance.users
         ? instance.users.map((user) => new UserTransformer(user.dataValues))

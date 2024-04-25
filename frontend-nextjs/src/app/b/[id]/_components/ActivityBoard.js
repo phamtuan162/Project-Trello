@@ -30,9 +30,13 @@ const ActivityBoard = ({ isActivity, setIsActivity }) => {
           Hoạt động
         </p>
         <ol className="flex flex-col gap-3 mt-4">
-          {workspace?.activities?.map((activity) => (
-            <ActivityBoardItem key={activity.id} activity={activity} />
-          ))}
+          <p className="hidden last:block text-xs  text-center text-muted-foreground">
+            Không có hoạt động nào
+          </p>
+          {workspace?.activities?.length > 0 &&
+            workspace?.activities?.map((activity) => (
+              <ActivityBoardItem key={activity.id} activity={activity} />
+            ))}
         </ol>
       </div>
     </div>

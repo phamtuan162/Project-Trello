@@ -33,10 +33,10 @@ export function ListOptions({ column, deleteColumnDetail }) {
         </CopyColumn>
       ),
     },
-    {
-      label: "Xóa danh sách",
-      action: onDeleteColumn,
-    },
+    // {
+    //   label: "Xóa danh sách",
+    //   action: onDeleteColumn,
+    // },
     {
       label: "Di chuyển danh sách",
       component: (
@@ -82,7 +82,7 @@ export function ListOptions({ column, deleteColumnDetail }) {
             {options?.map((option, index) => {
               return (
                 <ListboxItem
-                  className="max-h-8  data-[hover=true]:bg-default-100 pl-4 text-lg"
+                  className={`max-h-8  data-[hover=true]:bg-default-100 pl-4 text-lg `}
                   textValue={option.label}
                   key={index}
                   style={{ color: "#172b4d" }}
