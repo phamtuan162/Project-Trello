@@ -8,6 +8,7 @@ const {
   Board,
   UserWorkspaceRole,
   Role,
+  Notification,
 } = require("../../../models/index");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -250,9 +251,15 @@ module.exports = {
           model: Provider,
           as: "providers",
         },
+        {
+          model: Notification,
+          as: "notifications",
+        },
       ],
-      order: [[{ model: Device, as: "devices" }, "active_time", "desc"]],
-
+      order: [
+        [{ model: Device, as: "devices" }, "active_time", "desc"], // Sắp xếp Device trong mối quan hệ devices theo active_time
+        [{ model: Notification, as: "notifications" }, "created_at", "desc"], // Sắp xếp Notification theo createdAt
+      ],
       attributes: { exclude: ["password"] },
     });
     await user.update({ isOnline: true });

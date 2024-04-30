@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Select,
@@ -37,7 +37,7 @@ export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
   const userActive = useSelector((state) => state.user.user);
-
+  const socket = useSelector((state) => state.socket.socket);
   const sortedUsers = React.useMemo(() => {
     return workspace && workspace.users
       ? [...workspace.users].sort((a, b) => {
@@ -85,6 +85,29 @@ export default function PageWorkspaceUsers() {
       desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
     },
   ];
+  useEffect(() => {
+    const handleUserOnline = (data) => {
+      if (data.id && workspace?.users?.length > 0) {
+        const usersUpdate = workspace.users.map((item) => {
+          if (+item.id === +data.id) {
+            return { ...item, isOnline: data.isOnline };
+          }
+          return item;
+        });
+        if (usersUpdate) {
+          dispatch(updateWorkspace({ ...workspace, users: usersUpdate }));
+        }
+      }
+    };
+
+    if (socket) {
+      socket.on("getUserOnline", handleUserOnline);
+
+      return () => {
+        socket.off("getUserOnline", handleUserOnline);
+      };
+    }
+  }, [socket]);
   const rolesUser = React.useMemo(() => {
     if (userActive?.role?.toLowerCase() === "admin") {
       return roles.filter(
@@ -172,6 +195,14 @@ export default function PageWorkspaceUsers() {
           };
 
           dispatch(updateWorkspace(workspaceUpdate));
+
+          socket.emit("sendNotification", {
+            user_id: user.id,
+            userName: userActive.name,
+            userAvatar: userActive.avatar,
+            type: "cancel_user",
+            content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name} `,
+          });
         } else {
           const error = data.error;
           toast.error(error);

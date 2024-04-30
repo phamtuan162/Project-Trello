@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
 import { updateProfile } from "@/services/userApi";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
+import { fetchMission } from "@/stores/middleware/fetchMission";
 import { userSlice } from "@/stores/slices/userSlice";
 import { providerSlice } from "@/stores/slices/providerSlice";
 import Loading from "../Loading/Loading";
@@ -28,8 +29,14 @@ import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import FormCreateWorkspace from "../Form/FormCreateWorkspace";
+import { socketSlice } from "@/stores/slices/socket";
+import { io } from "socket.io-client";
+import Notification from "../Notification";
+import { notificationSlice } from "@/stores/slices/notificationSlice";
 const { updateUser } = userSlice.actions;
 const { updateProvider } = providerSlice.actions;
+const { updateSocket } = socketSlice.actions;
+const { updateNotification } = notificationSlice.actions;
 const Header = () => {
   const options = [
     {
@@ -38,7 +45,7 @@ const Header = () => {
       title: "",
       component: (
         <FormCreateWorkspace>
-          <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center ">
+          <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center ">
             <AddIcon />
           </button>
         </FormCreateWorkspace>
@@ -49,9 +56,11 @@ const Header = () => {
       icon: <NotifyIcon />,
       title: "",
       component: (
-        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-          <NotifyIcon />
-        </button>
+        <Notification>
+          <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+            <NotifyIcon />
+          </button>
+        </Notification>
       ),
     },
     {
@@ -59,7 +68,7 @@ const Header = () => {
       icon: <HelpOutlineIcon />,
       title: "",
       component: (
-        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+        <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
           <HelpOutlineIcon />
         </button>
       ),
@@ -75,6 +84,8 @@ const Header = () => {
       ),
     },
   ];
+  const socket = useSelector((state) => state.socket.socket);
+
   const { id } = useParams();
   const access_token = Cookies.get("access_token");
   const router = useRouter();
@@ -84,7 +95,6 @@ const Header = () => {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     if (!user.id && !pathname.startsWith("/auth/")) {
       getProfile(access_token).then((data) => {
@@ -93,6 +103,13 @@ const Header = () => {
           dispatch(updateUser(user));
           dispatch(updateProvider(user.providers));
           dispatch(fetchWorkspace(user.workspace_id_active));
+          dispatch(
+            fetchMission({
+              user_id: user.id,
+              workspace_id: user.workspace_id_active,
+            })
+          );
+          dispatch(updateNotification(user.notifications));
           if (pathname.startsWith(`/w/${id}`)) {
             let currentURL = window.location.href;
             currentURL = currentURL.replace(
@@ -115,14 +132,22 @@ const Header = () => {
       return () => clearTimeout(timer);
     }
   }, [user, workspace]);
+  useEffect(() => {
+    if (!socket) {
+      const newSocket = io("http://localhost:3001");
+      dispatch(updateSocket(newSocket));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user.id && socket) {
+      socket.emit("newUser", user.id);
+    }
+  }, [socket, user]);
+
   if (isLoading) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;
   }
-  window.addEventListener("beforeunload", function (event) {
-    if (user.id) {
-      updateProfile(user.id, { isOnline: false });
-    }
-  });
 
   return (
     <Navbar
@@ -186,7 +211,7 @@ const Header = () => {
               },
             }}
           >
-            {option?.component}
+            <div>{option?.component}</div>
           </Tooltip>
         ))}
         <NavbarItem className="ml-4">

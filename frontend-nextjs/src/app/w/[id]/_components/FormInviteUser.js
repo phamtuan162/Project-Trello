@@ -16,10 +16,13 @@ import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
+import { userSlice } from "@/stores/slices/userSlice";
+const { updateUser } = userSlice.actions;
 const { inviteUser, updateWorkspace } = workspaceSlice.actions;
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
+  const socket = useSelector((state) => state.socket.socket);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isInvite, setIsInvite] = useState(false);
   const [role, setRole] = useState(new Set(["member"]));
@@ -67,24 +70,33 @@ const FormInviteUser = ({ rolesUser }) => {
     const checkUserInvited = workspace.users.some(
       (user) => user.id === userInvite.id
     );
+    const roleUser = [...role][0];
     if (checkUserInvited) {
       setMessage("Người dùng này đã có trong Không gian làm việc của bạn");
     } else {
       inviteUserApi({
         user_id: userInvite.id,
-        role: [...role][0],
+        role: roleUser,
         workspace_id: workspace.id,
       }).then((data) => {
         if (data.status === 200) {
           const workspaceUpdate = {
             ...workspace,
-            users: [...workspace.users, { ...userInvite, role: [...role][0] }],
+            total_user: workspace.total_user + 1,
+            users: [...workspace.users, { ...userInvite, role: roleUser }],
             activities:
               workspace.activities.length > 0
                 ? [...workspace.activities, data.data]
                 : [data.data],
           };
           dispatch(updateWorkspace(workspaceUpdate));
+          socket.emit("sendNotification", {
+            user_id: userInvite.id,
+            userName: user.name,
+            userAvatar: user.avatar,
+            type: "invite_user",
+            content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${roleUser}`,
+          });
           toast.success("Mời người dùng vào Không gian làm việc thành công");
           setIsInvite(false);
           setUserInvite(null);

@@ -52,21 +52,21 @@ export default function MissionsWorkspace() {
     }
     return filteredMissions;
   }, [missions, filterValue, selected]);
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!missions || +id !== missions.workspace_id || !user.id) {
-        const data = await getMissionsApi({
-          user_id: user.id,
-          workspace_id: id,
-        });
-        if (data.status === 200) {
-          dispatch(updateMission(data.data));
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (!missions && id && user.id) {
+  //       const data = await getMissionsApi({
+  //         user_id: user.id,
+  //         workspace_id: id,
+  //       });
+  //       if (data.status === 200) {
+  //         dispatch(updateMission(data.data));
+  //       }
+  //     }
+  //   };
 
-    fetchData();
-  }, [id, user, missions]);
+  //   fetchData();
+  // }, [id, user, missions]);
   return (
     <div className="h-full ">
       <h1 className="text-xl font-medium mt-4">Nhiệm vụ</h1>

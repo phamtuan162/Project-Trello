@@ -21,8 +21,6 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
       setBoards(workspace.boards);
     }
   }, [workspace]);
-  console.log(workspace?.boards?.slice(0, 3));
-  console.log(boards);
   return (
     <div
       className="  h-full dark-border  lg:w-64 shrink-0  flex max-w-[250px]  flex-col"

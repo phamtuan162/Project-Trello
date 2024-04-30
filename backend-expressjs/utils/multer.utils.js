@@ -33,13 +33,19 @@ module.exports = {
   multerMiddleware: (req, res, next) => {
     upload.single("file")(req, res, function (err) {
       if (err instanceof multer.MulterError) {
+        if (err.message === "File too large") {
+          return res.status(400).json({
+            error: "Vượt quá kích thước tệp cho phép (5MB)",
+          });
+        }
+        return res
+
+          .status(400)
+          .json({ error: err.message, message: err.message });
+      } else {
         return res
           .status(400)
-          .json({ error: "Lỗi từ Multer", message: err.message });
-      } else if (err) {
-        return res
-          .status(400)
-          .json({ error: "Lỗi xử lý file", message: err.message });
+          .json({ error: err.message, message: err.message });
       }
 
       next();

@@ -7,7 +7,8 @@ import { cardSlice } from "./slices/cardSlice";
 import { boardSlice } from "./slices/boardSlice";
 import { columnSlice } from "./slices/columnSlice";
 import { missionSlice } from "./slices/missionSlice";
-
+import { socketSlice } from "./slices/socket";
+import { notificationSlice } from "./slices/notificationSlice";
 export const store = configureStore({
   reducer: {
     workspace: workspaceSlice.reducer,
@@ -18,5 +19,7 @@ export const store = configureStore({
     board: boardSlice.reducer,
     column: columnSlice.reducer,
     mission: missionSlice.reducer,
+    socket: socketSlice.reducer,
+    notification: notificationSlice.reducer,
   },
 });

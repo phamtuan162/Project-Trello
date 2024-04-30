@@ -3,32 +3,89 @@
 /**
  * Module dependencies.
  */
-
-var app = require('../app');
-var debug = require('debug')('backend-expressjs:server');
-var http = require('http');
+const { User, Notification } = require("../models/index.js");
+const { AsyncLocalStorage } = require("async_hooks");
+var app = require("../app");
+var debug = require("debug")("backend-expressjs:server");
+var http = require("http");
+const { Server } = require("socket.io");
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
 
 /**
  * Create HTTP server.
  */
 
 var server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Hoặc bạn có thể cung cấp URL cụ thể của máy chủ web của bạn
+  },
+});
+// Sự kiện kết nối mới
+let onlineUsers = [];
 
+const addNewUser = (userId, socketId) => {
+  !onlineUsers.some((user) => +user.id === +userId) &&
+    onlineUsers.push({ id: userId, socketId });
+};
+
+const removeUser = (socketId) => {
+  onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId);
+};
+
+const getUser = (userId) => {
+  return onlineUsers.find((user) => +user.id === +userId);
+};
 /**
  * Listen on provided port, on all network interfaces.
  */
+io.on("connection", (socket) => {
+  socket.on("newUser", async (userId) => {
+    addNewUser(userId, socket.id);
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+    const userOnl = await User.findByPk(userId);
+    if (users.length > 0 && userOnl) {
+      for (const user of users) {
+        await userOnl.update({ isOnline: true });
+        io.to(user.socketId).emit("getUserOnline", userOnl);
+      }
+    }
+  });
+  socket.on("sendNotification", async (body) => {
+    const { user_id } = body;
+    const receiver = getUser(user_id);
 
+    const notification = await Notification.create({
+      ...body,
+      status: "unread",
+    });
+    if (receiver) {
+      io.to(receiver.socketId).emit("getNotification", notification);
+    }
+  });
+  socket.on("disconnect", async () => {
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+    const userOff = onlineUsers.find((user) => user.socketId === socket.id);
+    const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+    if (users.length > 0 && userUpdate) {
+      for (const user of users) {
+        await userUpdate.update({ isOnline: false });
+        io.to(user.socketId).emit("getUserOnline", userUpdate);
+      }
+    }
+
+    removeUser(socket.id);
+  });
+});
 server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-
+server.on("error", onError);
+server.on("listening", onListening);
 /**
  * Normalize a port into a number, string, or false.
  */
@@ -54,22 +111,20 @@ function normalizePort(val) {
  */
 
 function onError(error) {
-  if (error.syscall !== 'listen') {
+  if (error.syscall !== "listen") {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
       process.exit(1);
       break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
       process.exit(1);
       break;
     default:
@@ -83,8 +138,6 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  debug("Listening on " + bind);
 }

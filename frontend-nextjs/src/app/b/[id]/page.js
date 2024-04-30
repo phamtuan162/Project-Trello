@@ -135,7 +135,9 @@ export default function BoardIdPage() {
 
       const updatedColumns = newBoard.columns.map((column) => {
         if (
-          typeof column.cardOrderIds[0] === "string" &&
+          Array.isArray(column.cardOrderIds) &&
+          column.cardOrderIds.length > 0 && // Kiểm tra có phần tử trong mảng không
+          typeof column.cardOrderIds[0] === "string" && // Kiểm tra phần tử đầu tiên có phải là chuỗi không
           column.cardOrderIds[0].indexOf("placeholder-card") !== -1
         ) {
           return {
@@ -146,7 +148,6 @@ export default function BoardIdPage() {
         }
         return column;
       });
-
       const updatedBoard = { ...newBoard, columns: updatedColumns };
       const data = await moveCardToDifferentColumnAPI({
         updateBoard: updatedBoard,

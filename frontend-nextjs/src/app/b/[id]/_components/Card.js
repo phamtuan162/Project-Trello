@@ -109,6 +109,7 @@ export function Card({ card }) {
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
+      {...listeners}
       key={card.id}
       onClick={() => {
         if (!isAssign && !isDragging) {
@@ -120,90 +121,95 @@ export function Card({ card }) {
       onMouseLeave={() => setIsEdit(false)}
       className="  text-sm bg-white rounded-md shadow-sm card relative z-45"
     >
-      <div {...(!isAssign && checkRoleBoard ? listeners : {})} className="pb-3">
-        {cardUpdate?.background && (
-          <div
-            className={`rounded-t-md relative w-full bg-no-repeat bg-cover bg-center h-[160px] h-max-[200px]`}
-            style={{
-              backgroundImage: `url(${cardUpdate.background})`,
-            }}
-          ></div>
-        )}
-      </div>
-      <div className={`p-3 pt-0 relative `}>
-        {cardUpdate?.title}
-        <div
-          className={`${
-            !isEdit || !checkRoleBoard ? "hidden" : ""
-          } absolute right-2 -top-1 z-50 `}
-        >
-          <AssignUser
-            isAssign={isAssign}
-            setIsAssign={setIsAssign}
-            cardUpdate={cardUpdate}
-          />
+      <div {...(checkRoleBoard ? listeners : {})}>
+        <div className="pb-3">
+          {cardUpdate?.background && (
+            <div
+              className={`rounded-t-md relative w-full bg-no-repeat bg-cover bg-center h-[160px] h-max-[200px]`}
+              style={{
+                backgroundImage: `url(${cardUpdate.background})`,
+              }}
+            ></div>
+          )}
         </div>
-        <div className=" mt-1 flex flex-wrap gap-2 w-full">
+        <div className={`p-3 pt-0 relative `}>
+          {cardUpdate?.title}
           <div
             className={`${
-              cardUpdate.startDateTime || cardUpdate.endDateTime ? "" : "hidden"
-            } `}
+              !isEdit || !checkRoleBoard ? "hidden" : ""
+            } absolute right-2 -top-1 z-50 `}
           >
-            <div
-              className={`text-xs mt-1  inline-flex items-center gap-1  ${
-                cardUpdate.status === "success" && "bg-green-700 text-white"
-              } ${
-                cardUpdate.status === "expired" && "bg-red-700 text-white"
-              } rounded-sm px-1 py-0.5 `}
-            >
-              {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
-                (cardUpdate.status === "success" ? (
-                  <SquareCheck size={14} />
-                ) : (
-                  <Clock size={12} />
-                ))}
-
-              {cardUpdate?.startDateTime && (
-                <>
-                  {format(cardUpdate?.startDateTime, "d 'tháng' M")}
-                  {cardUpdate?.endDateTime && " - "}
-                </>
-              )}
-
-              {cardUpdate?.endDateTime &&
-                format(cardUpdate?.endDateTime, "d 'tháng' M")}
-            </div>
-          </div>
-          {missions?.length > 0 && (
-            <div
-              className={`text-xs mt-1  inline-flex items-center gap-1  ${
-                missionSuccess.length === missions.length &&
-                "bg-green-700 text-white"
-              }  rounded-sm px-1 py-0.5`}
-            >
-              <SquareCheck size={14} /> {missionSuccess.length}/
-              {missions.length}
-            </div>
-          )}
-          {cardUpdate?.attachments?.length > 0 && (
-            <div className="flex gap-1 items-center">
-              <Paperclip size={12} /> {cardUpdate.attachments.length}
-            </div>
-          )}
-        </div>
-
-        <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">
-          {cardUpdate?.users?.map((user) => (
-            <Avatar
-              key={user.id}
-              src={user.avatar}
-              name={user.name.charAt(0).toUpperCase()}
-              radius="full"
-              color="secondary"
+            <AssignUser
+              isAssign={isAssign}
+              setIsAssign={setIsAssign}
+              cardUpdate={cardUpdate}
             />
-          ))}
-        </AvatarGroup>
+          </div>
+          <div className=" mt-1 flex flex-wrap gap-2 w-full">
+            <div
+              className={`${
+                cardUpdate.startDateTime || cardUpdate.endDateTime
+                  ? ""
+                  : "hidden"
+              } `}
+            >
+              <div
+                className={`text-xs mt-1  inline-flex items-center gap-1  ${
+                  cardUpdate.status === "success" && "bg-green-700 text-white"
+                } ${
+                  cardUpdate.status === "expired" && "bg-red-700 text-white"
+                } rounded-sm px-1 py-0.5 `}
+              >
+                {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
+                  (cardUpdate.status === "success" ? (
+                    <SquareCheck size={14} />
+                  ) : (
+                    <Clock size={12} />
+                  ))}
+
+                {cardUpdate?.startDateTime && (
+                  <>
+                    {format(cardUpdate?.startDateTime, "d 'tháng' M")}
+                    {cardUpdate?.endDateTime && " - "}
+                  </>
+                )}
+
+                {cardUpdate?.endDateTime &&
+                  format(cardUpdate?.endDateTime, "d 'tháng' M")}
+              </div>
+            </div>
+            {missions?.length > 0 && (
+              <div
+                className={`text-xs mt-1  inline-flex items-center gap-1  ${
+                  missionSuccess.length === missions.length &&
+                  "bg-green-700 text-white"
+                }  rounded-sm px-1 py-0.5`}
+              >
+                <SquareCheck size={14} /> {missionSuccess.length}/
+                {missions.length}
+              </div>
+            )}
+            {cardUpdate?.attachments?.length > 0 && (
+              <div className="flex gap-1 items-center">
+                <Paperclip size={12} /> {cardUpdate.attachments.length}
+              </div>
+            )}
+          </div>
+
+          <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">
+            {cardUpdate?.users?.map((user) => (
+              <Avatar
+                key={user.id}
+                src={user.avatar}
+                name={user.name.charAt(0).toUpperCase()}
+                radius="full"
+                color="secondary"
+              />
+            ))}
+          </AvatarGroup>
+        </div>
       </div>
     </div>
   );
 }
+// {...(!isAssign && checkRoleBoard ? listeners : {})}

@@ -14,6 +14,7 @@ const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
   const userActive = useSelector((state) => state.user.user);
+  const socket = useSelector((state) => state.socket.socket);
   const [isOpen, setIsOpen] = useState(false);
   const handleLeaveOrCancelWorkspace = async () => {
     if (+user.id === +userActive.id) {
@@ -33,6 +34,7 @@ const LeaveWorkspace = ({ user }) => {
         if (data.status === 200) {
           const workspaceUpdate = {
             ...workspace,
+            total_user: workspace.total_user - 1,
             users: workspace.users.filter((item) => +item.id !== +user.id),
             activities:
               workspace.activities.length > 0
@@ -40,7 +42,13 @@ const LeaveWorkspace = ({ user }) => {
                 : [data.data],
           };
           dispatch(updateWorkspace(workspaceUpdate));
-
+          socket.emit("sendNotification", {
+            user_id: user.id,
+            userName: userActive.name,
+            userAvatar: userActive.avatar,
+            type: "cancel_user",
+            content: `đã loại bạn khỏi Không gian làm việc ${workspace.name} `,
+          });
           toast.success("Loại bỏ thành viên thành công");
         } else {
           const message = data.error;

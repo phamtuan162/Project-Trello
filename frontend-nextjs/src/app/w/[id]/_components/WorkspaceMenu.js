@@ -25,7 +25,9 @@ import { switchWorkspace } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
 import Loading from "@/components/Loading/Loading";
+import { fetchMission } from "@/stores/middleware/fetchMission";
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateUser } = userSlice.actions;
 export default function WorkspaceMenu({
@@ -39,8 +41,8 @@ export default function WorkspaceMenu({
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
   const workspacesSwitched = useMemo(() => {
-    return user?.workspaces?.filter((item) => +item.id !== +workspaceId) || [];
-  }, [user, workspaceId]);
+    return user?.workspaces?.filter((item) => +item.id !== +workspace.id) || [];
+  }, [user, workspace]);
   const [workspaceSearch, setWorkspaceSearch] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -82,6 +84,9 @@ export default function WorkspaceMenu({
 
           dispatch(updateUser({ ...user, role: userNeedToFind.role }));
         }
+        dispatch(
+          fetchMission({ user_id: user.id, workspace_id: workspace_id_witched })
+        );
         dispatch(updateWorkspace(workspaceActive));
         if (pathname.startsWith(`/w/${workspaceId}`)) {
           let currentURL = window.location.href;
@@ -91,7 +96,7 @@ export default function WorkspaceMenu({
           );
           router.push(currentURL);
         }
-        setIsChange(false);
+
         // router.push(`/w/${workspaceActive.id}/boards`);
       }
     });
@@ -243,7 +248,10 @@ export default function WorkspaceMenu({
                       </h4>
                       <div className="flex items-center text-xs text-muted-foreground ">
                         <PrivateIcon size={16} /> {"\u2022"}{" "}
-                        {workspace_search?.total_user} thành viên
+                        {workspace_search.id === workspace.id
+                          ? workspace?.total_user
+                          : workspace_search?.total_user}{" "}
+                        thành viên
                       </div>
                     </div>
                   </div>

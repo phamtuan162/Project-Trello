@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
@@ -12,7 +12,7 @@ const AttachmentFile = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
-
+  const inputRef = useRef();
   const HandleUploadFile = async (e) => {
     const file = e.target.files[0];
     const formData = new FormData();
@@ -30,6 +30,7 @@ const AttachmentFile = ({ children }) => {
       } else {
         const error = data.error;
         toast.error(error);
+        setIsOpen(false);
       }
     });
   };
@@ -69,6 +70,7 @@ const AttachmentFile = ({ children }) => {
               Đính kèm tệp từ máy tính của bạn
             </p>
             <input
+              ref={inputRef}
               onChange={(e) => HandleUploadFile(e)}
               type="file"
               accept="*/*"

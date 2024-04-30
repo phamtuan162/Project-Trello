@@ -19,8 +19,9 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
   const [keyword, setKeyWord] = useState("");
   const workspace = useSelector((state) => state.workspace.workspace);
   const user = useSelector((state) => state.user.user);
+  const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
-
+  const socket = useSelector((state) => state.socket.socket);
   const [userSearch, setUserSearch] = useState([]);
   const userNotAssignCard = useMemo(() => {
     if (!workspace || !workspace.users || !cardUpdate.users) {
@@ -85,6 +86,13 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               users: cardUpdate.users,
             })
           );
+          socket.emit("sendNotification", {
+            user_id: userAssign.id,
+            userName: user.name,
+            userAvatar: user.avatar,
+            type: "assign_user_card",
+            content: `đã thêm bạn vào thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name} `,
+          });
           setKeyWord("");
           setUserSearch([]);
         } else {
@@ -95,23 +103,32 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     }
   };
 
-  const HandleUnAssignedCard = async (user) => {
-    if (user) {
-      unAssignUserApi(cardUpdate.id, { user_id: user.id }).then((data) => {
-        if (data.status === 200) {
-          const cardUpdate = data.card;
-          dispatch(
-            updateCard({
-              ...card,
-              users: cardUpdate.users,
-              activities: cardUpdate.activities,
-            })
-          );
-        } else {
-          const error = data.error;
-          toast.error(error);
+  const HandleUnAssignedCard = async (userAssign) => {
+    if (userAssign) {
+      unAssignUserApi(cardUpdate.id, { user_id: userAssign.id }).then(
+        (data) => {
+          if (data.status === 200) {
+            const cardUpdate = data.card;
+            dispatch(
+              updateCard({
+                ...card,
+                users: cardUpdate.users,
+                activities: cardUpdate.activities,
+              })
+            );
+            socket.emit("sendNotification", {
+              user_id: userAssign.id,
+              userName: user.name,
+              userAvatar: user.avatar,
+              type: "assign_user_card",
+              content: `đã loại bạn khỏi thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name} `,
+            });
+          } else {
+            const error = data.error;
+            toast.error(error);
+          }
         }
-      });
+      );
     }
   };
 
