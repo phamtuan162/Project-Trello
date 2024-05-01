@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
@@ -22,6 +22,7 @@ import {
   NavbarMenu,
   NavbarMenuToggle,
   Tooltip,
+  Badge,
 } from "@nextui-org/react";
 import { SearchIcon } from "../Icon/SearchIcon";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
@@ -33,11 +34,47 @@ import { socketSlice } from "@/stores/slices/socket";
 import { io } from "socket.io-client";
 import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
+import { clickNotification } from "@/services/workspaceApi";
+import { toast } from "react-toastify";
 const { updateUser } = userSlice.actions;
 const { updateProvider } = providerSlice.actions;
 const { updateSocket } = socketSlice.actions;
 const { updateNotification } = notificationSlice.actions;
 const Header = () => {
+  const notifications = useSelector(
+    (state) => state.notification.notifications
+  );
+  const notificationsClick = useMemo(() => {
+    return notifications?.filter((notification) => !notification.onClick);
+  }, [notifications]);
+  console.log(notificationsClick);
+
+  const socket = useSelector((state) => state.socket.socket);
+
+  const { id } = useParams();
+  const access_token = Cookies.get("access_token");
+  const router = useRouter();
+  const pathname = usePathname();
+  const dispatch = useDispatch();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const user = useSelector((state) => state.user.user);
+  const workspace = useSelector((state) => state.workspace.workspace);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleClickNotify = async () => {
+    if (notificationsClick?.length > 0) {
+      const notificationsUpdate = notifications.map((notification) => {
+        return { ...notification, onClick: true };
+      });
+      dispatch(updateNotification(notificationsUpdate));
+      clickNotification({ user_id: user.id }).then((data) => {
+        if (data.status === 200) {
+        } else {
+          toast.error(data.error);
+        }
+      });
+    }
+  };
   const options = [
     {
       label: "Thêm không gian ",
@@ -56,11 +93,18 @@ const Header = () => {
       icon: <NotifyIcon />,
       title: "",
       component: (
-        <Notification>
-          <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-            <NotifyIcon />
-          </button>
-        </Notification>
+        <Badge
+          color="danger"
+          content={notificationsClick.length}
+          isInvisible={!notificationsClick.length > 0}
+          shape="circle"
+        >
+          <Notification handleClickNotify={handleClickNotify}>
+            <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+              <NotifyIcon />
+            </button>
+          </Notification>
+        </Badge>
       ),
     },
     {
@@ -84,17 +128,12 @@ const Header = () => {
       ),
     },
   ];
-  const socket = useSelector((state) => state.socket.socket);
-
-  const { id } = useParams();
-  const access_token = Cookies.get("access_token");
-  const router = useRouter();
-  const pathname = usePathname();
-  const dispatch = useDispatch();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = useSelector((state) => state.user.user);
-  const workspace = useSelector((state) => state.workspace.workspace);
-  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    if (!socket) {
+      const newSocket = io("http://localhost:3001");
+      dispatch(updateSocket(newSocket));
+    }
+  }, []);
   useEffect(() => {
     if (!user.id && !pathname.startsWith("/auth/")) {
       getProfile(access_token).then((data) => {
@@ -132,12 +171,6 @@ const Header = () => {
       return () => clearTimeout(timer);
     }
   }, [user, workspace]);
-  useEffect(() => {
-    if (!socket) {
-      const newSocket = io("http://localhost:3001");
-      dispatch(updateSocket(newSocket));
-    }
-  }, []);
 
   useEffect(() => {
     if (user.id && socket) {

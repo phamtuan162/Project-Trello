@@ -13,6 +13,7 @@ const workRouter = require("./work/work");
 const missionRouter = require("./mission/mission");
 const activityRouter = require("./activity/activity");
 const attachmentRouter = require("./attachment/attachment");
+const notificationRouter = require("./notification/notification");
 router.use("/auth", authRouter);
 
 router.use("/role", roleRouter);
@@ -39,4 +40,5 @@ router.use("/activity", activityRouter);
 
 router.use("/attachment", attachmentRouter);
 
+router.use("/notification", notificationRouter);
 module.exports = router;

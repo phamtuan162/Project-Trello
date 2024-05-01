@@ -87,6 +87,7 @@ export default function PageWorkspaceUsers() {
   ];
   useEffect(() => {
     const handleUserOnline = (data) => {
+      console.log(data);
       if (data.id && workspace?.users?.length > 0) {
         const usersUpdate = workspace.users.map((item) => {
           if (+item.id === +data.id) {

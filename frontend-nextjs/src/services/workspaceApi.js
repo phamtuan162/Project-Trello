@@ -742,3 +742,22 @@ export const deleteFileApi = async (attachmentId) => {
   }
   return null;
 };
+/* Notification */
+export const markAsReadNotification = async (body) => {
+  const { response, data } = await client.put(
+    `/notification/mark-as-read`,
+    body
+  );
+  if (response.ok) {
+    return data;
+  }
+};
+export const clickNotification = async (body) => {
+  const { response, data } = await client.put(
+    `/notification/click-notify`,
+    body
+  );
+  if (response.ok) {
+    return data;
+  }
+};

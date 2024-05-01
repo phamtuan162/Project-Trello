@@ -12,14 +12,18 @@ import ThemeSwitcher from "./ThemeSwitcher";
 import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import Cookies from "js-cookie";
 export function UserMenu({ user }) {
+  const socket = useSelector((state) => state.socket.socket);
   const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
       onClick: async () => {
         logoutApi().then((data) => {
           if (data) {
+            socket.emit("logout", user.id);
+
             Cookies.remove("access_token");
             Cookies.remove("refresh_token");
             window.location.href = "/auth/login";

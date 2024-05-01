@@ -50,9 +50,12 @@ io.on("connection", (socket) => {
     addNewUser(userId, socket.id);
     const users = onlineUsers.filter((user) => user.socketId !== socket.id);
     const userOnl = await User.findByPk(userId);
+    if (userOnl) {
+      await userOnl.update({ isOnline: true });
+    }
+
     if (users.length > 0 && userOnl) {
       for (const user of users) {
-        await userOnl.update({ isOnline: true });
         io.to(user.socketId).emit("getUserOnline", userOnl);
       }
     }
@@ -64,18 +67,35 @@ io.on("connection", (socket) => {
     const notification = await Notification.create({
       ...body,
       status: "unread",
+      onClick: false,
     });
     if (receiver) {
       io.to(receiver.socketId).emit("getNotification", notification);
+    }
+  });
+  socket.on("logout", async (body) => {
+    const user_id = body;
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+    const userOnl = await User.findByPk(user_id);
+    if (userOnl) {
+      await userOnl.update({ isOnline: false });
+    }
+
+    if (users.length > 0 && userOnl) {
+      for (const user of users) {
+        io.to(user.socketId).emit("getUserOnline", userOnl);
+      }
     }
   });
   socket.on("disconnect", async () => {
     const users = onlineUsers.filter((user) => user.socketId !== socket.id);
     const userOff = onlineUsers.find((user) => user.socketId === socket.id);
     const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+    if (userUpdate) {
+      await userUpdate.update({ isOnline: false });
+    }
     if (users.length > 0 && userUpdate) {
       for (const user of users) {
-        await userUpdate.update({ isOnline: false });
         io.to(user.socketId).emit("getUserOnline", userUpdate);
       }
     }

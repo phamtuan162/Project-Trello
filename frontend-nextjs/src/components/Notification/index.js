@@ -10,13 +10,17 @@ import { useEffect, useMemo, useState } from "react";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import NotificationItem from "./notification-item";
 import { CheckIcon, X } from "lucide-react";
+import { markAsReadNotification } from "@/services/workspaceApi";
+import { toast } from "react-toastify";
 const { updateNotification } = notificationSlice.actions;
-const Notification = ({ children }) => {
+const Notification = ({ children, handleClickNotify }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(true);
 
   const socket = useSelector((state) => state.socket.socket);
+  const user = useSelector((state) => state.user.user);
+
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
@@ -43,13 +47,31 @@ const Notification = ({ children }) => {
       };
     }
   }, [socket]);
-
+  const handleMarkAsReadNotification = async () => {
+    if (notifications.length > 0) {
+      markAsReadNotification({ user_id: user.id }).then((data) => {
+        if (data.status === 200) {
+          const notificationsUpdate = notifications.map((notification) => {
+            return { ...notification, status: "read" };
+          });
+          dispatch(updateNotification(notificationsUpdate));
+        } else {
+          toast.error(data.error);
+        }
+      });
+    }
+  };
   return (
     <Popover
       placement="bottom"
       showArrow
       isOpen={isOpen}
-      onOpenChange={(open) => setIsOpen(open)}
+      onOpenChange={(open) => {
+        if (open) {
+          handleClickNotify();
+        }
+        setIsOpen(open);
+      }}
       classNames={{
         content: [" p-0"],
       }}
@@ -66,7 +88,7 @@ const Notification = ({ children }) => {
             </p>
             <button
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center rounded-lg p-1.5 absolute -top-1.5 right-3 hover:bg-default-200"
+              className="focus-visible:outline-0 flex items-center justify-center rounded-lg p-1.5 absolute -top-1.5 right-3 hover:bg-default-200"
               type="button"
             >
               <X size={14} color={"#626f86"} />
@@ -75,9 +97,15 @@ const Notification = ({ children }) => {
 
           <ol className="space-y-2 mt-4 pb-2 px-2 cursor-pointer max-h-[450px] overflow-x-auto">
             <div className="flex justify-end gap-2 mb-4">
-              <button className="text-xs hover:underline">
-                Đánh dấu tất cả đã đọc
-              </button>
+              {isSelected && (
+                <button
+                  onClick={() => handleMarkAsReadNotification()}
+                  className="text-xs hover:underline"
+                >
+                  Đánh dấu tất cả đã đọc
+                </button>
+              )}
+
               <Switch
                 isSelected={isSelected}
                 onValueChange={setIsSelected}

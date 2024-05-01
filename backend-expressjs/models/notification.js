@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       userAvatar: DataTypes.STRING,
       userName: DataTypes.STRING,
       status: DataTypes.STRING,
+      onClick: DataTypes.BOOLEAN,
     },
     {
       sequelize,
