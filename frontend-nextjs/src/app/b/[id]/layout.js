@@ -2,6 +2,12 @@ export const metadata = {
   title: "Bảng",
   description: "Chi tiết Bảng",
 };
+import BoardNavbar from "./_components/BoardNavbar";
 export default function BoardLayout({ children }) {
-  return <div className="relative h-full flex">{children}</div>;
+  return (
+    <div className="relative h-full flex">
+      <BoardNavbar />
+      {children}
+    </div>
+  );
 }

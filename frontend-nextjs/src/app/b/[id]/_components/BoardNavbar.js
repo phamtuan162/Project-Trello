@@ -1,14 +1,53 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@nextui-org/button";
-import { Avatar, AvatarGroup, Input } from "@nextui-org/react";
-import { useSelector } from "react-redux";
+import {
+  Avatar,
+  AvatarGroup,
+  Input,
+  Breadcrumbs,
+  BreadcrumbItem,
+} from "@nextui-org/react";
+import { useDispatch, useSelector } from "react-redux";
 import { BoardOptions } from "./BoardOptions";
-export default function BoardNavbar({ board, updateBoard, setIsActivity }) {
+import { usePathname, useRouter } from "next/navigation";
+import Loading from "@/components/Loading/Loading";
+import { updateBoardDetail } from "@/services/workspaceApi";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { toast } from "react-toastify";
+import { useParams } from "next/navigation";
+import { generatePlaceholderCard } from "@/utils/formatters";
+import { mapOrder } from "@/utils/sorts";
+import { isEmpty } from "lodash";
+import { getBoardDetail } from "@/services/workspaceApi";
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { BoardIcon } from "@/components/Icon/BoardIcon";
+import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
+const { updateCard } = cardSlice.actions;
+export default function BoardNavbar({ setIsActivity }) {
+  const options = [
+    { href: "", key: "board", label: "Bảng", icon: <BoardIcon size={16} /> },
+    {
+      href: "/dashboard",
+      key: "dashboard",
+      label: "Bảng điều khiển",
+      icon: <DashBoardIcon size={16} />,
+    },
+  ];
+  const pathname = usePathname();
+  const [currentPage, setCurrentPage] = useState(
+    pathname.includes("dashboard") ? "dashboard" : "board"
+  );
+
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { id: boardId } = useParams();
   const inputRef = useRef(null);
   const btnRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const board = useSelector((state) => state.board.board);
+
   const userOnline = useMemo(() => {
     return workspace?.users?.filter((user) => user.isOnline);
   }, [workspace]);
@@ -21,7 +60,14 @@ export default function BoardNavbar({ board, updateBoard, setIsActivity }) {
     const title = inputRef.current.value.trim();
 
     if (title && title !== board.title.trim()) {
-      await updateBoard(board.id, { title: title });
+      updateBoardDetail(board.id, { title: title }).then((data) => {
+        if (data.status === 200) {
+          const newBoard = { ...board };
+          newBoard.title = updateData.title;
+          dispatch(boardSlice.actions.updateBoard(newBoard));
+          toast.success("Cập nhật thành công");
+        }
+      });
       setIsEditing(false);
     }
   };
@@ -31,9 +77,48 @@ export default function BoardNavbar({ board, updateBoard, setIsActivity }) {
       inputRef.current.blur();
     }
   };
+
+  useEffect(() => {
+    const fetchBoardDetail = async () => {
+      try {
+        dispatch(updateCard({}));
+        const data = await getBoardDetail(boardId);
+        if (data.status === 200) {
+          let boardData = data.data;
+          boardData.columns = mapOrder(
+            boardData.columns,
+            boardData.columnOrderIds,
+            "id"
+          );
+
+          boardData.columns.forEach((column) => {
+            if (isEmpty(column.cards)) {
+              column.cards = [generatePlaceholderCard(column)];
+              column.cardOrderIds = [generatePlaceholderCard(column).id];
+            } else {
+              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+            }
+          });
+
+          dispatch(boardSlice.actions.updateBoard(boardData));
+        }
+      } catch (error) {
+        console.error("Error fetching board detail:", error);
+      }
+    };
+    if (!board || +boardId !== +board.id) {
+      fetchBoardDetail();
+    }
+  }, []);
+  if (!board.id || +board.id !== +boardId) {
+    return;
+  }
   return (
-    <div className="w-full h-10 z-[40] bg-black/50 absolute  flex items-center px-6 gap-x-4 ">
-      <div className="h-[40px]">
+    <div
+      className="w-full h-12 z-[40] absolute  flex items-center px-6 gap-x-4 "
+      style={{ backdropFilter: "blur(4px)", background: "#0000003d" }}
+    >
+      <div className="h-[40px] flex item-center">
         {isEditing ? (
           <Input
             defaultValue={board?.title}
@@ -55,7 +140,32 @@ export default function BoardNavbar({ board, updateBoard, setIsActivity }) {
           </Button>
         )}
       </div>
-
+      <Breadcrumbs
+        onAction={(key) => setCurrentPage(key)}
+        classNames={{
+          list: "gap-2",
+        }}
+        itemClasses={{
+          item: [
+            "p-1.5 rounded-md text-white ",
+            "data-[current=true]:border-foreground data-[current=true]:bg-gray-200 data-[current=true]:text-indigo-950 transition-colors",
+            "data-[disabled=true]:border-default-400 data-[disabled=true]:bg-gray-200",
+          ],
+          separator: "hidden",
+        }}
+      >
+        {options.map((option) => (
+          <BreadcrumbItem
+            key={option.key}
+            isCurrent={currentPage === option.key}
+            onClick={() => router.push(`/b/${board.id}${option.href}`)}
+            className="option"
+            startContent={option.icon}
+          >
+            {option.label}
+          </BreadcrumbItem>
+        ))}
+      </Breadcrumbs>
       <div className="ml-auto text-white flex gap-3 items-center ">
         <AvatarGroup isBordered max={2} className="group-avatar-1">
           {userOnline?.map((user) => (

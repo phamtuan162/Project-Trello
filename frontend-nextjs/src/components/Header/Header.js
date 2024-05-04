@@ -47,7 +47,6 @@ const Header = () => {
   const notificationsClick = useMemo(() => {
     return notifications?.filter((notification) => !notification.onClick);
   }, [notifications]);
-  console.log(notificationsClick);
 
   const socket = useSelector((state) => state.socket.socket);
 

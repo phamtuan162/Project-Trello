@@ -12,6 +12,7 @@ const MissionItem = ({ mission }) => {
   const board = useMemo(() => {
     return workspace?.boards?.find((board) => +mission.board_id === +board.id);
   }, [mission]);
+  console.log(board);
   return (
     <li className="flex items-center gap-4 hover:bg-default-100 p-2 rounded-lg cursor-pointer border-1 border-solid border-default-200">
       <div className="flex flex-col space-y-1">
@@ -62,6 +63,9 @@ const MissionItem = ({ mission }) => {
               }
             >
               {board?.title}
+            </BreadcrumbItem>
+            <BreadcrumbItem onClick={() => router.push(`/b/${board.id}`)}>
+              {mission?.cardTittle}
             </BreadcrumbItem>
           </Breadcrumbs>
         </div>

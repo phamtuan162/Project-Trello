@@ -4,19 +4,14 @@ import { RadioGroup, Radio, Input } from "@nextui-org/react";
 import { SearchIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { useMemo, useEffect, useCallback } from "react";
-import { getMissionsApi } from "@/services/workspaceApi";
-import { missionSlice } from "@/stores/slices/missionSlice";
+import { useMemo, useCallback } from "react";
 import MissionItem from "./mission";
-const { updateMission } = missionSlice.actions;
 export default function MissionsWorkspace() {
   const dispatch = useDispatch();
   const missions = useSelector((state) => state.mission.missions);
-  const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [selected, setSelected] = useState("all");
-  const { id } = useParams();
 
   const statusOptions = [
     { name: "Tất cả", value: "all" },
@@ -52,21 +47,7 @@ export default function MissionsWorkspace() {
     }
     return filteredMissions;
   }, [missions, filterValue, selected]);
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     if (!missions && id && user.id) {
-  //       const data = await getMissionsApi({
-  //         user_id: user.id,
-  //         workspace_id: id,
-  //       });
-  //       if (data.status === 200) {
-  //         dispatch(updateMission(data.data));
-  //       }
-  //     }
-  //   };
 
-  //   fetchData();
-  // }, [id, user, missions]);
   return (
     <div className="h-full ">
       <h1 className="text-xl font-medium mt-4">Nhiệm vụ</h1>

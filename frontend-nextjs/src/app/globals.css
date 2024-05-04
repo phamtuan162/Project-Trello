@@ -144,3 +144,11 @@ header {
 .file-img img {
   object-fit: contain;
 }
+
+.option:hover {
+  background-color: #a6c5e229;
+  border-radius: 6px;
+}
+.option span:disabled {
+  color: #172b4d;
+}

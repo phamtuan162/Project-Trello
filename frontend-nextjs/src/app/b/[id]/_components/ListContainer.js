@@ -36,7 +36,6 @@ export function ListContainer({
   createNewColumn,
   createNewCard,
   updateColumn,
-  updateBoard,
 }) {
   const user = useSelector((state) => state.user.user);
   const checkUser = useMemo(
@@ -342,7 +341,6 @@ export function ListContainer({
         createNewColumn={createNewColumn}
         createNewCard={createNewCard}
         updateColumn={updateColumn}
-        updateBoard={updateBoard}
       />
       ;
       <DragOverlay dropAnimation={dropAnimation}>

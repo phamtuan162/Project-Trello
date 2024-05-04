@@ -27,44 +27,42 @@ export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
-  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
-  const [isActivity, setIsActivity] = useState(false);
 
   const { id: boardId } = useParams();
-  useEffect(() => {
-    const fetchBoardDetail = async () => {
-      try {
-        setIsLoading(true);
-        dispatch(updateCard({}));
-        const data = await getBoardDetail(boardId);
-        if (data.status === 200) {
-          let boardData = data.data;
-          boardData.columns = mapOrder(
-            boardData.columns,
-            boardData.columnOrderIds,
-            "id"
-          );
+  // useEffect(() => {
+  //   const fetchBoardDetail = async () => {
+  //     try {
+  //       setIsLoading(true);
+  //       dispatch(updateCard({}));
+  //       const data = await getBoardDetail(boardId);
+  //       if (data.status === 200) {
+  //         let boardData = data.data;
+  //         boardData.columns = mapOrder(
+  //           boardData.columns,
+  //           boardData.columnOrderIds,
+  //           "id"
+  //         );
 
-          boardData.columns.forEach((column) => {
-            if (isEmpty(column.cards)) {
-              column.cards = [generatePlaceholderCard(column)];
-              column.cardOrderIds = [generatePlaceholderCard(column).id];
-            } else {
-              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-            }
-          });
+  //         boardData.columns.forEach((column) => {
+  //           if (isEmpty(column.cards)) {
+  //             column.cards = [generatePlaceholderCard(column)];
+  //             column.cardOrderIds = [generatePlaceholderCard(column).id];
+  //           } else {
+  //             column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+  //           }
+  //         });
 
-          dispatch(boardSlice.actions.updateBoard(boardData));
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error fetching board detail:", error);
-      }
-    };
+  //         dispatch(boardSlice.actions.updateBoard(boardData));
+  //         setIsLoading(false);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching board detail:", error);
+  //     }
+  //   };
 
-    fetchBoardDetail();
-  }, []);
+  //   fetchBoardDetail();
+  // }, []);
 
   const moveColumns = (dndOrderedColumns) => {
     const newBoard = { ...board };
@@ -274,58 +272,46 @@ export default function BoardIdPage() {
       toast.error(error);
     }
   };
-
-  const updateBoard = async (boardId, updateData) => {
-    const data = await updateBoardDetail(boardId, { ...updateData });
-    if (data.status === 200) {
-      const newBoard = { ...board };
-      if (updateData.title) {
-        newBoard.title = updateData.title;
-        dispatch(boardSlice.actions.updateBoard(newBoard));
-        toast.success("Cập nhật thành công");
-      }
-    } else {
-      const error = data.error;
-      toast.error(error);
-    }
-  };
+  if (!board.id || +board.id !== +boardId) {
+    return <Loading />;
+  }
+  // const updateBoard = async (boardId, updateData) => {
+  //   const data = await updateBoardDetail(boardId, { ...updateData });
+  //   if (data.status === 200) {
+  //     const newBoard = { ...board };
+  //     if (updateData.title) {
+  //       newBoard.title = updateData.title;
+  //       dispatch(boardSlice.actions.updateBoard(newBoard));
+  //       toast.success("Cập nhật thành công");
+  //     }
+  //   } else {
+  //     const error = data.error;
+  //     toast.error(error);
+  //   }
+  // };
   return (
-    <>
-      {!isLoading ? (
-        <div
-          className="relative h-full bg-no-repeat bg-cover bg-center grow overflow-x-auto"
-          style={{
-            backgroundImage: board?.background
-              ? `url(${board.background})`
-              : "",
-          }}
-        >
-          <BoardNavbar
+    <div
+      className="relative h-full bg-no-repeat bg-cover bg-center grow overflow-x-auto"
+      style={{
+        backgroundImage: board?.background ? `url(${board.background})` : "",
+      }}
+    >
+      <div className="relative pt-10 h-full ">
+        <div className="p-4 h-full overflow-y-hidden ">
+          <ListContainer
             board={board}
-            updateBoard={updateBoard}
-            setIsActivity={setIsActivity}
+            boardId={boardId}
+            moveColumns={moveColumns}
+            moveCardInTheSameColumn={moveCardInTheSameColumn}
+            moveCardToDifferentColumn={moveCardToDifferentColumn}
+            deleteColumnDetail={deleteColumnDetail}
+            createNewColumn={createNewColumn}
+            createNewCard={createNewCard}
+            updateColumn={updateColumn}
           />
-          <div className="relative pt-8 h-full ">
-            <div className="p-4 h-full overflow-y-hidden ">
-              <ListContainer
-                board={board}
-                boardId={boardId}
-                moveColumns={moveColumns}
-                moveCardInTheSameColumn={moveCardInTheSameColumn}
-                moveCardToDifferentColumn={moveCardToDifferentColumn}
-                deleteColumnDetail={deleteColumnDetail}
-                createNewColumn={createNewColumn}
-                createNewCard={createNewCard}
-                updateColumn={updateColumn}
-                updateBoard={updateBoard}
-              />
-            </div>
-          </div>
         </div>
-      ) : (
-        <Loading />
-      )}
-      <ActivityBoard isActivity={isActivity} setIsActivity={setIsActivity} />
-    </>
+      </div>
+    </div>
   );
 }
+// <ActivityBoard isActivity={isActivity} setIsActivity={setIsActivity} />
