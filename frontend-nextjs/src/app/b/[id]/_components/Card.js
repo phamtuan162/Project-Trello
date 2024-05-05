@@ -24,6 +24,7 @@ export function Card({ card }) {
   const cardUpdate = useMemo(() => {
     return +card.id === +cardData.id ? cardData : card;
   }, [cardData]);
+
   const missions = useMemo(() => {
     const extractMissions = (works) => {
       let allMissions = [];
@@ -69,32 +70,6 @@ export function Card({ card }) {
     display: card?.FE_PlaceholderCard ? "none" : "block",
   };
 
-  const actions = [
-    {
-      label: "Ngày đến hạn",
-      icon: <CalendarCheck size={18} />,
-    },
-    {
-      label: "Nhãn thẻ",
-      icon: <Tags size={18} />,
-    },
-    {
-      label: "Ưu tiên",
-      icon: <Flag size={18} />,
-    },
-    {
-      label: "Chỉnh sửa",
-      icon: <Pencil size={18} />,
-    },
-    {
-      label: "Đóng nhiệm vụ",
-      icon: <Check size={18} className="hover:text-green-400" />,
-    },
-    {
-      label: "Hành động khác",
-      icon: <MoreIcon size={18} />,
-    },
-  ];
   const [isEdit, setIsEdit] = useState(false);
   const [isAssign, setIsAssign] = useState(false);
 
@@ -109,7 +84,7 @@ export function Card({ card }) {
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
-      {...listeners}
+      {...(checkRoleBoard ? listeners : {})}
       key={card.id}
       onClick={() => {
         if (!isAssign && !isDragging) {
@@ -121,7 +96,7 @@ export function Card({ card }) {
       onMouseLeave={() => setIsEdit(false)}
       className="  text-sm bg-white rounded-md shadow-sm card relative z-45"
     >
-      <div {...(checkRoleBoard ? listeners : {})}>
+      <div>
         <div className="pb-3">
           {cardUpdate?.background && (
             <div
@@ -212,4 +187,3 @@ export function Card({ card }) {
     </div>
   );
 }
-// {...(!isAssign && checkRoleBoard ? listeners : {})}

@@ -1,11 +1,15 @@
 "use client";
 import { useSelector } from "react-redux";
 import { Chart } from "chart.js/auto";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useMemo } from "react";
 import { MoreHorizontalIcon } from "lucide-react";
-const BarChart = ({ chart }) => {
+const Chart1 = () => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
+  const check = useMemo(
+    () => board?.columns?.some((column) => column.cards.length > 0) || false,
+    [board]
+  );
   useEffect(() => {
     if (chartRef.current) {
       if (chartRef.current.chart) {
@@ -17,7 +21,7 @@ const BarChart = ({ chart }) => {
       const columnCounts = board.columns.map((column) => column.title);
       const context = chartRef.current.getContext("2d");
       const newChart = new Chart(context, {
-        type: chart.type,
+        type: "bar",
         data: {
           labels: columnCounts,
           datasets: [
@@ -59,7 +63,7 @@ const BarChart = ({ chart }) => {
       });
       chartRef.current.chart = newChart;
     }
-  }, []);
+  }, [board]);
   return (
     <div
       className="group p-4 rounded-lg bg-white"
@@ -75,8 +79,20 @@ const BarChart = ({ chart }) => {
         <p className="font-bold">Số thẻ trong mỗi danh sách</p>
         <MoreHorizontalIcon size={16} />
       </div>
-      <canvas className="w-full" ref={chartRef} />
+      <div className="w-full">
+        <div className="w-full  hidden last:flex items-center justify-center flex-col gap-2">
+          <img
+            src="https://trello.com/assets/a5465d28947b51ca12ca.png"
+            alt=""
+            className="w-[200px] h-[200px]"
+          />
+          <p className=" text-lg  text-muted-foreground">
+            Bảng này chưa có thẻ nào
+          </p>
+        </div>
+        {check ? <canvas className="w-full" ref={chartRef} /> : ""}
+      </div>
     </div>
   );
 };
-export default BarChart;
+export default Chart1;

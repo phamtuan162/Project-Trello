@@ -78,12 +78,12 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     } else {
       assignUserApi(cardUpdate.id, { user_id: userAssign.id }).then((data) => {
         if (data.status === 200) {
-          const cardUpdate = data.card;
+          const cardUpdateNew = data.card;
           dispatch(
             updateCard({
-              ...card,
-              activities: cardUpdate.activities,
-              users: cardUpdate.users,
+              ...cardUpdate,
+              activities: cardUpdateNew.activities,
+              users: cardUpdateNew.users,
             })
           );
           socket.emit("sendNotification", {
@@ -93,8 +93,8 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
             type: "assign_user_card",
             content: `đã thêm bạn vào thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name} `,
           });
+
           setKeyWord("");
-          setUserSearch([]);
         } else {
           const error = data.error;
           toast.error(error);
@@ -108,12 +108,12 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       unAssignUserApi(cardUpdate.id, { user_id: userAssign.id }).then(
         (data) => {
           if (data.status === 200) {
-            const cardUpdate = data.card;
+            const cardUpdateNew = data.card;
             dispatch(
               updateCard({
-                ...card,
-                users: cardUpdate.users,
-                activities: cardUpdate.activities,
+                ...cardUpdate,
+                users: cardUpdateNew.users,
+                activities: cardUpdateNew.activities,
               })
             );
             socket.emit("sendNotification", {
@@ -123,6 +123,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
               type: "assign_user_card",
               content: `đã loại bạn khỏi thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name} `,
             });
+            setKeyWord("");
           } else {
             const error = data.error;
             toast.error(error);

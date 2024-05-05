@@ -1,15 +1,10 @@
 "use client";
-import { Copy, Trash, ArrowRight, Share2 } from "lucide-react";
-import { useSelector, useDispatch } from "react-redux";
-import useCardModal from "@/hooks/use-card-modal";
+import { Copy, Trash, ArrowRight } from "lucide-react";
 import { Button } from "@nextui-org/react";
 import MoveCard from "@/components/actions/card/moveCard";
 import CopyCard from "@/components/actions/card/copyCard";
 import DeleteCard from "@/components/actions/card/deleteCard";
 const ActionsCard = () => {
-  const cardModal = useCardModal();
-  const board = useSelector((state) => state.board.board);
-
   const actions = [
     {
       label: "Di chuyển",

@@ -81,7 +81,7 @@ export default function BoardNavbar({ setIsActivity }) {
   useEffect(() => {
     const fetchBoardDetail = async () => {
       try {
-        dispatch(updateCard({}));
+        // dispatch(updateCard({}));
         const data = await getBoardDetail(boardId);
         if (data.status === 200) {
           let boardData = data.data;
