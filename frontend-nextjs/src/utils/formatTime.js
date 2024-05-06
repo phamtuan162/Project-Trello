@@ -1,3 +1,5 @@
+import { subDays, isWithinInterval, subMonths } from "date-fns";
+
 export function formatTimeAgo(isoDateString) {
   const currentTime = new Date();
   const pastTime = new Date(isoDateString);
@@ -27,3 +29,30 @@ export function formatTimeAgo(isoDateString) {
     return `vài giây trước`;
   }
 }
+
+export const isWithinLastTwoWeeks = (dateToCheck) => {
+  const currentDate = new Date();
+  const twoWeeksAgo = subDays(currentDate, 14);
+
+  const interval = { start: twoWeeksAgo, end: currentDate };
+
+  return isWithinInterval(dateToCheck, interval);
+};
+
+export const isWithinLastWeek = (dateToCheck) => {
+  const currentDate = new Date();
+  const weekAgo = subDays(currentDate, 7);
+
+  const interval = { start: weekAgo, end: currentDate };
+
+  return isWithinInterval(dateToCheck, interval);
+};
+
+export const isWithinLastMonth = (dateToCheck) => {
+  const currentDate = new Date();
+  const monthAgo = subMonths(currentDate, 1);
+
+  const interval = { start: monthAgo, end: currentDate };
+
+  return isWithinInterval(dateToCheck, interval);
+};
