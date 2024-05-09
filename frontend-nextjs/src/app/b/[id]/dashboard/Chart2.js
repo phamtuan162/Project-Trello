@@ -1,13 +1,26 @@
 "use client";
+import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
-import { MoreHorizontalIcon } from "lucide-react";
-const Chart2 = ({ typeCharts }) => {
+import { RadioGroup, Radio } from "@nextui-org/react";
+import { checkCardCreationDate } from "@/utils/formatTime";
+const colors = [
+  "rgba(255, 99, 132, 0.8)",
+  "rgba(255, 159, 64, 0.8)",
+  "rgba(255, 205, 86, 0.8)",
+  "rgba(75, 192, 192, 0.8)",
+  "rgba(54, 162, 235, 0.8)",
+  "rgba(153, 102, 255, 0.8)",
+  "rgba(201, 203, 207, 0.8)",
+  // Add more colors if needed
+];
+const Chart2 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
   const [type, setType] = useState("bar");
+  const [selected, setSelected] = useState("month");
 
   const updatedBoard = useMemo(() => {
     const updatedColumns = board?.columns?.map((column) => {
@@ -32,80 +45,174 @@ const Chart2 = ({ typeCharts }) => {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
+      const context = chartRef.current.getContext("2d");
+      let chartData = {};
 
-      let users = [];
-      let cards = [];
-      updatedBoard?.columns?.forEach((column) => {
-        if (column?.cards?.length > 0) {
-          for (const card of column.cards) {
-            if (card?.users?.length > 0) {
-              for (const user of card.users) {
-                if (!users.includes(user.name)) {
-                  users.unshift(user.name);
-                  cards.unshift(1);
-                } else {
-                  const index = users.findIndex((item) => item === user.name);
-                  cards[index] += 1;
+      if (type === "line") {
+        let timeCreates = [];
+        let datasets = [];
+        let cardCounts = [];
+        let users = [];
+        updatedBoard?.columns?.forEach((column) => {
+          if (column.cards.length > 0) {
+            column.cards.forEach((card) => {
+              if (card.created_at) {
+                const created_at = format(
+                  new Date(card.created_at),
+                  "dd/MM/yyyy"
+                );
+
+                if (
+                  checkCardCreationDate(selected, card.created_at) &&
+                  !timeCreates.includes(created_at)
+                ) {
+                  timeCreates.push(created_at);
+                  cardCounts.push(0);
+                }
+                if (card?.users?.length > 0) {
+                  for (const user of card.users) {
+                    if (!users.includes(user.name)) {
+                      users.push(user.name);
+                    }
+                  }
                 }
               }
-            }
-            if (!users.includes("Không được giao")) {
-              users.push("Không được giao");
-              cards.push(1);
-            } else {
-              const index = users.findIndex(
-                (item) => item === "Không được giao"
-              );
-              cards[index] += 1;
-            }
+            });
           }
+        });
+        timeCreates.sort(
+          (a, b) =>
+            new Date(a.split("/").reverse().join("/")) -
+            new Date(b.split("/").reverse().join("/"))
+        );
+        if (users.length > 0) {
+          users.forEach((user, index) => {
+            datasets.push({
+              label: user,
+              data: [...cardCounts],
+              backgroundColor: colors[index % colors.length],
+              borderColor: colors[index % colors.length],
+              fill: false,
+            });
+          });
         }
-      });
-      const context = chartRef.current.getContext("2d");
-      const newChart = new Chart(context, {
-        type: type,
-        data: {
-          labels: users,
-          datasets: [
-            {
-              label: "Số thẻ ",
-              data: cards,
-              backgroundColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(255, 205, 86, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(201, 203, 207, 0.2)",
-              ],
-              borderColor: [
-                "rgb(255, 99, 132)",
-                "rgb(255, 159, 64)",
-                "rgb(255, 205, 86)",
-                "rgb(75, 192, 192)",
-                "rgb(54, 162, 235)",
-                "rgb(153, 102, 255)",
-                "rgb(201, 203, 207)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          scales: {
-            x: {
-              type: "category",
-            },
-            y: {
-              beginAtZero: true,
+
+        updatedBoard?.columns?.forEach((column) => {
+          if (column.cards.length > 0) {
+            column.cards.forEach((card) => {
+              if (card.created_at) {
+                const created_at = format(
+                  new Date(card.created_at),
+                  "dd/MM/yyyy"
+                );
+                if (timeCreates.includes(created_at)) {
+                  if (card?.users?.length > 0) {
+                    for (const user of card.users) {
+                      const dataset = datasets.find(
+                        (item) => item.label === user.name
+                      );
+                      const indexTime = timeCreates.findIndex(
+                        (item) => item === created_at
+                      );
+                      dataset.data[indexTime] += 1;
+                    }
+                  }
+                }
+              }
+            });
+          }
+        });
+
+        chartData = {
+          type: type,
+          data: {
+            labels: timeCreates,
+            datasets: datasets,
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { type: "category" },
+              y: { beginAtZero: true },
             },
           },
-        },
-      });
+        };
+      } else {
+        let users = [];
+        let cards = [];
+        updatedBoard?.columns?.forEach((column) => {
+          if (column?.cards?.length > 0) {
+            for (const card of column.cards) {
+              if (card?.users?.length > 0) {
+                for (const user of card.users) {
+                  if (!users.includes(user.name)) {
+                    users.unshift(user.name);
+                    cards.unshift(1);
+                  } else {
+                    const index = users.findIndex((item) => item === user.name);
+                    cards[index] += 1;
+                  }
+                }
+              }
+              if (!users.includes("Không được giao")) {
+                users.push("Không được giao");
+                cards.push(1);
+              } else {
+                const index = users.findIndex(
+                  (item) => item === "Không được giao"
+                );
+                cards[index] += 1;
+              }
+            }
+          }
+        });
+        chartData = {
+          type: type,
+          data: {
+            labels: users,
+            datasets: [
+              {
+                label: "Số thẻ ",
+                data: cards,
+                backgroundColor: [
+                  "rgba(255, 99, 132, 0.2)",
+                  "rgba(255, 159, 64, 0.2)",
+                  "rgba(255, 205, 86, 0.2)",
+                  "rgba(75, 192, 192, 0.2)",
+                  "rgba(54, 162, 235, 0.2)",
+                  "rgba(153, 102, 255, 0.2)",
+                  "rgba(201, 203, 207, 0.2)",
+                ],
+                borderColor: [
+                  "rgb(255, 99, 132)",
+                  "rgb(255, 159, 64)",
+                  "rgb(255, 205, 86)",
+                  "rgb(75, 192, 192)",
+                  "rgb(54, 162, 235)",
+                  "rgb(153, 102, 255)",
+                  "rgb(201, 203, 207)",
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: {
+                type: "category",
+              },
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        };
+      }
+      const newChart = new Chart(context, chartData);
+
       chartRef.current.chart = newChart;
     }
-  }, [updatedBoard, type]);
+  }, [updatedBoard, type, selected]);
 
   function handleDownload() {
     if (chartRef.current) {
@@ -160,6 +267,19 @@ const Chart2 = ({ typeCharts }) => {
         </div>
       </div>
       <div className="w-full grow flex flex-col">
+        {type === "line" && (
+          <RadioGroup
+            label="Khung thời gian"
+            value={selected}
+            onValueChange={setSelected}
+            orientation="horizontal"
+            className="radio "
+          >
+            {times.map((time) => (
+              <Radio value={time.value}>{time.label}</Radio>
+            ))}
+          </RadioGroup>
+        )}
         <div className="w-full  hidden last:flex items-center justify-center flex-col gap-2">
           <img
             src="https://trello.com/assets/58551b69c73b0c3abe12.png"
@@ -171,12 +291,12 @@ const Chart2 = ({ typeCharts }) => {
           </p>
         </div>
         {check ? (
-          <canvas className="w-full max-h-[300px]" ref={chartRef} />
+          <canvas className="w-full h-full grow max-h-[300px]" ref={chartRef} />
         ) : (
           ""
         )}
         {check && (
-          <div className="w-full  flex items-end justify-center grow">
+          <div className="w-full  flex  justify-center ">
             <button
               onClick={handleDownload}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"

@@ -56,3 +56,13 @@ export const isWithinLastMonth = (dateToCheck) => {
 
   return isWithinInterval(dateToCheck, interval);
 };
+
+export const checkCardCreationDate = (selected, cardCreatedDate) => {
+  if (selected === "week") {
+    return isWithinLastWeek(cardCreatedDate);
+  } else if (selected === "two_weeks") {
+    return isWithinLastTwoWeeks(cardCreatedDate);
+  } else {
+    return isWithinLastMonth(cardCreatedDate);
+  }
+};

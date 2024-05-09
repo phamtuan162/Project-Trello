@@ -4,20 +4,8 @@ import { RadioGroup, Radio } from "@nextui-org/react";
 import { useSelector } from "react-redux";
 import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
-import {
-  isWithinLastTwoWeeks,
-  isWithinLastWeek,
-  isWithinLastMonth,
-} from "@/utils/formatTime";
-const checkCardCreationDate = (selected, cardCreatedDate) => {
-  if (selected === "week") {
-    return isWithinLastWeek(cardCreatedDate);
-  } else if (selected === "two_weeks") {
-    return isWithinLastTwoWeeks(cardCreatedDate);
-  } else {
-    return isWithinLastMonth(cardCreatedDate);
-  }
-};
+import { checkCardCreationDate } from "@/utils/formatTime";
+
 const colors = [
   "rgba(255, 99, 132, 0.8)",
   "rgba(255, 159, 64, 0.8)",
@@ -36,7 +24,7 @@ const Chart1 = ({ typeCharts, times }) => {
     [board]
   );
   const [type, setType] = useState("bar");
-  const [selected, setSelected] = useState("week");
+  const [selected, setSelected] = useState("month");
 
   useEffect(() => {
     if (chartRef.current) {
@@ -181,7 +169,7 @@ const Chart1 = ({ typeCharts, times }) => {
   };
   return (
     <div
-      className="group p-4 rounded-lg bg-white"
+      className="group p-4 rounded-lg bg-white flex flex-col"
       style={{
         boxShadow:
           "0 3px 5px rgba(9, 30, 66, 0.2), 0 0 1px rgba(9, 30, 66, 0.31)",
@@ -217,7 +205,7 @@ const Chart1 = ({ typeCharts, times }) => {
           ))}
         </div>
       </div>
-      <div className="w-full">
+      <div className="w-full  grow flex flex-col">
         {type === "line" && (
           <RadioGroup
             label="Khung thời gian"
@@ -243,12 +231,12 @@ const Chart1 = ({ typeCharts, times }) => {
           </p>
         </div>
         {check ? (
-          <canvas className="w-full max-h-[300px]" ref={chartRef} />
+          <canvas className="w-full h-full grow max-h-[300px]" ref={chartRef} />
         ) : (
           ""
         )}
         {check && (
-          <div className="w-full flex items-center justify-center">
+          <div className="w-full  flex items-end justify-center">
             <button
               onClick={handleDownload}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"

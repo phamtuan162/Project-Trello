@@ -87,17 +87,67 @@ io.on("connection", (socket) => {
       }
     }
   });
+  socket.on("visitBoard", async (body) => {
+    const { board_id, user_id } = body;
+    const receiver = getUser(user_id);
+
+    if (user_id && board_id && receiver) {
+      const user = onlineUsers.find(
+        (user) => +user.id === +user_id && user.board_id === board_id
+      );
+
+      if (!user) {
+        const users = onlineUsers.filter(
+          (item) => +item.board_id === +board_id || +item.id === +user_id
+        );
+
+        const usersOnline = onlineUsers.map((user) => {
+          if (+user.id === +user_id) {
+            io.to(user.socketId).emit("getUserVisitBoard", users);
+            return { ...user, board_id: board_id };
+          }
+          if (+user.board_id === +board_id) {
+            io.to(user.socketId).emit("getUserVisitBoard", users);
+          }
+          if (+user.board_id === +receiver.board_id) {
+            const usersVisit = onlineUsers.filter(
+              (item) =>
+                +item.board_id === +receiver.board_id && +item.id !== user_id
+            );
+            io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
+          }
+          return user;
+        });
+
+        onlineUsers = usersOnline;
+      }
+    }
+  });
+
   socket.on("disconnect", async () => {
-    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
     const userOff = onlineUsers.find((user) => user.socketId === socket.id);
     const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+
     if (userUpdate) {
       await userUpdate.update({ isOnline: false });
     }
-    if (users.length > 0 && userUpdate) {
-      for (const user of users) {
-        io.to(user.socketId).emit("getUserOnline", userUpdate);
-      }
+
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+
+    users.forEach((user) => {
+      io.to(user.socketId).emit("getUserOnline", userUpdate);
+    });
+
+    if (userOff?.board_id && onlineUsers.length > 1) {
+      onlineUsers.forEach((user) => {
+        if (+user.board_id === +userOff.board_id && +user.id !== userOff.id) {
+          const usersVisit = onlineUsers.filter(
+            (item) =>
+              +item.board_id === +userOff.board_id && +item.id !== userOff.id
+          );
+          io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
+        }
+      });
     }
 
     removeUser(socket.id);

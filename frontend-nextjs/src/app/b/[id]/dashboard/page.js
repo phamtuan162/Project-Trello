@@ -57,8 +57,8 @@ export default function dashboardPage() {
         >
           <div className="h-full w-full overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 grid-row-2 py-1">
             <Chart1 typeCharts={typeCharts} times={times} />
-            <Chart2 typeCharts={typeCharts} />
-            <Chart3 typeCharts={typeCharts} />
+            <Chart2 typeCharts={typeCharts} times={times} />
+            <Chart3 typeCharts={typeCharts} times={times} />
           </div>
         </div>
       </div>

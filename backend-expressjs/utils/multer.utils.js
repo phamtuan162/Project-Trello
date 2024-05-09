@@ -42,11 +42,12 @@ module.exports = {
 
           .status(400)
           .json({ error: err.message, message: err.message });
-      } else {
-        return res
-          .status(400)
-          .json({ error: err.message, message: err.message });
       }
+      // else {
+      //   return res
+      //     .status(400)
+      //     .json({ error: err.message, message: err.message });
+      // }
 
       next();
     });

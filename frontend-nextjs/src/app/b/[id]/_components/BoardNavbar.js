@@ -26,11 +26,16 @@ import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
 const { updateCard } = cardSlice.actions;
 export default function BoardNavbar({ setIsActivity }) {
   const options = [
-    { href: "", key: "board", label: "Bảng", icon: <BoardIcon size={16} /> },
+    {
+      href: "",
+      key: "board",
+      label: "Bảng Kanban",
+      icon: <BoardIcon size={16} />,
+    },
     {
       href: "/dashboard",
       key: "dashboard",
-      label: "Bảng điều khiển",
+      label: "Báo cáo",
       icon: <DashBoardIcon size={16} />,
     },
   ];
@@ -45,12 +50,21 @@ export default function BoardNavbar({ setIsActivity }) {
   const inputRef = useRef(null);
   const btnRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
+  const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useSelector((state) => state.board.board);
+  const socket = useSelector((state) => state.socket.socket);
+  const [userVisit, setUserVisit] = useState([]);
+  const usersVisitBoard = useMemo(() => {
+    if (userVisit.length > 0 && workspace?.users?.length > 0) {
+      return workspace.users.filter(
+        (user) =>
+          user.isOnline && userVisit.find((item) => +item.id === +user.id)
+      );
+    }
+  }, [userVisit, workspace]);
 
-  const userOnline = useMemo(() => {
-    return workspace?.users?.filter((user) => user.isOnline);
-  }, [workspace]);
+  console.log(usersVisitBoard, userVisit);
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -100,16 +114,38 @@ export default function BoardNavbar({ setIsActivity }) {
             }
           });
 
+          if (user.id) {
+            socket.emit("visitBoard", {
+              board_id: boardData.id,
+              user_id: user.id,
+            });
+          }
           dispatch(boardSlice.actions.updateBoard(boardData));
         }
       } catch (error) {
         console.error("Error fetching board detail:", error);
       }
     };
-    if (!board || +boardId !== +board.id) {
+    if ((!board || +boardId !== +board.id) && user.id) {
       fetchBoardDetail();
     }
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    const handleUserVisitBoard = (data) => {
+      if (data.length > 0) {
+        setUserVisit(data);
+      }
+    };
+
+    if (socket) {
+      socket.on("getUserVisitBoard", handleUserVisitBoard);
+
+      return () => {
+        socket.off("getUserVisitBoard", handleUserVisitBoard);
+      };
+    }
+  }, [socket]);
   if (!board.id || +board.id !== +boardId) {
     return;
   }
@@ -168,11 +204,11 @@ export default function BoardNavbar({ setIsActivity }) {
       </Breadcrumbs>
       <div className="ml-auto text-white flex gap-3 items-center ">
         <AvatarGroup isBordered max={2} className="group-avatar-1">
-          {userOnline?.map((user) => (
+          {usersVisitBoard?.map((user) => (
             <Avatar
-              key={user.id}
+              key={user?.id}
               src={user.avatar}
-              name={user.name.charAt(0).toUpperCase()}
+              name={user?.name?.charAt(0).toUpperCase()}
               color="secondary"
             />
           ))}

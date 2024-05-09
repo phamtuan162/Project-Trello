@@ -2,11 +2,22 @@
 import { useSelector } from "react-redux";
 import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
-const Chart3 = ({ typeCharts }) => {
+import { RadioGroup, Radio } from "@nextui-org/react";
+import { checkCardCreationDate } from "@/utils/formatTime";
+import { format } from "date-fns";
+const colors = [
+  "rgba(75, 192, 192, 0.8)",
+  "rgba(255, 205, 86, 0.8)",
+  "rgba(255, 159, 64, 0.8)",
+  "rgba(255, 99, 132, 0.8)",
+  "rgba(201, 203, 207, 0.8)",
+];
+const Chart3 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
   const [type, setType] = useState("bar");
+  const [selected, setSelected] = useState("month");
 
   const updatedBoard = useMemo(() => {
     const updatedColumns = board?.columns?.map((column) => {
@@ -31,88 +42,176 @@ const Chart3 = ({ typeCharts }) => {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
-
+      const context = chartRef.current.getContext("2d");
+      let chartData = {};
       let status = [
-        "Hoàn tất",
-        "Sắp hết hạn",
-        "Hết hạn sau",
-        "Quá hạn",
-        "Không có ngày hết hạn",
+        {
+          label: "Hoàn tất",
+          value: "success",
+        },
+        {
+          label: "Sắp hết hạn",
+          value: "up_expired",
+        },
+        {
+          label: "Hết hạn sau",
+          value: "pending",
+        },
+        {
+          label: "Quá hạn",
+          value: "expired",
+        },
+        {
+          label: "Không có ngày hết hạn",
+          value: null,
+        },
       ];
-      let cards = [0, 0, 0, 0, 0];
-      updatedBoard?.columns?.forEach((column) => {
-        if (column?.cards?.length > 0) {
-          for (const card of column.cards) {
-            if (!card.endDateTime) {
-              const index = status.findIndex(
-                (item) => item === "Không có ngày hết hạn"
-              );
-              cards[index] += 1;
-            } else {
-              if (card.status === "success") {
-                const index = status.findIndex((item) => item === "Hoàn tất");
-                cards[index] += 1;
-              } else if (card.status === "expired") {
-                const index = status.findIndex((item) => item === "Quá hạn");
-                cards[index] += 1;
-              } else if (card.status === "pending") {
+      if (type === "line") {
+        let timeCreates = [];
+        let datasets = [];
+        let cardCounts = [];
+        updatedBoard?.columns?.forEach((column) => {
+          if (column.cards.length > 0) {
+            column.cards.forEach((card) => {
+              if (card.created_at) {
+                const created_at = format(
+                  new Date(card.created_at),
+                  "dd/MM/yyyy"
+                );
+
+                if (
+                  checkCardCreationDate(selected, card.created_at) &&
+                  !timeCreates.includes(created_at)
+                ) {
+                  timeCreates.push(created_at);
+                  cardCounts.push(0);
+                }
+              }
+            });
+          }
+        });
+        timeCreates.sort(
+          (a, b) =>
+            new Date(a.split("/").reverse().join("/")) -
+            new Date(b.split("/").reverse().join("/"))
+        );
+        status.forEach((item, index) => {
+          datasets.push({
+            label: item.label,
+            data: [...cardCounts],
+            backgroundColor: colors[index % colors.length],
+            borderColor: colors[index % colors.length],
+            fill: false,
+          });
+        });
+
+        updatedBoard?.columns?.forEach((column) => {
+          if (column.cards.length > 0) {
+            column.cards.forEach((card) => {
+              if (card.created_at) {
+                const created_at = format(
+                  new Date(card.created_at),
+                  "dd/MM/yyyy"
+                );
+                if (timeCreates.includes(created_at)) {
+                  const statusItem = status.find(
+                    (item) => item.value === card.status
+                  );
+                  const dataset = datasets.find(
+                    (item) => item.label === statusItem.label
+                  );
+                  const indexTime = timeCreates.findIndex(
+                    (item) => item === created_at
+                  );
+                  dataset.data[indexTime] += 1;
+                }
+              }
+            });
+          }
+        });
+        chartData = {
+          type: type,
+          data: {
+            labels: timeCreates,
+            datasets: datasets,
+          },
+          options: {
+            responsive: true,
+            scales: {
+              x: { type: "category" },
+              y: { beginAtZero: true },
+            },
+          },
+        };
+      } else {
+        let cards = [0, 0, 0, 0, 0];
+        updatedBoard?.columns?.forEach((column) => {
+          if (column?.cards?.length > 0) {
+            for (const card of column.cards) {
+              if (!card.endDateTime) {
                 const index = status.findIndex(
-                  (item) => item === "Hết hạn sau"
+                  (item) => item === "Không có ngày hết hạn"
+                );
+                cards[index] += 1;
+              } else {
+                const index = status.findIndex(
+                  (item) => item.value === card.status
                 );
                 cards[index] += 1;
               }
             }
           }
-        }
-      });
-      const context = chartRef.current.getContext("2d");
-      const newChart = new Chart(context, {
-        type: type,
-        data: {
-          labels: status,
-          datasets: [
-            {
-              label: "Số thẻ ",
-              data: cards,
-              backgroundColor: [
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(255, 205, 86, 0.2)",
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(201, 203, 207, 0.2)",
-              ],
-              borderColor: [
-                "rgb(75, 192, 192)",
-                "rgb(255, 205, 86)",
-                "rgb(255, 159, 64)",
-                "rgb(255, 99, 132)",
-                "rgb(201, 203, 207)",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          scales: {
-            x: {
-              type: "category",
-            },
-            y: {
-              beginAtZero: true,
+        });
+        chartData = {
+          type: type,
+          data: {
+            labels: status.map((item) => item.label),
+            datasets: [
+              {
+                label: "Số thẻ ",
+                data: cards,
+                backgroundColor: [
+                  "rgba(75, 192, 192, 0.2)",
+                  "rgba(255, 205, 86, 0.2)",
+                  "rgba(255, 159, 64, 0.2)",
+                  "rgba(255, 99, 132, 0.2)",
+                  "rgba(201, 203, 207, 0.2)",
+                ],
+                borderColor: [
+                  "rgb(75, 192, 192)",
+                  "rgb(255, 205, 86)",
+                  "rgb(255, 159, 64)",
+                  "rgb(255, 99, 132)",
+                  "rgb(201, 203, 207)",
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: {
+                type: "category",
+              },
+              y: {
+                beginAtZero: true,
+              },
             },
           },
-        },
-      });
+        };
+      }
+
+      const newChart = new Chart(context, chartData);
       chartRef.current.chart = newChart;
     }
-  }, [updatedBoard, type]);
+  }, [updatedBoard, type, selected]);
 
   function handleDownload() {
     if (chartRef.current) {
       const file = chartRef.current.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = file;
-      link.download = "barChart.png";
+      link.download = `${type}Chart.png`;
       link.click();
     }
   }
@@ -124,7 +223,7 @@ const Chart3 = ({ typeCharts }) => {
   };
   return (
     <div
-      className="group p-4 rounded-lg bg-white"
+      className="group p-4 rounded-lg bg-white flex flex-col"
       style={{
         boxShadow:
           "0 3px 5px rgba(9, 30, 66, 0.2), 0 0 1px rgba(9, 30, 66, 0.31)",
@@ -159,7 +258,20 @@ const Chart3 = ({ typeCharts }) => {
           ))}
         </div>
       </div>
-      <div className="w-full ">
+      <div className="w-full grow flex flex-col">
+        {type === "line" && (
+          <RadioGroup
+            label="Khung thời gian"
+            value={selected}
+            onValueChange={setSelected}
+            orientation="horizontal"
+            className="radio "
+          >
+            {times.map((time) => (
+              <Radio value={time.value}>{time.label}</Radio>
+            ))}
+          </RadioGroup>
+        )}
         <div className="w-full  hidden last:flex items-center justify-center flex-col gap-2">
           <img
             src="https://trello.com/assets/ef769d2a141355c08d0e.png"
@@ -171,7 +283,7 @@ const Chart3 = ({ typeCharts }) => {
           </p>
         </div>
         {check ? (
-          <canvas className="w-full max-h-[300px]" ref={chartRef} />
+          <canvas className="w-full max-h-[300px] grow h-full" ref={chartRef} />
         ) : (
           ""
         )}

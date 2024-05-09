@@ -194,27 +194,34 @@ module.exports = {
         include: { model: Card, as: "cards" },
       });
       if (column) {
-        for (const card of column.cards) {
-          const cardDelete = await Card.findByPk(card.id, {
-            include: [
-              { model: User, as: "users" },
-              { model: Work, as: "works" },
-            ],
-          });
-          if (cardDelete.users.length > 0) {
-            for (const user of cardDelete.users) {
-              const userInstance = await User.findByPk(user.id);
-              await cardDelete.removeUser(userInstance);
+        if (column.cards.length > 0) {
+          for (const card of column.cards) {
+            const cardDelete = await Card.findByPk(card.id, {
+              include: [
+                { model: User, as: "users" },
+                { model: Work, as: "works" },
+                { model: Attachment, as: "attachments" },
+              ],
+            });
+            if (cardDelete.users.length > 0) {
+              for (const user of cardDelete.users) {
+                const userInstance = await User.findByPk(user.id);
+                await cardDelete.removeUser(userInstance);
+              }
             }
-          }
-          if (cardDelete.works.length > 0) {
-            for (const work of cardDelete.works) {
-              await Mission.destroy({ where: { work_id: work.id } });
-              await Work.destroy({ where: { id: work.id } });
+            if (cardDelete.works.length > 0) {
+              for (const work of cardDelete.works) {
+                await Mission.destroy({ where: { work_id: work.id } });
+                await Work.destroy({ where: { id: work.id } });
+              }
             }
+            if (cardDelete.attachments.length > 0) {
+              await Attachment.destroy({ where: { card_id: cardDelete.id } });
+            }
+            await cardDelete.destroy();
           }
-          await cardDelete.destroy();
         }
+
         const title = column.title;
         await Column.destroy({ where: { id } });
         const board = await Board.findByPk(column.board_id);
