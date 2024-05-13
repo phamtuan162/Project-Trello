@@ -8,6 +8,7 @@ const {
   Activity,
   Attachment,
   Workspace,
+  Comment,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -44,6 +45,7 @@ module.exports = {
     try {
       const card = await Card.findByPk(id, {
         include: [
+          { model: Comment, as: "comments" },
           { model: Attachment, as: "attachments" },
           { model: Activity, as: "activities" },
           { model: User, as: "users" },

@@ -1,20 +1,26 @@
-const { Activity, User, Workspace, Card } = require("../../../models/index");
+const { Comment, User, Card } = require("../../../models/index");
+const { object, string } = require("yup");
 
 module.exports = {
   index: async (req, res) => {
-    const { order = "desc", sort = "created_at" } = req.query;
+    const { order = "desc", sort = "created_at", card_id, user_id } = req.query;
     const filters = {};
-
+    if (card_id) {
+      filters.card_id = card_id;
+    }
+    if (user_id) {
+      filters.user_id = user_id;
+    }
     const options = {
       order: [[sort, order]],
       where: filters,
     };
     const response = {};
     try {
-      const activities = await Activity.findAll(options);
+      const comments = await Comment.findAll(options);
       response.status = 200;
       response.message = "Success";
-      response.data = activities;
+      response.data = comments;
     } catch (e) {
       response.status = 500;
       response.message = "Server error";
@@ -26,8 +32,8 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const activity = await Activity.findByPk(id);
-      if (!activity) {
+      const comment = await Comment.findByPk(id);
+      if (!comment) {
         Object.assign(response, {
           status: 404,
           message: "Not Found",
@@ -36,7 +42,7 @@ module.exports = {
         Object.assign(response, {
           status: 200,
           message: "Success",
-          data: activity,
+          data: comment,
         });
       }
     } catch (e) {
@@ -46,36 +52,30 @@ module.exports = {
     res.status(response.status).json(response);
   },
   store: async (req, res) => {
-    const { user_id, action, workspace_id, board_id, column_id, card_id } =
-      req.body;
+    const rules = {};
+
+    if (req.body.content) {
+      rules.content = string().required("Chưa nhập nội dung bình luận");
+    }
+
+    const schema = object(rules);
     const response = {};
-    const actions = ["create", "update", "move", "copy"];
     try {
-      if (
-        !action ||
-        !user_id ||
-        !workspace_id ||
-        (!board_id && !column_id && !card_id)
-      ) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
+      const body = await schema.validate(req.body, {
+        abortEarly: false,
+      });
 
-      if (!actions.includes(action.toLowerCase().trim())) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
+      const user = await User.findByPk(body.user_id);
+      const card = await Card.findByPk(body.card_id);
 
-      const user = await User.findByPk(user_id);
-      if (!user) {
+      if (!user || !card) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-
-      const workspace = await Workspace.findByPk(workspace_id);
-      if (!workspace) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
-
-      const activity = await Activity.create({
-        ...req.body,
+      const comment = await Comment.create({
+        content: body.content,
+        user_id: user.id,
+        card_id: card.id,
+        isEdit: false,
         userName: user.name,
         userAvatar: user.avatar,
       });
@@ -83,26 +83,30 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        data: comment,
       });
-    } catch (error) {
+    } catch (e) {
+      const errors = Object.fromEntries(
+        e.inner.map(({ path, message }) => [path, message])
+      );
       Object.assign(response, {
-        status: 500,
-        message: "Sever error",
+        status: 400,
+        message: "Bad Request",
+        errors,
       });
     }
     res.status(response.status).json(response);
   },
   update: async (req, res) => {},
   delete: async (req, res) => {
-    const { card_id } = req.body;
+    const { id } = req.params;
     const response = {};
     try {
-      const card = await Card.findByPk(card_id);
-      if (!card) {
+      const comment = await Comment.findByPk(id);
+      if (!comment) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-      await Activity.destroy({ where: { card_id: card_id } });
+      await comment.destroy();
 
       Object.assign(response, {
         status: 200,

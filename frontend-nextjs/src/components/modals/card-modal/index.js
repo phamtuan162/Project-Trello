@@ -19,6 +19,7 @@ import BackgroundCard from "./background";
 import DateCard from "./date";
 import WorksCard from "./works";
 import AttachmentList from "./attachments";
+import CommentCard from "./comments";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
 const { updateCard } = cardSlice.actions;
@@ -60,7 +61,7 @@ export const CardModal = () => {
       isOpen={isOpen}
       onOpenChange={onClose}
       classNames={{
-        closeButton: ["z-50"],
+        closeButton: [`z-50 ${isLoading && "hidden"}`],
       }}
     >
       {isLoading ? (
@@ -87,7 +88,7 @@ export const CardModal = () => {
                       <DescCardModal />
                       {card?.attachments?.length > 0 && <AttachmentList />}
                       {card?.works?.length > 0 && <WorksCard />}
-
+                      <CommentCard />
                       <ActivityCard />
                     </div>
                   </div>

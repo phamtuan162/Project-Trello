@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
         as: "attachments",
       });
 
+      User.hasMany(models.Comment, {
+        foreignKey: "user_id",
+        as: "comments",
+      });
+
       User.hasMany(models.Notification, {
         foreignKey: "user_id",
         as: "notifications",

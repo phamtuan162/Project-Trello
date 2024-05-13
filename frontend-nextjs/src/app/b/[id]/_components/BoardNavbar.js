@@ -64,7 +64,6 @@ export default function BoardNavbar({ setIsActivity }) {
     }
   }, [userVisit, workspace]);
 
-  console.log(usersVisitBoard, userVisit);
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -82,8 +81,8 @@ export default function BoardNavbar({ setIsActivity }) {
           toast.success("Cập nhật thành công");
         }
       });
-      setIsEditing(false);
     }
+    setIsEditing(false);
   };
 
   const handleKeyDown = (event) => {
@@ -120,7 +119,9 @@ export default function BoardNavbar({ setIsActivity }) {
               user_id: user.id,
             });
           }
-          dispatch(boardSlice.actions.updateBoard(boardData));
+          if (!board.id || +board.id !== +boardId) {
+            dispatch(boardSlice.actions.updateBoard(boardData));
+          }
         }
       } catch (error) {
         console.error("Error fetching board detail:", error);

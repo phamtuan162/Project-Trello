@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "card_id",
         as: "attachments",
       });
+      Card.hasMany(models.Comment, {
+        foreignKey: "card_id",
+        as: "comments",
+      });
       Card.belongsTo(models.Workspace, {
         foreignKey: "workspace_id",
         as: "workspace",
