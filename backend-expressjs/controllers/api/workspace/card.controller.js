@@ -427,13 +427,29 @@ module.exports = {
                     const attachmentNew = await Attachment.create({
                       fileName: attachment.fileName,
                       path: attachment.path,
-                      created_at: attachment.created_at,
-                      updated_at: attachment.updated_at,
+
                       card_id: cardNew.id,
                       user_id: attachment.user_id,
                     });
 
                     return attachmentNew;
+                  })
+                );
+                break;
+              case "comments":
+                await Promise.all(
+                  card.comments.map(async (comment) => {
+                    const activity = await Activity.create({
+                      user_id: user.id,
+                      userName: user.name,
+                      userAvatar: user.avatar,
+                      card_id: cardNew.id,
+                      title: comment.content,
+                      action: "copy-comment",
+                      workspace_id: user.workspace_id_active,
+                      desc: `đã sao chép bình luận của ${comment.userName} từ thẻ ${card.title}`,
+                    });
+                    return activity;
                   })
                 );
                 break;

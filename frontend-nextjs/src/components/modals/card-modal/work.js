@@ -64,7 +64,7 @@ const WorkCard = ({ work }) => {
   //Sửa tiêu đề danh sách việc làm
   const onSubmit = (formData) => {
     const title = formData.get("title");
-    if (title) {
+    if (title !== "") {
       updateWorkApi(work.id, { title: title }).then((data) => {
         if (data.status === 200) {
           const workNew = data.data;

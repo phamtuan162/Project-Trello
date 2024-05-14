@@ -11,3 +11,9 @@ export const deleteCommentApi = async (commentID) => {
     return data;
   }
 };
+export const updateCommentApi = async (commentID, body) => {
+  const { response, data } = await client.put(`/comment/${commentID}`, body);
+  if (response.ok) {
+    return data;
+  }
+};

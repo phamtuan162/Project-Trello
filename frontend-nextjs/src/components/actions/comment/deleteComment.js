@@ -49,11 +49,19 @@ const DeleteComment = ({ comment, children }) => {
     }
   };
 
-  if (user.id && userComment.id) {
-    if (+user.id !== +userComment.id) {
+  if (user.id && userComment.id && +user.id !== +userComment.id) {
+    const userRole = user.role.toLowerCase();
+    const userCommentRole = userComment.role.toLowerCase();
+
+    const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
+    const isAdminEditingOwner =
+      userRole === "admin" && userCommentRole === "owner";
+
+    if (!isOwnerOrAdmin || isAdminEditingOwner) {
       return;
     }
   }
+
   return (
     <Popover
       placement="right"

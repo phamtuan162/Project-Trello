@@ -8,6 +8,7 @@ const {
   Mission,
   Activity,
   Attachment,
+  Comment,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -67,6 +68,7 @@ module.exports = {
             model: Card,
             as: "cards",
             include: [
+              { model: Comment, as: "comments" },
               { model: Attachment, as: "attachments" },
               {
                 model: User,

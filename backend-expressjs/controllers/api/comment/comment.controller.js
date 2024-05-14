@@ -97,7 +97,45 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
-  update: async (req, res) => {},
+  update: async (req, res) => {
+    const { id } = req.params;
+    const rules = {};
+
+    if (req.body.content) {
+      rules.content = string()
+        .required("Chưa nhập nội dung bình luận")
+        .max(200, "Nội dung bình luận phải có nhiều nhất 200 ký tự");
+    }
+
+    const schema = object(rules);
+    const response = {};
+    try {
+      const body = await schema.validate(req.body, {
+        abortEarly: false,
+      });
+
+      const comment = await Comment.findByPk(id);
+
+      if (!comment) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      await comment.update({ ...body, isEdit: true });
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (e) {
+      const errors = Object.fromEntries(
+        e?.inner.map(({ path, message }) => [path, message])
+      );
+      Object.assign(response, {
+        status: 400,
+        message: "Bad Request",
+      });
+    }
+    res.status(response.status).json(response);
+  },
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};

@@ -4,15 +4,7 @@ import { useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import AssignUser from "./AssignUser";
-import {
-  CalendarCheck,
-  Paperclip,
-  Tags,
-  Flag,
-  Check,
-  Pencil,
-} from "lucide-react";
-import { MoreIcon } from "@/components/Icon/MoreIcon";
+import { Paperclip, MessageCircle } from "lucide-react";
 import { Avatar, AvatarGroup } from "@nextui-org/react";
 import useCardModal from "@/hooks/use-card-modal";
 import { Clock } from "lucide-react";
@@ -167,6 +159,12 @@ export function Card({ card }) {
             {cardUpdate?.attachments?.length > 0 && (
               <div className="flex gap-1 items-center">
                 <Paperclip size={12} /> {cardUpdate.attachments.length}
+              </div>
+            )}
+
+            {cardUpdate?.comments?.length > 0 && (
+              <div className="flex gap-1 items-center">
+                <MessageCircle size={12} /> {cardUpdate.comments.length}
               </div>
             )}
           </div>
