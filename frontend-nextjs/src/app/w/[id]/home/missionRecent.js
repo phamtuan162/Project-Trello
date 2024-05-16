@@ -6,15 +6,15 @@ import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-const MissionItem = ({ mission }) => {
+const MissionRecent = ({ mission }) => {
   const router = useRouter();
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useMemo(() => {
     return workspace?.boards?.find((board) => +mission.board_id === +board.id);
-  }, [mission]);
+  }, [mission, workspace]);
   return (
     <li className="flex items-center gap-4 hover:bg-default-100 p-2 rounded-lg cursor-pointer border-1 border-solid border-default-200">
-      <div className="flex flex-col space-y-1">
+      <div className="flex flex-col ">
         <p
           className={`text-md text-muted-foreground ml-2 ${
             mission.status === "success" && "line-through"
@@ -22,13 +22,13 @@ const MissionItem = ({ mission }) => {
         >
           {mission?.name}
         </p>
-        <div className="flex gap-2">
+        <div className="mt-1 flex gap-2 flex-wrap">
           <p
             className={`text-xs ${
               mission.status === "success" && "border-green-700 text-green-700"
             } ${
               mission.status === "expired" && "bg-red-700 text-red-700"
-            }text-muted-foreground px-2   rounded-full  flex gap-1 items-center border-1 border-solid border-default-200`}
+            }text-muted-foreground p-2   rounded-full  flex gap-1 items-center border-1 border-solid border-default-200`}
           >
             <ClockIcon size={14} />
             {mission?.endDateTime
@@ -42,7 +42,7 @@ const MissionItem = ({ mission }) => {
                   src={workspace?.background}
                   radius="md"
                   size="sm"
-                  className="h-4 w-4 text-indigo-700 bg-indigo-100"
+                  className="h-4 w-4 text-indigo-700 bg-indigo-100 shrink-0"
                   name={workspace?.name?.charAt(0).toUpperCase()}
                 />
               }
@@ -72,4 +72,4 @@ const MissionItem = ({ mission }) => {
     </li>
   );
 };
-export default MissionItem;
+export default MissionRecent;

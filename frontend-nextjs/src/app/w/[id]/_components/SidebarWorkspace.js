@@ -73,7 +73,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
               key={index}
               color="foreground"
               className={`flex  p-2 gap-4 items-center justify-center lg:justify-start  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
-                index > 5 ? "hidden" : ""
+                index > 4 ? "hidden" : ""
               } ${
                 pathname.includes(option.href)
                   ? "bg-indigo-100 text-indigo-700"
@@ -124,7 +124,10 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
 
             <span className="lg:block hidden">Xem tất cả bảng</span>
           </div>
-          <FormPopoverBoard placement="top" workspaces={user.workspaces}>
+          <FormPopoverBoard
+            placement={"top-right"}
+            workspaces={user.workspaces}
+          >
             <div className="flex p-1.5 hover:bg-default-100 rounded-lg justify-center lg:justify-start items-center gap-2 text-sm  cursor-pointer">
               <Plus size={16} />
 
@@ -136,6 +139,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
 
       <div className="p-2 flex flex-col lg:flex-row justify-center items-center lg:h-[50px] gap-1 ">
         <button
+          onClick={() => router.push(`/w/${workspace.id}/users`)}
           className={`flex gap-1 items-center text-sm py-1.5 flex items-center justify-center rounded-lg hover:bg-default-100 lg:flex-1 w-full`}
         >
           <img

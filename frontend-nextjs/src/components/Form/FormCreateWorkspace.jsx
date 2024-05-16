@@ -17,8 +17,10 @@ import { createWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { userSlice } from "@/stores/slices/userSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
 const { updateUser } = userSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
+const { updateMission } = missionSlice.actions;
 export default function FormCreateWorkspace({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -67,11 +69,12 @@ export default function FormCreateWorkspace({ children }) {
         }
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
+        dispatch(updateMission([]));
+        setIsCreate(false);
         router.push(`/w/${workspace.id}/home`);
 
         setForm({ name: "", desc: "", color: "#9353D3" });
       }
-      setIsCreate(false);
     });
   };
   const { name, desc, color } = form;

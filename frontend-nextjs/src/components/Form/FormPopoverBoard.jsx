@@ -40,13 +40,11 @@ export default function FormPopoverBoard({
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
     const title = formData.get("title");
-    const status = formData.get("status");
 
     createBoard({
       background: image,
       title: title,
       workspace_id: workspace_id,
-      status: status,
     }).then((data) => {
       if (data.status === 200) {
         const board = data.data;
@@ -168,42 +166,6 @@ export default function FormPopoverBoard({
               </div>
             </div>
 
-            <div className="mb-2">
-              <p
-                className="text-small font-bold text-foreground"
-                {...titleProps}
-              >
-                Quyền xem
-              </p>
-              <div className="mt-2 flex flex-col gap-2 w-full">
-                <Select
-                  name="status"
-                  defaultSelectedKeys={["private"]}
-                  size="xs"
-                  variant="bordered"
-                  aria-label="input-label"
-                  id="mode"
-                >
-                  <SelectItem
-                    name="status"
-                    key={"private"}
-                    value={"private"}
-                    id="mode_private"
-                  >
-                    Riêng tư
-                  </SelectItem>
-                  <SelectItem
-                    name="status"
-                    key={"public"}
-                    value={"public"}
-                    id="public"
-                  >
-                    Công khai
-                  </SelectItem>
-                </Select>
-              </div>
-            </div>
-
             <Button
               isDisabled={
                 user?.role?.toLowerCase() !== "admin" &&
@@ -225,3 +187,38 @@ export default function FormPopoverBoard({
     </Popover>
   );
 }
+// <div className="mb-2">
+// <p
+//   className="text-small font-bold text-foreground"
+//   {...titleProps}
+// >
+//   Quyền xem
+// </p>
+// <div className="mt-2 flex flex-col gap-2 w-full">
+//   <Select
+//     name="status"
+//     defaultSelectedKeys={["private"]}
+//     size="xs"
+//     variant="bordered"
+//     aria-label="input-label"
+//     id="mode"
+//   >
+//     <SelectItem
+//       name="status"
+//       key={"private"}
+//       value={"private"}
+//       id="mode_private"
+//     >
+//       Riêng tư
+//     </SelectItem>
+//     <SelectItem
+//       name="status"
+//       key={"public"}
+//       value={"public"}
+//       id="public"
+//     >
+//       Công khai
+//     </SelectItem>
+//   </Select>
+// </div>
+// </div>

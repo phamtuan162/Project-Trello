@@ -36,11 +36,7 @@ export default function pageActivity() {
   const activities = useMemo(() => {
     return workspace?.activities?.length > 0
       ? workspace.activities
-          .filter(
-            (activity) =>
-              activity.board_id ||
-              (!activity.card_id && !activity.board_id && !activity.column_id)
-          )
+          .filter((activity) => activity.workspace_id)
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       : [];
   }, [workspace]);

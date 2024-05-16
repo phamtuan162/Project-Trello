@@ -3,7 +3,6 @@ import BreadcrumbWorkspace from "./_components/BreadcrumbWorkspace";
 import { ActivityIcon } from "lucide-react";
 import { CalendarIcon } from "@/components/Icon/CalenderIcon";
 import { MissionIcon } from "@/components/Icon/MissionIcon";
-import { RecentlyIcon } from "@/components/Icon/RecentlyIcon";
 import { HomeIcon } from "@/components/Icon/HomeIcon";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
@@ -30,11 +29,11 @@ export default function WorkspaceLayout({ children }) {
       label: "Nhiệm vụ của tôi",
       icon: <MissionIcon />,
     },
-    {
-      href: "/calendar",
-      label: "Lịch",
-      icon: <CalendarIcon />,
-    },
+    // {
+    //   href: "/calendar",
+    //   label: "Lịch",
+    //   icon: <CalendarIcon />,
+    // },
 
     {
       href: "/settings",
@@ -46,6 +45,11 @@ export default function WorkspaceLayout({ children }) {
       href: "/users",
       label: "Thành viên",
       icon: <UserIcon />,
+    },
+    {
+      href: "/boards",
+      label: "Tất cả Bảng",
+      icon: <BoardIcon />,
     },
   ];
   return (

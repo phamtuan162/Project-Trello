@@ -11,7 +11,7 @@ const ActivityItem = ({ activity }) => {
         name={activity?.userName?.charAt(0).toUpperCase()}
         radius="full"
         color="secondary"
-        className="h-[40px] w-[40px] text-lg"
+        className="h-[40px] w-[40px] text-lg shrink-0"
       />
       <div className="flex flex-col space-y-0.5">
         <p className="text-xs text-muted-foreground">

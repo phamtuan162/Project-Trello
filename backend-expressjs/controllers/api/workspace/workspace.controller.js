@@ -9,6 +9,7 @@ const {
   Activity,
   Work,
   Mission,
+  Comment,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
@@ -323,8 +324,11 @@ module.exports = {
         workspace_id: workspace_id,
         role_id: roleInstance.id,
       });
-      await workspace.update({ total_user: workspace.total_user + 1 });
-
+      const totalUser = workspace.total_user + 1;
+      await Workspace.update(
+        { total_user: totalUser },
+        { where: { id: workspace_id } }
+      );
       const activity = await Activity.create({
         user_id: userMain.id,
         userName: userMain.name,
@@ -334,12 +338,14 @@ module.exports = {
         workspace_id: workspace_id,
         desc: `đã thêm ${user.name} vào Không gian làm việc này`,
       });
+      console.log(activity);
       Object.assign(response, {
         status: 200,
         message: "Success",
         data: activity,
       });
     } catch (error) {
+      console.log(error);
       Object.assign(response, {
         status: 500,
         message: "Server error",
@@ -379,6 +385,29 @@ module.exports = {
         user.update({ workspace_id_active: user.workspaces[0].id });
       }
 
+      const userLeave = await User.findByPk(user_id);
+
+      const cards = await Card.findAll({
+        where: { workspace_id: workspace_id },
+      });
+
+      if (cards.length > 0) {
+        for (const card of cards) {
+          await card.removeUser(userLeave);
+          await Comment.destroy({
+            where: { user_id: user_id, card_id: card.id },
+          });
+        }
+      }
+      await Mission.update(
+        { user_id: null },
+        {
+          where: {
+            workspace_id: workspace_id,
+            user_id: user_id,
+          },
+        }
+      );
       const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -438,15 +467,6 @@ module.exports = {
         user.update({ workspace_id_active: user.workspaces[0].id });
       }
 
-      const activity = await Activity.create({
-        user_id: userMain.id,
-        userName: userMain.name,
-        userAvatar: userMain.avatar,
-        title: workspace.name,
-        action: "cancel_user",
-        workspace_id: workspace_id,
-        desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
-      });
       const userCancel = await User.findByPk(user_id);
       const cards = await Card.findAll({
         where: { workspace_id: workspace_id },
@@ -454,6 +474,9 @@ module.exports = {
       if (cards.length > 0) {
         for (const card of cards) {
           await card.removeUser(userCancel);
+          await Comment.destroy({
+            where: { user_id: user_id, card_id: card.id },
+          });
         }
       }
       await Mission.update(
@@ -465,6 +488,15 @@ module.exports = {
           },
         }
       );
+      const activity = await Activity.create({
+        user_id: userMain.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        title: workspace.name,
+        action: "cancel_user",
+        workspace_id: workspace_id,
+        desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
+      });
       Object.assign(response, {
         status: 200,
         message: "Success",

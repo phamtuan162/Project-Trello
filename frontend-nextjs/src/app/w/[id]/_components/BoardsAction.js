@@ -56,29 +56,26 @@ export function BoardsAction({ setBoards, boardsOrigin, boards }) {
       >
         Bảng
       </span>
-      {isAction ? (
-        <div className=" items-center flex">
-          <SortBoard setBoards={setBoards} boards={boards}>
-            <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
-              <MoreIcon size={14} />
-            </button>
-          </SortBoard>
 
-          <button
-            className="outline-0 p-1 rounded-lg hover:bg-default-100"
-            onClick={() => setIsSearch(!isSearch)}
-          >
-            <Search size={14} />
+      <div className={`items-center  ${isAction ? "flex" : "hidden"}`}>
+        <SortBoard setBoards={setBoards} boards={boards}>
+          <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
+            <MoreIcon size={14} />
           </button>
-          <FormPopoverBoard>
-            <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
-              <Plus size={14} />
-            </button>
-          </FormPopoverBoard>
-        </div>
-      ) : (
-        ""
-      )}
+        </SortBoard>
+
+        <button
+          className="outline-0 p-1 rounded-lg hover:bg-default-100"
+          onClick={() => setIsSearch(!isSearch)}
+        >
+          <Search size={14} />
+        </button>
+        <FormPopoverBoard placement={"top-right"}>
+          <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
+            <Plus size={14} />
+          </button>
+        </FormPopoverBoard>
+      </div>
     </div>
   );
 }

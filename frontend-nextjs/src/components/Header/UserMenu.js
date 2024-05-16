@@ -100,7 +100,6 @@ export function UserMenu({ user }) {
               }}
             />
           </DropdownItem>
-          <DropdownItem key="switch_account">Chuyển đồi tài khoản</DropdownItem>
 
           <DropdownItem onClick={() => router.push("/settings")} key="settings">
             Cài đặt

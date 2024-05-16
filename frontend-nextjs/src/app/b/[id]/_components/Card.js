@@ -15,7 +15,7 @@ export function Card({ card }) {
 
   const cardUpdate = useMemo(() => {
     return +card.id === +cardData.id ? cardData : card;
-  }, [cardData]);
+  }, [cardData, card]);
 
   const missions = useMemo(() => {
     const extractMissions = (works) => {

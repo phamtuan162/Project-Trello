@@ -445,7 +445,7 @@ module.exports = {
                       userAvatar: user.avatar,
                       card_id: cardNew.id,
                       title: comment.content,
-                      action: "copy-comment",
+                      action: "copy_comment",
                       workspace_id: user.workspace_id_active,
                       desc: `đã sao chép bình luận của ${comment.userName} từ thẻ ${card.title}`,
                     });

@@ -13,7 +13,7 @@ export default function Home() {
       getWorkspaceDetail(user.workspace_id_active).then((data) => {
         if (data.status === 200) {
           const workspace = data.data;
-          router.push(`/w/${workspace.id}/boards`);
+          router.push(`/w/${workspace.id}/home`);
         }
       });
     }
