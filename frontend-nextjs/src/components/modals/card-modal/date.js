@@ -74,11 +74,18 @@ const DateCard = ({ checkRole }) => {
                 Hoàn tất
               </span>
             ) : (
-              card.status === "expired" && (
-                <span className="px-1 rounded-sm h-[20px] bg-red-700 text-white font-medium text-xs flex items-center">
-                  Hết hạn
-                </span>
-              )
+              <>
+                {card.status === "expired" && (
+                  <span className="px-1 rounded-sm h-[20px] bg-red-700 text-white font-medium text-xs flex items-center">
+                    Hết hạn
+                  </span>
+                )}
+                {card.status === "up_expired" && (
+                  <span className="px-1 rounded-sm h-[20px] bg-yellow-700 text-white font-medium text-xs flex items-center">
+                    Sắp hết hạn
+                  </span>
+                )}
+              </>
             )}
 
             <ChevronDown size={15} />

@@ -171,8 +171,11 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                     className={`${
                       mission.status === "success" && "bg-green-700 text-white"
                     } ${
-                      mission.status === "expired" && "bg-red-700 text-white"
+                      mission.status === "up_expired" &&
+                      "bg-yellow-700 text-white"
                     } ${
+                      mission.status === "expired" && "bg-red-700 text-white"
+                    }${
                       (mission.status === "pending" || !mission.status) &&
                       "bg-gray-200"
                     }

@@ -2,7 +2,7 @@
 import { AlignLeft } from "lucide-react";
 import { useState, useRef } from "react";
 import { useEventListener, useOnClickOutside } from "usehooks-ts";
-import { Textarea, Button } from "@nextui-org/react";
+import { Textarea, Button, CircularProgress } from "@nextui-org/react";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { useSelector, useDispatch } from "react-redux";
@@ -12,6 +12,8 @@ const { updateCard } = cardSlice.actions;
 const DescCardModal = () => {
   const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUpdate, setIsUpdate] = useState(false);
+
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   const formRef = useRef(null);
@@ -41,6 +43,7 @@ const DescCardModal = () => {
   const onSubmit = (formData) => {
     const desc = formData.get("desc");
     if (desc) {
+      setIsUpdate(true);
       updateCardApi(card.id, { desc: desc }).then((data) => {
         if (data.status === 200) {
           const cardUpdate = { ...card, desc: desc };
@@ -49,6 +52,7 @@ const DescCardModal = () => {
         } else {
           const error = data.error;
           toast.error(error);
+          setIsUpdate(false);
         }
       });
     }
@@ -75,17 +79,24 @@ const DescCardModal = () => {
               ref={textareaRef}
             />
             <div className="flex items-center gap-x-2">
-              <Button type="submit" size="sm" radius="lg" color="secondary">
-                Lưu
+              <Button
+                disabled={isUpdate}
+                type="submit"
+                size="sm"
+                radius="lg"
+                color="secondary"
+              >
+                {isUpdate ? <CircularProgress /> : "Lưu"}
               </Button>
               <Button
+                disabled={isUpdate}
                 type="button"
                 size="sm"
                 radius="lg"
                 color="danger"
                 onClick={() => disableEditing()}
               >
-                Hủy bỏ
+                {isUpdate ? <CircularProgress /> : "Hủy bot"}
               </Button>
             </div>
           </form>

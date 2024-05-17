@@ -125,6 +125,9 @@ export function Card({ card }) {
                   cardUpdate.status === "success" && "bg-green-700 text-white"
                 } ${
                   cardUpdate.status === "expired" && "bg-red-700 text-white"
+                } ${
+                  cardUpdate.status === "up_expired" &&
+                  "bg-yellow-700 text-white"
                 } rounded-sm px-1 py-0.5 `}
               >
                 {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&

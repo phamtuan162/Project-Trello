@@ -22,7 +22,9 @@ import AttachmentList from "./attachments";
 import CommentCard from "./comments";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 const { updateCard } = cardSlice.actions;
+const { updateBoard } = boardSlice.actions;
 export const CardModal = () => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
@@ -44,8 +46,23 @@ export const CardModal = () => {
 
       getCardDetail(id).then((data) => {
         if (data.status === 200) {
-          const card = data.data;
-          dispatch(updateCard(card));
+          const cardUpdate = data.data;
+          if (+cardUpdate.id !== +card.id && card.id) {
+            const columnsUpdate = board.columns.map((column) => {
+              const index = column.cards.findIndex((c) => +c.id === +card.id);
+              if (index !== -1) {
+                const updatedColumn = {
+                  ...column,
+                  cards: column.cards.map((c, i) => (i === index ? card : c)),
+                };
+                return updatedColumn;
+              }
+              return column;
+            });
+
+            dispatch(updateBoard({ ...board, columns: columnsUpdate }));
+          }
+          dispatch(updateCard(cardUpdate));
           dispatch(columnSlice.actions.updateColumn(board.columns));
           setIsLoading(false);
         }
