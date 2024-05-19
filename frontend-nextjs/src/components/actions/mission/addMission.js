@@ -31,6 +31,9 @@ const AddMission = ({ work }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
+    if (e.key === "Enter") {
+      formRef.current.onSubmit();
+    }
   };
 
   useEventListener("keydown", onKeyDown);
@@ -97,6 +100,7 @@ const AddMission = ({ work }) => {
       />
       <div className="flex items-center gap-x-2">
         <Button
+          disabled={isLoading}
           ref={btnRef}
           type="submit"
           size="sm"
@@ -106,6 +110,7 @@ const AddMission = ({ work }) => {
           {isLoading ? <CircularProgress size={20} /> : "Thêm"}
         </Button>
         <Button
+          disabled={isLoading}
           type="button"
           size="sm"
           radius="lg"

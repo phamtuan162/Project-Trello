@@ -73,7 +73,7 @@ module.exports = {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
       const work = await Work.create(body);
-      const activity = await Activity.create({
+      await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
@@ -86,7 +86,11 @@ module.exports = {
       const cardUpdate = await Card.findByPk(card.id, {
         include: [
           { model: Activity, as: "activities" },
-          { model: Work, as: "works" },
+          {
+            model: Work,
+            as: "works",
+            include: { model: Mission, as: "missions" },
+          },
         ],
       });
 

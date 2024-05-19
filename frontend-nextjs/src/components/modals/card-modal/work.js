@@ -39,6 +39,13 @@ const WorkCard = ({ work }) => {
 
     return progressPercentage;
   }, [work]);
+  const missions = useMemo(() => {
+    return work?.missions
+      ? [...work.missions].sort(
+          (a, b) => new Date(a.created_at) - new Date(b.created_at)
+        )
+      : [];
+  }, [work]);
 
   const enableEditing = () => {
     setIsEditing(true);
@@ -136,7 +143,7 @@ const WorkCard = ({ work }) => {
         </span>
         <Progress size="md" radius="md" value={progressWork} />
       </div>
-      {work?.missions?.length > 0 && <MissionsWork missions={work.missions} />}
+      {missions?.length > 0 && <MissionsWork missions={missions} />}
       <div className="flex items-center gap-x-4 w-full ">
         <div className="w-[22px]"></div>
         <AddMission work={work} />

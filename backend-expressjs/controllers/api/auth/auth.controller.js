@@ -15,7 +15,6 @@ const crypto = require("crypto");
 var ip = require("ip");
 const UAParser = require("ua-parser-js");
 const sendMail = require("../../../utils/mail");
-const { log } = require("console");
 
 const generateToken = () => {
   return crypto.randomBytes(16).toString("hex");

@@ -18,6 +18,7 @@ const MissionsWork = ({ missions }) => {
 
     return missionsSuccess.map((mission) => mission.id);
   }, [missions]);
+
   const [missionSelected, setMissionSelected] = useState(null);
   const HandleSelectMission = async (select) => {
     const checkMission = select.some((item) => +item === +missionSelected.id);
