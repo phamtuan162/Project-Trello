@@ -105,6 +105,10 @@ const FormInviteUser = ({ rolesUser }) => {
               workspace.users ? workspace.users.length : "1"
             } người `
           );
+          socket.emit("inviteUser", {
+            userInviteId: user.id,
+            userInvitedId: userInvite.id,
+          });
         } else {
           const error = data.error;
           setMessage(error);

@@ -3,7 +3,13 @@
 /**
  * Module dependencies.
  */
-const { User, Notification } = require("../models/index.js");
+const {
+  User,
+  Notification,
+  Workspace,
+  Board,
+  Activity,
+} = require("../models/index.js");
 const { AsyncLocalStorage } = require("async_hooks");
 var app = require("../app");
 var debug = require("debug")("backend-expressjs:server");
@@ -30,9 +36,9 @@ const io = new Server(server, {
 // Sự kiện kết nối mới
 let onlineUsers = [];
 
-const addNewUser = (userId, socketId) => {
+const addNewUser = (userId, workspaceId, socketId) => {
   !onlineUsers.some((user) => +user.id === +userId) &&
-    onlineUsers.push({ id: userId, socketId });
+    onlineUsers.push({ id: userId, socketId, workspaceId });
 };
 
 const removeUser = (socketId) => {
@@ -47,7 +53,11 @@ const getUser = (userId) => {
  */
 io.on("connection", (socket) => {
   socket.on("newUser", async (userId) => {
-    addNewUser(userId, socket.id);
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return null;
+    }
+    addNewUser(userId, user.workspace_id_active, socket.id);
     const users = onlineUsers.filter((user) => user.socketId !== socket.id);
     const userOnl = await User.findByPk(userId);
     if (userOnl) {
@@ -57,6 +67,53 @@ io.on("connection", (socket) => {
     if (users.length > 0 && userOnl) {
       for (const user of users) {
         io.to(user.socketId).emit("getUserOnline", userOnl);
+      }
+    }
+  });
+  socket.on("inviteUser", async (body) => {
+    const { userInviteId, userInvitedId } = body;
+    const userInvited = await User.findByPk(userInvitedId);
+    const userInvite = await User.findByPk(userInviteId);
+    if (!userInvited || !userInvite) {
+      return;
+    }
+
+    const usersWorkspace = onlineUsers.filter(
+      (user) =>
+        ++user.workspace_id_active === ++userInvited.workspace_id_active &&
+        ++user.id !== ++userInvite.id &&
+        ++user.id !== ++userInvitedId.id
+    );
+
+    if (usersWorkspace.length > 0) {
+      for (const user of usersWorkspace) {
+        io.to(user.socketId).emit("getUserWorkspace", {
+          user: userInvite,
+          type: "invite_user",
+        });
+      }
+    }
+  });
+  socket.on("removeUser", async (body) => {
+    const { userActionId, userRemoveId } = body;
+    const userRemove = await User.findByPk(userRemoveId);
+    const userAction = await User.findByPk(userActionId);
+    if (!userRemove || !userAction) {
+      return;
+    }
+
+    const usersWorkspace = onlineUsers.filter(
+      (user) =>
+        ++user.workspace_id_active === ++userInvited.workspace_id_active &&
+        ++user.id !== ++userAction.id
+    );
+
+    if (usersWorkspace.length > 0) {
+      for (const user of usersWorkspace) {
+        io.to(user.socketId).emit("getUserWorkspace", {
+          user: userRemove,
+          type: "remove_user",
+        });
       }
     }
   });

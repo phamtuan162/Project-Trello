@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { getProfile } from "@/services/authApi";
-import { updateProfile } from "@/services/userApi";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
 import { fetchMission } from "@/stores/middleware/fetchMission";
 import { userSlice } from "@/stores/slices/userSlice";
@@ -34,12 +33,14 @@ import { socketSlice } from "@/stores/slices/socket";
 import { io } from "socket.io-client";
 import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { clickNotification } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 const { updateUser } = userSlice.actions;
 const { updateProvider } = providerSlice.actions;
 const { updateSocket } = socketSlice.actions;
 const { updateNotification } = notificationSlice.actions;
+const { updateWorkspace } = workspaceSlice.actions;
 const Header = () => {
   const notifications = useSelector(
     (state) => state.notification.notifications
@@ -140,14 +141,7 @@ const Header = () => {
           const user = data.data;
           dispatch(updateUser(user));
           dispatch(updateProvider(user.providers));
-          dispatch(fetchWorkspace(user.workspace_id_active));
-          dispatch(
-            fetchMission({
-              user_id: user.id,
-              workspace_id: user.workspace_id_active,
-            })
-          );
-          dispatch(updateNotification(user.notifications));
+
           if (pathname.startsWith(`/w/${id}`)) {
             let currentURL = window.location.href;
             currentURL = currentURL.replace(
@@ -172,8 +166,50 @@ const Header = () => {
   }, [user, workspace]);
 
   useEffect(() => {
-    if (user.id && socket) {
+    const getUsersWorkspace = (data) => {
+      if (data) {
+        const { type, user: userUpdated } = data;
+        const lowerType = type.toLowerCase().trim();
+
+        if (lowerType === "invite_user") {
+          const usersUpdated = [...workspace.users, userUpdated];
+          dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
+        }
+
+        if (lowerType === "remove_user") {
+          if (user.id === userUpdated.id) {
+            toast.info("Bạn đã bị loại bỏ ra khỏi không gian làm việc này");
+            setTimeout(() => {
+              location.href = "/";
+            }, 2000);
+          } else {
+            const usersUpdated = workspace.users.filter(
+              (item) => ++item.id !== ++userUpdated.id
+            );
+            dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
+          }
+        }
+      }
+    };
+
+    if (user.id && socket && !workspace.id) {
       socket.emit("newUser", user.id);
+      dispatch(fetchWorkspace(user.workspace_id_active));
+      dispatch(
+        fetchMission({
+          user_id: user.id,
+          workspace_id: user.workspace_id_active,
+        })
+      );
+      dispatch(updateNotification(user.notifications));
+    }
+
+    if (socket && workspace?.users?.length > 0) {
+      socket.on("getUserOnline", getUsersWorkspace);
+
+      return () => {
+        socket.off("getUserOnline", getUsersWorkspace);
+      };
     }
   }, [socket, user]);
 

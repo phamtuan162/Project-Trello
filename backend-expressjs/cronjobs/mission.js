@@ -5,8 +5,10 @@ const {
   Board,
   Workspace,
   Column,
+  Work,
 } = require("../models/index");
 const { isAfter, subDays, isBefore } = require("date-fns");
+const sendMail = require("../utils/mail");
 
 module.exports = {
   HandleExpired: async () => {
@@ -16,7 +18,10 @@ module.exports = {
           model: User,
           as: "user",
         },
-        { model: Card, as: "card" },
+        {
+          model: Work,
+          as: "work",
+        },
       ],
     });
 
@@ -26,10 +31,10 @@ module.exports = {
 
       if (mission.endDateTime && isAfter(currentTime, mission.endDateTime)) {
         await mission.update({ status: "expired" });
-
-        if (mission.user && mission.card) {
+        const card = await Card.findByPk(mission.work.card_id);
+        if (mission.user && card) {
           const workspace = await Workspace.findByPk(mission.workspace_id);
-          const column = await Column.findByPk(mission.card.column_id);
+          const column = await Column.findByPk(card.column_id);
           const board = column ? await Board.findByPk(column.board_id) : null;
 
           if (workspace && board && mission.user.email) {

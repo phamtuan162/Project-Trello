@@ -7,7 +7,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { toast } from "react-toastify";
 import {
-  getBoardDetail,
   updateBoardDetail,
   updateColumnDetail,
   moveCardToDifferentColumnAPI,
@@ -15,54 +14,16 @@ import {
   createColumn,
   createCard,
 } from "@/services/workspaceApi";
-import BoardNavbar from "./_components/BoardNavbar";
 import { generatePlaceholderCard } from "@/utils/formatters";
-import { mapOrder } from "@/utils/sorts";
-import { isEmpty } from "lodash";
 import Loading from "@/components/Loading/Loading";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import ActivityBoard from "./_components/ActivityBoard";
 const { updateCard } = cardSlice.actions;
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
   const card = useSelector((state) => state.card.card);
-
   const { id: boardId } = useParams();
-  // useEffect(() => {
-  //   const fetchBoardDetail = async () => {
-  //     try {
-  //       setIsLoading(true);
-  //       dispatch(updateCard({}));
-  //       const data = await getBoardDetail(boardId);
-  //       if (data.status === 200) {
-  //         let boardData = data.data;
-  //         boardData.columns = mapOrder(
-  //           boardData.columns,
-  //           boardData.columnOrderIds,
-  //           "id"
-  //         );
-
-  //         boardData.columns.forEach((column) => {
-  //           if (isEmpty(column.cards)) {
-  //             column.cards = [generatePlaceholderCard(column)];
-  //             column.cardOrderIds = [generatePlaceholderCard(column).id];
-  //           } else {
-  //             column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-  //           }
-  //         });
-
-  //         dispatch(boardSlice.actions.updateBoard(boardData));
-  //         setIsLoading(false);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching board detail:", error);
-  //     }
-  //   };
-
-  //   fetchBoardDetail();
-  // }, []);
 
   const moveColumns = (dndOrderedColumns) => {
     const newBoard = { ...board };

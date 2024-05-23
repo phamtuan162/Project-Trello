@@ -18,7 +18,7 @@ module.exports = {
           const column = await Column.findByPk(card.column_id);
           const board = column ? await Board.findByPk(column.board_id) : null;
 
-          if (workspace && column && board) {
+          if (workspace && board) {
             const link = `http://localhost:3000/w/${workspace.id}`;
             const html = `<p>Thẻ <b>${card.title}</b> của bạn trong Bảng làm việc <b>${board.title}</b> thuộc Không gian làm việc <a href=${link}>${workspace.name}</a> <span style="color:red">đã hết hạn</span>!</p>`;
 

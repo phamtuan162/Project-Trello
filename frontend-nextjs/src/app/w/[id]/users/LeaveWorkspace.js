@@ -23,6 +23,10 @@ const LeaveWorkspace = ({ user }) => {
           if (data.status === 200) {
             dispatch(cancelUser(user));
             window.location.href = "/";
+            socket.emit("removeUser", {
+              userActionId: user.id,
+              userRemoveId: userActive.id,
+            });
           }
         }
       );
@@ -50,6 +54,10 @@ const LeaveWorkspace = ({ user }) => {
             content: `đã loại bạn khỏi Không gian làm việc ${workspace.name} `,
           });
           toast.success("Loại bỏ thành viên thành công");
+          socket.emit("removeUser", {
+            userActionId: user.id,
+            userRemoveId: userActive.id,
+          });
         } else {
           const message = data.error;
           toast.error(message);
