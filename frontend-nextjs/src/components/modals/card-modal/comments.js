@@ -3,8 +3,8 @@ import { MessagesSquare } from "lucide-react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useSelector, useDispatch } from "react-redux";
 import { useMemo, useRef, useState } from "react";
-import { Avatar, Button, Textarea } from "@nextui-org/react";
-import { useEventListener, useOnClickOutside } from "usehooks-ts";
+import { Avatar, Button, Textarea, CircularProgress } from "@nextui-org/react";
+import { useOnClickOutside } from "usehooks-ts";
 import { createComment } from "@/services/commentApi";
 import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
@@ -17,10 +17,11 @@ const CommentCard = () => {
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   const [isComment, setIsComment] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState("");
   const inputRef = useRef(null);
   const formRef = useRef();
-
+  const btnRef = useRef();
   const comments = useMemo(() => {
     if (!card || !Array.isArray(card.comments)) {
       return [];
@@ -53,28 +54,35 @@ const CommentCard = () => {
     if (e.key === "Escape") {
       disableEditing();
     }
+    if (e.key === "Enter") {
+      btnRef.current.click();
+    }
   };
 
-  useEventListener("keydown", onKeyDown);
   useOnClickOutside(formRef, disableEditing);
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const data = await createComment({
-        content: content,
-        card_id: card.id,
-        user_id: user.id,
-      });
+      if (!isLoading) {
+        setIsLoading(true);
 
-      if (data.status === 200) {
-        const commentNew = data.data;
-        const commentsUpdate = [...card.comments, commentNew];
-        const cardUpdate = { ...card, comments: commentsUpdate };
-        dispatch(updateCard(cardUpdate));
-      } else {
-        toast.error(data.error);
+        const data = await createComment({
+          content: content,
+          card_id: card.id,
+          user_id: user.id,
+        });
+
+        if (data.status === 200) {
+          const commentNew = data.data;
+          const commentsUpdate = [...card.comments, commentNew];
+          const cardUpdate = { ...card, comments: commentsUpdate };
+          dispatch(updateCard(cardUpdate));
+          setContent("");
+        } else {
+          toast.error(data.error);
+        }
+        setIsLoading(false);
       }
     } catch (error) {
       toast.error("Đã xảy ra lỗi khi tạo bình luận.");
@@ -129,21 +137,25 @@ const CommentCard = () => {
                     isInvalid && "Bạn đã nhập quá 200 ký tự được cho phép"
                   }
                   onChange={(e) => setContent(e.target.value)}
+                  onKeyDown={onKeyDown}
                   size="xs"
                 />
                 <div className="flex items-center gap-x-2">
                   <Button
-                    isDisabled={isInvalid || content === ""}
+                    isDisabled={isInvalid || content === "" || isLoading}
                     type="submit"
                     size="sm"
                     radius="lg"
                     color="primary"
+                    ref={btnRef}
                   >
-                    Lưu
+                    {isLoading ? <CircularProgress /> : "Lưu"}
                   </Button>
-                  <span onClick={disableEditing}>
-                    <CloseIcon size={20} />
-                  </span>
+                  {!isLoading && (
+                    <span onClick={disableEditing}>
+                      <CloseIcon size={20} />
+                    </span>
+                  )}
                 </div>
               </form>
             ) : (

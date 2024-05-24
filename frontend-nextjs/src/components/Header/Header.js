@@ -59,6 +59,8 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const board = useSelector((state) => state.board.board);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const handleClickNotify = async () => {
@@ -98,6 +100,7 @@ const Header = () => {
           content={notificationsClick.length}
           isInvisible={!notificationsClick.length > 0}
           shape="circle"
+          className="text-sm"
         >
           <Notification handleClickNotify={handleClickNotify}>
             <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
@@ -167,24 +170,42 @@ const Header = () => {
 
   useEffect(() => {
     const getUsersWorkspace = (data) => {
-      if (data) {
+      if (data?.type) {
         const { type, user: userUpdated } = data;
         const lowerType = type.toLowerCase().trim();
-
         if (lowerType === "invite_user") {
           const usersUpdated = [...workspace.users, userUpdated];
           dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
+          if (+userUpdated.id === +user.id) {
+            dispatch(
+              updateUser({ ...user, workspaces: userUpdated.workspaces })
+            );
+          }
         }
 
         if (lowerType === "remove_user") {
-          if (user.id === userUpdated.id) {
-            toast.info("Bạn đã bị loại bỏ ra khỏi không gian làm việc này");
-            setTimeout(() => {
-              location.href = "/";
-            }, 2000);
+          if (+user.id === +userUpdated.id) {
+            if (
+              +user.workspace_id_active === +userUpdated.workspace_id_active
+            ) {
+              toast.info("Bạn đã bị loại bỏ ra khỏi không gian làm việc này");
+              setTimeout(() => {
+                window.location.href = "/";
+              }, 2000);
+            } else {
+              dispatch(
+                updateUser({ ...user, workspaces: userUpdated.workspaces })
+              );
+            }
           } else {
+            if (pathname.startsWith(`/b/${board.id}`)) {
+              let currentURL = window.location.href;
+              window.location.href = currentURL;
+              // router.push(currentURL);
+              return;
+            }
             const usersUpdated = workspace.users.filter(
-              (item) => ++item.id !== ++userUpdated.id
+              (item) => item.id !== userUpdated.id
             );
             dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
           }
@@ -205,10 +226,10 @@ const Header = () => {
     }
 
     if (socket && workspace?.users?.length > 0) {
-      socket.on("getUserOnline", getUsersWorkspace);
+      socket.on("getUserWorkspace", getUsersWorkspace);
 
       return () => {
-        socket.off("getUserOnline", getUsersWorkspace);
+        socket.off("getUserWorkspace", getUsersWorkspace);
       };
     }
   }, [socket, user]);

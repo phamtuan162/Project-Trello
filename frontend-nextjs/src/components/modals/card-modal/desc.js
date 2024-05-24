@@ -1,7 +1,7 @@
 "use client";
 import { AlignLeft } from "lucide-react";
 import { useState, useRef } from "react";
-import { useEventListener, useOnClickOutside } from "usehooks-ts";
+import { useOnClickOutside } from "usehooks-ts";
 import { Textarea, Button, CircularProgress } from "@nextui-org/react";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
@@ -18,7 +18,7 @@ const DescCardModal = () => {
   const user = useSelector((state) => state.user.user);
   const formRef = useRef(null);
   const textareaRef = useRef(null);
-
+  const btnRef = useRef();
   const enableEditing = () => {
     setIsEditing(true);
     setTimeout(() => {
@@ -34,9 +34,10 @@ const DescCardModal = () => {
     if (e.key === "Escape") {
       disableEditing();
     }
+    if (e.key === "Enter") {
+      btnRef.current.click();
+    }
   };
-
-  useEventListener("keydown", onKeyDown);
 
   useOnClickOutside(formRef, disableEditing);
 
@@ -77,6 +78,7 @@ const DescCardModal = () => {
               }}
               defaultValue={card?.desc || undefined}
               ref={textareaRef}
+              onKeyDown={onKeyDown}
             />
             <div className="flex items-center gap-x-2">
               <Button
@@ -85,6 +87,7 @@ const DescCardModal = () => {
                 size="sm"
                 radius="lg"
                 color="secondary"
+                ref={btnRef}
               >
                 {isUpdate ? <CircularProgress /> : "Lưu"}
               </Button>
@@ -96,7 +99,7 @@ const DescCardModal = () => {
                 color="danger"
                 onClick={() => disableEditing()}
               >
-                {isUpdate ? <CircularProgress /> : "Hủy bot"}
+                {isUpdate ? <CircularProgress /> : "Hủy bỏ"}
               </Button>
             </div>
           </form>

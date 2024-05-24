@@ -47,6 +47,7 @@ export default function WorkspaceMenu({
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isChange, setIsChange] = useState(false);
+
   const options = [
     {
       href: "/settings",

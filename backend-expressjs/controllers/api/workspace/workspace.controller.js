@@ -319,7 +319,7 @@ module.exports = {
         return res.status(404).json({ status: 404, message: "Role not found" });
       }
 
-      const user_workspace_role = await UserWorkspaceRole.create({
+      await UserWorkspaceRole.create({
         user_id: user_id,
         workspace_id: workspace_id,
         role_id: roleInstance.id,
@@ -329,6 +329,7 @@ module.exports = {
         { total_user: totalUser },
         { where: { id: workspace_id } }
       );
+
       const activity = await Activity.create({
         user_id: userMain.id,
         userName: userMain.name,
@@ -372,7 +373,10 @@ module.exports = {
       const workspace = await Workspace.findByPk(workspace_id, {
         include: { model: User, include: "users" },
       });
-      await workspace.update({ total_user: workspace.users.length });
+      await Workspace.update(
+        { total_user: workspace.users.length }, // giá trị cần cập nhật
+        { where: { id: workspace.id } } // điều kiện
+      );
       const user = await User.findOne({
         where: { workspace_id_active: workspace_id },
         include: {
@@ -449,11 +453,9 @@ module.exports = {
       const workspace = await Workspace.findByPk(workspace_id, {
         include: { model: User, as: "users" },
       });
-      await workspace.update(
-        {
-          where: { id: workspace_id },
-        },
-        { total_user: workspace.users.length }
+      await Workspace.update(
+        { total_user: workspace.users.length }, // giá trị cần cập nhật
+        { where: { id: workspace.id } } // điều kiện
       );
       const user = await User.findOne({
         where: { workspace_id_active: workspace_id },

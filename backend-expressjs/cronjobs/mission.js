@@ -9,6 +9,7 @@ const {
 } = require("../models/index");
 const { isAfter, subDays, isBefore } = require("date-fns");
 const sendMail = require("../utils/mail");
+const { Op } = require("sequelize");
 
 module.exports = {
   HandleExpired: async () => {
@@ -23,13 +24,16 @@ module.exports = {
           as: "work",
         },
       ],
+      where: {
+        endDateTime: { [Op.not]: null }, // endDateTime không null
+      },
     });
 
     for (const mission of missions) {
       const currentTime = new Date();
       const oneDayBeforeEnd = subDays(mission.endDateTime, 1);
 
-      if (mission.endDateTime && isAfter(currentTime, mission.endDateTime)) {
+      if (isAfter(currentTime, mission.endDateTime)) {
         await mission.update({ status: "expired" });
         const card = await Card.findByPk(mission.work.card_id);
         if (mission.user && card) {
@@ -43,7 +47,8 @@ module.exports = {
             sendMail(mission.user.email, "Thông báo công việc hết hạn", html);
           }
         }
-      } else if (
+      }
+      if (
         isAfter(currentTime, oneDayBeforeEnd) &&
         isBefore(currentTime, mission.endDateTime)
       ) {

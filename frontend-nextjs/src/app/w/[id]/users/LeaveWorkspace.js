@@ -24,7 +24,7 @@ const LeaveWorkspace = ({ user }) => {
             dispatch(cancelUser(user));
             window.location.href = "/";
             socket.emit("removeUser", {
-              userActionId: user.id,
+              userActionId: userActive.id,
               userRemoveId: userActive.id,
             });
           }
@@ -55,8 +55,8 @@ const LeaveWorkspace = ({ user }) => {
           });
           toast.success("Loại bỏ thành viên thành công");
           socket.emit("removeUser", {
-            userActionId: user.id,
-            userRemoveId: userActive.id,
+            userActionId: userActive.id,
+            userRemoveId: user.id,
           });
         } else {
           const message = data.error;

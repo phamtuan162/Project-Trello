@@ -1,10 +1,10 @@
 "use client";
-import { useEventListener, useOnClickOutside } from "usehooks-ts";
+import { useOnClickOutside } from "usehooks-ts";
 import { useState, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
 import vi from "date-fns/locale/vi";
-import { Avatar, Button, Textarea } from "@nextui-org/react";
+import { Avatar, Button, Textarea, CircularProgress } from "@nextui-org/react";
 import DeleteComment from "@/components/actions/comment/deleteComment";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { updateCommentApi } from "@/services/commentApi";
@@ -18,8 +18,11 @@ const CommentItem = ({ comment }) => {
   const card = useSelector((state) => state.card.card);
   const inputRef = useRef(null);
   const formRef = useRef();
+  const btnRef = useRef();
+  const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [content, setContent] = useState("oke");
+
   const userComment = useMemo(() => {
     return workspace?.users?.find((u) => +u.id === +comment.user_id) || null;
   }, [workspace]);
@@ -56,29 +59,33 @@ const CommentItem = ({ comment }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
+    if (e.key === "Enter") {
+      btnRef.current.click();
+    }
   };
-
-  useEventListener("keydown", onKeyDown);
-
   useOnClickOutside(formRef, disableEditing);
 
   const onSubmit = async () => {
     try {
-      const data = await updateCommentApi(comment.id, {
-        content: content,
-      });
-
-      if (data.status === 200) {
-        const commentsUpdate = card.comments.map((item) => {
-          if (+item.id === +comment.id) {
-            return { ...item, content: content, isEdit: true };
-          }
-          return item;
+      if (!isInvalid) {
+        setIsLoading(true);
+        const data = await updateCommentApi(comment.id, {
+          content: content,
         });
-        const cardUpdate = { ...card, comments: commentsUpdate };
-        dispatch(updateCard(cardUpdate));
-      } else {
-        toast.error(data.error);
+
+        if (data.status === 200) {
+          const commentsUpdate = card.comments.map((item) => {
+            if (+item.id === +comment.id) {
+              return { ...item, content: content, isEdit: true };
+            }
+            return item;
+          });
+          const cardUpdate = { ...card, comments: commentsUpdate };
+          dispatch(updateCard(cardUpdate));
+        } else {
+          toast.error(data.error);
+        }
+        setIsLoading(false);
       }
     } catch (error) {
       toast.error("Đã xảy ra lỗi khi chỉnh sửa bình luận.");
@@ -120,20 +127,24 @@ const CommentItem = ({ comment }) => {
                 isInvalid && "Bạn đã nhập quá 200 ký tự được cho phép"
               }
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={onKeyDown}
             />
             <div className="flex items-center gap-x-2">
               <Button
-                isDisabled={isInvalid || content === ""}
+                isDisabled={isInvalid || content === "" || isLoading}
                 type="submit"
                 size="sm"
                 radius="lg"
                 color="primary"
+                ref={btnRef}
               >
-                Lưu
+                {isLoading ? <CircularProgress /> : "Lưu"}
               </Button>
-              <span onClick={() => disableEditing()}>
-                <CloseIcon size={20} />
-              </span>
+              {!isLoading && (
+                <span onClick={disableEditing}>
+                  <CloseIcon size={20} />
+                </span>
+              )}
             </div>
           </form>
         ) : (

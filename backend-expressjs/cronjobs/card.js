@@ -1,16 +1,21 @@
 const { Card, User, Column, Board, Workspace } = require("../models/index");
 const { isAfter, subDays, isBefore } = require("date-fns");
 const sendMail = require("../utils/mail");
+const { Op } = require("sequelize");
 
 module.exports = {
   HandleExpired: async () => {
-    const cards = await Card.findAll({ include: { model: User, as: "users" } });
-
+    const cards = await Card.findAll({
+      include: { model: User, as: "users" },
+      where: {
+        endDateTime: { [Op.not]: null }, // endDateTime không null
+      },
+    });
     for (const card of cards) {
       const currentTime = new Date();
       const oneDayBeforeEnd = subDays(card.endDateTime, 1);
 
-      if (card.endDateTime && isAfter(currentTime, card.endDateTime)) {
+      if (isAfter(currentTime, card.endDateTime)) {
         await card.update({ status: "expired" });
 
         if (card.users.length > 0) {
@@ -33,9 +38,10 @@ module.exports = {
             );
           }
         }
-      } else if (
+      }
+      if (
         isAfter(currentTime, oneDayBeforeEnd) &&
-        isBefore(currentTime, mission.endDateTime)
+        isBefore(currentTime, card.endDateTime)
       ) {
         await card.update({ status: "up_expired" });
       }

@@ -105,6 +105,7 @@ const FormInviteUser = ({ rolesUser }) => {
               workspace.users ? workspace.users.length : "1"
             } người `
           );
+          setKeyWord("");
           socket.emit("inviteUser", {
             userInviteId: user.id,
             userInvitedId: userInvite.id,

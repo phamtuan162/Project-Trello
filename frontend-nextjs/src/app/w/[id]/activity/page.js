@@ -10,8 +10,6 @@ import {
   Dropdown,
   DropdownTrigger,
   Button,
-  Select,
-  SelectItem,
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon } from "lucide-react";
 
