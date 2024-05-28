@@ -12,7 +12,7 @@ import {
   ModalBody,
   ModalContent,
 } from "@nextui-org/react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { createWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
@@ -21,6 +21,20 @@ import { missionSlice } from "@/stores/slices/missionSlice";
 const { updateUser } = userSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateMission } = missionSlice.actions;
+const colors = [
+  "#338EF7",
+  "#9353D3",
+  "#45D483",
+  "#F54180",
+  "#FF71D7",
+  "#F7B750",
+  "#A5EEFD",
+  "#0E793C",
+  "#004493",
+  "#C20E4D",
+  "#936316",
+  "#fbdba7",
+];
 export default function FormCreateWorkspace({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -31,52 +45,50 @@ export default function FormCreateWorkspace({ children }) {
   const [form, setForm] = useState({
     name: "",
     desc: "",
-    color: "#9353D3",
+    color: colors[1],
   });
-  const colors = [
-    "#338EF7",
-    "#9353D3",
-    "#45D483",
-    "#F54180",
-    "#FF71D7",
-    "#F7B750",
-    "#A5EEFD",
-    "#0E793C",
-    "#004493",
-    "#C20E4D",
-    "#936316",
-    "#fbdba7",
-  ];
 
-  const HandleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = useCallback((e) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      [e.target.name]: e.target.value,
+    }));
+  }, []);
 
-  const HandleCreateWorkspace = async (e) => {
+  const handleCreateWorkspace = useCallback(async (e) => {
     e.preventDefault();
     setIsCreate(true);
-    createWorkspaceApi(user.id, {
-      ...form,
-    }).then((data) => {
+
+    try {
+      const { data } = await createWorkspaceApi(user.id, form);
+
       if (data.status === 200) {
         const workspace = data.data;
-        if (workspace.users) {
-          const userNeedToFind = workspace.users.find(
-            (item) => +item.id === +user.id
-          );
+        const userNeedToFind = workspace.users.find(
+          (item) => +item.id === +user.id
+        );
 
+        if (userNeedToFind) {
           dispatch(updateUser({ ...user, role: userNeedToFind.role }));
         }
+
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
         dispatch(updateMission([]));
-        setIsCreate(false);
         router.push(`/w/${workspace.id}/home`);
-
-        setForm({ name: "", desc: "", color: "#9353D3" });
+        setForm({ name: "", desc: "", color: colors[1] });
       }
-    });
-  };
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi tạo không gian mới.");
+    } finally {
+      setIsCreate(false);
+    }
+  }, []);
+
+  const resetForm = useCallback(() => {
+    setForm({ name: "", desc: "", color: colors[1] });
+  }, []);
+
   const { name, desc, color } = form;
   return (
     <div className="">
@@ -86,7 +98,7 @@ export default function FormCreateWorkspace({ children }) {
         isOpen={isOpen}
         onOpenChange={(open) => {
           onOpenChange(open);
-          setForm({ name: "", desc: "", color: "#9353D3" });
+          if (!open) resetForm();
         }}
         backdrop="opaque"
       >
@@ -111,7 +123,7 @@ export default function FormCreateWorkspace({ children }) {
                 <form
                   action=""
                   className="mt-6"
-                  onSubmit={HandleCreateWorkspace}
+                  onSubmit={handleCreateWorkspace}
                 >
                   <div>
                     <span className="block text-md uppercase font-medium text-default-400">
@@ -126,7 +138,7 @@ export default function FormCreateWorkspace({ children }) {
                             name="color"
                             value={color_item}
                             id={color_item}
-                            onChange={HandleChange}
+                            onChange={handleChange}
                           />
                           <label
                             htmlFor={color_item}
@@ -160,7 +172,7 @@ export default function FormCreateWorkspace({ children }) {
                     labelPlacement="outside"
                     size="md"
                     isRequired
-                    onChange={HandleChange}
+                    onChange={handleChange}
                     value={name}
                   />
 
@@ -180,7 +192,7 @@ export default function FormCreateWorkspace({ children }) {
                     minRows={4}
                     className="col-span-12  md:col-span-6 mb-6 md:mb-0 w-full mt-3"
                     placeholder="Nhập mô tả..."
-                    onChange={HandleChange}
+                    onChange={handleChange}
                     value={desc}
                   />
                   <Button

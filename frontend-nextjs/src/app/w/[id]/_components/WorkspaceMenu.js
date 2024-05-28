@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -25,7 +25,6 @@ import { switchWorkspace } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
-import { missionSlice } from "@/stores/slices/missionSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
 const { updateWorkspace } = workspaceSlice.actions;
@@ -71,22 +70,25 @@ export default function WorkspaceMenu({
     }
   }, [workspacesSwitched]);
 
-  const handleSwitchWorkspace = async (workspace_id_witched) => {
+  const handleSwitchWorkspace = useCallback(async (workspace_id_witched) => {
     setIsChange(true);
-    switchWorkspace(workspace_id_witched, {
-      user_id: user.id,
-    }).then((data) => {
+    try {
+      const data = await switchWorkspace(workspace_id_witched, {
+        user_id: user.id,
+      });
       if (data.status === 200) {
         const workspaceActive = data.data;
         if (workspaceActive.users) {
           const userNeedToFind = workspaceActive.users.find(
             (item) => +item.id === +user.id
           );
-
           dispatch(updateUser({ ...user, role: userNeedToFind.role }));
         }
         dispatch(
-          fetchMission({ user_id: user.id, workspace_id: workspace_id_witched })
+          fetchMission({
+            user_id: user.id,
+            workspace_id: workspace_id_witched,
+          })
         );
         dispatch(updateWorkspace(workspaceActive));
         if (pathname.startsWith(`/w/${workspaceId}`)) {
@@ -97,23 +99,29 @@ export default function WorkspaceMenu({
           );
           router.push(currentURL);
         }
-
-        // router.push(`/w/${workspaceActive.id}/boards`);
       }
-    });
-  };
+    } catch (error) {
+      console.error("Không thể chuyển đổi không gian làm việc", error);
+    } finally {
+      setIsChange(false);
+    }
+  }, []);
 
-  const handleSearchWorkspace = async (e) => {
-    const searchString = e.target.value.toLowerCase();
-    const workspaceNeedSearch = workspacesSwitched.filter((item) =>
-      item.name.toLowerCase().includes(searchString)
-    );
-    setWorkspaceSearch(workspaceNeedSearch);
-  };
-  const handleClose = async () => {
+  const handleSearchWorkspace = useCallback(
+    (e) => {
+      const searchString = e.target.value.toLowerCase();
+      const workspaceNeedSearch = workspacesSwitched.filter((item) =>
+        item.name.toLowerCase().includes(searchString)
+      );
+      setWorkspaceSearch(workspaceNeedSearch);
+    },
+    [workspacesSwitched]
+  );
+
+  const handleClose = useCallback(() => {
     setWorkspaceSearch(workspacesSwitched);
     setIsSearch(!isSearch);
-  };
+  }, []);
 
   if (isChange) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;

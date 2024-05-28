@@ -2,7 +2,6 @@
 import { Button } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
 import ActivityBoardItem from "./ActivityBoardItem";
 const ActivityBoard = ({ isActivity, setIsActivity }) => {
   const workspace = useSelector((state) => state.workspace.workspace);

@@ -29,11 +29,6 @@ export default function WorkspaceLayout({ children }) {
       label: "Nhiệm vụ của tôi",
       icon: <MissionIcon />,
     },
-    // {
-    //   href: "/calendar",
-    //   label: "Lịch",
-    //   icon: <CalendarIcon />,
-    // },
 
     {
       href: "/settings",

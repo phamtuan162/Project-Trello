@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Bảng",
+  title: "Bảng | ProManage",
   description: "Chi tiết Bảng",
 };
 import BoardNavbar from "./_components/BoardNavbar";

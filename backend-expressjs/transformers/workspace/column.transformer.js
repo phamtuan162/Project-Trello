@@ -7,6 +7,7 @@ class ColumnTransformer extends Transformer {
       board_id: instance.board_id,
       title: instance.title,
       cardOrderIds: instance.cardOrderIds,
+      order: instance.order,
       cards: instance.cards || [],
       created_at: instance.created_at,
       updated_at: instance.updated_at,

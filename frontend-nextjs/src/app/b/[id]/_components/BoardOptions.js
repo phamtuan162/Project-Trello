@@ -111,18 +111,17 @@ export function BoardOptions({ setIsActivity }) {
             <Image size={16} /> Thay đổi hình nền
           </Button>
         </FormBackground>
-
-        <Button
-          onClick={() => {
-            setIsActivity(true);
-            setIsOpen(false);
-          }}
-          style={{ color: "#172b4d" }}
-          className="mt-2 text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
-        >
-          <ActivityIcon size={16} /> Hoạt động
-        </Button>
       </PopoverContent>
     </Popover>
   );
 }
+// <Button
+//   onClick={() => {
+//     setIsActivity(true);
+//     setIsOpen(false);
+//   }}
+//   style={{ color: "#172b4d" }}
+//   className="mt-2 text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
+// >
+//   <ActivityIcon size={16} /> Hoạt động
+// </Button>

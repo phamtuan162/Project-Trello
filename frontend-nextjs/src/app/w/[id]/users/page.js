@@ -21,7 +21,6 @@ import {
   Pagination,
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon, X } from "lucide-react";
-import { columns, statusOptions } from "./data";
 import FormInviteUser from "../_components/FormInviteUser";
 import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
@@ -32,7 +31,41 @@ function capitalize(str) {
 }
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
-const { decentRoleUser, updateWorkspace } = workspaceSlice.actions;
+const columns = [
+  { name: "ID", uid: "id", sortable: true },
+  { name: "NAME", uid: "name", sortable: true },
+  { name: "ROLE", uid: "role", sortable: true },
+  { name: "EMAIL", uid: "email" },
+  { name: "STATUS", uid: "status", sortable: true },
+  { name: "ACTIONS", uid: "actions" },
+];
+const statusOptions = [
+  { name: "Online", uid: "online" },
+  { name: "Offline", uid: "offline" },
+];
+const roles = [
+  {
+    name: "Owner",
+    value: "owner",
+    desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
+  },
+  {
+    name: "Admin",
+    value: "admin",
+    desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
+  },
+  {
+    name: "Member",
+    value: "member",
+    desc: "Thao tác với các phần được chỉ định và giao cho.",
+  },
+  {
+    name: "Guest",
+    value: "guest",
+    desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
+  },
+];
+const { updateWorkspace } = workspaceSlice.actions;
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -63,28 +96,6 @@ export default function PageWorkspaceUsers() {
     direction: "ascending",
   });
   const [page, setPage] = React.useState(1);
-  const roles = [
-    {
-      name: "Owner",
-      value: "owner",
-      desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
-    },
-    {
-      name: "Admin",
-      value: "admin",
-      desc: "Quản lý Không gian, Con người, Thanh toán và các cài đặt Không gian làm việc khác.",
-    },
-    {
-      name: "Member",
-      value: "member",
-      desc: "Thao tác với các phần được chỉ định và giao cho.",
-    },
-    {
-      name: "Guest",
-      value: "guest",
-      desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
-    },
-  ];
   useEffect(() => {
     const handleUserOnline = (data) => {
       if (data?.id && workspace?.users?.length > 0) {
@@ -171,22 +182,25 @@ export default function PageWorkspaceUsers() {
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
-  const handleDecentRole = async (role, user) => {
+  const handleDecentRole = React.useCallback(async (role, user) => {
     const roleNew = [...role][0];
     if (roleNew && user.id) {
-      decentRoleApi(workspace.id, {
-        user_id: user.id,
-        role: roleNew,
-      }).then((data) => {
+      try {
+        const data = await decentRoleApi(workspace.id, {
+          user_id: user.id,
+          role: roleNew,
+        });
+
         if (data.status === 200) {
+          const activity = data.data;
           const updatedUsers = workspace.users.map((item) => {
-            return +item.id === user.id ? { ...item, role: roleNew } : item;
+            return +item.id === +user.id ? { ...item, role: roleNew } : item;
           });
 
           const newActivities =
             workspace.activities.length > 0
-              ? workspace.activities.concat(data.data)
-              : [data.data];
+              ? [activity, ...workspace.activities]
+              : [activity];
 
           const workspaceUpdate = {
             ...workspace,
@@ -201,15 +215,18 @@ export default function PageWorkspaceUsers() {
             userName: userActive.name,
             userAvatar: userActive.avatar,
             type: "cancel_user",
-            content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name} `,
+            content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
           });
         } else {
           const error = data.error;
           toast.error(error);
         }
-      });
+      } catch (error) {
+        toast.error("Đã xảy ra lỗi khi cập nhật vai trò.");
+      }
     }
-  };
+  }, []);
+
   const renderCell = React.useCallback((user, columnKey) => {
     const cellValue = user[columnKey];
 

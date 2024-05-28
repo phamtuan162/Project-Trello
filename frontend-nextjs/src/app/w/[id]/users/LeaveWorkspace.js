@@ -2,13 +2,14 @@
 import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { toast } from "react-toastify";
 import {
   leaveWorkspaceApi,
   cancelUserWorkspaceApi,
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { toast } from "react-toastify";
+
 const { cancelUser, updateWorkspace } = workspaceSlice.actions;
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
@@ -16,7 +17,7 @@ const LeaveWorkspace = ({ user }) => {
   const userActive = useSelector((state) => state.user.user);
   const socket = useSelector((state) => state.socket.socket);
   const [isOpen, setIsOpen] = useState(false);
-  const handleLeaveOrCancelWorkspace = async () => {
+  const handleLeaveOrCancelWorkspace = useCallback(async () => {
     if (+user.id === +userActive.id) {
       leaveWorkspaceApi({ user_id: user.id, workspace_id: workspace.id }).then(
         (data) => {
@@ -64,7 +65,7 @@ const LeaveWorkspace = ({ user }) => {
         }
       });
     }
-  };
+  }, []);
   if (user?.role?.toLowerCase() === "owner" && +userActive?.id !== +user.id) {
     return;
   }

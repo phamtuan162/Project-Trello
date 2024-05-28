@@ -94,6 +94,7 @@ const MoveColumn = ({ children, column }) => {
           if (data.status === 200) {
             dispatch(updateBoard(newBoard));
             dispatch(updateColumn(newColumns));
+            setIsOpen(false);
           } else {
             const error = data.error;
             toast.error(error);
@@ -140,6 +141,7 @@ const MoveColumn = ({ children, column }) => {
         if (data.status === 200) {
           dispatch(updateBoard(boardActive));
           dispatch(updateColumn(boardActive.columns));
+          setIsOpen(false);
         } else {
           const error = data.error;
           toast.error(error);

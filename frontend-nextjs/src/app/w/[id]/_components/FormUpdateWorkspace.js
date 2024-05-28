@@ -2,8 +2,7 @@
 import { useDispatch } from "react-redux";
 import { Textarea, Button } from "@nextui-org/react";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";
@@ -24,27 +23,33 @@ const FormUpdateWorkspace = ({ workspace }) => {
     }
   }, [workspace]);
 
-  const HandleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = useCallback((e) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      [e.target.name]: e.target.value,
+    }));
+  }, []);
 
-  const handleUpdateWorkspace = async (formData) => {
+  const handleUpdateWorkspace = useCallback(async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
     const name = formData.get("name");
     const desc = formData.get("desc");
-    updateWorkspaceApi(workspace.id, {
-      name: name,
-      desc: desc,
-    }).then((data) => {
+
+    try {
+      const data = await updateWorkspaceApi(workspace.id, { name, desc });
+
       if (data.status === 200) {
-        dispatch(updateWorkspace({ ...workspace, name: name, desc: desc }));
+        dispatch(updateWorkspace({ ...workspace, name, desc }));
         toast.success("Cập nhật thành công");
       } else {
-        const message = data.error;
-        toast.error(message);
-        setForm({ ...form, name: workspace.name, desc: workspace.desc });
+        throw new Error(data.error);
       }
-    });
-  };
+    } catch (error) {
+      toast.error(error.message);
+      setForm({ name: workspace.name, desc: workspace.desc });
+    }
+  }, []);
 
   const { name, desc } = form;
   return (
@@ -58,7 +63,7 @@ const FormUpdateWorkspace = ({ workspace }) => {
           type="text"
           name="name"
           className="h-full b-0 grow border-b-1 border-default-200 border-solid focus-visible:outline-none"
-          onChange={HandleChange}
+          onChange={handleChange}
           value={name}
         />
       </div>
@@ -76,7 +81,7 @@ const FormUpdateWorkspace = ({ workspace }) => {
         className="col-span-12  md:col-span-6 mb-6 md:mb-0 w-full mt-3"
         placeholder="Nhập mô tả..."
         value={desc}
-        onChange={HandleChange}
+        onChange={handleChange}
       />
 
       <Button

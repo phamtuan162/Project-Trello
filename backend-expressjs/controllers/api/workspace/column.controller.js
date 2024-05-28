@@ -7,6 +7,7 @@ const {
   Mission,
   Activity,
   Attachment,
+  Comment,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
@@ -166,6 +167,19 @@ module.exports = {
         include: {
           model: Card,
           as: "cards",
+          include: [
+            { model: Comment, as: "comments" },
+            { model: Attachment, as: "attachments" },
+            {
+              model: User,
+              as: "users",
+            },
+            {
+              model: Work,
+              as: "works",
+              include: { model: Mission, as: "missions" },
+            },
+          ],
         },
       });
       Object.assign(response, {
@@ -399,6 +413,7 @@ module.exports = {
       const columnNew = await Column.create({
         title: title,
         board_id: board_id,
+        order: column.order,
       });
       const newColumnOrderIds = [columnNew.id, ...BoardActive.columnOrderIds];
       await Activity.create({
@@ -472,7 +487,7 @@ module.exports = {
               );
               if (work.missions.length > 0) {
                 for (const mission of work.missions) {
-                  const missionNew = await Mission.create({
+                  await Mission.create({
                     name: mission.name,
                     work_id: workNew.id,
                     user_id: mission.user_id,
@@ -487,7 +502,7 @@ module.exports = {
 
           if (card.attachments.length > 0) {
             for (const attachment of card.attachments) {
-              const attachmentNew = await Attachment.create({
+              await Attachment.create({
                 fileName: attachment.fileName,
                 path: attachment.path,
                 created_at: attachment.created_at,
@@ -500,7 +515,6 @@ module.exports = {
         }
         await columnNew.update({ cardOrderIds: cardOrderIdsNew });
       }
-      console.log(newColumnOrderIds);
       await BoardActive.update({
         columnOrderIds: newColumnOrderIds,
       });

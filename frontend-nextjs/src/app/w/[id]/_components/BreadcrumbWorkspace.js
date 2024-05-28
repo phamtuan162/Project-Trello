@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 import { Avatar } from "@nextui-org/react";
 const BreadcrumbWorkspace = ({ options, origin }) => {
   const pathname = usePathname();
-  const router = useRouter();
   const workspace = useSelector((state) => state.workspace.workspace);
 
   const optionsSorted = options.filter((option) =>

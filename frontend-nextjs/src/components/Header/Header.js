@@ -250,9 +250,7 @@ const Header = () => {
           className="lg:hidden"
         />
         <NavbarBrand>
-          <Link
-            onClick={() => router.push(`/w/${user.workspace_id_active}/boards`)}
-          >
+          <Link onClick={() => router.push(`/w/${workspace.id}/boards`)}>
             <p className="font-bold text-inherit cursor-pointer">ProManage</p>
           </Link>
         </NavbarBrand>

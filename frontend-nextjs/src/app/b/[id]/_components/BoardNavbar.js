@@ -11,7 +11,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { BoardOptions } from "./BoardOptions";
 import { usePathname, useRouter } from "next/navigation";
-import Loading from "@/components/Loading/Loading";
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { toast } from "react-toastify";
@@ -23,30 +22,28 @@ import { getBoardDetail } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
-const { updateCard } = cardSlice.actions;
+const options = [
+  {
+    href: "",
+    key: "board",
+    label: "Bảng Kanban",
+    icon: <BoardIcon size={16} />,
+  },
+  {
+    href: "/dashboard",
+    key: "dashboard",
+    label: "Báo cáo",
+    icon: <DashBoardIcon size={16} />,
+  },
+];
 export default function BoardNavbar({ setIsActivity }) {
-  const options = [
-    {
-      href: "",
-      key: "board",
-      label: "Bảng Kanban",
-      icon: <BoardIcon size={16} />,
-    },
-    {
-      href: "/dashboard",
-      key: "dashboard",
-      label: "Báo cáo",
-      icon: <DashBoardIcon size={16} />,
-    },
-  ];
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { id: boardId } = useParams();
   const pathname = usePathname();
   const [currentPage, setCurrentPage] = useState(
     pathname.includes("dashboard") ? "dashboard" : "board"
   );
-
-  const dispatch = useDispatch();
-  const router = useRouter();
-  const { id: boardId } = useParams();
   const inputRef = useRef(null);
   const btnRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -75,8 +72,9 @@ export default function BoardNavbar({ setIsActivity }) {
     if (title && title !== board.title.trim()) {
       updateBoardDetail(board.id, { title: title }).then((data) => {
         if (data.status === 200) {
+          const boardUpdated = data.data;
           const newBoard = { ...board };
-          newBoard.title = updateData.title;
+          newBoard.title = boardUpdated.title;
           dispatch(boardSlice.actions.updateBoard(newBoard));
           toast.success("Cập nhật thành công");
         }
@@ -186,7 +184,7 @@ export default function BoardNavbar({ setIsActivity }) {
           item: [
             "p-1.5 rounded-md text-white ",
             "data-[current=true]:border-foreground data-[current=true]:bg-gray-200 data-[current=true]:text-indigo-950 transition-colors",
-            "data-[disabled=true]:border-default-400 data-[disabled=true]:bg-gray-200",
+            "data-[disabled=true]:border-default-400 data-[disabled=true]:bg-gray-200 focus:outline-none",
           ],
           separator: "hidden",
         }}

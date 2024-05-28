@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useState, useRef, useCallback } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -35,44 +34,49 @@ export default function FormPopoverBoard({
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
 
-  const onSubmit = (formData) => {
+  const onSubmit = useCallback(async (formData) => {
     setIsCreate(true);
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
     const title = formData.get("title");
 
-    createBoard({
-      background: image,
-      title: title,
-      workspace_id: workspace_id,
-    }).then((data) => {
+    try {
+      const data = await createBoard({
+        background: image,
+        title: title,
+        workspace_id: workspace_id,
+      });
+
       if (data.status === 200) {
         const board = data.data;
-        let updatedBoards = [];
-        if (Array.isArray(workspace.boards) && workspace.boards.length > 0) {
-          updatedBoards = [...workspace.boards, board];
-        } else {
-          updatedBoards = [board];
-        }
+        // Sử dụng mặc định là mảng rỗng nếu workspace.boards hoặc workspace.activities không tồn tại
+        const updatedBoards = [...(workspace.boards || []), board];
+        const updatedActivities = [
+          ...(workspace.activities || []),
+          ...board.activities,
+        ];
 
         const updatedWorkspace = {
           ...workspace,
           boards: updatedBoards,
-          activities:
-            workspace.activities.length > 0
-              ? [...workspace.activities, board.activities]
-              : [board.activities],
+          activities: updatedActivities,
         };
+
         dispatch(updateWorkspace(updatedWorkspace));
         toast.success("Thêm bảng thành công");
-        router.push(`/b/${board.id}`);
+        if (+workspace.id === +workspace_id) {
+          router.push(`/b/${board.id}`);
+        }
       } else {
         const error = data.error;
         toast.error(error);
       }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi thêm bảng.");
+    } finally {
       setIsCreate(false);
-    });
-  };
+    }
+  }, []);
 
   return (
     <Popover

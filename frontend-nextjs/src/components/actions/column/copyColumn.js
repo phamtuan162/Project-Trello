@@ -24,34 +24,36 @@ const CopyColumn = ({ children, column }) => {
   const [title, setTitle] = useState(column.title);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
-  const columns = useSelector((state) => state.column.columns);
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const columnCopy = columns.find((item) => +item.id === +column.id);
-    if (columnCopy) {
-      setIsLoading(true);
-      copyColumnApi({
-        column: columnCopy,
+    setIsLoading(true);
+    try {
+      const data = await copyColumnApi({
+        column: column,
         board_id: board.id,
         title: title,
-      }).then((data) => {
-        if (data.status === 200) {
-          const columnUpdate = data.data;
-          const newBoard = {
-            ...board,
-            columns: [columnUpdate, ...board.columns],
-          };
-          dispatch(updateBoard(newBoard));
-          toast.success("Sao chép danh sách thành công");
-          setIsLoading(false);
-          setIsOpen(false);
-          dispatch(updateColumn(newBoard.columns));
-        } else {
-          const error = data.error;
-          toast.error(error);
-          setIsLoading(false);
-        }
       });
+      handleCopyColumnResponse(data);
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi sao chép danh sách");
+    }
+    setIsLoading(false);
+  };
+
+  const handleCopyColumnResponse = (data) => {
+    if (data.status === 200) {
+      const columnUpdate = data.data;
+      const newBoard = {
+        ...board,
+        columns: [columnUpdate, ...board.columns],
+      };
+      dispatch(updateBoard(newBoard));
+      toast.success("Sao chép danh sách thành công");
+      setIsOpen(false);
+      dispatch(updateColumn(newBoard.columns));
+    } else {
+      const error = data.error;
+      toast.error(error);
     }
   };
   return (
@@ -85,7 +87,7 @@ const CopyColumn = ({ children, column }) => {
           <form
             className="px-3  p-1 cursor-pointer"
             style={{ color: "#44546f" }}
-            onSubmit={(e) => onSubmit(e)}
+            onSubmit={(e) => handleSubmit(e)}
           >
             <label htmlFor="name" className="text-xs font-medium">
               Tên

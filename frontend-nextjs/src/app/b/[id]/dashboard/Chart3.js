@@ -206,7 +206,7 @@ const Chart3 = ({ typeCharts, times }) => {
     }
   }, [updatedBoard, type, selected]);
 
-  function handleDownload() {
+  const handleDownload = () => {
     if (chartRef.current) {
       const file = chartRef.current.toDataURL("image/png");
       const link = document.createElement("a");
@@ -214,9 +214,9 @@ const Chart3 = ({ typeCharts, times }) => {
       link.download = `${type}Chart.png`;
       link.click();
     }
-  }
+  };
 
-  const handleSelectTypeChart = async (typeChart) => {
+  const handleSelectTypeChart = (typeChart) => {
     if (type !== typeChart) {
       setType(typeChart);
     }

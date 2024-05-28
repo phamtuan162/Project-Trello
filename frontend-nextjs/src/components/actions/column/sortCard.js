@@ -4,9 +4,11 @@ import {
   PopoverContent,
   PopoverTrigger,
   Button,
+  Listbox,
+  ListboxItem,
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { boardSlice } from "@/stores/slices/boardSlice";
@@ -15,13 +17,14 @@ import { updateColumnDetail } from "@/services/workspaceApi";
 const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
 const SortCard = ({ children, column }) => {
-  console.log(column);
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState(
+    new Set([column.order || "asc"])
+  );
   const board = useSelector((state) => state.board.board);
   const columns = useSelector((state) => state.column.columns);
-  console.log(columns);
-  const sortCardsByName = () => {
+  const sortCardsByName = (order) => {
     const sortedCards = [...column.cards].sort((a, b) =>
       a.title.localeCompare(b.title)
     );
@@ -32,13 +35,11 @@ const SortCard = ({ children, column }) => {
     };
 
     const updatedColumns = columns.map((item) => {
-      if (item.id === column.id) {
-        return sortedColumn;
-      }
-      return item;
+      return item.id === column.id ? sortedColumn : item;
     });
 
     updateColumnDetail(column.id, {
+      order: order,
       cardOrderIds: sortedColumn.cardOrderIds,
     }).then((data) => {
       if (data.status === 200) {
@@ -55,7 +56,6 @@ const SortCard = ({ children, column }) => {
 
   const sortCardsByCreatedAt = (order = "asc") => {
     const ascending = order === "asc";
-    console.log(ascending);
     const sortedCards = [...column.cards].sort((a, b) => {
       const dateA = new Date(a.created_at);
       const dateB = new Date(b.created_at);
@@ -69,13 +69,11 @@ const SortCard = ({ children, column }) => {
     };
 
     const updatedColumns = columns.map((item) => {
-      if (item.id === column.id) {
-        return sortedColumn;
-      }
-      return item;
+      return item.id === column.id ? sortedColumn : item;
     });
 
     updateColumnDetail(column.id, {
+      order: order,
       cardOrderIds: sortedColumn.cardOrderIds,
     }).then((data) => {
       if (data.status === 200) {
@@ -89,23 +87,19 @@ const SortCard = ({ children, column }) => {
       }
     });
   };
-  const sortCardsByEndDate = () => {
-    const sortedCardsWithEndDate = column.cards
-      .filter((card) => card.endDateTime)
-      .sort((a, b) => {
+
+  const sortCardsByEndDate = (order) => {
+    const sortedCards = [...column.cards].sort((a, b) => {
+      // Sắp xếp thẻ có ngày kết thúc trước
+      if (a.endDateTime && b.endDateTime) {
         return new Date(a.endDateTime) - new Date(b.endDateTime);
-      });
-
-    const sortedCardsWithoutEndDate = column.cards
-      .filter((card) => !card.endDateTime)
-      .sort((a, b) => {
-        return a.title.localeCompare(b.title);
-      });
-
-    const sortedCards = [
-      ...sortedCardsWithEndDate,
-      ...sortedCardsWithoutEndDate,
-    ];
+      }
+      // Nếu chỉ có một trong hai thẻ có ngày kết thúc
+      if (a.endDateTime) return -1;
+      if (b.endDateTime) return 1;
+      // Nếu cả hai thẻ không có ngày kết thúc, sắp xếp theo tên
+      return a.title.localeCompare(b.title);
+    });
 
     const sortedColumn = {
       ...column,
@@ -114,13 +108,11 @@ const SortCard = ({ children, column }) => {
     };
 
     const updatedColumns = columns.map((item) => {
-      if (item.id === column.id) {
-        return sortedColumn;
-      }
-      return item;
+      return item.id === column.id ? sortedColumn : item;
     });
 
     updateColumnDetail(column.id, {
+      order: order,
       cardOrderIds: sortedColumn.cardOrderIds,
     }).then((data) => {
       if (data.status === 200) {
@@ -133,6 +125,34 @@ const SortCard = ({ children, column }) => {
       }
     });
   };
+  const options = [
+    {
+      order: "desc",
+      label: "Ngày tạo (Gần Nhất Trước)",
+      function: sortCardsByCreatedAt,
+    },
+    {
+      order: "asc",
+      label: "Ngày tạo (Xa Nhất Trước)",
+      function: sortCardsByCreatedAt,
+    },
+    {
+      order: "name",
+      label: "Tên thẻ (theo thứ tự bảng chữ cái)",
+      function: sortCardsByName,
+    },
+    {
+      order: "endDateTime",
+      label: "Ngày hết hạn",
+      function: sortCardsByEndDate,
+    },
+  ];
+
+  const handleSort = useCallback(() => {
+    const order = [...selectedKeys][0];
+    const option = options.find((item) => item.order === order);
+    option.function(order);
+  }, [selectedKeys]);
 
   return (
     <Popover
@@ -161,30 +181,20 @@ const SortCard = ({ children, column }) => {
             </Button>
           </div>
           <div className="mt-3">
-            <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
-              onClick={() => sortCardsByCreatedAt("asc")}
+            <Listbox
+              aria-label="Single selection example"
+              variant="flat"
+              disallowEmptySelection
+              selectionMode="single"
+              selectedKeys={selectedKeys}
+              onSelectionChange={setSelectedKeys}
             >
-              Ngày tạo (Gần Nhất Trước)
-            </div>
-            <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
-              onClick={() => sortCardsByCreatedAt("desc")}
-            >
-              Ngày tạo (Xa Nhất Trước)
-            </div>
-            <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
-              onClick={() => sortCardsByName()}
-            >
-              Tên thẻ (theo thứ tự bảng chữ cái)
-            </div>
-            <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
-              onClick={() => sortCardsByEndDate()}
-            >
-              Ngày hết hạn
-            </div>
+              {options.map((option) => (
+                <ListboxItem key={option.order} onClick={() => handleSort()}>
+                  {option.label}
+                </ListboxItem>
+              ))}
+            </Listbox>
           </div>
         </div>
       </PopoverContent>

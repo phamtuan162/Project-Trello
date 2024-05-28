@@ -1,6 +1,6 @@
 "use client";
 import { useSelector } from "react-redux";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ListOptions } from "./ListOptions";
 export function ListHeader({
   column,
@@ -17,29 +17,29 @@ export function ListHeader({
     }
   }, [isEditing]);
 
-  const onUpdateTitle = async () => {
+  const onUpdateTitle = useCallback(async () => {
     const title = inputRef.current.value.trim();
 
-    if (title !== column.title) {
+    if (title !== column.title.toString().trim()) {
       await updateColumn(column.id, { title: title });
-      setIsEditing(false);
     }
     setIsEditing(false);
-  };
+  }, [inputRef]);
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = useCallback((event) => {
     if (event.key === "Enter") {
       inputRef.current.blur();
     }
-  };
+  }, []);
   return (
-    <div className=" px-2 pt-0 pb-1 text-sm font-semibold flex justify-between items-start gap-x-2">
+    <div className=" px-2 pt-0 pb-1 text-sm font-semibold flex justify-between items-center gap-x-2">
       <div className="h-[30px] grow">
         {isEditing ? (
           <input
             ref={inputRef}
             name="title"
             id="title"
+            required
             defaultValue={column.title}
             className="h-full text-lg rounded-md focus-visible:border-sky-600 w-full pl-3"
             style={{ border: "none" }}
@@ -55,6 +55,7 @@ export function ListHeader({
           </span>
         )}
       </div>
+
       {(user?.role?.toLowerCase() === "admin" ||
         user?.role?.toLowerCase() === "owner") && (
         <ListOptions

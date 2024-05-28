@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       board_id: DataTypes.INTEGER,
       cardOrderIds: DataTypes.ARRAY(DataTypes.INTEGER),
       title: DataTypes.STRING,
+      order: DataTypes.STRING,
     },
     {
       sequelize,

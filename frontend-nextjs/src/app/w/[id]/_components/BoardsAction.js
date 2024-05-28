@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@nextui-org/react";
+import { debounce } from "lodash";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import SortBoard from "@/components/actions/board/sortBoard";
 import { Plus } from "lucide-react";
@@ -9,23 +10,34 @@ export function BoardsAction({ setBoards, boardsOrigin, boards }) {
   const [isSearch, setIsSearch] = useState(false);
   const [isAction, setIsAction] = useState(false);
   const inputRef = useRef(null);
-  const handleSearchBoard = async (e) => {
-    const searchString = e.target.value.toLowerCase();
-    const boardNeedSearch = boardsOrigin.filter((board) =>
-      board.title.toLowerCase().includes(searchString)
-    );
-    setBoards(boardNeedSearch);
+
+  const handleSearchBoard = useCallback(
+    debounce((searchString) => {
+      const lowercasedSearchString = searchString.toLowerCase();
+      const boardNeedSearch = boardsOrigin.filter((board) =>
+        board.title.toLowerCase().includes(lowercasedSearchString)
+      );
+      setBoards(boardNeedSearch);
+    }, 300),
+    []
+  );
+
+  const handleInputChange = (e) => {
+    const searchString = e.target.value;
+    handleSearchBoard(searchString);
   };
+
   useEffect(() => {
     if (isSearch && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isSearch]);
+
   return isSearch ? (
     <div className="my-2 lg:block hidden">
       <Input
         ref={inputRef}
-        onChange={(e) => handleSearchBoard(e)}
+        onChange={(e) => handleInputChange(e)}
         onBlur={() => {
           setBoards(boardsOrigin);
           setIsSearch(!isSearch);

@@ -2,23 +2,21 @@
 import { useState } from "react";
 import { RadioGroup, Radio, Input } from "@nextui-org/react";
 import { SearchIcon } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { useMemo, useCallback } from "react";
 import MissionItem from "./mission";
+const statusOptions = [
+  { name: "Tất cả", value: "all" },
+  { name: "Hoàn thành", value: "success" },
+  { name: "Sắp hết hạn", value: "imminent" },
+  { name: "Hết hạn", value: "expired" },
+];
 export default function MissionsWorkspace() {
-  const dispatch = useDispatch();
   const missions = useSelector((state) => state.mission.missions);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [selected, setSelected] = useState("all");
 
-  const statusOptions = [
-    { name: "Tất cả", value: "all" },
-    { name: "Hoàn thành", value: "success" },
-    { name: "Sắp hết hạn", value: "imminent" },
-    { name: "Hết hạn", value: "expired" },
-  ];
   const onSearchChange = useCallback((value) => {
     if (value) {
       setFilterValue(value);
