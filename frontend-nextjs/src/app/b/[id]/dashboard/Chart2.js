@@ -196,16 +196,15 @@ const Chart2 = ({ typeCharts, times }) => {
               },
             ],
           },
-          options: {
-            scales: {
-              x: {
-                type: "category",
-              },
-              y: {
-                beginAtZero: true,
-              },
-            },
-          },
+          options:
+            type === "pie"
+              ? null
+              : {
+                  scales: {
+                    x: { type: "category" },
+                    y: { beginAtZero: true },
+                  },
+                },
         };
       }
       const newChart = new Chart(context, chartData);
@@ -296,7 +295,7 @@ const Chart2 = ({ typeCharts, times }) => {
           ""
         )}
         {check && (
-          <div className="w-full  flex  justify-center ">
+          <div className="w-full  flex  justify-center mt-2">
             <button
               onClick={handleDownload}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"

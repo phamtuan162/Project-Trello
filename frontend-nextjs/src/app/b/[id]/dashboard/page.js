@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import Chart1 from "./Chart1";
 import Chart2 from "./Chart2";
 import Chart3 from "./Chart3";
+import Chart4 from "./Chart4";
 import Loading from "@/components/Loading/Loading";
 import { useParams } from "next/navigation";
 const typeCharts = [
@@ -59,6 +60,7 @@ export default function dashboardPage() {
             <Chart1 typeCharts={typeCharts} times={times} />
             <Chart2 typeCharts={typeCharts} times={times} />
             <Chart3 typeCharts={typeCharts} times={times} />
+            <Chart4 typeCharts={typeCharts} times={times} />
           </div>
         </div>
       </div>

@@ -7,7 +7,14 @@ const {
   Column,
   Work,
 } = require("../models/index");
-const { isAfter, subDays, isBefore } = require("date-fns");
+const {
+  isAfter,
+  subDays,
+  isBefore,
+  subHours,
+  formatDistanceToNow,
+} = require("date-fns");
+const vi = require("date-fns/locale/vi");
 const sendMail = require("../utils/mail");
 const { Op } = require("sequelize");
 
@@ -32,27 +39,43 @@ module.exports = {
     for (const mission of missions) {
       const currentTime = new Date();
       const oneDayBeforeEnd = subDays(mission.endDateTime, 1);
+      const oneHourBeforeEnd = subHours(currentTime, 1);
 
-      if (isAfter(currentTime, mission.endDateTime)) {
-        await mission.update({ status: "expired" });
-        const card = await Card.findByPk(mission.work.card_id);
-        if (mission.user && card) {
-          const workspace = await Workspace.findByPk(mission.workspace_id);
-          const column = await Column.findByPk(card.column_id);
-          const board = column ? await Board.findByPk(column.board_id) : null;
+      const card = await Card.findByPk(mission.work.card_id);
+      const workspace = await Workspace.findByPk(mission.workspace_id);
+      const column = await Column.findByPk(card.column_id);
+      const board = column ? await Board.findByPk(column.board_id) : null;
+      if (workspace && board && mission.user.email && card) {
+        const link = `http://localhost:3000/w/${workspace.id}`;
 
-          if (workspace && board && mission.user.email) {
-            const link = `http://localhost:3000/w/${workspace.id}`;
-            const html = `<p>Công việc <b> ${mission.name}</b> của bạn trong Bảng làm việc <b>${board.title}</b>  thuộc Không gian làm việc <a href="${link}">${workspace.name}</a> <span style="color:red">đã hết hạn</span>!</p>`;
-            sendMail(mission.user.email, "Thông báo công việc hết hạn", html);
-          }
+        if (
+          isBefore(oneHourBeforeEnd, mission.endDateTime) &&
+          isAfter(currentTime, mission.endDateTime)
+        ) {
+          await mission.update({ status: "expired" });
+
+          const html = `<p>Công việc <b> ${mission.name}</b> của bạn trong Bảng làm việc <b>${board.title}</b>  thuộc Không gian làm việc <a href="${link}">${workspace.name}</a> <span style="color:red">đã hết hạn</span>!</p>`;
+          sendMail(mission.user.email, "Thông báo công việc hết hạn", html);
+        } else if (
+          isAfter(currentTime, oneDayBeforeEnd) &&
+          isBefore(currentTime, mission.endDateTime)
+        ) {
+          await mission.update({ status: "up_expired" });
+          // const html = `<p>Công việc <b> ${
+          //   mission.name
+          // }</b> của bạn trong Bảng làm việc <b>${
+          //   board.title
+          // }</b>  thuộc Không gian làm việc <a href="${link}">${
+          //   workspace.name
+          // }</a> <span style="color:red">sắp hết hạn ${formatDistanceToNow(
+          //   new Date(card.endDateTime),
+          //   {
+          //     addSuffix: true,
+          //     locale: vi,
+          //   }
+          // )}</span>!</p>`;
+          // sendMail(mission.user.email, "Thông báo công việc hết hạn", html);
         }
-      }
-      if (
-        isAfter(currentTime, oneDayBeforeEnd) &&
-        isBefore(currentTime, mission.endDateTime)
-      ) {
-        await mission.update({ status: "up_expired" });
       }
     }
   },

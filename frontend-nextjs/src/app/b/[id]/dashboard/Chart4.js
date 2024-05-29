@@ -1,11 +1,10 @@
 "use client";
 import { format } from "date-fns";
-import { RadioGroup, Radio } from "@nextui-org/react";
 import { useSelector } from "react-redux";
 import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
+import { RadioGroup, Radio } from "@nextui-org/react";
 import { checkCardCreationDate } from "@/utils/formatTime";
-
 const colors = [
   "rgba(255, 99, 132, 0.8)",
   "rgba(255, 159, 64, 0.8)",
@@ -16,16 +15,32 @@ const colors = [
   "rgba(201, 203, 207, 0.8)",
   // Add more colors if needed
 ];
-const Chart1 = ({ typeCharts, times }) => {
+const Chart4 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
-  const check = useMemo(
-    () => board?.columns?.some((column) => column.cards.length > 0) || false,
-    [board]
-  );
+  const card = useSelector((state) => state.card.card);
   const [type, setType] = useState("bar");
   const [selected, setSelected] = useState("month");
 
+  const updatedBoard = useMemo(() => {
+    const updatedColumns = board?.columns?.map((column) => {
+      if (column?.cards?.length > 0) {
+        const updatedCards = column.cards.map((item) =>
+          +item.id === +card.id ? card : item
+        );
+        return { ...column, cards: updatedCards };
+      }
+      return column;
+    });
+    return { ...board, columns: updatedColumns };
+  }, [card, board]);
+  const check = useMemo(
+    () =>
+      updatedBoard?.columns?.some((column) =>
+        column.cards.some((card) => card.comments.length > 0)
+      ) || false,
+    [updatedBoard]
+  );
   useEffect(() => {
     if (chartRef.current) {
       if (chartRef.current.chart) {
@@ -33,26 +48,38 @@ const Chart1 = ({ typeCharts, times }) => {
       }
       const context = chartRef.current.getContext("2d");
       let chartData = {};
+
       if (type === "line") {
         let timeCreates = [];
         let datasets = [];
-        let cardCounts = [];
-        board.columns.forEach((column) => {
+        let commentCounts = [];
+        let users = [];
+        updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.created_at) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
+              if (card.comments.length > 0 && card?.users?.length > 0) {
+                card.users.forEach((user) => {
+                  if (!users.includes(user.name)) {
+                    users.push(user.name);
+                  }
+                });
 
-                if (
-                  checkCardCreationDate(selected, card.created_at) &&
-                  !timeCreates.includes(created_at)
-                ) {
-                  timeCreates.push(created_at);
-                  cardCounts.push(0);
-                }
+                card.comments.forEach((comment) => {
+                  if (comment.created_at) {
+                    const created_at = format(
+                      new Date(comment.created_at),
+                      "dd/MM/yyyy"
+                    );
+
+                    if (
+                      checkCardCreationDate(selected, comment.created_at) &&
+                      !timeCreates.includes(created_at)
+                    ) {
+                      timeCreates.push(created_at);
+                      commentCounts.push(0);
+                    }
+                  }
+                });
               }
             });
           }
@@ -62,34 +89,44 @@ const Chart1 = ({ typeCharts, times }) => {
             new Date(a.split("/").reverse().join("/")) -
             new Date(b.split("/").reverse().join("/"))
         );
-        board.columns.forEach((column, index) => {
-          datasets.push({
-            label: column.title,
-            data: [...cardCounts],
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            fill: false,
+        if (users.length > 0) {
+          users.forEach((user, index) => {
+            datasets.push({
+              label: user,
+              data: [...commentCounts],
+              backgroundColor: colors[index % colors.length],
+              borderColor: colors[index % colors.length],
+              fill: false,
+            });
           });
+        }
+
+        updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.created_at) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
-                if (timeCreates.includes(created_at)) {
-                  const dataset = datasets.find(
-                    (item) => item.label === column.title
-                  );
-                  const indexTime = timeCreates.findIndex(
-                    (item) => item === created_at
-                  );
-                  dataset.data[indexTime] += 1;
-                }
+              if (card.comments.length > 0) {
+                card.comments.forEach((comment) => {
+                  if (comment.created_at) {
+                    const created_at = format(
+                      new Date(comment.created_at),
+                      "dd/MM/yyyy"
+                    );
+                    if (timeCreates.includes(created_at)) {
+                      const dataset = datasets.find(
+                        (item) => item.label === comment.userName
+                      );
+                      const indexTime = timeCreates.findIndex(
+                        (item) => item === created_at
+                      );
+                      dataset.data[indexTime] += 1;
+                    }
+                  }
+                });
               }
             });
           }
         });
+
         chartData = {
           type: type,
           data: {
@@ -105,18 +142,39 @@ const Chart1 = ({ typeCharts, times }) => {
           },
         };
       } else {
-        const cardCounts = board.columns.map((column) =>
-          Math.round(+column.cards.length || 0)
-        );
-        const columnCounts = board.columns.map((column) => column.title);
+        let users = [];
+        let comments = [];
+        console.log(comments);
+        updatedBoard?.columns?.forEach((column) => {
+          if (column?.cards?.length > 0) {
+            for (const card of column.cards) {
+              if (card?.users?.length > 0 && card.comments.length > 0) {
+                card.users.forEach((user) => {
+                  if (!users.includes(user.name)) {
+                    users.unshift(user.name);
+                    comments.unshift(0);
+                  }
+                });
+
+                card.comments.forEach((comment) => {
+                  const index = users.findIndex(
+                    (item) => item === comment.userName
+                  );
+                  comments[index] += 1;
+                });
+              }
+            }
+          }
+        });
+
         chartData = {
           type: type,
           data: {
-            labels: columnCounts,
+            labels: users,
             datasets: [
               {
-                label: "Số thẻ ",
-                data: cardCounts,
+                label: "Tổng bình luận ",
+                data: comments,
                 backgroundColor: [
                   "rgba(255, 99, 132, 0.2)",
                   "rgba(255, 159, 64, 0.2)",
@@ -138,29 +196,30 @@ const Chart1 = ({ typeCharts, times }) => {
                 borderWidth: 1,
               },
             ],
-            options:
-              type === "pie"
-                ? null
-                : {
-                    scales: {
-                      x: { type: "category" },
-                      y: { beginAtZero: true },
-                    },
-                  },
           },
+          options:
+            type === "pie"
+              ? null
+              : {
+                  scales: {
+                    x: { type: "category" },
+                    y: { beginAtZero: true },
+                  },
+                },
         };
       }
       const newChart = new Chart(context, chartData);
+
       chartRef.current.chart = newChart;
     }
-  }, [board, type, selected]);
+  }, [updatedBoard, type, selected]);
 
   const handleDownload = () => {
     if (chartRef.current) {
       const file = chartRef.current.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = file;
-      link.download = "barChart.png";
+      link.download = `${type}Chart.png`;
       link.click();
     }
   };
@@ -182,8 +241,7 @@ const Chart1 = ({ typeCharts, times }) => {
         className="w-full flex items-center justify-between"
         style={{ color: "#172b4d" }}
       >
-        <p className="font-bold">Số thẻ trong mỗi danh sách</p>
-
+        <p className="font-bold">Tổng bình luận mỗi thành viên</p>
         <div className="flex gap-1">
           {typeCharts.map((typeChart, index) => (
             <div
@@ -208,7 +266,7 @@ const Chart1 = ({ typeCharts, times }) => {
           ))}
         </div>
       </div>
-      <div className="w-full  grow flex flex-col">
+      <div className="w-full grow flex flex-col">
         {type === "line" && (
           <RadioGroup
             label="Khung thời gian"
@@ -222,15 +280,14 @@ const Chart1 = ({ typeCharts, times }) => {
             ))}
           </RadioGroup>
         )}
-
         <div className="w-full  hidden last:flex items-center justify-center flex-col gap-2">
           <img
-            src="https://trello.com/assets/a5465d28947b51ca12ca.png"
+            src="https://trello.com/assets/58551b69c73b0c3abe12.png"
             alt=""
             className="w-[200px] h-[200px]"
           />
           <p className=" text-lg  text-muted-foreground">
-            Bảng này chưa có thẻ nào
+            Bảng này chưa có bình luận nào
           </p>
         </div>
         {check ? (
@@ -239,7 +296,7 @@ const Chart1 = ({ typeCharts, times }) => {
           ""
         )}
         {check && (
-          <div className="w-full  flex items-end justify-center mt-2">
+          <div className="w-full  flex  justify-center mt-2">
             <button
               onClick={handleDownload}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"
@@ -252,4 +309,4 @@ const Chart1 = ({ typeCharts, times }) => {
     </div>
   );
 };
-export default Chart1;
+export default Chart4;

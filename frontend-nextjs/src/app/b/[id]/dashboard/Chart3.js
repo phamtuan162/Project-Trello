@@ -12,6 +12,28 @@ const colors = [
   "rgba(255, 99, 132, 0.8)",
   "rgba(201, 203, 207, 0.8)",
 ];
+const status = [
+  {
+    label: "Hoàn tất",
+    value: "success",
+  },
+  {
+    label: "Sắp hết hạn",
+    value: "up_expired",
+  },
+  {
+    label: "Hết hạn sau",
+    value: "pending",
+  },
+  {
+    label: "Quá hạn",
+    value: "expired",
+  },
+  {
+    label: "Không có ngày hết hạn",
+    value: null,
+  },
+];
 const Chart3 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
@@ -38,172 +60,117 @@ const Chart3 = ({ typeCharts, times }) => {
   );
 
   useEffect(() => {
-    if (chartRef.current) {
-      if (chartRef.current.chart) {
-        chartRef.current.chart.destroy();
-      }
-      const context = chartRef.current.getContext("2d");
-      let chartData = {};
-      let status = [
-        {
-          label: "Hoàn tất",
-          value: "success",
-        },
-        {
-          label: "Sắp hết hạn",
-          value: "up_expired",
-        },
-        {
-          label: "Hết hạn sau",
-          value: "pending",
-        },
-        {
-          label: "Quá hạn",
-          value: "expired",
-        },
-        {
-          label: "Không có ngày hết hạn",
-          value: null,
-        },
-      ];
-      if (type === "line") {
-        let timeCreates = [];
-        let datasets = [];
-        let cardCounts = [];
-        updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
-            column.cards.forEach((card) => {
-              if (card.created_at) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
+    if (!chartRef.current) return;
 
-                if (
-                  checkCardCreationDate(selected, card.created_at) &&
-                  !timeCreates.includes(created_at)
-                ) {
-                  timeCreates.push(created_at);
-                  cardCounts.push(0);
-                }
-              }
-            });
+    if (chartRef.current.chart) {
+      chartRef.current.chart.destroy();
+    }
+
+    const context = chartRef.current.getContext("2d");
+    let chartData = {};
+
+    if (type === "line") {
+      const timeCreates = [];
+      const datasets = status.map((item, index) => ({
+        label: item.label,
+        data: [],
+        backgroundColor: colors[index % colors.length],
+        borderColor: colors[index % colors.length],
+        fill: false,
+      }));
+
+      updatedBoard.columns.forEach((column) => {
+        column.cards.forEach((card) => {
+          if (card.created_at) {
+            const created_at = format(new Date(card.created_at), "dd/MM/yyyy");
+            if (
+              checkCardCreationDate(selected, card.created_at) &&
+              !timeCreates.includes(created_at)
+            ) {
+              timeCreates.push(created_at);
+            }
           }
         });
-        timeCreates.sort(
-          (a, b) =>
-            new Date(a.split("/").reverse().join("/")) -
-            new Date(b.split("/").reverse().join("/"))
-        );
-        status.forEach((item, index) => {
-          datasets.push({
-            label: item.label,
-            data: [...cardCounts],
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            fill: false,
-          });
-        });
+      });
 
-        updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
-            column.cards.forEach((card) => {
-              if (card.created_at) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
-                if (timeCreates.includes(created_at)) {
-                  const statusItem = status.find(
-                    (item) => item.value === card.status
-                  );
-                  const dataset = datasets.find(
-                    (item) => item.label === statusItem.label
-                  );
-                  const indexTime = timeCreates.findIndex(
-                    (item) => item === created_at
-                  );
-                  dataset.data[indexTime] += 1;
-                }
-              }
-            });
-          }
-        });
-        chartData = {
-          type: type,
-          data: {
-            labels: timeCreates,
-            datasets: datasets,
-          },
-          options: {
-            responsive: true,
-            scales: {
-              x: { type: "category" },
-              y: { beginAtZero: true },
-            },
-          },
-        };
-      } else {
-        let cards = [0, 0, 0, 0, 0];
-        updatedBoard?.columns?.forEach((column) => {
-          if (column?.cards?.length > 0) {
-            for (const card of column.cards) {
-              if (!card.endDateTime) {
-                const index = status.findIndex(
-                  (item) => item === "Không có ngày hết hạn"
-                );
-                cards[index] += 1;
-              } else {
-                const index = status.findIndex(
-                  (item) => item.value === card.status
-                );
-                cards[index] += 1;
+      timeCreates.sort(
+        (a, b) =>
+          new Date(a.split("/").reverse().join("/")) -
+          new Date(b.split("/").reverse().join("/"))
+      );
+
+      const cardCounts = Array(timeCreates.length).fill(0);
+
+      updatedBoard.columns.forEach((column) => {
+        column.cards.forEach((card) => {
+          if (card.created_at) {
+            const created_at = format(new Date(card.created_at), "dd/MM/yyyy");
+            const timeIndex = timeCreates.indexOf(created_at);
+            if (timeIndex !== -1) {
+              const statusIndex = status.findIndex(
+                (item) => item.value === card.status
+              );
+              if (statusIndex !== -1) {
+                datasets[statusIndex].data[timeIndex] =
+                  (datasets[statusIndex].data[timeIndex] || 0) + 1;
               }
             }
           }
         });
-        chartData = {
-          type: type,
-          data: {
-            labels: status.map((item) => item.label),
-            datasets: [
-              {
-                label: "Số thẻ ",
-                data: cards,
-                backgroundColor: [
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(255, 205, 86, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(201, 203, 207, 0.2)",
-                ],
-                borderColor: [
-                  "rgb(75, 192, 192)",
-                  "rgb(255, 205, 86)",
-                  "rgb(255, 159, 64)",
-                  "rgb(255, 99, 132)",
-                  "rgb(201, 203, 207)",
-                ],
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              x: {
-                type: "category",
-              },
-              y: {
-                beginAtZero: true,
-              },
-            },
-          },
-        };
-      }
+      });
 
-      const newChart = new Chart(context, chartData);
-      chartRef.current.chart = newChart;
+      chartData = {
+        type,
+        data: { labels: timeCreates, datasets },
+        options: {
+          responsive: true,
+          scales: {
+            x: { type: "category" },
+            y: { beginAtZero: true },
+          },
+        },
+      };
+    } else {
+      const cards = [0, 0, 0, 0, 0];
+      updatedBoard.columns.forEach((column) => {
+        column.cards.forEach((card) => {
+          const statusIndex = card.endDateTime
+            ? status.findIndex((item) => item.value === card.status)
+            : 4;
+          if (statusIndex !== -1) cards[statusIndex] += 1;
+        });
+      });
+
+      chartData = {
+        type,
+        data: {
+          labels: status.map((item) => item.label),
+          datasets: [
+            {
+              label: "Số thẻ ",
+              data: cards,
+              backgroundColor: colors.map((color) =>
+                color.replace("0.8", "0.2")
+              ),
+              borderColor: colors.map((color) => color.replace("0.8", "1")),
+              borderWidth: 1,
+            },
+          ],
+        },
+        options:
+          type === "pie"
+            ? null
+            : {
+                scales: {
+                  x: { type: "category" },
+                  y: { beginAtZero: true },
+                },
+              },
+      };
     }
+
+    const newChart = new Chart(context, chartData);
+    chartRef.current.chart = newChart;
   }, [updatedBoard, type, selected]);
 
   const handleDownload = () => {
@@ -283,12 +250,15 @@ const Chart3 = ({ typeCharts, times }) => {
           </p>
         </div>
         {check ? (
-          <canvas className="w-full max-h-[300px] grow h-full" ref={chartRef} />
+          <canvas
+            className="w-full  grow h-full max-h-[300px]"
+            ref={chartRef}
+          />
         ) : (
           ""
         )}
         {check && (
-          <div className="w-full  flex items-end justify-center grow">
+          <div className="w-full  flex items-end justify-center  mt-2">
             <button
               onClick={handleDownload}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"
