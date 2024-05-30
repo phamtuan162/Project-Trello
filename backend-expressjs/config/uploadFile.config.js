@@ -37,6 +37,11 @@ module.exports = {
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       // Thêm các loại MIME của các tệp khác bạn muốn chấp nhận ở đây
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+      "text/markdown", // Tệp MagicDraw UML
+      "application/vnd.magicdraw+xml",
     ],
     // Kích thước tệp tối đa (5MB)
     fileSize: 1024 * 1024 * 5,

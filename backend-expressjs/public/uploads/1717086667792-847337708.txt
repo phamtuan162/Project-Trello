@@ -30,10 +30,10 @@ app.set("port", port);
 var server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Hoặc bạn có thể cung cấp URL cụ thể của máy chủ web của bạn
+    origin: "*", // Hoáº·c báº¡n cÃ³ thá» cung cáº¥p URL cá»¥ thá» cá»§a mÃ¡y chá»§ web cá»§a báº¡n
   },
 });
-// Sự kiện kết nối mới
+// Sá»± kiá»n káº¿t ná»i má»i
 let onlineUsers = [];
 
 const addNewUser = (userId, workspaceId, socketId) => {
@@ -125,23 +125,6 @@ io.on("connection", (socket) => {
           user: userRemove,
           type: "remove_user",
         });
-      }
-    }
-  });
-  socket.on("updateWorkspace", async (body) => {
-    const { workspace_id, userActionId } = body;
-    const userAction = await User.findByPk(userActionId);
-    const workspace = await Workspace.findByPk(workspace_id);
-    if (!workspace || !userAction) {
-      return;
-    }
-    const users = onlineUsers.filter(
-      (user) =>
-        +user.workspaceId === +workspace.id && +user.id !== +userAction.id
-    );
-    if (users.length > 0) {
-      for (const user of users) {
-        io.to(user.socketId).emit("getWorkspaceUpdated", workspace);
       }
     }
   });

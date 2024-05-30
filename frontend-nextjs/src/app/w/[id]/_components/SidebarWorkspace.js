@@ -1,27 +1,53 @@
 "use client";
 import { Avatar } from "@nextui-org/react";
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { HelpOutlineIcon } from "@/components/Icon/HelpOutlineIcon";
 import { BoardsAction } from "./BoardsAction";
 import { ChevronDown, Plus } from "lucide-react";
 import WorkspaceMenu from "./WorkspaceMenu";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
 import { useEffect, useState } from "react";
+const { updateWorkspace } = workspaceSlice.actions;
 const SidebarWorkspace = ({ workspaceOptions }) => {
+  const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
   const { id: workspaceId } = useParams();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const socket = useSelector((state) => state.socket.socket);
   const [boards, setBoards] = useState([]);
   useEffect(() => {
     if (workspace.boards) {
       setBoards(workspace.boards);
     }
   }, [workspace]);
+  useEffect(() => {
+    const handleGetWorkspaceUpdated = (data) => {
+      const workspaceUpdated = data;
+      if (!workspaceUpdated.id || !workspace.id) {
+        return;
+      }
+      dispatch(
+        updateWorkspace({
+          ...workspace,
+          name: workspaceUpdated.name,
+          desc: workspaceUpdated.desc,
+        })
+      );
+    };
 
+    if (socket) {
+      socket.on("getWorkspaceUpdated", handleGetWorkspaceUpdated);
+
+      return () => {
+        socket.off("getWorkspaceUpdated", handleGetWorkspaceUpdated);
+      };
+    }
+  }, [socket]);
   return (
     <div
       className="  h-full dark-border  lg:w-64 shrink-0  flex max-w-[250px]  flex-col"

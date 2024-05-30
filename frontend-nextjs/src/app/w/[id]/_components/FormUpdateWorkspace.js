@@ -1,5 +1,5 @@
 "use client";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Textarea, Button } from "@nextui-org/react";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { useEffect, useState, useCallback } from "react";
@@ -9,7 +9,8 @@ import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";
 const { updateWorkspace } = workspaceSlice.actions;
 const FormUpdateWorkspace = ({ workspace }) => {
   const dispatch = useDispatch();
-
+  const socket = useSelector((state) => state.socket.socket);
+  const user = useSelector((state) => state.user.user);
   const [form, setForm] = useState({
     name: "",
     desc: "",
@@ -30,20 +31,24 @@ const FormUpdateWorkspace = ({ workspace }) => {
     }));
   }, []);
 
-  const handleUpdateWorkspace = useCallback(async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
+  const handleUpdateWorkspace = useCallback(async (formData) => {
     const name = formData.get("name");
     const desc = formData.get("desc");
-
+    if (name === "") {
+      return;
+    }
     try {
       const data = await updateWorkspaceApi(workspace.id, { name, desc });
 
       if (data.status === 200) {
         dispatch(updateWorkspace({ ...workspace, name, desc }));
         toast.success("Cập nhật thành công");
+        socket.emit("updateWorkspace", {
+          userActionId: user.id,
+          workspace_id: workspace.id,
+        });
       } else {
-        throw new Error(data.error);
+        toast.error(data.error);
       }
     } catch (error) {
       toast.error(error.message);

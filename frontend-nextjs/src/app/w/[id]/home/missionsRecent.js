@@ -34,7 +34,7 @@ const MissionsRecent = () => {
               onClick={() => router.push(`/w/${id}/missions`)}
               className="p-1 px-2 inline-block text-xs m rounded-full bg-default-100"
             >
-              Xem thêm
+              Xem tất cả
             </button>
           </div>
         )}

@@ -175,7 +175,13 @@ const Header = () => {
         const lowerType = type.toLowerCase().trim();
         if (lowerType === "invite_user") {
           const usersUpdated = [...workspace.users, userUpdated];
-          dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
+          dispatch(
+            updateWorkspace({
+              ...workspace,
+              total_user: workspace.total_user + 1,
+              users: usersUpdated,
+            })
+          );
           if (+userUpdated.id === +user.id) {
             dispatch(
               updateUser({ ...user, workspaces: userUpdated.workspaces })
@@ -207,7 +213,13 @@ const Header = () => {
             const usersUpdated = workspace.users.filter(
               (item) => item.id !== userUpdated.id
             );
-            dispatch(updateWorkspace({ ...workspace, users: usersUpdated }));
+            dispatch(
+              updateWorkspace({
+                ...workspace,
+                total_user: workspace.total_user - 1,
+                users: usersUpdated,
+              })
+            );
           }
         }
       }

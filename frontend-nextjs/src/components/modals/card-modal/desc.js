@@ -41,21 +41,25 @@ const DescCardModal = () => {
 
   useOnClickOutside(formRef, disableEditing);
 
-  const onSubmit = (formData) => {
+  const onSubmit = async (e) => {
+    e.preventDefault(); // Ngăn chặn hành vi mặc định của form
+    const formData = new FormData(e.target);
     const desc = formData.get("desc");
-    if (desc) {
-      setIsUpdate(true);
-      updateCardApi(card.id, { desc: desc }).then((data) => {
-        if (data.status === 200) {
-          const cardUpdate = { ...card, desc: desc };
-          dispatch(updateCard(cardUpdate));
-          setIsEditing(false);
-        } else {
-          const error = data.error;
-          toast.error(error);
-          setIsUpdate(false);
-        }
-      });
+    if (!desc) return;
+
+    setIsUpdate(true);
+    try {
+      const data = await updateCardApi(card.id, { desc });
+      if (data.status === 200) {
+        dispatch(updateCard({ ...card, desc }));
+        setIsEditing(false);
+      } else {
+        toast.error(data.error);
+      }
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật thẻ");
+    } finally {
+      setIsUpdate(false);
     }
   };
   return (
@@ -64,7 +68,7 @@ const DescCardModal = () => {
       <div className="w-full">
         <p className="font-semibold  mb-2 text-sm">Mô tả</p>
         {isEditing ? (
-          <form action={onSubmit} ref={formRef} className="space-y-2">
+          <form onSubmit={onSubmit} ref={formRef} className="space-y-2">
             <Textarea
               id="desc"
               name="desc"
@@ -115,9 +119,10 @@ const DescCardModal = () => {
             }}
             role="button"
             className="min-h-[78px] bg-gray-200 text-sm font-medium py-3 px-3.5 rounded-md"
-          >
-            {card?.desc || "Thêm mô tả chi tiết hơn..."}
-          </div>
+            dangerouslySetInnerHTML={{
+              __html: card?.desc || "Thêm mô tả chi tiết hơn...",
+            }}
+          ></div>
         )}
       </div>
     </div>

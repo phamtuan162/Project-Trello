@@ -51,7 +51,7 @@ const ActivitiesRecent = ({ activitiesRecent }) => {
               onClick={() => router.push(`/w/${id}/activity`)}
               className="p-1 px-2 inline-block text-xs m rounded-full bg-default-100"
             >
-              Xem thêm
+              Xem tất cả
             </button>
           </div>
         )}

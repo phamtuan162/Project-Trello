@@ -12,7 +12,15 @@ const storage = multer.diskStorage({
 
 function fileFilter(req, file, cb) {
   const allowedTypes = uploadConfig.allowedTypes;
-  if (allowedTypes.includes(file.mimetype)) {
+  const allowedExtensions = [".mdj"];
+  const fileExtension = file.originalname
+    .slice(file.originalname.lastIndexOf("."))
+    .toLowerCase();
+
+  if (
+    allowedTypes.includes(file.mimetype) ||
+    allowedExtensions.includes(fileExtension)
+  ) {
     cb(null, true);
   } else {
     const error = new Error("Định dạng file không hợp lệ");
@@ -32,22 +40,22 @@ const upload = multer({
 module.exports = {
   multerMiddleware: (req, res, next) => {
     upload.single("file")(req, res, function (err) {
-      if (err instanceof multer.MulterError) {
-        if (err.message === "File too large") {
-          return res.status(400).json({
-            error: "Vượt quá kích thước tệp cho phép (5MB)",
-          });
+      if (err) {
+        if (err instanceof multer.MulterError) {
+          if (err.message === "File too large") {
+            return res.status(400).json({
+              error: "Vượt quá kích thước tệp cho phép (5MB)",
+            });
+          }
+          return res
+            .status(400)
+            .json({ error: err.message, message: err.message });
+        } else {
+          return res
+            .status(400)
+            .json({ error: err.message, message: err.message });
         }
-        return res
-
-          .status(400)
-          .json({ error: err.message, message: err.message });
       }
-      // else {
-      //   return res
-      //     .status(400)
-      //     .json({ error: err.message, message: err.message });
-      // }
 
       next();
     });
