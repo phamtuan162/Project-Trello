@@ -26,7 +26,7 @@ export default function RootLayout({ children, params }) {
             <main className="bg-background">
               {children}
               <ToastContainer />
-              <ModalProvider />
+              <ModalProvider></ModalProvider>
             </main>
           </Providers>
         </ProviderRedux>

@@ -36,6 +36,9 @@ export const CardModal = () => {
       user?.role?.toLowerCase() === "owner"
     );
   }, [user]);
+  // const { id, onClose, isOpen } = useCardModal();
+  // console.log(id);
+  // console.log(isOpen);
   const id = useCardModal((state) => state.id);
   const isOpen = useCardModal((state) => state.isOpen);
   const onClose = useCardModal((state) => state.onClose);
@@ -43,30 +46,31 @@ export const CardModal = () => {
   useEffect(() => {
     const fetchCardData = async () => {
       setIsLoading(true);
+      if (id) {
+        getCardDetail(id).then((data) => {
+          if (data.status === 200) {
+            const cardUpdate = data.data;
+            if (+cardUpdate.id !== +card.id && card.id) {
+              const columnsUpdate = board.columns.map((column) => {
+                const index = column.cards.findIndex((c) => +c.id === +card.id);
+                if (index !== -1) {
+                  const updatedColumn = {
+                    ...column,
+                    cards: column.cards.map((c, i) => (i === index ? card : c)),
+                  };
+                  return updatedColumn;
+                }
+                return column;
+              });
 
-      getCardDetail(id).then((data) => {
-        if (data.status === 200) {
-          const cardUpdate = data.data;
-          if (+cardUpdate.id !== +card.id && card.id) {
-            const columnsUpdate = board.columns.map((column) => {
-              const index = column.cards.findIndex((c) => +c.id === +card.id);
-              if (index !== -1) {
-                const updatedColumn = {
-                  ...column,
-                  cards: column.cards.map((c, i) => (i === index ? card : c)),
-                };
-                return updatedColumn;
-              }
-              return column;
-            });
-
-            dispatch(updateBoard({ ...board, columns: columnsUpdate }));
+              dispatch(updateBoard({ ...board, columns: columnsUpdate }));
+            }
+            dispatch(updateCard(cardUpdate));
+            dispatch(columnSlice.actions.updateColumn(board.columns));
+            setIsLoading(false);
           }
-          dispatch(updateCard(cardUpdate));
-          dispatch(columnSlice.actions.updateColumn(board.columns));
-          setIsLoading(false);
-        }
-      });
+        });
+      }
     };
 
     if ((id && card.id !== id && card.id) || (!card.id && id)) {

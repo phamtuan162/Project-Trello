@@ -10,7 +10,7 @@ const {
   Comment,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const ColumnTransformer = require("../../../transformers/workspace/column.transformer");
 module.exports = {
   index: async (req, res) => {
@@ -203,65 +203,48 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
-    try {
-      const column = await Column.findByPk(id, {
-        include: { model: Card, as: "cards" },
-      });
-      if (column) {
-        if (column.cards.length > 0) {
-          for (const card of column.cards) {
-            const cardDelete = await Card.findByPk(card.id, {
-              include: [
-                { model: User, as: "users" },
-                { model: Work, as: "works" },
-                { model: Attachment, as: "attachments" },
-              ],
-            });
-            if (cardDelete.users.length > 0) {
-              for (const user of cardDelete.users) {
-                const userInstance = await User.findByPk(user.id);
-                await cardDelete.removeUser(userInstance);
-              }
-            }
-            if (cardDelete.works.length > 0) {
-              for (const work of cardDelete.works) {
-                await Mission.destroy({ where: { work_id: work.id } });
-                await Work.destroy({ where: { id: work.id } });
-              }
-            }
-            if (cardDelete.attachments.length > 0) {
-              await Attachment.destroy({ where: { card_id: cardDelete.id } });
-            }
-            await cardDelete.destroy();
-          }
-        }
 
-        const title = column.title;
-        await Column.destroy({ where: { id } });
-        const board = await Board.findByPk(column.board_id);
-        await Activity.create({
-          user_id: user.id,
-          userName: user.name,
-          userAvatar: user.avatar,
-          column_id: column.id,
-          title: title,
-          action: "delete_column",
-          workspace_id: user.workspace_id_active,
-          desc: `đã xóa danh sách ${column.title} ra khỏi bảng ${board.title}`,
-        });
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-        });
+    try {
+      const column = await Column.findByPk(id);
+
+      const board = await Board.findByPk(column.board_id);
+      if (!column || !board) {
+        return res.status(404).json({ status: 404, message: "Not found" });
       }
+
+      const title = column.title;
+      const columnOrderIdsUpdate = board.columnOrderIds.filter(
+        (item) => +item !== +column.id
+      );
+
+      await Column.destroy({ where: { id } });
+      await board.update({ columnOrderIds: columnOrderIdsUpdate });
+
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        column_id: column.id,
+        title: title,
+        action: "delete_column",
+        workspace_id: user.workspace_id_active,
+        desc: `đã xóa danh sách ${title} ra khỏi bảng ${board.title}`,
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
     } catch (error) {
       Object.assign(response, {
         status: 500,
-        message: "Sever error",
+        message: "Server error",
       });
     }
+
     res.status(response.status).json(response);
   },
+
   moveCardDiffBoard: async (req, res) => {
     const { user_id, card_id, activeColumn, overColumn } = req.body;
     const response = {};

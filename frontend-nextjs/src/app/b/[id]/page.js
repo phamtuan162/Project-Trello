@@ -7,7 +7,6 @@ import {
   updateBoardDetail,
   updateColumnDetail,
   moveCardToDifferentColumnAPI,
-  deleteColumn,
   createColumn,
   createCard,
 } from "@/services/workspaceApi";
@@ -117,29 +116,6 @@ export default function BoardIdPage() {
     }
   };
 
-  const deleteColumnDetail = async (columnId) => {
-    const newBoard = {
-      ...board,
-      columns: board.columns.filter((c) => c.id !== columnId),
-      columnOrderIds: board.columnOrderIds.filter((id) => id !== columnId),
-    };
-
-    try {
-      const data = await deleteColumn(columnId);
-      if (data.status === 200) {
-        await updateBoardDetail(newBoard.id, {
-          columnOrderIds: newBoard.columnOrderIds,
-        });
-        dispatch(boardSlice.actions.updateBoard(newBoard));
-        toast.success("Bạn đã xóa danh sách này thành công");
-      } else {
-        toast.error(data.error);
-      }
-    } catch (error) {
-      console.error("Error deleting column:", error);
-    }
-  };
-
   const createNewColumn = async (newColumnData) => {
     try {
       const data = await createColumn({ ...newColumnData, board_id: board.id });
@@ -241,7 +217,6 @@ export default function BoardIdPage() {
             moveColumns={moveColumns}
             moveCardInTheSameColumn={moveCardInTheSameColumn}
             moveCardToDifferentColumn={moveCardToDifferentColumn}
-            deleteColumnDetail={deleteColumnDetail}
             createNewColumn={createNewColumn}
             createNewCard={createNewCard}
             updateColumn={updateColumn}

@@ -8,7 +8,7 @@ import {
 
 export function ListColumn({
   columns,
-  deleteColumnDetail,
+
   createNewColumn,
   createNewCard,
   updateColumn,
@@ -23,7 +23,6 @@ export function ListColumn({
           <Column
             column={column}
             key={column.id}
-            deleteColumnDetail={deleteColumnDetail}
             createNewCard={createNewCard}
             updateColumn={updateColumn}
           />

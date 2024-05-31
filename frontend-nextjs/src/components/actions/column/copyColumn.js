@@ -14,6 +14,7 @@ import { boardSlice } from "@/stores/slices/boardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
 import { toast } from "react-toastify";
 import { copyColumnApi } from "@/services/workspaceApi";
+import { mapOrder } from "@/utils/sorts";
 const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
 const CopyColumn = ({ children, column }) => {
@@ -43,10 +44,15 @@ const CopyColumn = ({ children, column }) => {
   const handleCopyColumnResponse = (data) => {
     if (data.status === 200) {
       const columnUpdate = data.data;
-      const newBoard = {
+      let newBoard = {
         ...board,
         columns: [columnUpdate, ...board.columns],
       };
+      newBoard.columns = mapOrder(
+        boardData.columns,
+        boardData.columnOrderIds,
+        "id"
+      );
       dispatch(updateBoard(newBoard));
       toast.success("Sao chép danh sách thành công");
       setIsOpen(false);

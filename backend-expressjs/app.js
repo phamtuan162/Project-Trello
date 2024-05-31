@@ -4,7 +4,7 @@ const cron = require("node-cron");
 const blacklist_token = require("./cronjobs/blacklist_tokens");
 const card = require("./cronjobs/card");
 const mission = require("./cronjobs/mission");
-
+const column = require("./cronjobs/column");
 var createError = require("http-errors");
 var express = require("express");
 

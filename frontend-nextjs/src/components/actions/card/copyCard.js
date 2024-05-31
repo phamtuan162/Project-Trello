@@ -243,7 +243,7 @@ const CopyCard = ({ children }) => {
           <div className="w-full mt-3">
             <p className="text-xs font-medium">Sao chép tới...</p>
             <Select
-              selectedKeys={[valueBoard.toString()]}
+              selectedKeys={[valueBoard?.toString()]}
               label="Bảng"
               className="mt-1 text-xs"
               classNames={{
@@ -257,7 +257,7 @@ const CopyCard = ({ children }) => {
                 setValueBoard([...newValue][0] || valueBoard);
               }}
             >
-              {workspaces.map((workspace) => (
+              {workspaces?.map((workspace) => (
                 <SelectSection key={workspace.id} title={workspace.name}>
                   {workspace.boards.map((board) => (
                     <SelectItem key={board.id} value={board.id}>

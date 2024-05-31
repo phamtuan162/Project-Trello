@@ -8,7 +8,7 @@ import { CardForm } from "./Cardform";
 import { useSelector } from "react-redux";
 export function Column({
   column,
-  deleteColumnDetail,
+
   createNewCard,
   updateColumn,
 }) {
@@ -51,7 +51,6 @@ export function Column({
         )}
         <ListHeader
           column={column}
-          deleteColumnDetail={deleteColumnDetail}
           createNewCard={createNewCard}
           updateColumn={updateColumn}
         />

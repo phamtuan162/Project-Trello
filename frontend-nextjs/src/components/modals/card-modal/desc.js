@@ -42,7 +42,7 @@ const DescCardModal = () => {
   useOnClickOutside(formRef, disableEditing);
 
   const onSubmit = async (e) => {
-    e.preventDefault(); // Ngăn chặn hành vi mặc định của form
+    e.preventDefault();
     const formData = new FormData(e.target);
     const desc = formData.get("desc");
     if (!desc) return;

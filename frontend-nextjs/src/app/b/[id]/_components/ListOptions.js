@@ -6,54 +6,60 @@ import {
   Listbox,
   ListboxItem,
 } from "@nextui-org/react";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { MoreHorizontal } from "lucide-react";
-import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import MoveColumn from "@/components/actions/column/moveColumn";
 import CopyColumn from "@/components/actions/column/copyColumn";
 import SortCard from "@/components/actions/column/sortCard";
-export function ListOptions({ column, deleteColumnDetail }) {
+import DeleteColumn from "@/components/actions/column/deleteColumn";
+import { useSelector } from "react-redux";
+export function ListOptions({ column }) {
   const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
-  const onDeleteColumn = async () => {
-    toast.warning("Bạn có chắc chắn muốn xóa danh sách này không", {
-      onClick: async () => {
-        deleteColumnDetail(column.id);
-      },
-    });
-  };
+  const user = useSelector((state) => state.user.user);
+  const isAdminOrOwner = useMemo(() => {
+    return user.role === "admin" || user.role === "owner";
+  }, [user.role]);
 
-  const options = [
-    {
-      label: "Sao chép danh sách",
-      component: (
-        <CopyColumn column={column}>
-          <span className="block w-full">Sao chép danh sách</span>
-        </CopyColumn>
-      ),
-    },
-    // {
-    //   label: "Xóa danh sách",
-    //   action: onDeleteColumn,
-    // },
-    {
-      label: "Di chuyển danh sách",
-      component: (
-        <MoveColumn column={column}>
-          <span className="block w-full">Di chuyển danh sách</span>
-        </MoveColumn>
-      ),
-    },
-    {
-      label: "Sắp xếp",
-      component: (
-        <SortCard column={column}>
-          <span className="block w-full">Sắp xếp theo...</span>
-        </SortCard>
-      ),
-    },
-  ];
+  const options = useMemo(
+    () =>
+      [
+        {
+          label: "Sao chép danh sách",
+          component: (
+            <CopyColumn column={column}>
+              <span className="block w-full">Sao chép danh sách</span>
+            </CopyColumn>
+          ),
+        },
+        !isAdminOrOwner && {
+          label: "Xóa danh sách",
+          component: (
+            <DeleteColumn column={column}>
+              <span className="block w-full">Xóa danh sách</span>
+            </DeleteColumn>
+          ),
+        },
+        {
+          label: "Di chuyển danh sách",
+          component: (
+            <MoveColumn column={column}>
+              <span className="block w-full">Di chuyển danh sách</span>
+            </MoveColumn>
+          ),
+        },
+        {
+          label: "Sắp xếp",
+          component: (
+            <SortCard column={column}>
+              <span className="block w-full">Sắp xếp theo...</span>
+            </SortCard>
+          ),
+        },
+      ].filter(Boolean),
+    [isAdminOrOwner]
+  );
   return (
     <Popover
       placement="right"
@@ -86,7 +92,6 @@ export function ListOptions({ column, deleteColumnDetail }) {
                   textValue={option.label}
                   key={index}
                   style={{ color: "#172b4d" }}
-                  onClick={() => option.action && option.action()}
                 >
                   {option.component ? option.component : option.label}
                 </ListboxItem>

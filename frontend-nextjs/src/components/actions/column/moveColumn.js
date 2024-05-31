@@ -36,118 +36,111 @@ const MoveColumn = ({ children, column }) => {
   const columns = useSelector((state) => state.column.columns);
   const [valueBoard, setValueBoard] = useState(board.id);
   const [valueColumn, setValueColumn] = useState(column.id);
-  const workspaces = useMemo(() => {
-    return user?.workspaces?.filter((workspace) => workspace.boards.length > 0);
-  }, [user]);
+
+  const workspaces = useMemo(
+    () => user?.workspaces?.filter((w) => w.boards.length > 0),
+    [user]
+  );
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (valueBoard) {
-        const data = await getBoardDetail(+valueBoard);
-        if (data.status === 200) {
-          let boardData = data.data;
-
-          boardData.columns = mapOrder(
-            boardData.columns,
-            boardData.columnOrderIds,
-            "id"
-          );
-          boardData.columns.forEach((column) => {
-            if (isEmpty(column.cards)) {
-              column.cards = [generatePlaceholderCard(column)];
-              column.cardOrderIds = [generatePlaceholderCard(column).id];
-            } else {
-              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-            }
-          });
-          dispatch(updateColumn(boardData.columns));
-          setBoardMove(boardData);
+    if (valueBoard) {
+      const fetchBoardDetails = async () => {
+        try {
+          const data = await getBoardDetail(valueBoard);
+          if (data.status === 200) {
+            const boardData = data.data;
+            boardData.columns = mapOrder(
+              boardData.columns,
+              boardData.columnOrderIds,
+              "id"
+            );
+            boardData.columns.forEach((col) => {
+              if (isEmpty(col.cards)) {
+                const placeholderCard = generatePlaceholderCard(col);
+                col.cards = [placeholderCard];
+                col.cardOrderIds = [placeholderCard.id];
+              } else {
+                col.cards = mapOrder(col.cards, col.cardOrderIds, "id");
+              }
+            });
+            dispatch(updateColumn(boardData.columns));
+            setBoardMove(boardData);
+          }
+        } catch (error) {
+          toast.error("Failed to fetch board details");
         }
-      }
-    };
-
-    fetchData();
+      };
+      fetchBoardDetails();
+    } else {
+      setBoardMove(board);
+    }
   }, [valueBoard]);
 
-  const HandleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    if (+valueBoard === +column.board_id) {
-      if (+column.id !== +valueColumn) {
-        const oldColumnIndex = columns.findIndex((c) => +c.id === +column.id);
-        const newColumnIndex = columns.findIndex((c) => +c.id === +valueColumn);
-        const dndOrderedColumns = arrayMove(
-          columns,
-          oldColumnIndex,
-          newColumnIndex
-        );
-        const newBoard = { ...board };
-        const newColumns = [...dndOrderedColumns];
 
-        const dndOrderedColumnsIds = newColumns.map((c) => c.id);
+    try {
+      if (+valueBoard === +column.board_id) {
+        if (+column.id !== +valueColumn) {
+          const newColumns = arrayMove(
+            columns,
+            columns.findIndex((c) => +c.id === +column.id),
+            columns.findIndex((c) => +c.id === +valueColumn)
+          );
+          const newBoard = {
+            ...board,
+            columns: newColumns,
+            columnOrderIds: newColumns.map((c) => c.id),
+          };
+          const data = await updateBoardDetail(newBoard.id, {
+            columnOrderIds: newBoard.columnOrderIds,
+          });
 
-        newBoard.columns = newColumns;
-        newBoard.columnOrderIds = dndOrderedColumnsIds;
-
-        updateBoardDetail(newBoard.id, {
-          columnOrderIds: dndOrderedColumnsIds,
-        }).then((data) => {
           if (data.status === 200) {
             dispatch(updateBoard(newBoard));
             dispatch(updateColumn(newColumns));
             setIsOpen(false);
           } else {
-            const error = data.error;
-            toast.error(error);
+            toast.error(data.error);
           }
-          setIsLoading(false);
-        });
-      }
-    } else {
-      const boardActive = cloneDeep(board);
-      const boardOver = cloneDeep(boardMove);
+        }
+      } else {
+        const boardActive = cloneDeep(board);
+        const boardOver = cloneDeep(boardMove);
+        const newColumnIndex = columns.findIndex((c) => c.id === +valueColumn);
 
-      const newColumnIndex = columns.findIndex(
-        (item) => item.id === +valueColumn
-      );
-
-      if (boardActive) {
         boardActive.columns = boardActive.columns.filter(
-          (item) => item.id !== column.id
+          (c) => c.id !== column.id
         );
+        boardActive.columnOrderIds = boardActive.columns.map((c) => c.id);
 
-        boardActive.columnOrderIds = boardActive.columns.map((item) => item.id);
-      }
-
-      if (boardOver) {
-        boardOver.columns = boardOver.columns.filter(
-          (item) => item.id !== column.id
-        );
-        const rebuild_activeDraggingColumnData = {
-          ...column,
-          board_id: boardOver.id,
-        };
+        const updatedColumn = { ...column, board_id: boardOver.id };
         boardOver.columns = boardOver.columns.toSpliced(
           newColumnIndex,
           0,
-          rebuild_activeDraggingColumnData
+          updatedColumn
         );
-        boardOver.columnOrderIds = boardOver.columns.map((item) => item.id);
-      }
-      moveColumnToDifferentBoardAPI(column.id, {
-        user_id: user.id,
-        boardActive,
-        boardOver,
-      }).then((data) => {
+        boardOver.columnOrderIds = boardOver.columns.map((c) => c.id);
+
+        const data = await moveColumnToDifferentBoardAPI(column.id, {
+          user_id: user.id,
+          boardActive,
+          boardOver,
+        });
+
         if (data.status === 200) {
           dispatch(updateBoard(boardActive));
           dispatch(updateColumn(boardActive.columns));
           setIsOpen(false);
         } else {
-          const error = data.error;
-          toast.error(error);
+          toast.error(data.error);
         }
-        setIsLoading(false);
-      });
+      }
+    } catch (error) {
+      toast.error("Failed to move column");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -167,7 +160,7 @@ const MoveColumn = ({ children, column }) => {
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className="w-[260px] p-2 px-3">
-        <form className="w-full" onSubmit={(e) => HandleSubmit(e)}>
+        <form className="w-full" onSubmit={(e) => handleSubmit(e)}>
           <div className="flex justify-between items-center relative">
             <h1 className="grow text-center font-medium text-xs">
               Di chuyển danh sách

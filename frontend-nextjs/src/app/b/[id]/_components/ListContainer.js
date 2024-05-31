@@ -32,7 +32,6 @@ export function ListContainer({
   moveColumns,
   moveCardInTheSameColumn,
   moveCardToDifferentColumn,
-  deleteColumnDetail,
   createNewColumn,
   createNewCard,
   updateColumn,
@@ -337,7 +336,6 @@ export function ListContainer({
     >
       <ListColumn
         columns={orderedColumns}
-        deleteColumnDetail={deleteColumnDetail}
         createNewColumn={createNewColumn}
         createNewCard={createNewCard}
         updateColumn={updateColumn}
