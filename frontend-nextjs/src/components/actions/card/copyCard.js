@@ -21,7 +21,6 @@ import { columnSlice } from "@/stores/slices/columnSlice";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { copyCardWithBoardApi } from "@/services/workspaceApi";
 import { cloneDeep, isEmpty } from "lodash";
-import useCardModal from "@/hooks/use-card-modal";
 import { mapOrder } from "@/utils/sorts";
 import { toast } from "react-toastify";
 const { updateBoard } = boardSlice.actions;
@@ -33,7 +32,6 @@ function generateRandomId() {
 
 const CopyCard = ({ children }) => {
   const dispatch = useDispatch();
-  const cardModal = useCardModal();
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
@@ -84,70 +82,80 @@ const CopyCard = ({ children }) => {
 
     fetchData();
   }, [valueBoard]);
+
   const HandleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    if (valueBoard && valueColumn && valueCardIndex && title) {
-      const newBoard = { ...boardMove };
-      const nextColumns = cloneDeep(columns);
-      const nextOverColumn = nextColumns.find(
-        (column) => column.id === +valueColumn
-      );
-      const overCardIndex = cardsCurrent.findIndex(
-        (item) => item === +valueCardIndex
-      );
-      const shouldCopyUsers = selected?.includes("users");
 
-      let cardCopy = {};
-
-      if (nextOverColumn) {
-        cardCopy = {
-          ...card,
-          title: title,
-          users: shouldCopyUsers ? card.users : [],
-          id: generateRandomId(),
-          column_id: nextOverColumn.id,
-        };
-        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-          overCardIndex,
-          0,
-          cardCopy
+    try {
+      if (valueBoard && valueColumn && valueCardIndex && title) {
+        const newBoard = { ...boardMove };
+        const nextColumns = cloneDeep(columns);
+        const nextOverColumn = nextColumns.find(
+          (column) => column.id === +valueColumn
         );
-        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
-          (card) => card.id
+        const overCardIndex = cardsCurrent.findIndex(
+          (item) => item === +valueCardIndex
         );
-      }
-      newBoard.columns = [...nextColumns];
-      const checkBoard = +board.id === +valueBoard;
+        const shouldCopyUsers = selected?.includes("users");
 
-      const nextOverColumnCopy = { ...nextOverColumn };
-      nextOverColumnCopy.cards = nextOverColumnCopy.cards.filter(
-        (card) => !card.FE_PlaceholderCard
-      );
-      nextOverColumnCopy.cardOrderIds = nextOverColumnCopy.cards.map(
-        (card) => card.id
-      );
-      copyCardWithBoardApi({
-        keptItems: selected,
-        user_id: user.id,
-        matchBoard: checkBoard,
-        card: cardCopy,
-        overColumn: nextOverColumnCopy,
-      }).then((data) => {
-        if (data.status === 200) {
-          setTitle(card.title);
-          if (checkBoard) {
-            dispatch(updateBoard(newBoard));
-            dispatch(updateColumn(newBoard.columns));
-            setValueCardIndex(card.id);
+        if (nextOverColumn) {
+          const cardCopy = {
+            ...card,
+            title: title,
+            users: shouldCopyUsers ? card.users : [],
+            id: generateRandomId(),
+            column_id: nextOverColumn.id,
+          };
+
+          nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+            overCardIndex,
+            0,
+            cardCopy
+          );
+          nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
+            (card) => card.id
+          );
+
+          newBoard.columns = [...nextColumns];
+          const checkBoard = +board.id === +valueBoard;
+
+          const nextOverColumnCopy = {
+            ...nextOverColumn,
+            cards: nextOverColumn.cards.filter(
+              (card) => !card.FE_PlaceholderCard
+            ),
+            cardOrderIds: nextOverColumn.cards.map((card) => card.id),
+          };
+
+          const data = await copyCardWithBoardApi({
+            keptItems: selected,
+            user_id: user.id,
+            matchBoard: checkBoard,
+            card: cardCopy,
+            overColumn: nextOverColumnCopy,
+          });
+
+          if (data.status === 200) {
+            setTitle(card.title);
+            if (checkBoard) {
+              dispatch(updateBoard(newBoard));
+              dispatch(updateColumn(newBoard.columns));
+              toast.success("Sao chép thẻ thành công");
+              setIsOpen(false);
+              setValueCardIndex(card.id);
+            }
+            setSelected([]);
+          } else {
+            const error = data.error;
+            toast.error(error);
           }
-          setSelected([]);
-        } else {
-          const error = data.error;
-          toast.error(error);
         }
-        setIsLoading(false);
-      });
+      }
+    } catch (error) {
+      toast.error("An error occurred while copying the card.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

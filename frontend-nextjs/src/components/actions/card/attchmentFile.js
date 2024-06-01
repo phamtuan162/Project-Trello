@@ -7,18 +7,22 @@ import { attachmentFileApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
 const { updateCard } = cardSlice.actions;
+
 const AttachmentFile = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
-  const user = useSelector((state) => state.user.user);
   const inputRef = useRef();
+
   const HandleUploadFile = async (e) => {
     const file = e.target.files[0];
     const formData = new FormData();
     formData.append("file", file);
     formData.append("name", file.name);
-    attachmentFileApi(card.id, formData).then((data) => {
+
+    try {
+      const data = await attachmentFileApi(card.id, formData);
+
       if (data.status === 200) {
         const cardUpdate = {
           ...card,
@@ -30,9 +34,12 @@ const AttachmentFile = ({ children }) => {
       } else {
         const error = data.error;
         toast.error(error);
-        setIsOpen(false);
       }
-    });
+    } catch (error) {
+      toast.error("An error occurred while uploading the file.");
+    } finally {
+      inputRef.current.value = "";
+    }
   };
   return (
     <Popover

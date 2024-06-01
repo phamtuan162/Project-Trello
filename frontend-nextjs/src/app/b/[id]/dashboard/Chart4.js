@@ -19,6 +19,7 @@ const Chart4 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+
   const [type, setType] = useState("bar");
   const [selected, setSelected] = useState("month");
 
@@ -57,24 +58,20 @@ const Chart4 = ({ typeCharts, times }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.comments.length > 0 && card?.users?.length > 0) {
-                card.users.forEach((user) => {
-                  if (!users.includes(user.name)) {
-                    users.push(user.name);
-                  }
-                });
-
+              if (card.comments.length > 0) {
                 card.comments.forEach((comment) => {
-                  if (comment.created_at) {
+                  if (
+                    checkCardCreationDate(selected, comment.created_at) &&
+                    comment.created_at
+                  ) {
+                    if (!users.includes(comment.userName)) {
+                      users.push(comment.userName);
+                    }
                     const created_at = format(
                       new Date(comment.created_at),
                       "dd/MM/yyyy"
                     );
-
-                    if (
-                      checkCardCreationDate(selected, comment.created_at) &&
-                      !timeCreates.includes(created_at)
-                    ) {
+                    if (!timeCreates.includes(created_at)) {
                       timeCreates.push(created_at);
                       commentCounts.push(0);
                     }
@@ -144,23 +141,20 @@ const Chart4 = ({ typeCharts, times }) => {
       } else {
         let users = [];
         let comments = [];
-        console.log(comments);
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card?.users?.length > 0 && card.comments.length > 0) {
-                card.users.forEach((user) => {
-                  if (!users.includes(user.name)) {
-                    users.unshift(user.name);
-                    comments.unshift(0);
-                  }
-                });
-
+              if (card.comments.length > 0) {
                 card.comments.forEach((comment) => {
-                  const index = users.findIndex(
-                    (item) => item === comment.userName
-                  );
-                  comments[index] += 1;
+                  if (!users.includes(comment.userName)) {
+                    users.unshift(comment.userName);
+                    comments.unshift(1);
+                  } else {
+                    const index = users.findIndex(
+                      (item) => item === comment.userName
+                    );
+                    comments[index] += 1;
+                  }
                 });
               }
             }
@@ -266,7 +260,7 @@ const Chart4 = ({ typeCharts, times }) => {
           ))}
         </div>
       </div>
-      <div className="w-full grow flex flex-col">
+      <div className="w-full grow flex flex-col justify-end">
         {type === "line" && (
           <RadioGroup
             label="Khung thời gian"

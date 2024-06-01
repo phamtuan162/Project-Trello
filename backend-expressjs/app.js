@@ -36,66 +36,6 @@ const corsOptions = {
 
 var app = express();
 
-// app.set("port", 3001);
-
-// /**
-//  * Create HTTP server.
-//  */
-
-// var server = http.createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*", // Hoặc bạn có thể cung cấp URL cụ thể của máy chủ web của bạn
-//   },
-// });
-// // Sự kiện kết nối mới
-// let onlineUsers = [];
-
-// const addNewUser = (userId, socketId) => {
-//   !onlineUsers.some((user) => +user.id === +userId) &&
-//     onlineUsers.push({ userId, socketId });
-// };
-
-// const removeUser = (socketId) => {
-//   onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId);
-// };
-
-// const getUser = (userId) => {
-//   return onlineUsers.find((user) => +user.id === +userId);
-// };
-// /**
-//  * Listen on provided port, on all network interfaces.
-//  */
-// io.on("connection", (socket) => {
-//   console.log("A user connected...");
-
-//   // socket.on("newUser", (userId) => {
-//   //   addNewUser(userId, socket.id);
-//   //   const receiver = getUser(userId);
-//   //   io.to(receiver.socketId).emit("getUsers", {
-//   //     userId,
-//   //   });
-//   // });
-//   // socket.on("sendNotification", ({ senderName, receiverName, type }) => {
-//   //   const receiver = getUser(receiverName);
-//   //   io.to(receiver.socketId).emit("getNotification", {
-//   //     senderName,
-//   //     type,
-//   //   });
-//   // });
-
-//   // socket.on("sendText", ({ senderName, receiverName, text }) => {
-//   //   const receiver = getUser(receiverName);
-//   //   io.to(receiver.socketId).emit("getText", {
-//   //     senderName,
-//   //     text,
-//   //   });
-//   // });
-//   // Xử lý sự kiện disconnect
-//   // socket.on("disconnect", () => {
-//   //   removeUser(socket.id);
-//   // });
-// });
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "X-Requested-With");
   next();
@@ -159,6 +99,12 @@ app.use("/users", usersRouter);
 cron.schedule("* 0 * * *", () => {
   blacklist_token.delete();
 });
+// cron.schedule("* 0 * * *", () => {
+//   column.delete();
+// });
+// cron.schedule("* 0 * * *", () => {
+//   card.delete();
+// });
 cron.schedule("0 * * * *", () => {
   card.HandleExpired();
 });

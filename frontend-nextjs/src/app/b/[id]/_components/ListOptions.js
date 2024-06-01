@@ -19,7 +19,9 @@ export function ListOptions({ column }) {
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const isAdminOrOwner = useMemo(() => {
-    return user.role === "admin" || user.role === "owner";
+    return (
+      user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "owner"
+    );
   }, [user.role]);
 
   const options = useMemo(

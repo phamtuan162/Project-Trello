@@ -29,33 +29,39 @@ const DeleteCard = ({ children }) => {
   const board = useSelector((state) => state.board.board);
   const HandleDeleteCard = () => {
     setIsLoading(true);
-    const newBoard = { ...board };
+    try {
+      const newBoard = { ...board };
 
-    const nextColumns = cloneDeep(newBoard.columns);
-    const activeColumn = nextColumns.find(
-      (column) => +column.id === +card.column_id
-    );
-    if (activeColumn) {
-      activeColumn.cards = activeColumn.cards.filter(
-        (item) => item.id !== card.id
+      const nextColumns = cloneDeep(newBoard.columns);
+      const activeColumn = nextColumns.find(
+        (column) => +column.id === +card.column_id
       );
-      activeColumn.cardOrderIds = activeColumn.cards.map((item) => item.id);
-    }
-
-    const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
-    newBoard.columns = [...nextColumns];
-    newBoard.columnOrderIds = dndOrderedColumnsIds;
-    deleteCardApi(card.id).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateBoard(newBoard));
-        dispatch(updateCard([]));
-        dispatch(updateColumn(nextColumns));
-        cardModel.onClose();
-      } else {
-        const error = data.error;
-        toast.error(error);
+      if (activeColumn) {
+        activeColumn.cards = activeColumn.cards.filter(
+          (item) => item.id !== card.id
+        );
+        activeColumn.cardOrderIds = activeColumn.cards.map((item) => item.id);
       }
-    });
+
+      const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
+      newBoard.columns = [...nextColumns];
+      newBoard.columnOrderIds = dndOrderedColumnsIds;
+      deleteCardApi(card.id).then((data) => {
+        if (data.status === 200) {
+          dispatch(updateBoard(newBoard));
+          dispatch(updateCard([]));
+          dispatch(updateColumn(nextColumns));
+          cardModel.onClose();
+        } else {
+          const error = data.error;
+          toast.error(error);
+        }
+      });
+    } catch (error) {
+      toast.error("An error occurred while delete the card.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
     <Popover

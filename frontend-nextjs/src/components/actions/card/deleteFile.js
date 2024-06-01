@@ -5,12 +5,10 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Input,
   Button,
   CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { createWorkApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { deleteFileApi } from "@/services/workspaceApi";
@@ -25,7 +23,9 @@ const DeleteFile = ({ children, attachment }) => {
   const HandleDeleteFile = async () => {
     setIsLoading(true);
 
-    deleteFileApi(attachment.id).then((data) => {
+    try {
+      const data = await deleteFileApi(attachment.id);
+
       if (data.status === 200) {
         const attachmentsUpdate = card.attachments.filter(
           (item) => +item.id !== +attachment.id
@@ -36,15 +36,18 @@ const DeleteFile = ({ children, attachment }) => {
           activities: [data.data, ...card.activities],
         };
         dispatch(updateCard(cardUpdate));
-        setIsLoading(false);
         setIsOpen(false);
       } else {
         const error = data.error;
         toast.error(error);
-        setIsLoading(false);
       }
-    });
+    } catch (error) {
+      toast.error("An error occurred while deleting the file.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <Popover
       placement="right"

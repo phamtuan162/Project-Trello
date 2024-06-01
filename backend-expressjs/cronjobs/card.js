@@ -1,4 +1,14 @@
-const { Card, User, Column, Board, Workspace } = require("../models/index");
+const {
+  Card,
+  User,
+  Column,
+  Board,
+  Workspace,
+  Comment,
+  Attachment,
+  Work,
+  Mission,
+} = require("../models/index");
 const { isAfter, subDays, isBefore, subHours } = require("date-fns");
 const sendMail = require("../utils/mail");
 const { Op } = require("sequelize");
@@ -65,6 +75,44 @@ module.exports = {
           //   })
           // );
         }
+      }
+    }
+  },
+  delete: async () => {
+    const cards = await Card.findAll({
+      include: [
+        { model: Comment, as: "comments" },
+        { model: Attachment, as: "attachments" },
+        { model: User, as: "users" },
+        {
+          model: Work,
+          as: "works",
+          include: { model: Mission, as: "missions" },
+        },
+      ],
+
+      paranoid: false,
+    });
+    if (cards.length > 0) {
+      for (const card of cards) {
+        if (card.users.length > 0) {
+          await card.removeUsers(card.users);
+        }
+        if (card.comments.length > 0) {
+          await Comment.destroy({ where: { card_id: card.id } });
+        }
+        if (card.attachments.length > 0) {
+          await Attachment.destroy({ where: { card_id: card.id } });
+        }
+        if (card.works.length > 0) {
+          for (const work of card.works) {
+            if (work.missions.length > 0) {
+              await Mission.destroy({ where: { work_id: work.id } });
+            }
+            await work.destroy();
+          }
+        }
+        await card.destroy({ force: true });
       }
     }
   },

@@ -22,36 +22,40 @@ const EditNameFile = ({ children, attachment }) => {
   const [name, setName] = useState(attachment.fileName);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
+
   const HandleChange = (e) => {
     setName(e.target.value);
   };
+
   const HandleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    updateFileApi(attachment.id, { fileName: name }).then((data) => {
+    try {
+      const data = await updateFileApi(attachment.id, { fileName: name });
+
       if (data.status === 200) {
-        const attachmentUpdates = card.attachments.map((attachment) => {
-          if (+attachment.id === +data.data.id) {
-            return data.data;
-          }
-          return attachment;
-        });
+        const attachmentUpdates = card.attachments.map((attachment) =>
+          +attachment.id === +data.data.id ? data.data : attachment
+        );
 
         const cardUpdate = {
           ...card,
           attachments: attachmentUpdates,
         };
+
         dispatch(updateCard(cardUpdate));
-        setIsLoading(false);
         setIsOpen(false);
       } else {
-        const error = data.error;
-        toast.error(error);
-        setIsLoading(false);
+        toast.error(data.error);
       }
-    });
+    } catch (error) {
+      toast.error("An error occurred while updating the file.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <Popover
       placement="right"

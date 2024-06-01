@@ -208,40 +208,29 @@ module.exports = {
     const response = {};
 
     try {
-      const card = await Card.findByPk(id, {
-        include: [
-          { model: User, as: "users" },
-          { model: Work, as: "works" },
-        ],
-      });
+      const card = await Card.findByPk(id);
       const column = await Column.findByPk(card.column_id);
-      if (card && column) {
-        const cardOrderIdsUpdate = column.cardOrderIds.filter(
-          (item) => +item !== +card.id
-        );
-        await column.update({ cardOrderIds: cardOrderIdsUpdate });
-
-        if (card.works.length > 0) {
-          await Work.destroy({ where: { card_id: card.id } });
-        }
-        await card.removeUsers(card.users);
-        await Activity.create({
-          user_id: user.id,
-          userName: user.name,
-          userAvatar: user.avatar,
-          card_id: card.id,
-          title: card.title,
-          action: "delete",
-          workspace_id: user.workspace_id_active,
-          desc: `đã xóa thẻ ${card.title} khỏi danh sách ${column.title}`,
-        });
-        await card.destroy();
-
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-        });
+      if (!card || !column) {
+        return res.status(404).json({ status: 404, message: "Not found" });
       }
+
+      const title = card.title;
+      await card.destroy();
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        card_id: card.id,
+        title: title,
+        action: "delete",
+        workspace_id: user.workspace_id_active,
+        desc: `đã xóa thẻ ${card.title} khỏi danh sách ${column.title}`,
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
     } catch (error) {
       Object.assign(response, {
         status: 500,

@@ -19,6 +19,7 @@ const Chart5 = ({ typeCharts, times }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [type, setType] = useState("bar");
   const [selected, setSelected] = useState("month");
 
@@ -34,15 +35,27 @@ const Chart5 = ({ typeCharts, times }) => {
     });
     return { ...board, columns: updatedColumns };
   }, [card, board]);
-  const check = useMemo(
-    () =>
-      updatedBoard?.columns?.some((column) =>
-        column.cards.some((card) => card.comments.length > 0)
-      ) || false,
-    [updatedBoard]
-  );
+
+  const check = useMemo(() => {
+    if (!updatedBoard || !updatedBoard.columns) return false;
+
+    for (const column of updatedBoard.columns) {
+      if (!column.cards) continue;
+
+      for (const card of column.cards) {
+        if (!card.works) continue;
+
+        for (const work of card.works) {
+          if (work.missions.length > 0) return true;
+        }
+      }
+    }
+
+    return false;
+  }, [updatedBoard]);
+
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && workspace?.users?.length > 0) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
@@ -52,34 +65,39 @@ const Chart5 = ({ typeCharts, times }) => {
       if (type === "line") {
         let timeCreates = [];
         let datasets = [];
-        let commentCounts = [];
-        let users = [];
+        let missionCounts = [];
+        let users = ["Không được giao"];
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.comments.length > 0 && card?.users?.length > 0) {
-                card.users.forEach((user) => {
-                  if (!users.includes(user.name)) {
-                    users.push(user.name);
+              if (card.works.length > 0) {
+                for (const work of card.works) {
+                  if (work.missions.length > 0) {
+                    work.missions.forEach((mission) => {
+                      if (
+                        checkCardCreationDate(selected, mission.created_at) &&
+                        mission.created_at
+                      ) {
+                        if (mission.user_id) {
+                          const user = workspace?.users?.find(
+                            (user) => +user.id === +mission.user_id
+                          );
+                          if (!users.includes(user.name)) {
+                            users.push(user.name);
+                          }
+                        }
+                        const created_at = format(
+                          new Date(mission.created_at),
+                          "dd/MM/yyyy"
+                        );
+                        if (!timeCreates.includes(created_at)) {
+                          timeCreates.push(created_at);
+                          missionCounts.push(0);
+                        }
+                      }
+                    });
                   }
-                });
-
-                card.comments.forEach((comment) => {
-                  if (comment.created_at) {
-                    const created_at = format(
-                      new Date(comment.created_at),
-                      "dd/MM/yyyy"
-                    );
-
-                    if (
-                      checkCardCreationDate(selected, comment.created_at) &&
-                      !timeCreates.includes(created_at)
-                    ) {
-                      timeCreates.push(created_at);
-                      commentCounts.push(0);
-                    }
-                  }
-                });
+                }
               }
             });
           }
@@ -93,7 +111,7 @@ const Chart5 = ({ typeCharts, times }) => {
           users.forEach((user, index) => {
             datasets.push({
               label: user,
-              data: [...commentCounts],
+              data: [...missionCounts],
               backgroundColor: colors[index % colors.length],
               borderColor: colors[index % colors.length],
               fill: false,
@@ -104,24 +122,33 @@ const Chart5 = ({ typeCharts, times }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.comments.length > 0) {
-                card.comments.forEach((comment) => {
-                  if (comment.created_at) {
-                    const created_at = format(
-                      new Date(comment.created_at),
-                      "dd/MM/yyyy"
-                    );
-                    if (timeCreates.includes(created_at)) {
-                      const dataset = datasets.find(
-                        (item) => item.label === comment.userName
-                      );
-                      const indexTime = timeCreates.findIndex(
-                        (item) => item === created_at
-                      );
-                      dataset.data[indexTime] += 1;
-                    }
+              if (card.works.length > 0) {
+                for (const work of card.works) {
+                  if (work.missions.length > 0) {
+                    work.missions.forEach((mission) => {
+                      if (mission.created_at) {
+                        const created_at = format(
+                          new Date(mission.created_at),
+                          "dd/MM/yyyy"
+                        );
+                        const user = mission.user_id
+                          ? workspace?.users?.find(
+                              (user) => +user.id === +mission.user_id
+                            )
+                          : { name: "Không được giao" };
+                        if (timeCreates.includes(created_at)) {
+                          const dataset = datasets.find(
+                            (item) => item.label === user.name
+                          );
+                          const indexTime = timeCreates.findIndex(
+                            (item) => item === created_at
+                          );
+                          dataset.data[indexTime] += 1;
+                        }
+                      }
+                    });
                   }
-                });
+                }
               }
             });
           }
@@ -142,26 +169,37 @@ const Chart5 = ({ typeCharts, times }) => {
           },
         };
       } else {
-        let users = [];
-        let comments = [];
-        console.log(comments);
+        let users = ["Không được giao"];
+        let missions = [0];
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card?.users?.length > 0 && card.comments.length > 0) {
-                card.users.forEach((user) => {
-                  if (!users.includes(user.name)) {
-                    users.unshift(user.name);
-                    comments.unshift(0);
+              if (card.works.length > 0) {
+                for (const work of card.works) {
+                  if (work.missions.length > 0) {
+                    work.missions.forEach((mission) => {
+                      if (mission.user_id) {
+                        const user = workspace?.users?.find(
+                          (user) => +user.id === +mission.user_id
+                        );
+                        if (!users.includes(user.name)) {
+                          users.unshift(user.name);
+                          missions.unshift(1);
+                        } else {
+                          const index = users.findIndex(
+                            (item) => item === user.name
+                          );
+                          missions[index] += 1;
+                        }
+                      } else {
+                        const index = users.findIndex(
+                          (item) => item === "Không được giao"
+                        );
+                        missions[index] += 1;
+                      }
+                    });
                   }
-                });
-
-                card.comments.forEach((comment) => {
-                  const index = users.findIndex(
-                    (item) => item === comment.userName
-                  );
-                  comments[index] += 1;
-                });
+                }
               }
             }
           }
@@ -173,8 +211,8 @@ const Chart5 = ({ typeCharts, times }) => {
             labels: users,
             datasets: [
               {
-                label: "Tổng bình luận ",
-                data: comments,
+                label: "Số nhiệm vụ ",
+                data: missions,
                 backgroundColor: [
                   "rgba(255, 99, 132, 0.2)",
                   "rgba(255, 159, 64, 0.2)",
@@ -212,7 +250,7 @@ const Chart5 = ({ typeCharts, times }) => {
 
       chartRef.current.chart = newChart;
     }
-  }, [updatedBoard, type, selected]);
+  }, [updatedBoard, type, selected, workspace.users]);
 
   const handleDownload = () => {
     if (chartRef.current) {
@@ -241,7 +279,7 @@ const Chart5 = ({ typeCharts, times }) => {
         className="w-full flex items-center justify-between"
         style={{ color: "#172b4d" }}
       >
-        <p className="font-bold">Tổng bình luận mỗi thành viên</p>
+        <p className="font-bold">Số nhiệm vụ mỗi thành viên</p>
         <div className="flex gap-1">
           {typeCharts.map((typeChart, index) => (
             <div
@@ -266,7 +304,7 @@ const Chart5 = ({ typeCharts, times }) => {
           ))}
         </div>
       </div>
-      <div className="w-full grow flex flex-col">
+      <div className="w-full grow flex flex-col justify-end">
         {type === "line" && (
           <RadioGroup
             label="Khung thời gian"
@@ -287,7 +325,7 @@ const Chart5 = ({ typeCharts, times }) => {
             className="w-[200px] h-[200px]"
           />
           <p className=" text-lg  text-muted-foreground">
-            Bảng này chưa có bình luận nào
+            Bảng này chưa có nhiệm vụ nào
           </p>
         </div>
         {check ? (

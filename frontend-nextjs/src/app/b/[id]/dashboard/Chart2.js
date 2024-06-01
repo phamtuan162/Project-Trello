@@ -265,7 +265,7 @@ const Chart2 = ({ typeCharts, times }) => {
           ))}
         </div>
       </div>
-      <div className="w-full grow flex flex-col">
+      <div className="w-full grow flex flex-col justify-end">
         {type === "line" && (
           <RadioGroup
             label="Khung thời gian"
