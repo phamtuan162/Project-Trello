@@ -13,6 +13,7 @@ import MoveColumn from "@/components/actions/column/moveColumn";
 import CopyColumn from "@/components/actions/column/copyColumn";
 import SortCard from "@/components/actions/column/sortCard";
 import DeleteColumn from "@/components/actions/column/deleteColumn";
+import { Copy, Trash, ArrowRight, ArrowUpDown } from "lucide-react";
 import { useSelector } from "react-redux";
 export function ListOptions({ column }) {
   const closeRef = useRef(null);
@@ -22,7 +23,7 @@ export function ListOptions({ column }) {
     return (
       user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "owner"
     );
-  }, [user.role]);
+  }, [user]);
 
   const options = useMemo(
     () =>
@@ -31,15 +32,21 @@ export function ListOptions({ column }) {
           label: "Sao chép danh sách",
           component: (
             <CopyColumn column={column}>
-              <span className="block w-full">Sao chép danh sách</span>
+              <span className=" w-full justify-start  font-medium flex items-center gap-2">
+                <Copy size={16} />
+                Sao chép danh sách
+              </span>
             </CopyColumn>
           ),
         },
-        !isAdminOrOwner && {
+        isAdminOrOwner && {
           label: "Xóa danh sách",
           component: (
             <DeleteColumn column={column}>
-              <span className="block w-full">Xóa danh sách</span>
+              <span className=" w-full justify-start  font-medium flex items-center gap-2">
+                <Trash size={16} />
+                Xóa danh sách
+              </span>
             </DeleteColumn>
           ),
         },
@@ -47,7 +54,10 @@ export function ListOptions({ column }) {
           label: "Di chuyển danh sách",
           component: (
             <MoveColumn column={column}>
-              <span className="block w-full">Di chuyển danh sách</span>
+              <span className=" w-full justify-start  font-medium flex items-center gap-2">
+                <ArrowRight size={16} />
+                Di chuyển danh sách
+              </span>
             </MoveColumn>
           ),
         },
@@ -55,7 +65,10 @@ export function ListOptions({ column }) {
           label: "Sắp xếp",
           component: (
             <SortCard column={column}>
-              <span className="block w-full">Sắp xếp theo...</span>
+              <span className=" w-full justify-start  font-medium flex items-center gap-2">
+                <ArrowUpDown size={16} />
+                Sắp xếp theo...
+              </span>
             </SortCard>
           ),
         },

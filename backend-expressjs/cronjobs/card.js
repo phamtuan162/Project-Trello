@@ -8,6 +8,7 @@ const {
   Attachment,
   Work,
   Mission,
+  Activity,
 } = require("../models/index");
 const { isAfter, subDays, isBefore, subHours } = require("date-fns");
 const sendMail = require("../utils/mail");
@@ -81,6 +82,7 @@ module.exports = {
   delete: async () => {
     const cards = await Card.findAll({
       include: [
+        { model: Activity, as: "activities" },
         { model: Comment, as: "comments" },
         { model: Attachment, as: "attachments" },
         { model: User, as: "users" },
@@ -111,6 +113,12 @@ module.exports = {
             }
             await work.destroy();
           }
+        }
+        if (card.activities.length > 0) {
+          await Activity.update(
+            { card_id: null },
+            { where: { card_id: card.id } }
+          );
         }
         await card.destroy({ force: true });
       }

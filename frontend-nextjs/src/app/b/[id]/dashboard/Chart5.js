@@ -5,17 +5,8 @@ import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
 import { RadioGroup, Radio } from "@nextui-org/react";
 import { checkCardCreationDate } from "@/utils/formatTime";
-const colors = [
-  "rgba(255, 99, 132, 0.8)",
-  "rgba(255, 159, 64, 0.8)",
-  "rgba(255, 205, 86, 0.8)",
-  "rgba(75, 192, 192, 0.8)",
-  "rgba(54, 162, 235, 0.8)",
-  "rgba(153, 102, 255, 0.8)",
-  "rgba(201, 203, 207, 0.8)",
-  // Add more colors if needed
-];
-const Chart5 = ({ typeCharts, times }) => {
+
+const Chart5 = ({ typeCharts, times, colors }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
@@ -171,6 +162,8 @@ const Chart5 = ({ typeCharts, times }) => {
       } else {
         let users = ["Không được giao"];
         let missions = [0];
+        let backgroundColors = [];
+        let borderColors = [];
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
@@ -205,6 +198,22 @@ const Chart5 = ({ typeCharts, times }) => {
           }
         });
 
+        users.forEach((_, index) => {
+          const color = colors[index % colors.length];
+          backgroundColors.push(color);
+          borderColors.push(color);
+        });
+
+        const chartOptions =
+          type === "pie"
+            ? null
+            : {
+                scales: {
+                  x: { type: "category" },
+                  y: { beginAtZero: true },
+                },
+              };
+
         chartData = {
           type: type,
           data: {
@@ -213,44 +222,20 @@ const Chart5 = ({ typeCharts, times }) => {
               {
                 label: "Số nhiệm vụ ",
                 data: missions,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                  "rgba(255, 205, 86, 0.2)",
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(54, 162, 235, 0.2)",
-                  "rgba(153, 102, 255, 0.2)",
-                  "rgba(201, 203, 207, 0.2)",
-                ],
-                borderColor: [
-                  "rgb(255, 99, 132)",
-                  "rgb(255, 159, 64)",
-                  "rgb(255, 205, 86)",
-                  "rgb(75, 192, 192)",
-                  "rgb(54, 162, 235)",
-                  "rgb(153, 102, 255)",
-                  "rgb(201, 203, 207)",
-                ],
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
                 borderWidth: 1,
               },
             ],
           },
-          options:
-            type === "pie"
-              ? null
-              : {
-                  scales: {
-                    x: { type: "category" },
-                    y: { beginAtZero: true },
-                  },
-                },
+          options: chartOptions,
         };
       }
       const newChart = new Chart(context, chartData);
 
       chartRef.current.chart = newChart;
     }
-  }, [updatedBoard, type, selected, workspace.users]);
+  }, [updatedBoard, type, selected, workspace]);
 
   const handleDownload = () => {
     if (chartRef.current) {

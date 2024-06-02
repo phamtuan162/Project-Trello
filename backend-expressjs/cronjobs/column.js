@@ -7,49 +7,37 @@ const {
   User,
   Work,
   Mission,
+  Activity,
 } = require("../models/index");
 
 module.exports = {
   delete: async () => {
     try {
       const columns = await Column.findAll({
-        include: {
-          model: Card,
-          as: "cards",
-          include: [
-            { model: Comment, as: "comments" },
-            { model: Attachment, as: "attachments" },
-            { model: User, as: "users" },
-            {
-              model: Work,
-              as: "works",
-              include: { model: Mission, as: "missions" },
-            },
-          ],
-        },
+        include: [
+          {
+            model: Card,
+            as: "cards",
+          },
+          { model: Activity, as: "activities" },
+        ],
+
         paranoid: false,
       });
 
       for (const column of columns) {
-        for (const card of column.cards) {
-          if (card.users.length > 0) {
-            await card.removeUsers(card.users);
+        if (column.cards.length > 0) {
+          for (const card of column.cards) {
+            await card.update({ column_id: null });
+            await card.destroy();
           }
-          if (card.comments.length > 0) {
-            await Comment.destroy({ where: { card_id: card.id } });
-          }
-          if (card.attachments.length > 0) {
-            await Attachment.destroy({ where: { card_id: card.id } });
-          }
-          if (card.works.length > 0) {
-            for (const work of card.works) {
-              if (work.missions.length > 0) {
-                await Mission.destroy({ where: { work_id: work.id } });
-              }
-              await work.destroy();
-            }
-          }
-          await card.destroy({ force: true });
+        }
+
+        if (column.activities.length > 0) {
+          await Activity.update(
+            { column_id: null },
+            { where: { column_id: column.id } }
+          );
         }
         await column.destroy({ force: true });
       }

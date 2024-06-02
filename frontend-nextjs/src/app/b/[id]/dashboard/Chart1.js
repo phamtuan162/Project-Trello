@@ -6,17 +6,7 @@ import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
 import { checkCardCreationDate } from "@/utils/formatTime";
 
-const colors = [
-  "rgba(255, 99, 132, 0.8)",
-  "rgba(255, 159, 64, 0.8)",
-  "rgba(255, 205, 86, 0.8)",
-  "rgba(75, 192, 192, 0.8)",
-  "rgba(54, 162, 235, 0.8)",
-  "rgba(153, 102, 255, 0.8)",
-  "rgba(201, 203, 207, 0.8)",
-  // Add more colors if needed
-];
-const Chart1 = ({ typeCharts, times }) => {
+const Chart1 = ({ typeCharts, times, colors }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const check = useMemo(
@@ -27,7 +17,7 @@ const Chart1 = ({ typeCharts, times }) => {
   const [selected, setSelected] = useState("month");
 
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && check) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
@@ -37,19 +27,22 @@ const Chart1 = ({ typeCharts, times }) => {
         let timeCreates = [];
         let datasets = [];
         let cardCounts = [];
+        let columns = [];
         board.columns.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.created_at) {
+              if (
+                checkCardCreationDate(selected, card.created_at) &&
+                card.created_at
+              ) {
+                if (!columns.includes(column.title)) {
+                  columns.push(column.title);
+                }
                 const created_at = format(
                   new Date(card.created_at),
                   "dd/MM/yyyy"
                 );
-
-                if (
-                  checkCardCreationDate(selected, card.created_at) &&
-                  !timeCreates.includes(created_at)
-                ) {
+                if (!timeCreates.includes(created_at)) {
                   timeCreates.push(created_at);
                   cardCounts.push(0);
                 }
@@ -57,21 +50,27 @@ const Chart1 = ({ typeCharts, times }) => {
             });
           }
         });
-        timeCreates.sort(
-          (a, b) =>
-            new Date(a.split("/").reverse().join("/")) -
-            new Date(b.split("/").reverse().join("/"))
-        );
-        board.columns.forEach((column, index) => {
-          datasets.push({
-            label: column.title,
-            data: [...cardCounts],
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            fill: false,
-          });
-          if (column.cards.length > 0) {
-            column.cards.forEach((card) => {
+        if (timeCreates.length > 0) {
+          timeCreates.sort(
+            (a, b) =>
+              new Date(a.split("/").reverse().join("/")) -
+              new Date(b.split("/").reverse().join("/"))
+          );
+        }
+
+        if (columns.length > 0) {
+          columns.forEach((column, index) => {
+            datasets.push({
+              label: column,
+              data: [...cardCounts],
+              backgroundColor: colors[index % colors.length],
+              borderColor: colors[index % colors.length],
+              fill: false,
+            });
+            const columnActive = board.columns.find(
+              (item) => item.title === column
+            );
+            columnActive.cards.forEach((card) => {
               if (card.created_at) {
                 const created_at = format(
                   new Date(card.created_at),
@@ -79,7 +78,7 @@ const Chart1 = ({ typeCharts, times }) => {
                 );
                 if (timeCreates.includes(created_at)) {
                   const dataset = datasets.find(
-                    (item) => item.label === column.title
+                    (item) => item.label === column
                   );
                   const indexTime = timeCreates.findIndex(
                     (item) => item === created_at
@@ -88,8 +87,9 @@ const Chart1 = ({ typeCharts, times }) => {
                 }
               }
             });
-          }
-        });
+          });
+        }
+
         chartData = {
           type: type,
           data: {
@@ -105,49 +105,45 @@ const Chart1 = ({ typeCharts, times }) => {
           },
         };
       } else {
-        const cardCounts = board.columns.map((column) =>
-          Math.round(+column.cards.length || 0)
-        );
-        const columnCounts = board.columns.map((column) => column.title);
+        let columns = [];
+        let cardCounts = [];
+        let backgroundColors = [];
+        let borderColors = [];
+        board.columns.forEach((column, index) => {
+          if (column?.cards?.length > 0) {
+            columns.unshift(column.title);
+            cardCounts.unshift(column.cards.length);
+            const color = colors[index % colors.length];
+            backgroundColors.push(color);
+            borderColors.push(color);
+          }
+        });
+
+        const chartOptions =
+          type === "pie"
+            ? null
+            : {
+                scales: {
+                  x: { type: "category" },
+                  y: { beginAtZero: true },
+                },
+              };
+
         chartData = {
           type: type,
           data: {
-            labels: columnCounts,
+            labels: columns,
             datasets: [
               {
-                label: "Số thẻ ",
+                label: "Số thẻ",
                 data: cardCounts,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                  "rgba(255, 205, 86, 0.2)",
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(54, 162, 235, 0.2)",
-                  "rgba(153, 102, 255, 0.2)",
-                  "rgba(201, 203, 207, 0.2)",
-                ],
-                borderColor: [
-                  "rgb(255, 99, 132)",
-                  "rgb(255, 159, 64)",
-                  "rgb(255, 205, 86)",
-                  "rgb(75, 192, 192)",
-                  "rgb(54, 162, 235)",
-                  "rgb(153, 102, 255)",
-                  "rgb(201, 203, 207)",
-                ],
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
                 borderWidth: 1,
               },
             ],
-            options:
-              type === "pie"
-                ? null
-                : {
-                    scales: {
-                      x: { type: "category" },
-                      y: { beginAtZero: true },
-                    },
-                  },
           },
+          options: chartOptions,
         };
       }
       const newChart = new Chart(context, chartData);

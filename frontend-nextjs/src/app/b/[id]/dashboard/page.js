@@ -37,6 +37,21 @@ const times = [
   },
   { label: "Tháng qua", value: "month" },
 ];
+const colors = [
+  "rgba(255, 99, 132, 0.8)", // Màu đỏ
+  "rgba(255, 159, 64, 0.8)", // Màu cam
+  "rgba(255, 205, 86, 0.8)", // Màu vàng
+  "rgba(75, 192, 192, 0.8)", // Màu xanh nhạt
+  "rgba(54, 162, 235, 0.8)", // Màu xanh lam
+  "rgba(153, 102, 255, 0.8)", // Màu tím
+  "rgba(201, 203, 207, 0.8)", // Màu xám
+  "rgba(255, 99, 71, 0.8)", // Màu đỏ cà chua
+  "rgba(60, 179, 113, 0.8)", // Màu xanh lá cây
+  "rgba(106, 90, 205, 0.8)", // Màu xanh tím
+  "rgba(244, 164, 96, 0.8)", // Màu cam nhạt
+  "rgba(30, 144, 255, 0.8)", // Màu xanh dương đậm
+];
+
 export default function dashboardPage() {
   const { id: boardId } = useParams();
   const board = useSelector((state) => state.board.board);
@@ -58,11 +73,11 @@ export default function dashboardPage() {
           className=" mt-14 mx-2 grow p-4   rounded-lg "
         >
           <div className="h-full w-full overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 grid-row-2 py-1">
-            <Chart1 typeCharts={typeCharts} times={times} />
-            <Chart2 typeCharts={typeCharts} times={times} />
-            <Chart3 typeCharts={typeCharts} times={times} />
-            <Chart4 typeCharts={typeCharts} times={times} />
-            <Chart5 typeCharts={typeCharts} times={times} />
+            <Chart1 typeCharts={typeCharts} times={times} colors={colors} />
+            <Chart2 typeCharts={typeCharts} times={times} colors={colors} />
+            <Chart3 typeCharts={typeCharts} times={times} colors={colors} />
+            <Chart4 typeCharts={typeCharts} times={times} colors={colors} />
+            <Chart5 typeCharts={typeCharts} times={times} colors={colors} />
           </div>
         </div>
       </div>

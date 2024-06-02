@@ -34,34 +34,35 @@ const CopyColumn = ({ children, column }) => {
         board_id: board.id,
         title: title,
       });
-      handleCopyColumnResponse(data);
+      if (data.status === 200) {
+        const columnUpdate = data.data;
+        let newBoard = {
+          ...board,
+          columns: [columnUpdate, ...board.columns],
+        };
+
+        newBoard.columns = mapOrder(
+          newBoard.columns,
+          newBoard.columnOrderIds,
+          "id"
+        );
+
+        dispatch(updateBoard(newBoard));
+        toast.success("Sao chép danh sách thành công");
+
+        setIsOpen(false);
+        dispatch(updateColumn(newBoard.columns));
+      } else {
+        const error = data.error;
+        toast.error(error);
+      }
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi sao chép danh sách");
+      toast.error(error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const handleCopyColumnResponse = (data) => {
-    if (data.status === 200) {
-      const columnUpdate = data.data;
-      let newBoard = {
-        ...board,
-        columns: [columnUpdate, ...board.columns],
-      };
-      newBoard.columns = mapOrder(
-        boardData.columns,
-        boardData.columnOrderIds,
-        "id"
-      );
-      dispatch(updateBoard(newBoard));
-      toast.success("Sao chép danh sách thành công");
-      setIsOpen(false);
-      dispatch(updateColumn(newBoard.columns));
-    } else {
-      const error = data.error;
-      toast.error(error);
-    }
-  };
   return (
     <Popover
       placement="right"

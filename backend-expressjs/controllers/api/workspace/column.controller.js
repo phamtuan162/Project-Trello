@@ -507,6 +507,7 @@ module.exports = {
           model: Card,
           as: "cards",
           include: [
+            { model: Comment, as: "comments" },
             { model: Attachment, as: "attachments" },
             {
               model: User,

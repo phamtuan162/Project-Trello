@@ -5,17 +5,8 @@ import { Chart } from "chart.js/auto";
 import { useRef, useEffect, useMemo, useState } from "react";
 import { RadioGroup, Radio } from "@nextui-org/react";
 import { checkCardCreationDate } from "@/utils/formatTime";
-const colors = [
-  "rgba(255, 99, 132, 0.8)",
-  "rgba(255, 159, 64, 0.8)",
-  "rgba(255, 205, 86, 0.8)",
-  "rgba(75, 192, 192, 0.8)",
-  "rgba(54, 162, 235, 0.8)",
-  "rgba(153, 102, 255, 0.8)",
-  "rgba(201, 203, 207, 0.8)",
-  // Add more colors if needed
-];
-const Chart4 = ({ typeCharts, times }) => {
+
+const Chart4 = ({ typeCharts, times, colors }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
