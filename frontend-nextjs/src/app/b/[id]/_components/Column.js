@@ -6,12 +6,7 @@ import { ListCard } from "./ListCard";
 import { ListHeader } from "./ListHeader";
 import { CardForm } from "./Cardform";
 import { useSelector } from "react-redux";
-export function Column({
-  column,
-
-  createNewCard,
-  updateColumn,
-}) {
+export function Column({ column, createNewCard, updateColumn }) {
   const user = useSelector((state) => state.user.user);
   const {
     attributes,
@@ -25,7 +20,6 @@ export function Column({
     data: { ...column },
   });
 
-  const inputRef = useRef(null);
   const dndKitCommonStyle = {
     touchAction: "none",
     transform: CSS.Translate.toString(transform),
@@ -42,7 +36,10 @@ export function Column({
       {...attributes}
       key={column.id}
     >
-      <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column">
+      <div
+        {...listeners}
+        className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column"
+      >
         {user?.role?.toLowerCase() === "admin" ||
         user?.role?.toLowerCase() === "owner" ? (
           <div {...listeners} className="h-4"></div>

@@ -35,11 +35,11 @@ export default function SettingsLayout({ children }) {
       label: "Lịch",
       icon: <CalendarIcon size={18} />,
     },
-    {
-      href: "/settings/storage",
-      label: "Lưu trữ đám mây",
-      icon: <Cloud size={18} />,
-    },
+    // {
+    //   href: "/settings/storage",
+    //   label: "Lưu trữ đám mây",
+    //   icon: <Cloud size={18} />,
+    // },
   ];
 
   const ProfileOptions = [

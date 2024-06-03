@@ -34,7 +34,7 @@ const Chart4 = ({ typeCharts, times, colors }) => {
     [updatedBoard]
   );
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && check) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
@@ -132,6 +132,8 @@ const Chart4 = ({ typeCharts, times, colors }) => {
       } else {
         let users = [];
         let comments = [];
+        let backgroundColors = [];
+        let borderColors = [];
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
@@ -152,6 +154,22 @@ const Chart4 = ({ typeCharts, times, colors }) => {
           }
         });
 
+        users.forEach((_, index) => {
+          const color = colors[index % colors.length];
+          backgroundColors.push(color);
+          borderColors.push(color);
+        });
+
+        const chartOptions =
+          type === "pie"
+            ? null
+            : {
+                scales: {
+                  x: { type: "category" },
+                  y: { beginAtZero: true },
+                },
+              };
+
         chartData = {
           type: type,
           data: {
@@ -160,37 +178,13 @@ const Chart4 = ({ typeCharts, times, colors }) => {
               {
                 label: "Tổng bình luận ",
                 data: comments,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                  "rgba(255, 205, 86, 0.2)",
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(54, 162, 235, 0.2)",
-                  "rgba(153, 102, 255, 0.2)",
-                  "rgba(201, 203, 207, 0.2)",
-                ],
-                borderColor: [
-                  "rgb(255, 99, 132)",
-                  "rgb(255, 159, 64)",
-                  "rgb(255, 205, 86)",
-                  "rgb(75, 192, 192)",
-                  "rgb(54, 162, 235)",
-                  "rgb(153, 102, 255)",
-                  "rgb(201, 203, 207)",
-                ],
-                borderWidth: 1,
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
+                derWidth: 1,
               },
             ],
           },
-          options:
-            type === "pie"
-              ? null
-              : {
-                  scales: {
-                    x: { type: "category" },
-                    y: { beginAtZero: true },
-                  },
-                },
+          options: chartOptions,
         };
       }
       const newChart = new Chart(context, chartData);

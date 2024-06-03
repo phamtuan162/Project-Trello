@@ -10,6 +10,7 @@ import {
   createColumn,
   createCard,
 } from "@/services/workspaceApi";
+import { mapOrder } from "@/utils/sorts";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { ListContainer } from "./_components/ListContainer";
 import Loading from "@/components/Loading/Loading";
@@ -140,14 +141,26 @@ export default function BoardIdPage() {
 
   const updateColumn = async (columnId, updateData) => {
     try {
-      const data = await updateColumnDetail(columnId, { ...updateData });
+      const data = await updateColumnDetail(columnId, updateData);
       if (data.status === 200) {
         const updatedColumn = data.data;
         const updatedColumns = board.columns.map((column) =>
-          +column.id === +updatedColumn.id ? updatedColumn : column
+          column.id === updatedColumn.id ? updatedColumn : column
         );
 
-        const updatedBoard = { ...board, columns: updatedColumns };
+        const updatedBoard = {
+          ...board,
+          columns: updatedColumns.map((column) => {
+            if (column.id === columnId) {
+              return {
+                ...column,
+                cards: mapOrder(column.cards, column.cardOrderIds, "id"),
+              };
+            }
+            return column;
+          }),
+        };
+
         dispatch(boardSlice.actions.updateBoard(updatedBoard));
         toast.success("Cập nhật thành công");
         dispatch(columnSlice.actions.updateColumn(updatedColumns));

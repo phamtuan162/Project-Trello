@@ -90,13 +90,14 @@ export default function WorkspaceMenu({
             workspace_id: workspace_id_witched,
           })
         );
-        dispatch(updateWorkspace(workspaceActive));
+
         if (pathname.startsWith(`/w/${workspaceId}`)) {
           let currentURL = window.location.href;
           currentURL = currentURL.replace(
             workspaceId.toString(),
-            workspace_id_witched.toString()
+            workspaceActive.id.toString()
           );
+          dispatch(updateWorkspace(workspaceActive));
           router.push(currentURL);
         }
       }
@@ -251,8 +252,8 @@ export default function WorkspaceMenu({
                       className="h-9 w-9 text-white "
                       name={workspace_search?.name?.charAt(0)}
                     />
-                    <div className="flex flex-col items-start  gap-1">
-                      <h4 className=" text-xs leading-4 text-small font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
+                    <div className="grow flex flex-col items-start  gap-1">
+                      <h4 className="w-full max-w-[169px] text-xs leading-4 text-small font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
                         {workspace_search?.name}
                       </h4>
                       <div className="flex items-center text-xs text-muted-foreground ">

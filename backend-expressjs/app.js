@@ -99,15 +99,18 @@ app.use("/users", usersRouter);
 cron.schedule("* 0 * * *", () => {
   blacklist_token.delete();
 });
-// cron.schedule("* 0 * * *", () => {
-//   column.delete();
-// });
-// cron.schedule("* 0 * * *", () => {
-//   card.delete();
-// });
+cron.schedule("0 0 * * *", () => {
+  column.delete();
+});
+
+cron.schedule("0 1 * * *", () => {
+  card.delete();
+});
+
 cron.schedule("0 * * * *", () => {
   card.HandleExpired();
 });
+
 cron.schedule("0 * * * *", () => {
   mission.HandleExpired();
 });

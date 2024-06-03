@@ -271,6 +271,19 @@ module.exports = {
         user.dataValues.role = role.name;
       }
     }
+    if (user.workspaces.length > 0) {
+      for (const workspace of user.workspaces) {
+        const user_workspace_role_item = await UserWorkspaceRole.findOne({
+          where: { user_id: id, workspace_id: workspace.id },
+        });
+        if (user_workspace_role_item) {
+          const role = await Role.findByPk(user_workspace_role_item.role_id);
+          if (role) {
+            workspace.dataValues.role = role.name;
+          }
+        }
+      }
+    }
 
     res.json({
       status: 200,

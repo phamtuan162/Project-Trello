@@ -73,7 +73,6 @@ export function ListContainer({
   useEffect(() => {
     setOrderedColumns(board?.columns);
   }, [board]);
-
   const findColumnByCardId = (cardId) => {
     return orderedColumns.find((column) =>
       column?.cards?.some((card) => card.id === cardId)
@@ -161,8 +160,10 @@ export function ListContainer({
       return nextColumns;
     });
   };
+
   const HandleDragStart = (e) => {
     if (checkUser) return;
+
     setActiveDragItemId(e?.active?.id);
     setActiveDragItemType(
       e?.active?.data?.current?.column_id

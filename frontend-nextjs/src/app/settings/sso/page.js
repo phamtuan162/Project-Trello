@@ -7,7 +7,7 @@ import { GithubIcon } from "@/components/Icon/GithubIcon";
 const PageSSO = () => {
   const user = useSelector((state) => state.user.user);
   const providers = useSelector((state) => state.provider.providers);
-  console.log(providers);
+  console.log(user, providers);
   const listSso = [
     {
       label: "Google",
@@ -20,6 +20,7 @@ const PageSSO = () => {
       icon: <GithubIcon size={28} />,
     },
   ];
+
   return (
     <div className="mt-6">
       <h1 className="text-2xl font-medium mt-2">Tài khoản được kết nối</h1>
@@ -30,7 +31,7 @@ const PageSSO = () => {
         <div className="mt-3" key={index}>
           <Switch
             isSelected={
-              providers.length > 0
+              providers?.length > 0
                 ? providers?.some(
                     (provider) => provider.name === sso.label.toLowerCase()
                   )

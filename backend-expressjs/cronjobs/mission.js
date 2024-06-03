@@ -40,10 +40,10 @@ module.exports = {
       const currentTime = new Date();
       const oneDayBeforeEnd = subDays(mission.endDateTime, 1);
       const oneHourBeforeEnd = subHours(currentTime, 1);
-
-      const card = await Card.findByPk(mission.work.card_id);
+      const work = await Work.findByPk(mission.work_id);
+      const card = await Card.findByPk(work.card_id);
       const workspace = await Workspace.findByPk(mission.workspace_id);
-      const column = await Column.findByPk(card.column_id);
+      const column = card ? await Column.findByPk(card.column_id) : null;
       const board = column ? await Board.findByPk(column.board_id) : null;
       if (workspace && board && mission.user.email && card) {
         const link = `http://localhost:3000/w/${workspace.id}`;

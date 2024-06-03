@@ -132,6 +132,8 @@ const Chart3 = ({ typeCharts, times }) => {
       };
     } else {
       const cards = [0, 0, 0, 0, 0];
+      let backgroundColors = [];
+      let borderColors = [];
       updatedBoard.columns.forEach((column) => {
         column.cards.forEach((card) => {
           const statusIndex = card.endDateTime
@@ -141,6 +143,22 @@ const Chart3 = ({ typeCharts, times }) => {
         });
       });
 
+      status.forEach((_, index) => {
+        const color = colors[index % colors.length];
+        backgroundColors.push(color);
+        borderColors.push(color);
+      });
+
+      const chartOptions =
+        type === "pie"
+          ? null
+          : {
+              scales: {
+                x: { type: "category" },
+                y: { beginAtZero: true },
+              },
+            };
+
       chartData = {
         type,
         data: {
@@ -149,23 +167,13 @@ const Chart3 = ({ typeCharts, times }) => {
             {
               label: "Số thẻ ",
               data: cards,
-              backgroundColor: colors.map((color) =>
-                color.replace("0.8", "0.2")
-              ),
-              borderColor: colors.map((color) => color.replace("0.8", "1")),
+              backgroundColor: backgroundColors,
+              borderColor: borderColors,
               borderWidth: 1,
             },
           ],
         },
-        options:
-          type === "pie"
-            ? null
-            : {
-                scales: {
-                  x: { type: "category" },
-                  y: { beginAtZero: true },
-                },
-              },
+        options: chartOptions,
       };
     }
 

@@ -9,7 +9,7 @@ export const providerSlice = createSlice({
   initialState,
   reducers: {
     updateProvider: (state, action) => {
-      state.providers = [action.payload];
+      state.providers = action.payload;
     },
   },
 });

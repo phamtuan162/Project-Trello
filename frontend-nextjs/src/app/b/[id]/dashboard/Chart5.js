@@ -46,7 +46,7 @@ const Chart5 = ({ typeCharts, times, colors }) => {
   }, [updatedBoard]);
 
   useEffect(() => {
-    if (chartRef.current && workspace?.users?.length > 0) {
+    if (chartRef.current && workspace?.users?.length > 0 && check) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }

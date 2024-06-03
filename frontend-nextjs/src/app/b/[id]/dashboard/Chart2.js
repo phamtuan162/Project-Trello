@@ -32,7 +32,7 @@ const Chart2 = ({ typeCharts, times, colors }) => {
   );
 
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && check) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
@@ -43,29 +43,28 @@ const Chart2 = ({ typeCharts, times, colors }) => {
         let timeCreates = [];
         let datasets = [];
         let cardCounts = [];
-        let users = [];
+        let users = ["Không được giao"];
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.created_at) {
+              if (
+                checkCardCreationDate(selected, card.created_at) &&
+                card.created_at
+              ) {
                 const created_at = format(
                   new Date(card.created_at),
                   "dd/MM/yyyy"
                 );
-
-                if (
-                  checkCardCreationDate(selected, card.created_at) &&
-                  !timeCreates.includes(created_at)
-                ) {
+                if (!timeCreates.includes(created_at)) {
                   timeCreates.push(created_at);
                   cardCounts.push(0);
                 }
-                if (card?.users?.length > 0) {
-                  for (const user of card.users) {
+                if (card.users.length > 0) {
+                  card.users.forEach((user) => {
                     if (!users.includes(user.name)) {
                       users.push(user.name);
                     }
-                  }
+                  });
                 }
               }
             });
@@ -97,16 +96,21 @@ const Chart2 = ({ typeCharts, times, colors }) => {
                   "dd/MM/yyyy"
                 );
                 if (timeCreates.includes(created_at)) {
-                  if (card?.users?.length > 0) {
-                    for (const user of card.users) {
+                  const indexTime = timeCreates.findIndex(
+                    (item) => item === created_at
+                  );
+                  if (card.users.length > 0) {
+                    card.users.forEach((user) => {
                       const dataset = datasets.find(
                         (item) => item.label === user.name
                       );
-                      const indexTime = timeCreates.findIndex(
-                        (item) => item === created_at
-                      );
                       dataset.data[indexTime] += 1;
-                    }
+                    });
+                  } else {
+                    const dataset = datasets.find(
+                      (item) => item.label === "Không được giao"
+                    );
+                    dataset.data[indexTime] += 1;
                   }
                 }
               }
@@ -131,10 +135,12 @@ const Chart2 = ({ typeCharts, times, colors }) => {
       } else {
         let users = [];
         let cards = [];
-        updatedBoard?.columns?.forEach((column) => {
-          if (column?.cards?.length > 0) {
+        let backgroundColors = [];
+        let borderColors = [];
+        updatedBoard.columns.forEach((column) => {
+          if (column.cards.length > 0) {
             for (const card of column.cards) {
-              if (card?.users?.length > 0) {
+              if (card.users.length > 0) {
                 for (const user of card.users) {
                   if (!users.includes(user.name)) {
                     users.unshift(user.name);
@@ -157,6 +163,23 @@ const Chart2 = ({ typeCharts, times, colors }) => {
             }
           }
         });
+
+        users.forEach((_, index) => {
+          const color = colors[index % colors.length];
+          backgroundColors.push(color);
+          borderColors.push(color);
+        });
+
+        const chartOptions =
+          type === "pie"
+            ? null
+            : {
+                scales: {
+                  x: { type: "category" },
+                  y: { beginAtZero: true },
+                },
+              };
+
         chartData = {
           type: type,
           data: {
@@ -165,37 +188,13 @@ const Chart2 = ({ typeCharts, times, colors }) => {
               {
                 label: "Số thẻ ",
                 data: cards,
-                backgroundColor: [
-                  "rgba(255, 99, 132, 0.2)",
-                  "rgba(255, 159, 64, 0.2)",
-                  "rgba(255, 205, 86, 0.2)",
-                  "rgba(75, 192, 192, 0.2)",
-                  "rgba(54, 162, 235, 0.2)",
-                  "rgba(153, 102, 255, 0.2)",
-                  "rgba(201, 203, 207, 0.2)",
-                ],
-                borderColor: [
-                  "rgb(255, 99, 132)",
-                  "rgb(255, 159, 64)",
-                  "rgb(255, 205, 86)",
-                  "rgb(75, 192, 192)",
-                  "rgb(54, 162, 235)",
-                  "rgb(153, 102, 255)",
-                  "rgb(201, 203, 207)",
-                ],
+                backgroundColor: backgroundColors,
+                borderColor: borderColors,
                 borderWidth: 1,
               },
             ],
           },
-          options:
-            type === "pie"
-              ? null
-              : {
-                  scales: {
-                    x: { type: "category" },
-                    y: { beginAtZero: true },
-                  },
-                },
+          options: chartOptions,
         };
       }
       const newChart = new Chart(context, chartData);
