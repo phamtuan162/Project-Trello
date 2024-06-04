@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import {
   Table,
   TableHeader,
@@ -18,9 +16,7 @@ import { formatTimeAgo } from "@/utils/formatTime";
 const PageSessions = () => {
   const user = useSelector((state) => state.user.user);
   const device_id_current = getLocalStorage("device_id_current") || "";
-  const handleLogoutDevice = async () => {
-    // const socket = io("http://localhost:3001");
-  };
+  const handleLogoutDevice = async () => {};
   return (
     <div className="mt-6">
       <h1 className="text-2xl font-medium mt-2">Phiên</h1>

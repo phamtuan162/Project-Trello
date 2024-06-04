@@ -77,7 +77,6 @@ export function Card({ card }) {
       style={dndKitCardStyles}
       {...attributes}
       {...(checkRoleBoard ? listeners : {})}
-      key={card.id}
       onClick={() => {
         if (!isAssign && !isDragging) {
           cardModal.onOpen(cardUpdate.id);

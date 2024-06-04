@@ -36,6 +36,7 @@ export function ListContainer({
   createNewCard,
   updateColumn,
 }) {
+  console.log(board);
   const user = useSelector((state) => state.user.user);
   const checkUser = useMemo(
     () => user.role && user.role.toLowerCase() === "guest",
@@ -71,8 +72,9 @@ export function ListContainer({
   const lastOverId = useRef(null);
 
   useEffect(() => {
-    setOrderedColumns(board?.columns);
+    setOrderedColumns(board?.columns || []);
   }, [board]);
+
   const findColumnByCardId = (cardId) => {
     return orderedColumns.find((column) =>
       column?.cards?.some((card) => card.id === cardId)

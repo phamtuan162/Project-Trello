@@ -4,12 +4,14 @@ import { LogOut, ArrowLeft } from "lucide-react";
 import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
+import { useSelector } from "react-redux";
 
 const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
   const pathname = usePathname();
   const check = ProfileOptions.some((ProfileOption) => {
     return ProfileOption.href.includes(pathname);
   });
+  const workspace = useSelector((state) => state.workspace.workspace);
   const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
@@ -26,7 +28,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
   };
   return (
     <div
-      className="h-full md:w-64 w-max-[300px] dark-border flex flex-col justify-center md:justify-start"
+      className="h-full md:min-w-[240px] max-w-[300px] dark-border flex flex-col justify-center md:justify-start"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
@@ -38,7 +40,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
         }}
       >
         <button
-          onClick={() => router.push("/")}
+          onClick={() => router.push(`/w/${workspace.id}/home`)}
           className="flex p-2 gap-2 items-center rounded-lg hover:bg-default-100 text-sm cursor-pointer w-full"
         >
           <ArrowLeft size={18} />

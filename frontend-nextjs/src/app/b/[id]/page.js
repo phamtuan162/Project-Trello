@@ -31,15 +31,15 @@ export default function BoardIdPage() {
       columns: [...dndOrderedColumns],
       columnOrderIds: dndOrderedColumns.map((c) => c.id),
     };
-
+    dispatch(boardSlice.actions.updateBoard(newBoard));
     try {
       const data = await updateBoardDetail(newBoard.id, {
         columnOrderIds: newBoard.columnOrderIds,
       });
       if (data.status === 200) {
-        dispatch(boardSlice.actions.updateBoard(newBoard));
       } else {
         toast.error(data.error);
+        document.location.href = `/b/${board.id}`;
       }
     } catch (error) {
       console.error("Error moving columns:", error);
@@ -58,15 +58,15 @@ export default function BoardIdPage() {
     );
 
     const newBoard = { ...board, columns: updatedColumns };
-
+    dispatch(boardSlice.actions.updateBoard(newBoard));
     try {
       const data = await updateColumnDetail(columnId, {
         cardOrderIds: dndOrderedCardIds,
       });
       if (data.status === 200) {
-        dispatch(boardSlice.actions.updateBoard(newBoard));
       } else {
         toast.error(data.error);
+        document.location.href = `/b/${board.id}`;
       }
     } catch (error) {
       console.error("Error moving card in the same column:", error);
@@ -111,6 +111,8 @@ export default function BoardIdPage() {
               : [data.data],
         };
         dispatch(updateCard(updatedCard));
+      } else {
+        document.location.href = `/b/${board.id}`;
       }
     } catch (error) {
       console.error("Error moving card to different column:", error);

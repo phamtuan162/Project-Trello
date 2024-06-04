@@ -34,12 +34,8 @@ export function Column({ column, createNewCard, updateColumn }) {
       ref={setNodeRef}
       style={dndKitCommonStyle}
       {...attributes}
-      key={column.id}
     >
-      <div
-        {...listeners}
-        className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column"
-      >
+      <div className="w-full rounded-md bg-[#f1f2f4] shadow-md pb-2 column">
         {user?.role?.toLowerCase() === "admin" ||
         user?.role?.toLowerCase() === "owner" ? (
           <div {...listeners} className="h-4"></div>
