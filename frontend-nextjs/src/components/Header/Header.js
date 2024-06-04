@@ -23,7 +23,6 @@ import {
   Tooltip,
   Badge,
 } from "@nextui-org/react";
-import { SearchIcon } from "../Icon/SearchIcon";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
@@ -35,6 +34,7 @@ import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { clickNotification } from "@/services/workspaceApi";
+import SearchWorkspace from "./SearchWorkspace";
 import { toast } from "react-toastify";
 const { updateUser } = userSlice.actions;
 const { updateProvider } = providerSlice.actions;
@@ -269,19 +269,7 @@ const Header = () => {
       </NavbarContent>
 
       <NavbarContent as="div" className="items-center gap-2" justify="end">
-        <Input
-          classNames={{
-            base: "max-w-full sm:max-w-[16rem] ml-auto",
-            mainWrapper: "h-full",
-            input: "text-small ",
-            inputWrapper:
-              "h-full font-normal text-default-500 bg-default-400/20 dark:bg-default-500/20 rounded-lg",
-          }}
-          placeholder="Tìm kiếm..."
-          size="sm"
-          startContent={<SearchIcon size={18} />}
-          type="search"
-        />
+        <SearchWorkspace />
         {options?.map((option, index) => (
           <Tooltip
             showArrow

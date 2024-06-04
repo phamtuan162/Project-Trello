@@ -75,7 +75,7 @@ export default function MissionsWorkspace() {
         onValueChange={setSelected}
       >
         {statusOptions.map((option) => (
-          <Radio className="tex-xs" value={option.value}>
+          <Radio className="tex-xs" value={option.value} key={option.value}>
             {option.name}
           </Radio>
         ))}

@@ -521,12 +521,22 @@ module.exports = {
     if (!user_id) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
-    const workspace = await Workspace.findOne({
-      where: { id },
+    const workspace = await Workspace.findByPk(id, {
       include: [
-        { model: User, as: "users" },
-        { model: Board, as: "boards" },
+        {
+          model: Board,
+          as: "boards",
+        },
+        {
+          model: User,
+          as: "users",
+        },
+        {
+          model: Activity,
+          as: "activities",
+        },
       ],
+      order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
     });
     if (!workspace) {
       return res.status(404).json({ status: 404, message: "Not found" });

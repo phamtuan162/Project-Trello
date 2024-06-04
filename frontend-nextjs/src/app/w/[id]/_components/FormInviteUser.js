@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Select,
   SelectItem,
@@ -16,9 +16,7 @@ import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
-import { userSlice } from "@/stores/slices/userSlice";
-const { updateUser } = userSlice.actions;
-const { inviteUser, updateWorkspace } = workspaceSlice.actions;
+const { updateWorkspace } = workspaceSlice.actions;
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);

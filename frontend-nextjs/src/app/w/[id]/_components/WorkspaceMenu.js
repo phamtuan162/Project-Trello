@@ -39,6 +39,7 @@ export default function WorkspaceMenu({
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
+
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspace.id) || [];
   }, [user, workspace]);

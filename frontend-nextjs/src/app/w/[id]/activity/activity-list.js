@@ -7,7 +7,9 @@ const ActivityList = ({ activities }) => {
         Không có hoạt động nào
       </p>
       {activities?.length > 0 &&
-        activities.map((activity) => <ActivityItem activity={activity} />)}
+        activities.map((activity) => (
+          <ActivityItem activity={activity} key={activity.id} />
+        ))}
     </ol>
   );
 };

@@ -205,7 +205,9 @@ module.exports = {
     const response = {};
 
     try {
-      const column = await Column.findByPk(id);
+      const column = await Column.findByPk(id, {
+        include: { model: Card, as: "cards" },
+      });
 
       const board = await Board.findByPk(column.board_id);
       if (!column || !board) {
@@ -216,8 +218,13 @@ module.exports = {
       const columnOrderIdsUpdate = board.columnOrderIds.filter(
         (item) => +item !== +column.id
       );
-
-      await Column.destroy({ where: { id } });
+      if (column.cards.length > 0) {
+        for (const card of column.cards) {
+          await Card.update({ column_id: null }, { where: { id: card.id } });
+          await Card.destroy({ where: { id: card.id } });
+        }
+      }
+      await column.destroy();
       await board.update({ columnOrderIds: columnOrderIdsUpdate });
 
       await Activity.create({
