@@ -24,7 +24,7 @@ export default function BoardIdPage() {
   const workspace = useSelector((state) => state.workspace.workspace);
   const card = useSelector((state) => state.card.card);
   const { id: boardId } = useParams();
-
+  console.log(board);
   const moveColumns = async (dndOrderedColumns) => {
     const newBoard = {
       ...board,
@@ -129,7 +129,11 @@ export default function BoardIdPage() {
         createdColumn.cardOrderIds = [placeholderCard.id];
 
         const newColumns = [...board.columns, createdColumn];
-        const newBoard = { ...board, columns: newColumns };
+        const newBoard = {
+          ...board,
+          columns: newColumns,
+          columnOrderIds: newColumns.map((c) => c.id),
+        };
 
         dispatch(boardSlice.actions.updateBoard(newBoard));
         toast.success("Tạo danh sách thành công");

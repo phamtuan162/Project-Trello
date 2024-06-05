@@ -1,12 +1,7 @@
 const { Op } = require("sequelize");
 const {
   Column,
-  Card,
-  Comment,
-  Attachment,
-  User,
-  Work,
-  Mission,
+
   Activity,
 } = require("../models/index");
 
@@ -17,6 +12,11 @@ module.exports = {
         include: { model: Activity, as: "activities" },
 
         paranoid: false,
+        where: {
+          deletedAt: {
+            [Op.ne]: null,
+          },
+        },
       });
 
       for (const column of columns) {

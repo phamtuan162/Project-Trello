@@ -32,11 +32,9 @@ const AddMission = ({ work }) => {
       disableEditing();
     }
     if (e.key === "Enter") {
-      formRef.current.onSubmit();
+      btnRef.current.click();
     }
   };
-
-  useEventListener("keydown", onKeyDown);
 
   useOnClickOutside(formRef, disableEditing);
 
@@ -87,6 +85,7 @@ const AddMission = ({ work }) => {
       action={onSubmit}
     >
       <Textarea
+        onKeyDown={onKeyDown}
         name="name"
         variant="bordered"
         className="w-full mt-2 text-sm rounded-sm"

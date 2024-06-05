@@ -92,8 +92,12 @@ module.exports = {
           include: { model: Mission, as: "missions" },
         },
       ],
-
       paranoid: false,
+      where: {
+        deletedAt: {
+          [Op.ne]: null, // chỉ lấy các bản ghi bị xóa mềm
+        },
+      },
     });
     if (cards.length > 0) {
       for (const card of cards) {

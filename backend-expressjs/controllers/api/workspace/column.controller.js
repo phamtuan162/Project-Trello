@@ -224,6 +224,7 @@ module.exports = {
           await Card.destroy({ where: { id: card.id } });
         }
       }
+      await column.update({ board_id: null });
       await column.destroy();
       await board.update({ columnOrderIds: columnOrderIdsUpdate });
 
