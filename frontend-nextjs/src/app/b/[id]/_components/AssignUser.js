@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -24,6 +24,7 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
   const socket = useSelector((state) => state.socket.socket);
+
   const hasSearchFilter = Boolean(keyword);
   const userNotAssignCard = useMemo(() => {
     if (!workspace || !workspace.users || !cardUpdate.users) {
@@ -71,31 +72,6 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     }
   };
 
-  const updateBoardAndCard = (updatedCard) => {
-    if (+cardUpdate.id !== +card.id && card.id) {
-      const columnsUpdate = board.columns.map((column) => {
-        const index = column.cards.findIndex((c) => +c.id === +card.id);
-        if (index !== -1) {
-          return {
-            ...column,
-            cards: column.cards.map((c, i) => (i === index ? card : c)),
-          };
-        }
-        return column;
-      });
-
-      dispatch(updateBoard({ ...board, columns: columnsUpdate }));
-    }
-
-    dispatch(
-      updateCard({
-        ...cardUpdate,
-        users: updatedCard.users,
-        activities: updatedCard.activities,
-      })
-    );
-  };
-
   const HandleSelectUserAssigned = async (userAssign) => {
     if (isSelect) return;
 
@@ -127,7 +103,15 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       });
 
       if (data.status === 200) {
-        updateBoardAndCard(data.card);
+        const cardUpdateNew = data.card;
+
+        dispatch(
+          updateCard({
+            ...cardUpdate,
+            activities: cardUpdateNew.activities,
+            users: cardUpdateNew.users,
+          })
+        );
         notifyUser(
           userAssign,
           "assign_user_card",
@@ -159,7 +143,14 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       });
 
       if (data.status === 200) {
-        updateBoardAndCard(data.card);
+        const cardUpdateNew = data.card;
+        dispatch(
+          updateCard({
+            ...cardUpdate,
+            activities: cardUpdateNew.activities,
+            users: cardUpdateNew.users,
+          })
+        );
         notifyUser(
           userAssign,
           "unassign_user_card",
@@ -179,6 +170,77 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
       setIsSelect(false);
     }
   };
+
+  const usersCard = useMemo(() => {
+    if (cardUpdate?.users?.length > 0) {
+      return (
+        <div className=" p-2 max-h-[200px] overflow-x-auto">
+          <p className="font-medium text-xs">Thành viên trong Thẻ</p>
+          {cardUpdate.users.map((user) => (
+            <div
+              key={user.id}
+              className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 "
+              onClick={() => HandleUnAssignedCard(user)}
+            >
+              <User
+                avatarProps={{
+                  radius: "full",
+                  size: "sm",
+                  src: user.avatar,
+                  color: "secondary",
+                  name: user.name.charAt(0).toUpperCase(),
+                }}
+                classNames={{
+                  description: "text-default-500",
+                }}
+                description={user.email}
+                name={user.name}
+              >
+                {user.email}
+              </User>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  }, [cardUpdate]);
+
+  const usersSearchCard = useMemo(() => {
+    if (filteredItems.length > 0) {
+      return (
+        <div>
+          <p className="font-medium text-xs">Thành viên trong Bảng</p>
+
+          {filteredItems.map((user) => (
+            <div
+              key={user.id}
+              className=" rounded-lg p-1 px-3 cursor-pointer mt-1   hover:bg-default-300"
+              onClick={() => HandleSelectUserAssigned(user)}
+            >
+              <User
+                avatarProps={{
+                  radius: "full",
+                  size: "sm",
+                  src: user.avatar,
+                  color: "secondary",
+                  name: user.name.charAt(0).toUpperCase(),
+                }}
+                classNames={{
+                  description: "text-default-500",
+                }}
+                name={user.name}
+                description={user.email}
+              >
+                {user.email}
+              </User>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  }, [filteredItems]);
 
   return (
     <Popover
@@ -226,70 +288,12 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
 
           <div>
             <div className=" p-2 pb-1 max-h-[200px] overflow-x-auto">
-              {filteredItems?.length > 0 ? (
-                <>
-                  <p className="font-medium text-xs">Thành viên trong Bảng</p>
-
-                  {filteredItems?.map((user) => (
-                    <div
-                      key={user.id}
-                      className=" rounded-lg p-1 px-3 cursor-pointer mt-1   hover:bg-default-300"
-                      onClick={() => HandleSelectUserAssigned(user)}
-                    >
-                      <User
-                        avatarProps={{
-                          radius: "full",
-                          size: "sm",
-                          src: user.avatar,
-                          color: "secondary",
-                          name: user.name.charAt(0).toUpperCase(),
-                        }}
-                        classNames={{
-                          description: "text-default-500",
-                        }}
-                        name={user.name}
-                        description={user.email}
-                      >
-                        {user.email}
-                      </User>
-                    </div>
-                  ))}
-                </>
-              ) : (
-                <p className="w-full text-center text-md">
-                  Không có thành viên nào
-                </p>
-              )}
+              <p className="hidden last:block text-md w-full  text-center text-muted-foreground">
+                Không có thành viên nào
+              </p>
+              {usersSearchCard}
             </div>
-            {cardUpdate?.users?.length > 0 && (
-              <div className=" p-2 max-h-[200px] overflow-x-auto">
-                <p className="font-medium text-xs">Thành viên trong Thẻ</p>
-                {cardUpdate.users.map((user) => (
-                  <div
-                    key={user.id}
-                    className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 "
-                    onClick={() => HandleUnAssignedCard(user)}
-                  >
-                    <User
-                      avatarProps={{
-                        radius: "full",
-                        size: "sm",
-                        src: user.avatar,
-                        color: "secondary",
-                        name: user.name.charAt(0).toUpperCase(),
-                      }}
-                      classNames={{
-                        description: "text-default-500",
-                      }}
-                      description={user.email}
-                      name={user.name}
-                    >
-                      {user.email}
-                    </User>
-                  </div>
-                ))}
-              </div>
-            )}
+            {usersCard}
           </div>
         </div>
       </PopoverContent>

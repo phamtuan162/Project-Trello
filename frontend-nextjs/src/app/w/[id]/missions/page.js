@@ -12,7 +12,10 @@ const statusOptions = [
   { name: "Hết hạn", value: "expired" },
 ];
 export default function MissionsWorkspace() {
-  const missions = useSelector((state) => state.mission.missions);
+  const missionsActive = useSelector((state) => state.mission.missions);
+  const missions = useMemo(() => {
+    return missionsActive.filter((item) => item.card_id) || [];
+  }, [missionsActive]);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [selected, setSelected] = useState("all");

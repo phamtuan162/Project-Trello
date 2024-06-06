@@ -10,7 +10,6 @@ export function CardForm({ createNewCard, column }) {
   const btnaddRef = useRef(null);
   const user = useSelector((state) => state.user.user);
   const [isEditing, setIsEditing] = useState(false);
-  const workspace = useSelector((state) => state.workspace.workspace);
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();

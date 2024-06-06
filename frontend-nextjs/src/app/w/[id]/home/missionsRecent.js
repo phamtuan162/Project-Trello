@@ -6,10 +6,10 @@ import MissionRecent from "./missionRecent";
 const MissionsRecent = () => {
   const { id } = useParams();
   const missions = useSelector((state) => state.mission.missions);
-  const missionsRecent = useMemo(() => {
-    if (missions?.length > 0) {
-      const missionsCopy = [...missions];
 
+  const missionsRecent = useMemo(() => {
+    const missionsCopy = missions?.filter((item) => item.card_id) || [];
+    if (missionsCopy.length > 0) {
       return missionsCopy
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 5);

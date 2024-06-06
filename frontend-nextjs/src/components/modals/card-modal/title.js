@@ -44,14 +44,16 @@ const TitleModal = () => {
       <Layout className=" mt-2.5 text-neutral-700" size={24} />
       <div className="w-full flex flex-col items-start gap-1">
         {isEditing ? (
-          <input
-            defaultValue={card?.title}
-            className=" rounded-md focus-visible:outline-none border-sky-600 h-full font-bold text-lg p-2 w-full h-[44px] border-2"
-            onBlur={() => onUpdateTitle()}
-            ref={inputRef}
-            onKeyDown={handleKeyDown}
-            size="xs"
-          />
+          <>
+            <input
+              defaultValue={card?.title}
+              className=" rounded-md focus-visible:outline-none border-sky-600 h-full font-bold text-lg p-2 w-3/4 h-[44px] border-2 "
+              onBlur={() => onUpdateTitle()}
+              ref={inputRef}
+              onKeyDown={handleKeyDown}
+              size="xs"
+            />
+          </>
         ) : (
           <span
             ref={btnRef}

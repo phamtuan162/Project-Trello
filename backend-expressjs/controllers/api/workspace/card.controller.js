@@ -84,7 +84,7 @@ module.exports = {
   },
   store: async (req, res) => {
     const user = req.user.dataValues;
-    const { title } = req.body;
+
     const rules = {};
     if (req.body.title) {
       rules.title = string().required("Chưa nhập tiêu đề");
@@ -118,7 +118,7 @@ module.exports = {
         userName: user.name,
         userAvatar: user.avatar,
         card_id: card.id,
-        title: title,
+        title: card.title,
         action: "create",
         workspace_id: user.workspace_id_active,
         desc: `vào danh sách ${column.title}`,
@@ -130,13 +130,14 @@ module.exports = {
         data: new CardTransformer(card),
       });
     } catch (e) {
-      const errors = Object.fromEntries(
-        e?.inner.map(({ path, message }) => [path, message])
-      );
+      // const errors = Object.fromEntries(
+      //   e?.inner.map(({ path, message }) => [path, message])
+      // );
+      console.log(e);
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
-        errors,
+        e,
       });
     }
     res.status(response.status).json(response);

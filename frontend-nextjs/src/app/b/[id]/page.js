@@ -17,14 +17,32 @@ import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
+import { useEffect } from "react";
 const { updateCard } = cardSlice.actions;
+const { updateBoard } = boardSlice.actions;
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
   const card = useSelector((state) => state.card.card);
   const { id: boardId } = useParams();
-  console.log(board);
+  useEffect(() => {
+    if (board?.id && card?.id) {
+      const columnsUpdate = board.columns.map((column) => {
+        const index = column.cards.findIndex((c) => +c.id === +card.id);
+        if (index !== -1) {
+          const updatedColumn = {
+            ...column,
+            cards: column.cards.map((c, i) => (i === index ? card : c)),
+          };
+          return updatedColumn;
+        }
+        return column;
+      });
+
+      dispatch(updateBoard({ ...board, columns: columnsUpdate }));
+    }
+  }, [card]);
   const moveColumns = async (dndOrderedColumns) => {
     const newBoard = {
       ...board,
@@ -45,7 +63,6 @@ export default function BoardIdPage() {
       console.error("Error moving columns:", error);
     }
   };
-
   const moveCardInTheSameColumn = async (
     dndOrderedCards,
     dndOrderedCardIds,

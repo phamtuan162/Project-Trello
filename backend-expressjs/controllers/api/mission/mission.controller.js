@@ -47,7 +47,7 @@ module.exports = {
             },
           });
 
-          if (work.card.column.board_id) {
+          if (work?.card?.column?.board_id) {
             mission.dataValues.board_id = work.card.column.board_id;
             mission.dataValues.card_id = work.card.id;
             mission.dataValues.cardTittle = work.card.title;

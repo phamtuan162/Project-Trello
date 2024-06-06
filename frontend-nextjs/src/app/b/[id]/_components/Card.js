@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -86,24 +86,6 @@ export function Card({ card }) {
     }
     return null;
   }, [cardUpdate]);
-
-  const assignUser = useMemo(() => {
-    if (isEdit || checkRoleBoard) {
-      return (
-        <div
-          className="
-       absolute right-2 -top-1 z-50 "
-        >
-          <AssignUser
-            isAssign={isAssign}
-            setIsAssign={setIsAssign}
-            cardUpdate={cardUpdate}
-          />
-        </div>
-      );
-    }
-    return null;
-  }, [isEdit, checkRoleBoard]);
 
   const dateCard = useMemo(() => {
     if (cardUpdate.startDateTime || cardUpdate.endDateTime) {
@@ -217,7 +199,17 @@ export function Card({ card }) {
         <div className="pb-3">{backgroundCard}</div>
         <div className={`p-3 pt-0 relative `}>
           {cardUpdate?.title}
-          {assignUser}
+          <div
+            className={`${
+              !isEdit || !checkRoleBoard ? "hidden" : ""
+            } absolute right-2 -top-1 z-50 `}
+          >
+            <AssignUser
+              isAssign={isAssign}
+              setIsAssign={setIsAssign}
+              cardUpdate={cardUpdate}
+            />
+          </div>
           <div className=" mt-1 flex flex-wrap gap-2 w-full">
             {dateCard}
             {missionsCard}

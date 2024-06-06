@@ -36,9 +36,7 @@ export const CardModal = () => {
       user?.role?.toLowerCase() === "owner"
     );
   }, [user]);
-  // const { id, onClose, isOpen } = useCardModal();
-  // console.log(id);
-  // console.log(isOpen);
+
   const id = useCardModal((state) => state.id);
   const isOpen = useCardModal((state) => state.isOpen);
   const onClose = useCardModal((state) => state.onClose);
@@ -65,6 +63,7 @@ export const CardModal = () => {
 
               dispatch(updateBoard({ ...board, columns: columnsUpdate }));
             }
+            console.log(cardUpdate);
             dispatch(updateCard(cardUpdate));
             dispatch(columnSlice.actions.updateColumn(board.columns));
             setIsLoading(false);
@@ -82,7 +81,11 @@ export const CardModal = () => {
       isOpen={isOpen}
       onOpenChange={onClose}
       classNames={{
-        closeButton: [`z-50 ${isLoading && "hidden"}`],
+        closeButton: [
+          `z-50 ${
+            isLoading && "hidden"
+          } data-[focus-visible=true]:outline-none`,
+        ],
       }}
     >
       {isLoading ? (

@@ -36,7 +36,6 @@ export function ListContainer({
   createNewCard,
   updateColumn,
 }) {
-  console.log(board);
   const user = useSelector((state) => state.user.user);
   const checkUser = useMemo(
     () => user.role && user.role.toLowerCase() === "guest",

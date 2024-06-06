@@ -19,9 +19,9 @@ import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
 import { isEmpty } from "lodash";
 import { getBoardDetail } from "@/services/workspaceApi";
-import { cardSlice } from "@/stores/slices/cardSlice";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
+
 const options = [
   {
     href: "",
