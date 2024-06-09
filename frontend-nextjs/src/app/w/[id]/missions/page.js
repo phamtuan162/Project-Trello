@@ -3,7 +3,7 @@ import { useState } from "react";
 import { RadioGroup, Radio, Input } from "@nextui-org/react";
 import { SearchIcon } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import MissionItem from "./mission";
 const statusOptions = [
   { name: "Tất cả", value: "all" },
@@ -20,13 +20,6 @@ export default function MissionsWorkspace() {
   const [filterValue, setFilterValue] = useState("");
   const [selected, setSelected] = useState("all");
 
-  const onSearchChange = useCallback((value) => {
-    if (value) {
-      setFilterValue(value);
-    } else {
-      setFilterValue("");
-    }
-  }, []);
   const hasSearchFilter = Boolean(filterValue);
 
   const filteredItems = useMemo(() => {
@@ -64,11 +57,11 @@ export default function MissionsWorkspace() {
         }}
         placeholder="Tìm kiếm bằng tên Bảng..."
         size="xs"
+        type="search"
         startContent={<SearchIcon className="text-default-300" />}
         value={filterValue}
         variant="bordered"
-        onClear={() => setFilterValue("")}
-        onValueChange={onSearchChange}
+        onChange={(e) => setFilterValue(e.target.value)}
       />
       <RadioGroup
         label="Sắp xếp"

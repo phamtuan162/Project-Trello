@@ -2,7 +2,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Textarea, Button } from "@nextui-org/react";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";

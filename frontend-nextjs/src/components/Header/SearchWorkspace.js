@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input, Avatar, CircularProgress } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ const SearchWorkspace = () => {
     return filteredWorkspaces;
   }, [user, filterValue]);
 
-  const handleSwitchWorkspace = useCallback(async (workspace_id_witched) => {
+  const handleSwitchWorkspace = async (workspace_id_witched) => {
     if (+workspace_id_witched === +workspace.id) {
       toast.info("Đang ở Không gian làm việc này");
       return;
@@ -68,7 +68,7 @@ const SearchWorkspace = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   return (
     <div className="w-[300px] relative">

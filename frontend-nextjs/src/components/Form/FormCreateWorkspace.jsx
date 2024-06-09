@@ -12,7 +12,7 @@ import {
   ModalBody,
   ModalContent,
 } from "@nextui-org/react";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { createWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";

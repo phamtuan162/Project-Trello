@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Plus } from "lucide-react";
 import { usePathname, useRouter, useParams } from "next/navigation";
@@ -26,7 +26,7 @@ const PageMyWorkspace = () => {
     );
   }, [user]);
 
-  const handleSwitchWorkspace = useCallback(async (workspace_id_witched) => {
+  const handleSwitchWorkspace = async (workspace_id_witched) => {
     console.log(workspaceId);
     if (+workspace_id_witched === +workspace.id) {
       toast.info("Bạn đang ở Không gian làm việc này!");
@@ -56,7 +56,7 @@ const PageMyWorkspace = () => {
     } catch (error) {
       console.error("Không thể chuyển đổi không gian làm việc", error);
     }
-  }, []);
+  };
   return (
     <div className="mt-2">
       <h1 className="text-2xl font-medium">Không gian làm việc của tôi</h1>

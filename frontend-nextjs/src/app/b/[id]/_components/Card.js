@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -178,11 +178,11 @@ export function Card({ card }) {
     return null;
   }, [cardUpdate]);
 
-  const handleCardClick = useCallback(() => {
+  const handleCardClick = () => {
     if (!isAssign && !isDragging) {
       cardModal.onOpen(cardUpdate.id);
     }
-  }, [isAssign, isDragging]);
+  };
   return (
     <div
       ref={setNodeRef}

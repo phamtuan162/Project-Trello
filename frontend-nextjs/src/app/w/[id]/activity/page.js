@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import ActivityList from "./activity-list";
 import Loading from "@/components/Loading/Loading";
@@ -21,13 +21,6 @@ export default function pageActivity() {
     { name: "Gần Nhất Trước ↓", uid: "desc" },
     { name: "Xa Nhất Trước ↑", uid: "asc" },
   ];
-  const onSearchChange = useCallback((value) => {
-    if (value) {
-      setFilterValue(value);
-    } else {
-      setFilterValue("");
-    }
-  }, []);
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -93,8 +86,8 @@ export default function pageActivity() {
             startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}
             variant="bordered"
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
+            type="search"
+            onChange={(e) => setFilterValue(e.target.value)}
           />
           <Dropdown classNames={{ content: ["min-w-22"] }}>
             <DropdownTrigger className="hidden sm:flex">

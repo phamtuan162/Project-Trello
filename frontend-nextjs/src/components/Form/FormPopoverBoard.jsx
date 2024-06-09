@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -34,7 +34,7 @@ export default function FormPopoverBoard({
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
 
-  const onSubmit = useCallback(async (formData) => {
+  const onSubmit = async (formData) => {
     setIsCreate(true);
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
@@ -76,7 +76,7 @@ export default function FormPopoverBoard({
     } finally {
       setIsCreate(false);
     }
-  }, []);
+  };
 
   return (
     <Popover
