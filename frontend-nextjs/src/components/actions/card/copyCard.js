@@ -27,7 +27,7 @@ const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
 
 function generateRandomId() {
-  return Math.floor(Math.random() * 1000);
+  return Math.floor(Math.random() * 10000);
 }
 
 const CopyCard = ({ children }) => {

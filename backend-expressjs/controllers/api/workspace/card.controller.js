@@ -474,6 +474,7 @@ module.exports = {
         message: "Success",
       });
     } catch (error) {
+      console.log(error);
       Object.assign(response, {
         status: 500,
         message: "Sever error",

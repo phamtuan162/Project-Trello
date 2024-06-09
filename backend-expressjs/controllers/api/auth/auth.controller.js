@@ -408,6 +408,7 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   forgotPassword: async (req, res) => {
     const { email } = req.body;
     const response = {};
@@ -451,6 +452,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   resetPassword: async (req, res) => {
     const { password_new } = req.body;
     const response = {};
@@ -480,20 +482,53 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   verifyAccount: async (req, res) => {
     const response = {};
-    await User.update(
-      {
-        status: true,
-      },
-      {
-        where: { id: req.user.id },
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "Not found" });
+    }
+
+    try {
+      const workspace = await Workspace.create({
+        name: "Workspace 1",
+        total_user: 1,
+        isActive: true,
+      });
+
+      if (workspace) {
+        const user_workspace_role = await UserWorkspaceRole.create({
+          user_id: user.id,
+          workspace_id: workspace.id,
+        });
+
+        const role = await Role.findOne({
+          where: { name: { [Op.iLike]: "%Owner%" } },
+        });
+        if (role) {
+          await user_workspace_role.update({
+            role_id: role.id,
+          });
+          await user.update({
+            workspace_id_active: workspace.id,
+            status: true,
+          });
+        }
       }
-    );
-    Object.assign(response, {
-      status: 200,
-      message: "Xác thực tài khoản thành công",
-    });
+      Object.assign(response, {
+        status: 200,
+        message: "Xác thực tài khoản thành công",
+      });
+    } catch (error) {
+      console.log(error);
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
     res.status(response.status).json(response);
   },
 };

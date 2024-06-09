@@ -6,10 +6,11 @@ import { useRef, useEffect, useMemo, useState } from "react";
 import { RadioGroup, Radio } from "@nextui-org/react";
 import { checkCardCreationDate } from "@/utils/formatTime";
 
-const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
+const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [type, setType] = useState("bar");
   const [selected, setSelected] = useState("month");
 
@@ -27,12 +28,13 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
   }, [card, board]);
   const check = useMemo(
     () =>
-      updatedBoard?.columns?.some((column) => column.cards.length > 0) || false,
+      updatedBoard?.columns?.some((column) =>
+        column.cards.some((card) => card.attachments.length > 0)
+      ) || false,
     [updatedBoard]
   );
-
   useEffect(() => {
-    if (chartRef.current && check) {
+    if (chartRef.current && check && workspace?.users?.length > 0) {
       if (chartRef.current.chart) {
         chartRef.current.chart.destroy();
       }
@@ -42,30 +44,35 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
       if (type === "line") {
         let timeCreates = [];
         let datasets = [];
-        let cardCounts = [];
-        let users = ["Không được giao"];
+        let attachmentsCounts = [];
+        let users = [];
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (
-                checkCardCreationDate(selected, card.created_at) &&
-                card.created_at
-              ) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
-                if (!timeCreates.includes(created_at)) {
-                  timeCreates.push(created_at);
-                  cardCounts.push(0);
-                }
-                if (card.users.length > 0) {
-                  card.users.forEach((user) => {
-                    if (!users.includes(user.name)) {
-                      users.push(user.name);
+              if (card.attachments.length > 0) {
+                card.attachments.forEach((attachment) => {
+                  if (
+                    checkCardCreationDate(selected, attachment.created_at) &&
+                    attachment.created_at
+                  ) {
+                    const user = workspace?.users?.find(
+                      (user) => +user.id === +attachment.user_id
+                    );
+                    if (user) {
+                      if (!users.includes(user.name)) {
+                        users.push(user.name);
+                      }
+                      const created_at = format(
+                        new Date(attachment.created_at),
+                        "dd/MM/yyyy"
+                      );
+                      if (!timeCreates.includes(created_at)) {
+                        timeCreates.push(created_at);
+                        attachmentsCounts.push(0);
+                      }
                     }
-                  });
-                }
+                  }
+                });
               }
             });
           }
@@ -79,7 +86,7 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
           users.forEach((user, index) => {
             datasets.push({
               label: user,
-              data: [...cardCounts],
+              data: [...attachmentsCounts],
               backgroundColor: colors[index % colors.length],
               borderColor: colors[index % colors.length],
               fill: false,
@@ -90,29 +97,28 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column.cards.length > 0) {
             column.cards.forEach((card) => {
-              if (card.created_at) {
-                const created_at = format(
-                  new Date(card.created_at),
-                  "dd/MM/yyyy"
-                );
-                if (timeCreates.includes(created_at)) {
-                  const indexTime = timeCreates.findIndex(
-                    (item) => item === created_at
-                  );
-                  if (card.users.length > 0) {
-                    card.users.forEach((user) => {
+              if (card.attachments.length > 0) {
+                card.attachments.forEach((attachment) => {
+                  if (attachment.created_at) {
+                    const created_at = format(
+                      new Date(attachment.created_at),
+                      "dd/MM/yyyy"
+                    );
+                    const user = workspace?.users?.find(
+                      (user) => +user.id === +attachment.user_id
+                    );
+
+                    if (timeCreates.includes(created_at) && user) {
                       const dataset = datasets.find(
                         (item) => item.label === user.name
                       );
+                      const indexTime = timeCreates.findIndex(
+                        (item) => item === created_at
+                      );
                       dataset.data[indexTime] += 1;
-                    });
-                  } else {
-                    const dataset = datasets.find(
-                      (item) => item.label === "Không được giao"
-                    );
-                    dataset.data[indexTime] += 1;
+                    }
                   }
-                }
+                });
               }
             });
           }
@@ -134,31 +140,29 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
         };
       } else {
         let users = [];
-        let cards = [];
+        let attachments = [];
         let backgroundColors = [];
         let borderColors = [];
-        updatedBoard.columns.forEach((column) => {
-          if (column.cards.length > 0) {
+        updatedBoard?.columns?.forEach((column) => {
+          if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card.users.length > 0) {
-                for (const user of card.users) {
-                  if (!users.includes(user.name)) {
-                    users.unshift(user.name);
-                    cards.unshift(1);
-                  } else {
-                    const index = users.findIndex((item) => item === user.name);
-                    cards[index] += 1;
+              if (card.attachments.length > 0) {
+                card.attachments.forEach((attachment) => {
+                  const user = workspace?.users?.find(
+                    (user) => +user.id === +attachment.user_id
+                  );
+                  if (user) {
+                    if (!users.includes(user.name)) {
+                      users.unshift(user.name);
+                      attachments.unshift(1);
+                    } else {
+                      const index = users.findIndex(
+                        (item) => item === user.name
+                      );
+                      attachments[index] += 1;
+                    }
                   }
-                }
-              }
-              if (!users.includes("Không được giao")) {
-                users.push("Không được giao");
-                cards.push(1);
-              } else {
-                const index = users.findIndex(
-                  (item) => item === "Không được giao"
-                );
-                cards[index] += 1;
+                });
               }
             }
           }
@@ -186,11 +190,11 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
             labels: users,
             datasets: [
               {
-                label: "Số thẻ ",
-                data: cards,
+                label: "Số tệp đính kèm ",
+                data: attachments,
                 backgroundColor: backgroundColors,
                 borderColor: borderColors,
-                borderWidth: 1,
+                derWidth: 1,
               },
             ],
           },
@@ -201,7 +205,7 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
 
       chartRef.current.chart = newChart;
     }
-  }, [updatedBoard, type, selected]);
+  }, [updatedBoard, type, selected, workspace]);
 
   const handleSelectTypeChart = (typeChart) => {
     if (type !== typeChart) {
@@ -220,7 +224,7 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
         className="w-full flex items-center justify-between"
         style={{ color: "#172b4d" }}
       >
-        <p className="font-bold">Số thẻ mỗi thành viên</p>
+        <p className="font-bold">Số tệp đính kèm mỗi thành viên</p>
         <div className="flex gap-1">
           {typeCharts.map((typeChart, index) => (
             <div
@@ -266,7 +270,7 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
             className="w-[200px] h-[200px]"
           />
           <p className=" text-lg  text-muted-foreground">
-            Bảng này chưa có thẻ nào
+            Bảng này chưa có tệp đính kèm nào
           </p>
         </div>
         {check ? (
@@ -288,4 +292,4 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
     </div>
   );
 };
-export default Chart2;
+export default Chart6;

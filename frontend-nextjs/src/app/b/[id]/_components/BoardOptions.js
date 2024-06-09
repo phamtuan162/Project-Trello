@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from "react-redux";
 const { updateBoard } = boardSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
 export function BoardOptions({ setIsActivity }) {
+  const socket = useSelector((state) => state.socket.socket);
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -36,6 +37,10 @@ export function BoardOptions({ setIsActivity }) {
         onClick: async () => {
           deleteBoard(board.id).then((data) => {
             if (data.status === 200) {
+              const users = workspace.users.filter(
+                (item) => +item.id !== +user.id
+              );
+              const title = board.title;
               const boardsUpdate =
                 workspace.boards.length > 0
                   ? workspace.boards.filter((item) => +item.id !== +board.id)
@@ -45,7 +50,19 @@ export function BoardOptions({ setIsActivity }) {
                 boards: boardsUpdate,
               };
               dispatch(updateWorkspace(workspaceUpdate));
+
               router.push(`/w/${board.workspace_id}/boards`);
+
+              if (users.length > 0)
+                for (const userItem of users) {
+                  socket.emit("sendNotification", {
+                    user_id: userItem.id,
+                    userName: user.name,
+                    userAvatar: user.avatar,
+                    type: "delete_board",
+                    content: `đã xóa Bảng ${title} ra khỏi Không gian làm việc ${workspace.name} `,
+                  });
+                }
             } else {
               const error = data.error;
               toast.error(error);

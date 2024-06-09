@@ -34,6 +34,7 @@ const BreadcrumbSettings = ({ options, origin }) => {
             <li key={index}>
               <div className="flex items-center">
                 <ChevronRight size={16} />
+                {optionSorted.icon}
                 <span className="ms-1 text-base text-gray-700 ">
                   {optionSorted.label}
                 </span>

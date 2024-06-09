@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -39,14 +39,15 @@ export default function WorkspaceMenu({
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
+  console.log(user);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSearch, setIsSearch] = useState(false);
+  const [isChange, setIsChange] = useState(false);
 
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspace.id) || [];
   }, [user, workspace]);
-  const [workspaceSearch, setWorkspaceSearch] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSearch, setIsSearch] = useState(false);
-  const [isChange, setIsChange] = useState(false);
 
   const options = [
     {
@@ -65,13 +66,27 @@ export default function WorkspaceMenu({
       icon: <UserIcon />,
     },
   ];
-  useEffect(() => {
-    if (workspacesSwitched?.length > 0) {
-      setWorkspaceSearch(workspacesSwitched);
-    }
-  }, [workspacesSwitched]);
 
-  const handleSwitchWorkspace = useCallback(async (workspace_id_witched) => {
+  const [filterValue, setFilterValue] = useState("");
+
+  const hasSearchFilter = Boolean(filterValue);
+
+  const filteredItems = useMemo(() => {
+    let filteredWorkspaces =
+      workspacesSwitched.filter(
+        (item) => item !== null && item !== undefined
+      ) || [];
+
+    if (hasSearchFilter) {
+      filteredWorkspaces = filteredWorkspaces.filter((item) =>
+        item.name.toLowerCase().includes(filterValue.toLowerCase())
+      );
+    }
+
+    return filteredWorkspaces;
+  }, [filterValue, workspacesSwitched]);
+
+  const handleSwitchWorkspace = async (workspace_id_witched) => {
     setIsChange(true);
     try {
       const data = await switchWorkspace(workspace_id_witched, {
@@ -91,40 +106,26 @@ export default function WorkspaceMenu({
             workspace_id: workspace_id_witched,
           })
         );
-
-        if (pathname.startsWith(`/w/${workspaceId}`)) {
-          let currentURL = window.location.href;
-          currentURL = currentURL.replace(
-            workspaceId.toString(),
-            workspaceActive.id.toString()
-          );
-          dispatch(updateWorkspace(workspaceActive));
-          router.push(currentURL);
-        }
+        dispatch(updateWorkspace(workspaceActive));
+        router.push(`/w/${workspaceId}/home`);
+        // if (pathname.startsWith(`/w/${workspaceId}`)) {
+        //   let currentURL = window.location.href;
+        //   currentURL = currentURL.replace(
+        //     workspaceId.toString(),
+        //     workspaceActive.id.toString()
+        //   );
+        // }
       }
     } catch (error) {
       console.error("Không thể chuyển đổi không gian làm việc", error);
     } finally {
       setIsChange(false);
     }
-  }, []);
-
-  const handleSearchWorkspace = useCallback(
-    (e) => {
-      const searchString = e.target.value.toLowerCase();
-      const workspaceNeedSearch = workspacesSwitched.filter((item) =>
-        item.name.toLowerCase().includes(searchString)
-      );
-      setWorkspaceSearch(workspaceNeedSearch);
-    },
-    [workspacesSwitched]
-  );
-
-  const handleClose = useCallback(() => {
-    setWorkspaceSearch(workspacesSwitched);
-    setIsSearch(!isSearch);
-  }, []);
-
+  };
+  const handleClose = () => {
+    setFilterValue("");
+    setIsSearch(false);
+  };
   if (isChange) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;
   }
@@ -164,7 +165,7 @@ export default function WorkspaceMenu({
                 name={workspace?.name?.charAt(0)}
               />
               <div className="flex flex-col items-start justify-center gap-1 grow">
-                <h4 className="text-xs leading-4 font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
+                <h4 className="text-xs  font-semibold  text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
                   {workspace?.name}
                 </h4>
                 <div className="flex items-center text-xs text-muted-foreground ">
@@ -195,7 +196,7 @@ export default function WorkspaceMenu({
             {isSearch ? (
               <div className="py-1">
                 <Input
-                  onChange={(e) => handleSearchWorkspace(e)}
+                  onChange={(e) => setFilterValue(e.target.value)}
                   variant="faded"
                   classNames={{
                     base: "max-w-full sm:max-w-[16rem] ",
@@ -204,17 +205,10 @@ export default function WorkspaceMenu({
                     inputWrapper:
                       "h-full font-normal text-default-500 bg-white  dark:bg-default-500/20 rounded-lg ",
                   }}
+                  type="search"
                   placeholder="Tìm kiếm..."
                   size="sm"
                   startContent={<SearchIcon size={18} />}
-                  endContent={
-                    <button
-                      className="p-1 hover:bg-default-100 rounded-lg flex items-center"
-                      onClick={handleClose}
-                    >
-                      <CloseIcon size={16} />
-                    </button>
-                  }
                 />
               </div>
             ) : (
@@ -232,44 +226,41 @@ export default function WorkspaceMenu({
             )}
 
             <div className="flex flex-col gap-3 ">
-              {workspaceSearch.length > 0 ? (
-                workspaceSearch?.map((workspace_search) => (
-                  <div
-                    onClick={() => handleSwitchWorkspace(workspace_search.id)}
-                    key={workspace_search.id}
-                    className="flex gap-3  p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
-                    style={{ cursor: "pointer" }}
-                  >
-                    <Avatar
-                      radius="md"
-                      size="sm"
-                      style={{
-                        background: `${
-                          workspace_search && workspace_search.color
-                            ? workspace_search.color
-                            : "#9353D3"
-                        }`,
-                      }}
-                      className="h-9 w-9 text-white "
-                      name={workspace_search?.name?.charAt(0)}
-                    />
-                    <div className="grow flex flex-col items-start  gap-1">
-                      <h4 className="w-full max-w-[169px] text-xs leading-4 text-small font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
-                        {workspace_search?.name}
-                      </h4>
-                      <div className="flex items-center text-xs text-muted-foreground ">
-                        <PrivateIcon size={16} /> {"\u2022"}{" "}
-                        {workspace_search.id === workspace.id
-                          ? workspace?.total_user
-                          : workspace_search?.total_user}{" "}
-                        thành viên
-                      </div>
+              <span className="italic text-md p-2 hidden last:block   text-center text-muted-foreground">
+                Không tìm thấy
+              </span>
+              {filteredItems.map((item) => (
+                <div
+                  onClick={() => handleSwitchWorkspace(item.id)}
+                  key={item.id}
+                  className="flex gap-3  p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
+                  style={{ cursor: "pointer" }}
+                >
+                  <Avatar
+                    radius="md"
+                    size="sm"
+                    style={{
+                      background: `${
+                        item && item.color ? item.color : "#9353D3"
+                      }`,
+                    }}
+                    className="h-9 w-9 text-white "
+                    name={item?.name?.charAt(0)}
+                  />
+                  <div className="grow flex flex-col items-start  gap-1">
+                    <h4 className="w-full max-w-[169px] text-xs   font-semibold text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
+                      {item?.name}
+                    </h4>
+                    <div className="flex items-center text-xs text-muted-foreground ">
+                      <PrivateIcon size={16} /> {"\u2022"}{" "}
+                      {item.id === workspace.id
+                        ? workspace?.total_user
+                        : item?.total_user}{" "}
+                      thành viên
                     </div>
                   </div>
-                ))
-              ) : (
-                <span className="italic text-md p-2">Không tìm thấy</span>
-              )}
+                </div>
+              ))}
             </div>
           </CardBody>
           <CardFooter>

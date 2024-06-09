@@ -13,7 +13,7 @@ module.exports = {
 
         paranoid: false,
         where: {
-          deletedAt: {
+          deleted_at: {
             [Op.ne]: null,
           },
         },

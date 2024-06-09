@@ -16,6 +16,7 @@ const PageMyWorkspace = () => {
   const { id: workspaceId } = useParams();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
+
   const workspace = useSelector((state) => state.workspace.workspace);
 
   const my_workspaces = useMemo(() => {

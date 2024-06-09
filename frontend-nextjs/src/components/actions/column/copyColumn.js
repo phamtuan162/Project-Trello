@@ -25,27 +25,37 @@ const CopyColumn = ({ children, column }) => {
   const [title, setTitle] = useState(column.title);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    let filteredCards = column.cards.filter((card) => !card.FE_PlaceholderCard);
+
+    const columnUpdated = column.cards.some((card) => card.FE_PlaceholderCard)
+      ? {
+          ...column,
+          cards: filteredCards,
+          cardOrderIds: filteredCards.map((card) => card.id),
+        }
+      : column;
+
     try {
       const data = await copyColumnApi({
-        column: column,
+        column: columnUpdated,
         board_id: board.id,
         title: title,
       });
       if (data.status === 200) {
-        const columnUpdate = data.data;
+        let columnUpdate = data.data;
+        columnUpdate.cards = mapOrder(
+          columnUpdate.cards,
+          columnUpdate.cardOrderIds,
+          "id"
+        );
         let newBoard = {
           ...board,
           columns: [columnUpdate, ...board.columns],
         };
-
-        newBoard.columns = mapOrder(
-          newBoard.columns,
-          newBoard.columnOrderIds,
-          "id"
-        );
 
         dispatch(updateBoard(newBoard));
         toast.success("Sao chép danh sách thành công");

@@ -24,14 +24,14 @@ const FormUpdateWorkspace = ({ workspace }) => {
     }
   }, [workspace]);
 
-  const handleChange = useCallback((e) => {
-    setForm((prevForm) => ({
-      ...prevForm,
+  const handleChange = (e) => {
+    setForm({
+      ...form,
       [e.target.name]: e.target.value,
-    }));
-  }, []);
+    });
+  };
 
-  const handleUpdateWorkspace = useCallback(async (formData) => {
+  const handleUpdateWorkspace = async (formData) => {
     const name = formData.get("name");
     const desc = formData.get("desc");
     if (name === "") {
@@ -54,7 +54,7 @@ const FormUpdateWorkspace = ({ workspace }) => {
       toast.error(error.message);
       setForm({ name: workspace.name, desc: workspace.desc });
     }
-  }, []);
+  };
 
   const { name, desc } = form;
   return (

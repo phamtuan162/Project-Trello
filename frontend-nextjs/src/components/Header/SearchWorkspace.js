@@ -23,7 +23,7 @@ const SearchWorkspace = () => {
   const hasSearchFilter = Boolean(filterValue);
   const filteredItems = useMemo(() => {
     let filteredWorkspaces =
-      user?.workspaces.filter((item) => item !== null && item !== undefined) ||
+      user?.workspaces?.filter((item) => item !== null && item !== undefined) ||
       [];
 
     if (hasSearchFilter) {

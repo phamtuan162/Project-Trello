@@ -34,7 +34,7 @@ const status = [
     value: null,
   },
 ];
-const Chart3 = ({ typeCharts, times }) => {
+const Chart3 = ({ typeCharts, times, handleDownload }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
@@ -181,16 +181,6 @@ const Chart3 = ({ typeCharts, times }) => {
     chartRef.current.chart = newChart;
   }, [updatedBoard, type, selected]);
 
-  const handleDownload = () => {
-    if (chartRef.current) {
-      const file = chartRef.current.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = file;
-      link.download = `${type}Chart.png`;
-      link.click();
-    }
-  };
-
   const handleSelectTypeChart = (typeChart) => {
     if (type !== typeChart) {
       setType(typeChart);
@@ -268,7 +258,7 @@ const Chart3 = ({ typeCharts, times }) => {
         {check && (
           <div className="w-full  flex items-end justify-center  mt-2">
             <button
-              onClick={handleDownload}
+              onClick={() => handleDownload(chartRef, type)}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"
             >
               Tải ảnh về

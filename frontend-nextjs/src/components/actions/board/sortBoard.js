@@ -7,13 +7,10 @@ import {
   Select,
   SelectItem,
 } from "@nextui-org/react";
-import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 
 const SortBoard = ({ children, setBoards, boards }) => {
-  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("updated_at");
   useEffect(() => {

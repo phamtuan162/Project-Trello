@@ -45,6 +45,8 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "workspaces",
       createdAt: "created_at",
       updatedAt: "updated_at",
+      paranoid: true, //Kích hoạt xóa mềm
+      deletedAt: "deleted_at",
     }
   );
   return Workspace;

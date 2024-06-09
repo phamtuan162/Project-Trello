@@ -486,7 +486,6 @@ module.exports = {
                     endDateTime: mission.endDateTime,
                   });
                 }
-                console.log(2);
               }
             }
           }
@@ -500,6 +499,18 @@ module.exports = {
                 updated_at: attachment.updated_at,
                 card_id: cardNew.id,
                 user_id: attachment.user_id,
+              });
+            }
+          }
+          if (card.comments.length > 0) {
+            for (const comment of card.comments) {
+              await Comment.create({
+                isEdit: comment.isEdit,
+                userName: comment.userName,
+                userAvatar: comment.userAvatar,
+                user_id: comment.user_id,
+                card_id: cardNew.id,
+                content: comment.content,
               });
             }
           }
@@ -536,6 +547,7 @@ module.exports = {
         data: columnUpdate,
       });
     } catch (error) {
+      console.log(error);
       Object.assign(response, {
         status: 500,
         message: "Sever error",

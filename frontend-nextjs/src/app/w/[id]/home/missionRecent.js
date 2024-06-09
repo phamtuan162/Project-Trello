@@ -35,19 +35,25 @@ const MissionRecent = ({ mission }) => {
               ? format(mission?.endDateTime, "d 'tháng' M ")
               : "Không có ngày hết hạn"}
           </p>
-          <Breadcrumbs variant={"bordered"} radius="full">
+          <Breadcrumbs
+            variant={"bordered"}
+            radius="full"
+            classNames={{ list: ["gap-y-1 gap-x-0"], separator: ["px-0"] }}
+          >
             <BreadcrumbItem
               startContent={
                 <Avatar
                   src={workspace?.background}
                   radius="md"
                   size="sm"
-                  className="h-4 w-4 text-indigo-700 bg-indigo-100 shrink-0"
+                  className="h-5 w-5 text-xs text-indigo-700 bg-indigo-100 shrink-0 m"
                   name={workspace?.name?.charAt(0).toUpperCase()}
                 />
               }
             >
-              {workspace?.name}
+              <span className="block whitespace-nowrap text-ellipsis  overflow-hidden max-w-[180px]">
+                {workspace?.name}
+              </span>
             </BreadcrumbItem>
             <BreadcrumbItem
               onClick={() => router.push(`/b/${board.id}`)}
@@ -56,7 +62,7 @@ const MissionRecent = ({ mission }) => {
                   src={board?.background}
                   radius="md"
                   size="sm"
-                  className="h-4 w-4 text-indigo-700 bg-indigo-100"
+                  className="h-5 w-5 text-indigo-700 bg-indigo-100"
                   name={board?.title?.charAt(0).toUpperCase()}
                 />
               }

@@ -183,6 +183,7 @@ module.exports = {
           });
         }
       } catch (e) {
+        console.log(e);
         const errors = Object.fromEntries(
           e?.inner?.map(({ path, message }) => [path, message])
         );
@@ -250,27 +251,19 @@ module.exports = {
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};
+    const workspace = await Workspace.findByPk(id);
+    if (!workspace) {
+      return res.status(404).json({ status: 404, message: "Not found" });
+    }
     try {
-      const boards = await Board.findAll({ where: { workspace_id: id } });
-
-      for (const board of boards) {
-        const columns = await Column.findAll({ where: { board_id: board.id } });
-        for (const column of columns) {
-          await Card.destroy({ where: { column_id: column.id } });
-        }
-        await Column.destroy({ where: { board_id: board.id } });
-      }
-      await Board.destroy({ where: { workspace_id: id }, force: true });
-
-      await UserWorkspaceRole.destroy({ where: { workspace_id: id } });
-
-      await Workspace.destroy({ where: { id } });
+      await workspace.destroy();
 
       const users = await User.findAll({
         where: { workspace_id_active: id },
-        include: [{ model: Workspace, as: "workspaces" }],
+        include: [{ model: Workspace, as: "workspaces", limit: 1 }],
         order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
       });
+      console.log(users);
 
       for (const user of users) {
         if (user.workspaces.length > 0) {

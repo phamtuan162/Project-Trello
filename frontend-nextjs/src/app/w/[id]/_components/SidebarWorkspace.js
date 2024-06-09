@@ -21,7 +21,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
   const socket = useSelector((state) => state.socket.socket);
   const [boards, setBoards] = useState([]);
   useEffect(() => {
-    if (workspace.boards) {
+    if (workspace?.boards) {
       setBoards(workspace.boards);
     }
   }, [workspace]);
@@ -114,11 +114,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
         </div>
 
         <div className="p-2 px-4">
-          <BoardsAction
-            setBoards={setBoards}
-            boardsOrigin={workspace?.boards}
-            boards={boards}
-          />
+          <BoardsAction setBoards={setBoards} boards={boards} />
           {boards?.slice(0, 3).map((board) => (
             <div
               onClick={() => router.push(`/b/${board.id}`)}

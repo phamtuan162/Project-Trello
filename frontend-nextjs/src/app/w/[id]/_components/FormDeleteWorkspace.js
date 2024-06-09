@@ -28,13 +28,31 @@ const FormDeleteWorkspace = ({ workspace }) => {
   const nameRef = useRef(null);
 
   const HandleDeleteWorkspace = async () => {
+    const workspaces = user.workspaces.filter(
+      (workspace) => workspace.role.toLowerCase() === "owner"
+    );
+    if (workspaces === 1) {
+      toast.warning("Bạn chỉ có duy nhất workspace này nên không thể xóa!");
+      return;
+    }
     setIsDelete(true);
     if (name === workspace.name && name !== "") {
       deleteWorkspaceApi(workspace.id).then((data) => {
         setIsDelete(false);
         if (data.status === 200) {
+          const users = workspace.users.filter((item) => +item.id !== +user.id);
           toast.success("Xóa thành công ");
           document.location.href = "/";
+          if (users.length > 0)
+            for (const userItem of users) {
+              socket.emit("sendNotification", {
+                user_id: userItem.id,
+                userName: user.name,
+                userAvatar: user.avatar,
+                type: "delete_workspace",
+                content: `đã xóa Không gian làm việc ${workspace.name} `,
+              });
+            }
         } else {
           const error = data.error;
           setMessage(error);

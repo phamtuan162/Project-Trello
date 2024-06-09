@@ -6,7 +6,7 @@ import { useRef, useEffect, useMemo, useState } from "react";
 import { RadioGroup, Radio } from "@nextui-org/react";
 import { checkCardCreationDate } from "@/utils/formatTime";
 
-const Chart5 = ({ typeCharts, times, colors }) => {
+const Chart5 = ({ typeCharts, times, colors, handleDownload }) => {
   const chartRef = useRef(null);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
@@ -237,16 +237,6 @@ const Chart5 = ({ typeCharts, times, colors }) => {
     }
   }, [updatedBoard, type, selected, workspace]);
 
-  const handleDownload = () => {
-    if (chartRef.current) {
-      const file = chartRef.current.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = file;
-      link.download = `${type}Chart.png`;
-      link.click();
-    }
-  };
-
   const handleSelectTypeChart = (typeChart) => {
     if (type !== typeChart) {
       setType(typeChart);
@@ -321,7 +311,7 @@ const Chart5 = ({ typeCharts, times, colors }) => {
         {check && (
           <div className="w-full  flex  justify-center mt-2">
             <button
-              onClick={handleDownload}
+              onClick={() => handleDownload(chartRef, type)}
               className="mt-auto rounded-md bg-amber-600 bg-opacity-25 p-1 px-4 font-medium  border border-amber-800"
             >
               Tải ảnh về

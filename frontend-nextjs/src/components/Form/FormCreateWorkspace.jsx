@@ -39,7 +39,7 @@ export default function FormCreateWorkspace({ children }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [isCreate, setIsCreate] = useState(false);
 
   const [form, setForm] = useState({
@@ -48,19 +48,18 @@ export default function FormCreateWorkspace({ children }) {
     color: colors[1],
   });
 
-  const handleChange = useCallback((e) => {
-    setForm((prevForm) => ({
-      ...prevForm,
+  const handleChange = (e) => {
+    setForm({
+      ...form,
       [e.target.name]: e.target.value,
-    }));
-  }, []);
+    });
+  };
 
-  const handleCreateWorkspace = useCallback(async (e) => {
+  const handleCreateWorkspace = async (e) => {
     e.preventDefault();
     setIsCreate(true);
-
     try {
-      const { data } = await createWorkspaceApi(user.id, form);
+      const data = await createWorkspaceApi(user.id, form);
 
       if (data.status === 200) {
         const workspace = data.data;
@@ -76,18 +75,22 @@ export default function FormCreateWorkspace({ children }) {
         dispatch(updateWorkspace(workspace));
         dispatch(updateMission([]));
         router.push(`/w/${workspace.id}/home`);
+        onClose();
         setForm({ name: "", desc: "", color: colors[1] });
+      } else {
+        const error = data.error;
+        toast.error(error);
       }
     } catch (error) {
       toast.error("Đã xảy ra lỗi khi tạo không gian mới.");
     } finally {
       setIsCreate(false);
     }
-  }, []);
+  };
 
-  const resetForm = useCallback(() => {
+  const resetForm = () => {
     setForm({ name: "", desc: "", color: colors[1] });
-  }, []);
+  };
 
   const { name, desc, color } = form;
   return (
@@ -98,8 +101,8 @@ export default function FormCreateWorkspace({ children }) {
         isOpen={isOpen}
         onOpenChange={(open) => {
           onOpenChange(open);
-          if (!open) resetForm();
         }}
+        onClose={() => resetForm()}
         backdrop="opaque"
       >
         <ModalContent className="max-w-xl  self-start z-50">

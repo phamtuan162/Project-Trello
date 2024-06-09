@@ -1,31 +1,32 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@nextui-org/react";
-import { debounce } from "lodash";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import SortBoard from "@/components/actions/board/sortBoard";
 import { Plus } from "lucide-react";
 import { Search } from "lucide-react";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
-export function BoardsAction({ setBoards, boardsOrigin, boards }) {
+import { useSelector } from "react-redux";
+export function BoardsAction({ setBoards, boards }) {
   const [isSearch, setIsSearch] = useState(false);
   const [isAction, setIsAction] = useState(false);
   const inputRef = useRef(null);
+  const workspace = useSelector((state) => state.workspace.workspace);
+  const [filterValue, setFilterValue] = useState("");
+  const hasSearchFilter = Boolean(filterValue);
+  useEffect(() => {
+    let filteredBoards =
+      workspace?.boards?.filter(
+        (item) => item !== null && item !== undefined
+      ) || [];
 
-  const handleSearchBoard = useCallback(
-    debounce((searchString) => {
-      const lowercasedSearchString = searchString.toLowerCase();
-      const boardNeedSearch = boardsOrigin.filter((board) =>
-        board.title.toLowerCase().includes(lowercasedSearchString)
+    if (hasSearchFilter) {
+      filteredBoards = filteredBoards.filter((item) =>
+        item.title.toLowerCase().includes(filterValue.toLowerCase())
       );
-      setBoards(boardNeedSearch);
-    }, 300),
-    []
-  );
+    }
 
-  const handleInputChange = (e) => {
-    const searchString = e.target.value;
-    handleSearchBoard(searchString);
-  };
+    setBoards(filteredBoards);
+  }, [filterValue]);
 
   useEffect(() => {
     if (isSearch && inputRef.current) {
@@ -37,9 +38,9 @@ export function BoardsAction({ setBoards, boardsOrigin, boards }) {
     <div className="my-2 lg:block hidden">
       <Input
         ref={inputRef}
-        onChange={(e) => handleInputChange(e)}
+        onChange={(e) => setFilterValue(e.target.value)}
         onBlur={() => {
-          setBoards(boardsOrigin);
+          setFilterValue("");
           setIsSearch(!isSearch);
         }}
         variant="faded"

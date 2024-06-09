@@ -285,31 +285,25 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
+    const board = await Board.findByPk(id);
+    if (!board) {
+      return res.status(404).json({ status: 404, message: "Not found" });
+    }
     try {
-      const board = await Board.findByPk(id);
-      if (!board) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
-
-      const columns = await Column.findAll({ where: { board_id: id } });
-
-      for (const column of columns) {
-        await Card.destroy({ where: { column_id: column.id } });
-      }
-      await Column.destroy({ where: { board_id: id } });
-
       const title = board.title;
-      // await Activity.create({
-      //   user_id: user.id,
-      //   userName: user.name,
-      //   userAvatar: user.avatar,
-      //   board_id: 9999,
-      //   title: title,
-      //   action: "add_board",
-      //   workspace_id: user.workspace_id_active,
-      //   desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
-      // });
-      await board.destroy({ force: true });
+
+      await board.destroy();
+
+      await Activity.create({
+        user_id: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        board_id: 9999,
+        title: title,
+        action: "add_board",
+        workspace_id: user.workspace_id_active,
+        desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
+      });
 
       Object.assign(response, {
         status: 200,

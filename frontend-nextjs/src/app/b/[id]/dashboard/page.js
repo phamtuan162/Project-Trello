@@ -5,6 +5,8 @@ import Chart2 from "./Chart2";
 import Chart3 from "./Chart3";
 import Chart4 from "./Chart4";
 import Chart5 from "./Chart5";
+import Chart6 from "./Chart6";
+
 import Loading from "@/components/Loading/Loading";
 import { useParams } from "next/navigation";
 const typeCharts = [
@@ -56,6 +58,26 @@ export default function dashboardPage() {
   const { id: boardId } = useParams();
   const board = useSelector((state) => state.board.board);
 
+  const handleDownload = (chartRef, type) => {
+    if (chartRef && chartRef.current) {
+      const canvas = chartRef.current;
+      const context = canvas.getContext("2d");
+
+      // Draw white background
+      context.save();
+      context.globalCompositeOperation = "destination-over";
+      context.fillStyle = "white";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.restore();
+
+      const file = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.href = file;
+      link.download = `${type}Chart.png`;
+      link.click();
+    }
+  };
+
   if (!board.id || +board.id !== +boardId) {
     return <Loading />;
   }
@@ -73,11 +95,42 @@ export default function dashboardPage() {
           className=" mt-14 mx-2 grow p-4   rounded-lg "
         >
           <div className="h-full w-full overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 grid-row-2 py-1">
-            <Chart1 typeCharts={typeCharts} times={times} colors={colors} />
-            <Chart2 typeCharts={typeCharts} times={times} colors={colors} />
-            <Chart3 typeCharts={typeCharts} times={times} colors={colors} />
-            <Chart4 typeCharts={typeCharts} times={times} colors={colors} />
-            <Chart5 typeCharts={typeCharts} times={times} colors={colors} />
+            <Chart1
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
+            <Chart2
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
+            <Chart3
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
+            <Chart4
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
+            <Chart5
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
+            <Chart6
+              typeCharts={typeCharts}
+              times={times}
+              colors={colors}
+              handleDownload={handleDownload}
+            />
           </div>
         </div>
       </div>

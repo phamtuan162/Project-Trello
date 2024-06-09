@@ -1,8 +1,12 @@
-const { User, Provider } = require("../models/index");
-const jwt = require("jsonwebtoken");
+const {
+  User,
+  Provider,
+  Workspace,
+  Role,
+  UserWorkspaceRole,
+} = require("../models/index");
 const GoogleStrategy = require("passport-google-oauth20");
-var ip = require("ip");
-const UAParser = require("ua-parser-js");
+const { Op } = require("sequelize");
 module.exports = new GoogleStrategy(
   {
     clientID:
@@ -40,6 +44,32 @@ module.exports = new GoogleStrategy(
         provider_id: provider[0].id,
       },
     });
+    const [user_workspace_role, created] = await UserWorkspaceRole.findOrCreate(
+      {
+        where: { user_id: user.id },
+        defaults: { user_id: user.id },
+      }
+    );
+    const role = await Role.findOne({
+      where: { name: { [Op.iLike]: "%Owner%" } },
+    });
+    if (created && role) {
+      const workspace = await Workspace.create({
+        name: "Workspace 1",
+        total_user: 1,
+        isActive: true,
+      });
+
+      await user_workspace_role.update({
+        role_id: role.id,
+        workspace_id: workspace.id,
+      });
+
+      await user.update({
+        workspace_id_active: workspace.id,
+      });
+    }
+
     if (user) {
       return cb(null, user[0]);
     }

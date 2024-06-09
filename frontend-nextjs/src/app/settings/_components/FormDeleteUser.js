@@ -9,6 +9,7 @@ import {
 import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteUser } from "@/services/userApi";
+import { useSelector } from "react-redux";
 const FormDeleteUser = (user) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(

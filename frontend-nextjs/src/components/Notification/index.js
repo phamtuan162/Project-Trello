@@ -47,6 +47,7 @@ const Notification = ({ children, handleClickNotify }) => {
       };
     }
   }, [socket]);
+
   const handleMarkAsReadNotification = async () => {
     if (notifications.length > 0) {
       markAsReadNotification({ user_id: user.id }).then((data) => {
