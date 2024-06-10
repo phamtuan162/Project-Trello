@@ -287,14 +287,14 @@ const PageMyWorkspace = () => {
               </DropdownMenu>
             </Dropdown>
             <FormCreateWorkspace>
-              <Button
-                className="bg-foreground text-background text-white"
-                endContent={<PlusIcon />}
+              <button
+                className="bg-foreground text-background text-white flex gap-1 justify-center items-center px-2 py-1.5 rounded-lg text-sm"
                 style={{ background: "#7f77f1" }}
                 size="sm"
               >
-                Add New
-              </Button>
+                <PlusIcon size={18} />
+                Thêm mới
+              </button>
             </FormCreateWorkspace>
           </div>
         </div>
