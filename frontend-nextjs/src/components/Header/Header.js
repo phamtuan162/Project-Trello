@@ -34,6 +34,7 @@ import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { clickNotification } from "@/services/workspaceApi";
+import { myWorkspacesSlice } from "@/stores/slices/myWorkspacesSlice";
 import SearchWorkspace from "./SearchWorkspace";
 import { toast } from "react-toastify";
 const { updateUser } = userSlice.actions;
@@ -41,6 +42,7 @@ const { updateProvider } = providerSlice.actions;
 const { updateSocket } = socketSlice.actions;
 const { updateNotification } = notificationSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
+const { updateMyWorkspaces } = myWorkspacesSlice.actions;
 const Header = () => {
   const notifications = useSelector(
     (state) => state.notification.notifications
@@ -142,7 +144,11 @@ const Header = () => {
       getProfile(access_token).then((data) => {
         if (data?.status === 200) {
           const user = data.data;
-          dispatch(updateUser(user));
+          const workspacesUpdate = user.workspaces.filter(
+            (item) => !item.deleted_at
+          );
+          dispatch(updateUser({ ...user, workspaces: workspacesUpdate }));
+          dispatch(updateMyWorkspaces(user.workspaces));
           dispatch(updateProvider(user.providers));
 
           if (pathname.startsWith(`/w/${id}`)) {

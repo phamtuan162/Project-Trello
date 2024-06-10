@@ -21,16 +21,14 @@ module.exports = {
     const {
       order = "desc",
       sort = "updated_at",
-      user_id,
+
       q,
       isActive,
       limit,
       page = 1,
     } = req.query;
     const filters = {};
-    if (user_id) {
-      filters.user_id = user_id;
-    }
+
     if (isActive) {
       filters.isActive = isActive;
     }
@@ -251,7 +249,9 @@ module.exports = {
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};
-    const workspace = await Workspace.findByPk(id);
+    const workspace = await Workspace.findByPk(id, {
+      include: { model: User, as: "users" },
+    });
     if (!workspace) {
       return res.status(404).json({ status: 404, message: "Not found" });
     }
@@ -260,15 +260,19 @@ module.exports = {
 
       const users = await User.findAll({
         where: { workspace_id_active: id },
-        include: [{ model: Workspace, as: "workspaces", limit: 1 }],
+        include: [{ model: Workspace, as: "workspaces" }],
         order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
       });
-      console.log(users);
 
-      for (const user of users) {
-        if (user.workspaces.length > 0) {
-          const latestWorkspace = user.workspaces[0];
-          await user.update({ workspace_id_active: latestWorkspace.id });
+      if (users.length > 0) {
+        for (const user of users) {
+          if (user.workspaces.length > 0) {
+            const latestWorkspace = user.workspaces[0];
+            await User.update(
+              { workspace_id_active: latestWorkspace.id },
+              { where: { id: user.id } }
+            );
+          }
         }
       }
 
@@ -277,6 +281,7 @@ module.exports = {
         message: "Success",
       });
     } catch (error) {
+      console.log(error);
       Object.assign(response, {
         status: 500,
         message: "Sever error",

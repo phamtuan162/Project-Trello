@@ -241,6 +241,7 @@ module.exports = {
         {
           model: Workspace,
           as: "workspaces",
+          paranoid: false,
           include: {
             model: Board,
             as: "boards",

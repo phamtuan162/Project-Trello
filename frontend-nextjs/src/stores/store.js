@@ -9,8 +9,10 @@ import { columnSlice } from "./slices/columnSlice";
 import { missionSlice } from "./slices/missionSlice";
 import { socketSlice } from "./slices/socket";
 import { notificationSlice } from "./slices/notificationSlice";
+import { myWorkspacesSlice } from "./slices/myWorkspacesSlice";
 export const store = configureStore({
   reducer: {
+    my_workspaces: myWorkspacesSlice.reducer,
     workspace: workspaceSlice.reducer,
     user: userSlice.reducer,
     provider: providerSlice.reducer,

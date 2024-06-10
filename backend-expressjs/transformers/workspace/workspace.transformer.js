@@ -21,6 +21,7 @@ class WorkspaceTransformer extends Transformer {
       total_user: instance.total_user,
       created_at: instance.created_at,
       updated_at: instance.updated_at,
+      deleted_at: instance.deleted_at,
     };
   }
 }

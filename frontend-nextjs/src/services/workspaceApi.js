@@ -2,7 +2,6 @@
 // import { API_ROOT } from "@/utils/constants";
 import { client } from "@/services/clientUtils";
 import { getAccessToken } from "./authApi";
-import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import axios from "axios";
 /** Workspace */

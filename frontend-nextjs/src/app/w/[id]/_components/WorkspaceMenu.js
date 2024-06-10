@@ -39,7 +39,6 @@ export default function WorkspaceMenu({
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-  console.log(user);
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
@@ -106,8 +105,9 @@ export default function WorkspaceMenu({
             workspace_id: workspace_id_witched,
           })
         );
+        console.log(workspaceActive);
         dispatch(updateWorkspace(workspaceActive));
-        router.push(`/w/${workspaceId}/home`);
+        router.push(`/w/${workspaceActive.id}/home`);
         // if (pathname.startsWith(`/w/${workspaceId}`)) {
         //   let currentURL = window.location.href;
         //   currentURL = currentURL.replace(

@@ -402,7 +402,7 @@ export default function PageWorkspaceUsers() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Tổng cộng {workspace?.users?.length.toString()} người dùng tham gia
+            Tổng cộng {workspace?.total_user} người dùng tham gia
           </span>
           <label className="flex items-center text-default-400 text-small">
             Hàng trên mỗi trang:
@@ -424,7 +424,7 @@ export default function PageWorkspaceUsers() {
     visibleColumns,
     onSearchChange,
     onRowsPerPageChange,
-    workspace?.users?.length,
+    workspace,
     hasSearchFilter,
   ]);
 
