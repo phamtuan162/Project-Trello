@@ -20,14 +20,8 @@ import { useMemo, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { PlusIcon, X, ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
-import { switchWorkspace } from "@/services/workspaceApi";
-import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { userSlice } from "@/stores/slices/userSlice";
-import { fetchMission } from "@/stores/middleware/fetchMission";
-const { updateWorkspace } = workspaceSlice.actions;
-const { updateUser } = userSlice.actions;
+import RestoreWorkspace from "./storeWorkspace";
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -47,8 +41,7 @@ const statusOptions = [
 ];
 const PageMyWorkspace = () => {
   const dispatch = useDispatch();
-  const router = useRouter();
-  const user = useSelector((state) => state.user.user);
+
   const my_workspaces = useSelector(
     (state) => state.my_workspaces.my_workspaces
   );
@@ -170,13 +163,15 @@ const PageMyWorkspace = () => {
       case "actions":
         return (
           item.deleted_at && (
-            <button
-              type="button"
-              className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
-              color="danger"
-            >
-              {"Khôi phục"}
-            </button>
+            <RestoreWorkspace workspace={item}>
+              <button
+                type="button"
+                className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
+                color="danger"
+              >
+                {"Khôi phục"}
+              </button>
+            </RestoreWorkspace>
           )
         );
       default:
@@ -325,36 +320,6 @@ const PageMyWorkspace = () => {
     my_workspaces_sort,
     hasSearchFilter,
   ]);
-  const handleSwitchWorkspace = async (workspace_id_witched) => {
-    if (+workspace_id_witched === +workspace.id) {
-      toast.info("Bạn đang ở Không gian làm việc này!");
-      return;
-    }
-    try {
-      const data = await switchWorkspace(workspace_id_witched, {
-        user_id: user.id,
-      });
-      if (data.status === 200) {
-        const workspaceActive = data.data;
-        if (workspaceActive.users) {
-          const userNeedToFind = workspaceActive.users.find(
-            (item) => +item.id === +user.id
-          );
-          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
-        }
-        dispatch(
-          fetchMission({
-            user_id: user.id,
-            workspace_id: workspace_id_witched,
-          })
-        );
-        dispatch(updateWorkspace(workspaceActive));
-        router.push(`/w/${workspaceActive.id}/home`);
-      }
-    } catch (error) {
-      console.error("Không thể chuyển đổi không gian làm việc", error);
-    }
-  };
 
   const bottomContent = useMemo(() => {
     return (
@@ -462,34 +427,3 @@ const PageMyWorkspace = () => {
   );
 };
 export default PageMyWorkspace;
-// <div className="flex  gap-4 mt-8 flex-wrap">
-//       {my_workspaces_sort?.map((workspace) => (
-//         <div className="flex flex-col gap-3 items-center w-[200px]">
-//           <div
-//             onClick={() => handleSwitchWorkspace(workspace.id)}
-//             key={workspace.id}
-//             className=" cursor-pointer rounded-full w-[180px] h-[180px] group relative  bg-center  bg-cover bg-sky-700   p-2 overflow-hidden flex items-center justify-center"
-//             style={{
-//               background: `${
-//                 workspace && workspace.color ? workspace.color : "#9353D3"
-//               }`,
-//             }}
-//           >
-//             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
-//             <p className="relative font-semibold text-white text-6xl">
-//               {workspace?.name?.charAt(0)}
-//             </p>
-//           </div>
-//           <p className="w-full text-center">{workspace.name}</p>
-//         </div>
-//       ))}
-
-//       <FormCreateWorkspace>
-//         <div
-//           role="button"
-//           className="aspect-video relative  w-[180px] h-[180px] ml-[20px] bg-muted rounded-full flex bg-default-300 flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"
-//         >
-//           <Plus size={60} />
-//         </div>
-//       </FormCreateWorkspace>
-//     </div>

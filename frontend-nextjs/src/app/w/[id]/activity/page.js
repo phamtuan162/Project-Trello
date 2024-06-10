@@ -11,7 +11,7 @@ import {
   DropdownTrigger,
   Button,
 } from "@nextui-org/react";
-import { SearchIcon, ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 
 export default function pageActivity() {
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -83,7 +83,6 @@ export default function pageActivity() {
             }}
             placeholder="Tìm kiếm bằng tên..."
             size="xs"
-            startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}
             variant="bordered"
             type="search"

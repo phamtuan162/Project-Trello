@@ -609,4 +609,30 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
+  restore: async (req, res) => {
+    const { id } = req.params;
+    const response = {};
+    const workspace = await Workspace.findByPk(id, {
+      paranoid: false,
+    });
+    if (!workspace) {
+      return res.status(404).json({ status: 404, message: " Not found" });
+    }
+    try {
+      await workspace.restore();
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      console.log(error);
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
+    res.status(response.status).json(response);
+  },
 };

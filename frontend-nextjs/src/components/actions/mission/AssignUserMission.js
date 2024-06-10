@@ -19,18 +19,18 @@ const { updateMission } = missionSlice.actions;
 const { updateCard } = cardSlice.actions;
 const AssignUserMission = ({ children, mission }) => {
   const dispatch = useDispatch();
-  const [timeoutId, setTimeoutId] = useState(null);
   const missions = useSelector((state) => state.mission.missions);
   const [isOpen, setIsOpen] = useState(false);
   const [keyword, setKeyWord] = useState("");
   const card = useSelector((state) => state.card.card);
   const workspace = useSelector((state) => state.workspace.workspace);
   const userMain = useSelector((state) => state.user.user);
-  const [userSearch, setUserSearch] = useState(workspace.users);
   const CheckUserSearch = (userId) => {
-    const check = userSearch.some((item) => +item === userId);
+    const check = filteredItems.some((item) => +item.id === +userId);
     return check;
   };
+  const hasSearchFilter = Boolean(keyword);
+
   const userNotAssignCard = useMemo(() => {
     if (!workspace || !workspace.users || !card.users) {
       return [];
@@ -40,11 +40,31 @@ const AssignUserMission = ({ children, mission }) => {
     return workspace.users.filter((user) => !assignedUserIds.includes(user.id));
   }, [workspace, card]);
 
+  const filteredItems = useMemo(() => {
+    let filteredUsers =
+      workspace?.users?.filter((item) => item !== null && item !== undefined) ||
+      [];
+
+    if (hasSearchFilter) {
+      filteredUsers = filteredUsers.filter(
+        (item) =>
+          item.name.toLowerCase().includes(keyword.toLowerCase()) ||
+          item.email.toLowerCase().includes(keyword.toLowerCase())
+      );
+    }
+
+    return filteredUsers;
+  }, [workspace, keyword]);
+
   const HandleSelectUserAssigned = async (userAssigned) => {
     if (userAssigned?.role?.toLowerCase() === "guest") {
       toast.error("Người này là khách không chỉ định được!");
 
       setIsOpen(false);
+      return;
+    }
+    if (+mission.user_id === +userAssigned.id) {
+      CancelUser(userAssigned);
       return;
     }
     const userIdUpdate =
@@ -116,48 +136,10 @@ const AssignUserMission = ({ children, mission }) => {
     });
   };
 
-  const HandleSearchUser = async (e) => {
-    const inputKeyword = e.target.value.toLowerCase().trim();
-    setKeyWord(e.target.value);
-    // Xóa timeout trước đó (nếu có)
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    // Thiết lập timeout mới
-    const newTimeoutId = setTimeout(async () => {
-      let usersIdNew = [];
-      for (const user of workspace.users) {
-        if (
-          user.name.trim().toLowerCase().includes(inputKeyword) ||
-          user.email.trim().toLowerCase().includes(inputKeyword)
-        ) {
-          usersIdNew.push(user.id);
-        }
-      }
-      setUserSearch(usersIdNew);
-    }, 2000); // Thời gian trễ là 2 giây
-
-    // Lưu ID của timeout mới vào state
-    setTimeoutId(newTimeoutId);
-  };
-
-  useEffect(() => {
-    if (workspace.users.length > 0) {
-      const userIds = workspace.users.map((user) => user.id);
-      setUserSearch(userIds);
-    }
-  }, []);
-
-  const HandleReset = async () => {
-    setIsOpen(false);
-    setKeyWord("");
-    const userIds = workspace.users.map((user) => user.id);
-    setUserSearch(userIds);
-  };
   return (
     <Popover
       placement="right"
-      onClose={HandleReset}
+      onClose={() => setIsOpen(false)}
       isOpen={isOpen}
       onOpenChange={(open) => {
         if (
@@ -186,31 +168,26 @@ const AssignUserMission = ({ children, mission }) => {
           </div>
           <div className="mt-4">
             <Input
-              onChange={(e) => HandleSearchUser(e)}
+              onChange={(e) => setKeyWord(e.target.value)}
               value={keyword}
               variant="bordered"
-              type="text"
+              type="search"
               name="name"
               id="name"
-              startContent={
-                <div className="pl-2">
-                  <SearchIcon size={16} />
-                </div>
-              }
               placeholder="Tìm kiếm..."
               size="xs"
               className="w-full "
             />
-            {userSearch.length === 0 && (
+            {filteredItems?.length === 0 && (
               <span className="w-full h-[60px] flex items-center justify-center bg-default-200 mt-2 rounded-sm ">
                 Không có kết quả
               </span>
             )}
             {userNotAssignCard?.length > 0 && (
               <div
-                className={`${userSearch.length === 0 && "hidden"} p-2 pb-0`}
+                className={`${filteredItems.length === 0 && "hidden"} p-2 pb-0`}
               >
-                <p className="font-medium text-xs">Thành viên trong Bảng</p>
+                <p className="font-medium text-xs ">Thành viên trong Bảng</p>
                 <div className="max-h-[160px] overflow-y-auto">
                   {userNotAssignCard.map((user) => (
                     <div
@@ -244,7 +221,7 @@ const AssignUserMission = ({ children, mission }) => {
             )}
 
             {card?.users?.length > 0 && (
-              <div className={`${userSearch.length === 0 && "hidden"} p-2 `}>
+              <div className={`${filteredItems.length === 0 && "hidden"} p-2 `}>
                 <p className="font-medium text-xs">Thành viên trong Thẻ</p>
                 <div className="max-h-[160px] overflow-y-auto">
                   {card.users.map((user) => (

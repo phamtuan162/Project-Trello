@@ -143,11 +143,11 @@ const SetDate = ({ children, mission }) => {
         const updatedMissions = work.missions.map((item) => {
           if (+item.id === +mission.id) {
             return {
-              ...mission,
+              ...item,
               endDateTime: endDateTimeUpdate.getTime(),
             };
           }
-          return mission;
+          return item;
         });
         return { ...work, missions: updatedMissions };
       }
@@ -184,11 +184,11 @@ const SetDate = ({ children, mission }) => {
           const updatedMissions = work.missions.map((item) => {
             if (+item.id === +mission.id) {
               return {
-                ...mission,
+                ...item,
                 endDateTime: null,
               };
             }
-            return mission;
+            return item;
           });
           return { ...work, missions: updatedMissions };
         }

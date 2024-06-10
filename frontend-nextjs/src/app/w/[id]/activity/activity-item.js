@@ -15,7 +15,7 @@ const ActivityItem = ({ activity }) => {
       />
       <div className="flex flex-col space-y-0.5">
         <p className="text-xs text-muted-foreground">
-          <span className="font-semibold  text-neutral-700">
+          <span className="font-semibold  text-neutral-700 mr-1">
             {activity?.userName}
           </span>
           {generateActivityMessage(activity)}

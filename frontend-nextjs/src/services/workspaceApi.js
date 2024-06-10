@@ -56,6 +56,15 @@ export const searchWorkspace = async (userId) => {
   }
 };
 
+export const restoreWorkspaceApi = async (workspaceId) => {
+  const { response, data } = await client.put(
+    `/workspace/restore/${workspaceId}`
+  );
+  if (response.ok) {
+    return data;
+  }
+};
+
 export const switchWorkspace = async (workspaceId, body) => {
   const { response, data } = await client.put(
     `/workspace/change-workspace/${workspaceId}`,

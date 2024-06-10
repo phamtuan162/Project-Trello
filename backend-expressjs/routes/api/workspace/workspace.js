@@ -25,6 +25,8 @@ router.put(
   workspaceController.cancelUser
 );
 router.put("/:id", permission("workspace.update"), workspaceController.update);
+router.put("/restore/:id", workspaceController.restore);
+
 router.patch(
   "/:id",
   permission("workspace.update"),
