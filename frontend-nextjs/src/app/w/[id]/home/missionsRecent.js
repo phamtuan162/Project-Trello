@@ -1,9 +1,10 @@
 "use client";
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import MissionRecent from "./missionRecent";
 const MissionsRecent = () => {
+  const router = useRouter();
   const { id } = useParams();
   const missions = useSelector((state) => state.mission.missions);
 

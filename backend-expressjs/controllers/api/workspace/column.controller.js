@@ -219,11 +219,10 @@ module.exports = {
         (item) => +item !== +column.id
       );
       if (column.cards.length > 0) {
-        await Card.update(
-          { column_id: null },
-          { where: { column_id: column.id } }
-        );
-        await Card.destroy({ where: { column_id: column.id } });
+        for (const card of column.cards) {
+          await card.update({ column_id: null });
+          await card.destroy();
+        }
       }
       await column.update({ board_id: null });
       await column.destroy();

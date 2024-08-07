@@ -145,6 +145,7 @@ export default function BoardNavbar({ setIsActivity }) {
       };
     }
   }, [socket]);
+
   if (!board.id || +board.id !== +boardId) {
     return;
   }

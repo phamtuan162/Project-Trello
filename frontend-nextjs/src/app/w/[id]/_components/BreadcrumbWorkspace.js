@@ -1,16 +1,19 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import { Avatar } from "@nextui-org/react";
-const BreadcrumbWorkspace = ({ options, origin }) => {
+import { useMemo } from "react";
+const BreadcrumbWorkspace = ({ options }) => {
   const pathname = usePathname();
   const workspace = useSelector((state) => state.workspace.workspace);
-
-  const optionsSorted = options.filter((option) =>
-    pathname.includes(option.href)
-  );
+  const optionsSorted = useMemo(() => {
+    if (!options || options.length === 0) {
+      return null;
+    }
+    return options.filter((option) => pathname.includes(option.href));
+  }, [options]);
 
   return (
     <nav className="flex" aria-label="Breadcrumb">

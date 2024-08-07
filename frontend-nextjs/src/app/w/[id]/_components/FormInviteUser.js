@@ -115,6 +115,7 @@ const FormInviteUser = ({ rolesUser }) => {
       });
     }
   };
+
   const HandleSelectUserInvite = async (userSelected) => {
     setUserInvite(userSelected);
     setKeyWord(userSelected.name);

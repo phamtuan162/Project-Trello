@@ -107,7 +107,8 @@ module.exports = {
         });
       }
     } catch (e) {
-      response.status = 500;
+      console.log(e);
+      response.status = 50;
       response.message = "Server Error";
     }
     res.status(response.status).json(response);
@@ -447,7 +448,7 @@ module.exports = {
       if (!user_workspace_role) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-      await user_workspace_role.destroy();
+      await user_workspace_role.destroy({ force: true });
       const workspace = await Workspace.findByPk(workspace_id, {
         include: { model: User, as: "users" },
       });
@@ -468,9 +469,11 @@ module.exports = {
       }
 
       const userCancel = await User.findByPk(user_id);
+
       const cards = await Card.findAll({
         where: { workspace_id: workspace_id },
       });
+
       if (cards.length > 0) {
         for (const card of cards) {
           await card.removeUser(userCancel);

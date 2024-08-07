@@ -20,21 +20,21 @@ export default function SettingsLayout({ children }) {
       label: "Thanh toán",
       icon: <CreditCard size={18} />,
     },
-    {
-      href: "/settings/notifications",
-      label: "Thông báo",
-      icon: <NotifyIcon size={18} />,
-    },
+    // {
+    //   href: "/settings/notifications",
+    //   label: "Thông báo",
+    //   icon: <NotifyIcon size={18} />,
+    // },
     {
       href: "/settings/my-workspace",
       label: "Không gian làm việc ",
       icon: <Building size={18} />,
     },
-    {
-      href: "/settings/calendar",
-      label: "Lịch",
-      icon: <CalendarIcon size={18} />,
-    },
+    // {
+    //   href: "/settings/calendar",
+    //   label: "Lịch",
+    //   icon: <CalendarIcon size={18} />,
+    // },
     // {
     //   href: "/settings/storage",
     //   label: "Lưu trữ đám mây",

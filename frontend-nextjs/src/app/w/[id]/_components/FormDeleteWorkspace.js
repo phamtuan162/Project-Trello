@@ -10,14 +10,12 @@ import {
   Button,
   CircularProgress,
 } from "@nextui-org/react";
-import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteWorkspaceApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 const FormDeleteWorkspace = ({ workspace }) => {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [message, setMessage] = useState(
     "Bằng cách xóa không gian làm việc này, bạn sẽ xóa tất cả các bảng và dự án.Tất cả dữ liệu và tín dụng thanh toán của bạn sẽ bị mất."
@@ -28,36 +26,41 @@ const FormDeleteWorkspace = ({ workspace }) => {
   const nameRef = useRef(null);
 
   const HandleDeleteWorkspace = async () => {
-    const workspaces = user.workspaces.filter(
-      (workspace) => workspace.role.toLowerCase() === "owner"
-    );
-    if (workspaces === 1) {
+    if (
+      user.workspaces.filter((ws) => ws.role.toLowerCase() === "owner")
+        .length === 1
+    ) {
       toast.warning("Bạn chỉ có duy nhất workspace này nên không thể xóa!");
       return;
     }
     setIsDelete(true);
     if (name === workspace.name && name !== "") {
-      deleteWorkspaceApi(workspace.id).then((data) => {
+      try {
+        const data = await deleteWorkspaceApi(workspace.id);
         setIsDelete(false);
         if (data.status === 200) {
           const users = workspace.users.filter((item) => +item.id !== +user.id);
-          toast.success("Xóa thành công ");
+          users.forEach((userItem) => {
+            socket.emit("sendNotification", {
+              user_id: userItem.id,
+              userName: user.name,
+              userAvatar: user.avatar,
+              type: "delete_workspace",
+              content: `đã xóa Không gian làm việc ${workspace.name}`,
+            });
+          });
+
+          toast.success(
+            "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
+          );
           document.location.href = "/";
-          if (users.length > 0)
-            for (const userItem of users) {
-              socket.emit("sendNotification", {
-                user_id: userItem.id,
-                userName: user.name,
-                userAvatar: user.avatar,
-                type: "delete_workspace",
-                content: `đã xóa Không gian làm việc ${workspace.name} `,
-              });
-            }
         } else {
-          const error = data.error;
-          setMessage(error);
+          setMessage(data.error);
         }
-      });
+      } catch (error) {
+        setIsDelete(false);
+        setMessage("Có lỗi xảy ra, vui lòng thử lại sau.");
+      }
     } else {
       setIsDelete(false);
       setMessage("Tên không gian làm việc không hợp lệ, Vui lòng nhập lại!");
@@ -84,7 +87,6 @@ const FormDeleteWorkspace = ({ workspace }) => {
         isOpen={isOpen}
         onOpenChange={(open) => {
           onOpenChange(open);
-
           setMessage(
             "Bằng cách xóa không gian làm việc này, bạn sẽ xóa tất cả các bảng và dự án.Tất cả dữ liệu và tín dụng thanh toán của bạn sẽ bị mất."
           );

@@ -96,25 +96,25 @@ app.use("/api/v1", apiRouter);
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 
-cron.schedule("* 0 * * *", () => {
-  blacklist_token.delete();
-});
+// cron.schedule("* 0 * * *", () => {
+//   blacklist_token.delete();
+// });
 
-cron.schedule("0 0 * * *", () => {
-  card.delete();
-});
+// cron.schedule("0 0 * * *", () => {
+//   card.delete();
+// });
 
-cron.schedule("0 1 * * *", () => {
-  column.delete();
-});
+// cron.schedule("0 1 * * *", () => {
+//   column.delete();
+// });
 
-cron.schedule("0 * * * *", () => {
-  card.HandleExpired();
-});
+// cron.schedule("0 * * * *", () => {
+//   card.HandleExpired();
+// });
 
-cron.schedule("0 * * * *", () => {
-  mission.HandleExpired();
-});
+// cron.schedule("0 * * * *", () => {
+//   mission.HandleExpired();
+// });
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

@@ -1,10 +1,11 @@
 "use client";
 import { useSelector, useDispatch } from "react-redux";
-import { useState, useRef } from "react";
-import { useEventListener, useOnClickOutside } from "usehooks-ts";
+import { useState, useRef, useMemo, useCallback } from "react";
+import { useOnClickOutside } from "usehooks-ts";
 import { Button, Textarea, CircularProgress } from "@nextui-org/react";
 import { createMissionApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { toast } from "react-toastify";
 const { updateCard } = cardSlice.actions;
 const AddMission = ({ work }) => {
   const dispatch = useDispatch();
@@ -15,6 +16,13 @@ const AddMission = ({ work }) => {
   const textareaRef = useRef(null);
   const formRef = useRef(null);
   const btnRef = useRef();
+
+  const checkRole = useMemo(() => {
+    return (
+      user?.role?.toLowerCase() !== "admin" &&
+      user?.role?.toLowerCase() !== "owner"
+    );
+  }, [user]);
 
   const enableEditing = () => {
     setIsEditing(true);
@@ -31,52 +39,56 @@ const AddMission = ({ work }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-    if (e.key === "Enter") {
-      btnRef.current.click();
-    }
+    // if (e.key === "Enter") {
+    //   btnRef.current.click();
+    // }
   };
 
   useOnClickOutside(formRef, disableEditing);
 
-  const onSubmit = (formData) => {
-    setIsLoading(true);
+  const onSubmit = useCallback(async (formData) => {
     const name = formData.get("name");
-    if (name) {
-      createMissionApi({
+
+    if (!name) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const data = await createMissionApi({
         name: name,
         work_id: work.id,
         status: "pending",
-      }).then((data) => {
-        if (data.status === 200) {
-          const missionNew = data.data;
-          const worksUpdate = card.works.map((item) => {
-            if (+item.id === +work.id) {
-              const missionsUpdate = item.missions
-                ? item.missions.concat(missionNew)
-                : [missionNew];
-              return { ...item, missions: missionsUpdate };
-            }
-            return item;
-          });
-          const cardUpdate = { ...card, works: worksUpdate };
-          dispatch(updateCard(cardUpdate));
-          setIsEditing(false);
-          setIsLoading(false);
-        } else {
-          const error = data.error;
-          toast.error(error);
-
-          setIsLoading(false);
-        }
       });
-    }
-  };
 
-  if (
-    user.role.toLowerCase() !== "admin" &&
-    user.role.toLowerCase() !== "owner"
-  ) {
-    return;
+      if (data.status === 200) {
+        const missionNew = data.data;
+
+        const worksUpdate = card.works.map((item) => {
+          if (+item.id === +work.id) {
+            const missionsUpdate = item.missions
+              ? [...item.missions, missionNew]
+              : [missionNew];
+            return { ...item, missions: missionsUpdate };
+          }
+          return item;
+        });
+
+        const cardUpdate = { ...card, works: worksUpdate };
+        dispatch(updateCard(cardUpdate));
+        setIsEditing(false);
+      } else {
+        toast.error(data.error);
+      }
+    } catch (error) {
+      toast.error("An error occurred while creating the mission.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  if (checkRole) {
+    return null;
   }
   return isEditing ? (
     <form

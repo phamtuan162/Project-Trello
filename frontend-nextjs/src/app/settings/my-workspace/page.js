@@ -18,8 +18,7 @@ import {
 } from "@nextui-org/react";
 import { useMemo, useState, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { PlusIcon, X, ChevronDownIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { PlusIcon, ChevronDownIcon } from "lucide-react";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import RestoreWorkspace from "./storeWorkspace";
 function capitalize(str) {
@@ -169,7 +168,7 @@ const PageMyWorkspace = () => {
                 className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
                 color="danger"
               >
-                {"Khôi phục"}
+                "Khôi phục"
               </button>
             </RestoreWorkspace>
           )

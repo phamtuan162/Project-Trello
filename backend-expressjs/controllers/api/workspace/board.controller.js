@@ -121,7 +121,7 @@ module.exports = {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
-      const board = await Board.create(body);
+      const board = await Board.create({ ...body, status: "public" });
       await Activity.create({
         user_id: user.id,
         userName: user.name,
