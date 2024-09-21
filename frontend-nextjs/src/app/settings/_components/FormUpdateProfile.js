@@ -8,7 +8,6 @@ import FormUpdateAvatar from "./FormUpdateAvatar";
 import { toast } from "react-toastify";
 const { updateUser } = userSlice.actions;
 const FormUpdateProfile = ({ user }) => {
-  const int = 8;
   const dispatch = useDispatch();
   const nameRef = useRef(null);
   const [form, setForm] = useState({
