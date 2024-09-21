@@ -1,0 +1,298 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+const {
+  User,
+  Notification,
+  Workspace,
+  Board,
+  Activity,
+} = require("../models/index.js");
+const { AsyncLocalStorage } = require("async_hooks");
+var app = require("../app");
+var debug = require("debug")("backend-expressjs:server");
+var http = require("http");
+const { Server } = require("socket.io");
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || "3000");
+app.set("port", port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Hoáº·c báº¡n cÃ³ thá» cung cáº¥p URL cá»¥ thá» cá»§a mÃ¡y chá»§ web cá»§a báº¡n
+  },
+});
+// Sá»± kiá»n káº¿t ná»i má»i
+let onlineUsers = [];
+
+const addNewUser = (userId, workspaceId, socketId) => {
+  !onlineUsers.some((user) => +user.id === +userId) &&
+    onlineUsers.push({ id: userId, socketId, workspaceId });
+};
+
+const removeUser = (socketId) => {
+  onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId);
+};
+
+const getUser = (userId) => {
+  return onlineUsers.find((user) => +user.id === +userId);
+};
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+io.on("connection", (socket) => {
+  socket.on("newUser", async (userId) => {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return null;
+    }
+    addNewUser(userId, user.workspace_id_active, socket.id);
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+    const userOnl = await User.findByPk(userId);
+    if (userOnl) {
+      await userOnl.update({ isOnline: true });
+    }
+    if (users.length > 0 && userOnl) {
+      for (const user of users) {
+        io.to(user.socketId).emit("getUserOnline", userOnl);
+      }
+    }
+  });
+  socket.on("inviteUser", async (body) => {
+    const { userInviteId, userInvitedId } = body;
+    const userInvited = await User.findByPk(userInvitedId, {
+      include: {
+        model: Workspace,
+        as: "workspaces",
+        include: { model: Board, as: "boards" },
+      },
+    });
+    const userInvite = await User.findByPk(userInviteId);
+    if (!userInvited || !userInvite) {
+      return;
+    }
+
+    const usersWorkspace = onlineUsers.filter(
+      (user) =>
+        (+user.workspaceId === +userInvite.workspace_id_active &&
+          +user.id !== +userInvite.id) ||
+        +user.id === +userInvited.id
+    );
+
+    if (usersWorkspace.length > 0) {
+      for (const user of usersWorkspace) {
+        io.to(user.socketId).emit("getUserWorkspace", {
+          user: userInvited,
+          type: "invite_user",
+        });
+      }
+    }
+  });
+  socket.on("removeUser", async (body) => {
+    const { userActionId, userRemoveId } = body;
+    const userRemove = await User.findByPk(userRemoveId, {
+      include: {
+        model: Workspace,
+        as: "workspaces",
+        include: { model: Board, as: "boards" },
+      },
+    });
+    const userAction = await User.findByPk(userActionId);
+    if (!userRemove || !userAction) {
+      return;
+    }
+    const usersWorkspace = onlineUsers.filter(
+      (user) =>
+        (+user.workspaceId === +userAction.workspace_id_active &&
+          +user.id !== +userAction.id) ||
+        +user.id === +userRemove.id
+    );
+
+    if (usersWorkspace.length > 0) {
+      for (const user of usersWorkspace) {
+        io.to(user.socketId).emit("getUserWorkspace", {
+          user: userRemove,
+          type: "remove_user",
+        });
+      }
+    }
+  });
+  socket.on("sendNotification", async (body) => {
+    const { user_id } = body;
+    const receiver = getUser(user_id);
+
+    const notification = await Notification.create({
+      ...body,
+      status: "unread",
+      onClick: false,
+    });
+    if (receiver) {
+      io.to(receiver.socketId).emit("getNotification", notification);
+    }
+  });
+  socket.on("logout", async (body) => {
+    const user_id = body;
+    const userOff = onlineUsers.find((user) => +user.id === +user_id);
+    const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+
+    if (userUpdate) {
+      await userUpdate.update({ isOnline: false });
+    }
+
+    const users = onlineUsers.filter((user) => +user.id !== +user_id);
+
+    if (users.length > 0) {
+      users.forEach((user) => {
+        io.to(user.socketId).emit("getUserOnline", userUpdate);
+      });
+    }
+
+    if (userOff?.board_id && onlineUsers.length > 1) {
+      onlineUsers.forEach((user) => {
+        if (+user.board_id === +userOff.board_id && +user.id !== userOff.id) {
+          const usersVisit = onlineUsers.filter(
+            (item) =>
+              +item.board_id === +userOff.board_id && +item.id !== userOff.id
+          );
+          io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
+        }
+      });
+    }
+
+    removeUser(socket.id);
+  });
+  socket.on("visitBoard", async (body) => {
+    const { board_id, user_id } = body;
+    const receiver = getUser(user_id);
+
+    if (user_id && board_id && receiver) {
+      const user = onlineUsers.find(
+        (user) => +user.id === +user_id && +user.board_id === +board_id
+      );
+
+      if (!user) {
+        const users = onlineUsers.filter(
+          (item) => +item.board_id === +board_id || +item.id === +user_id
+        );
+
+        const usersOnline = onlineUsers.map((user) => {
+          if (+user.id === +user_id) {
+            io.to(user.socketId).emit("getUserVisitBoard", users);
+            return { ...user, board_id: board_id };
+          }
+          if (+user.board_id === +board_id) {
+            io.to(user.socketId).emit("getUserVisitBoard", users);
+          }
+          if (+user.board_id === +receiver.board_id) {
+            const usersVisit = onlineUsers.filter(
+              (item) =>
+                +item.board_id === +receiver.board_id && +item.id !== +user_id
+            );
+            io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
+          }
+          return user;
+        });
+
+        onlineUsers = usersOnline;
+      }
+    }
+  });
+
+  socket.on("disconnect", async () => {
+    const userOff = onlineUsers.find((user) => user.socketId === socket.id);
+    const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+
+    if (userUpdate) {
+      await userUpdate.update({ isOnline: false });
+    }
+
+    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
+
+    users.forEach((user) => {
+      io.to(user.socketId).emit("getUserOnline", userUpdate);
+    });
+
+    if (userOff?.board_id && onlineUsers.length > 1) {
+      onlineUsers.forEach((user) => {
+        if (+user.board_id === +userOff.board_id && +user.id !== +userOff.id) {
+          const usersVisit = onlineUsers.filter(
+            (item) =>
+              +item.board_id === +userOff.board_id && +item.id !== +userOff.id
+          );
+          io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
+        }
+      });
+    }
+
+    removeUser(socket.id);
+  });
+});
+server.listen(port);
+server.on("error", onError);
+server.on("listening", onListening);
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+  debug("Listening on " + bind);
+}
