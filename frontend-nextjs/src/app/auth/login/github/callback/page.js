@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { loginGoogleCallbackApi } from "@/services/authApi";
+import { loginGithubCallbackApi } from "@/services/authApi";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { setLocalStorage } from "@/utils/localStorage";
@@ -9,12 +9,11 @@ import { toast } from "react-toastify";
 export default function pageCallback() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(false);
-
   useEffect(() => {
     const handleLogin = async () => {
       const query = window.location.search;
       try {
-        const data = await loginGoogleCallbackApi(query);
+        const data = await loginGithubCallbackApi(query);
         if (data.status === 200) {
           setLocalStorage("device_id_current", data.device_id_current);
           toast.success("Đăng nhập thành công");
@@ -23,10 +22,10 @@ export default function pageCallback() {
           router.push("/");
           setIsLogin(true);
         } else {
-          console.log(error);
+          toast.error(data.error);
         }
       } catch (error) {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+        console.log(error);
       }
     };
 

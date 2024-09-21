@@ -1,39 +1,78 @@
-const { User, Provider } = require("../models/index");
-
+const {
+  User,
+  Provider,
+  Workspace,
+  Role,
+  UserWorkspaceRole,
+} = require("../models/index");
+const { Op } = require("sequelize");
 const GitHubStrategy = require("passport-github2");
 module.exports = new GitHubStrategy(
   {
-    clientID: "17a35b931446aa200f23",
-    clientSecret: "a1c5b941b00762d94189ef4056fb8f5c6aa48693",
-    callbackURL: "http://localhost:3000/api/v1/auth/github/callback",
-    scope: ["profile", "user:email"],
-    state: true,
+    clientID: "Ov23li9ptRDJxUUMG6uZ",
+    clientSecret: "d190d7b3b190db0ca3b7bec622bf6022c94266e6",
+    callbackURL: "http://localhost:3000/auth/login/github/callback",
   },
   async (accessToken, refreshToken, profile, cb) => {
-    const {
-      displayName: name,
-      emails: [{ value: email }],
-    } = profile;
+    try {
+      const {
+        id: github_id,
+        username: name,
+        photos: [{ value: avatar }],
+      } = profile;
 
-    const provider = await Provider.findOrCreate({
-      where: { name: "github" },
-      defaults: {
-        name: "github",
-      },
-    });
+      const provider = await Provider.findOrCreate({
+        where: { name: "github" },
+        defaults: {
+          name: "github",
+        },
+      });
 
-    const user = await User.findOrCreate({
-      where: { email, provider_id: provider[0].id },
-      defaults: {
-        name: name,
-        email: email,
-        status: true,
-        provider_id: provider[0].id,
-      },
-    });
-    if (user) {
-      return cb(null, user[0]);
+      const [user] = await User.findOrCreate({
+        where: { github_id, provider_id: provider[0].id },
+        defaults: {
+          github_id: github_id,
+          name: name,
+          avatar: avatar,
+          status: true,
+          provider_id: provider[0].id,
+        },
+      });
+
+      const [role] = await Role.findOrCreate({
+        where: { name: { [Op.iLike]: "%Owner%" } },
+        defaults: {
+          name: "owner",
+        },
+      });
+
+      const checkWorkspace = await UserWorkspaceRole.findOne({
+        where: { user_id: user.id },
+      });
+
+      if (!checkWorkspace) {
+        const workspace = await Workspace.create({
+          name: "Workspace 1",
+          total_user: 1,
+          isActive: true,
+        });
+
+        await Promise.all([
+          UserWorkspaceRole.create({
+            user_id: user.id,
+            role_id: role.id,
+            workspace_id: workspace.id,
+          }),
+          user.update({
+            workspace_id_active: workspace.id,
+          }),
+        ]);
+      }
+
+      return cb(null, user || {});
+    } catch (error) {
+      console.error("Error in Google strategy:", error);
+      return cb(error, null);
     }
-    cb(null, {});
   }
 );

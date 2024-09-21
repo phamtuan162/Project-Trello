@@ -69,6 +69,7 @@ module.exports = (sequelize, DataTypes) => {
       status: DataTypes.BOOLEAN,
       avatar: DataTypes.STRING,
       refresh_token: DataTypes.STRING,
+      github_id: DataTypes.BIGINT,
     },
     {
       sequelize,

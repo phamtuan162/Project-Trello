@@ -29,6 +29,8 @@ export const loginLocalApi = async (body) => {
   const { response, data } = await client.post(`/auth/login`, body);
   return data;
 };
+
+/* google*/
 export const loginGoogleApi = async () => {
   const { response, data } = await client.get(`/auth/google/redirect`);
   return data;
@@ -37,6 +39,20 @@ export const loginGoogleCallbackApi = async (query) => {
   const queryString = new URLSearchParams(query).toString();
 
   const { data } = await client.get(`/auth/google/callback?${queryString}`);
+  return data;
+};
+
+/* github*/
+
+export const loginGithubApi = async () => {
+  const { response, data } = await client.get(`/auth/github/redirect`);
+  return data;
+};
+
+export const loginGithubCallbackApi = async (query) => {
+  const queryString = new URLSearchParams(query).toString();
+
+  const { data } = await client.get(`/auth/github/callback?${queryString}`);
   return data;
 };
 

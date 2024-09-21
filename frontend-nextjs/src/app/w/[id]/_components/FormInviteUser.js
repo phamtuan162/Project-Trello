@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   Select,
   SelectItem,
@@ -9,14 +9,18 @@ import {
   User,
   CircularProgress,
 } from "@nextui-org/react";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+
+import { debounce } from "@/utils/debounce";
+import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { Message } from "@/components/Message/Message";
 import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { toast } from "react-toastify";
 import { searchUser } from "@/services/userApi";
+
 const { updateWorkspace } = workspaceSlice.actions;
+
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
@@ -25,10 +29,11 @@ const FormInviteUser = ({ rolesUser }) => {
   const [isInvite, setIsInvite] = useState(false);
   const [role, setRole] = useState(new Set(["member"]));
   const [isSearch, setIsSearch] = useState(false);
+  const [searchResultsValid, setSearchResultsValid] = useState(true);
+  const [searchError, setSearchError] = useState(false); // Trạng thái lỗi tìm kiếm
   const [isLoading, setIsLoading] = useState(false);
   const [usersSearch, setUsersSearch] = useState([]);
   const [userInvite, setUserInvite] = useState(null);
-  const [timeoutId, setTimeoutId] = useState(null);
   const [keyword, setKeyWord] = useState("");
   const [message, setMessage] = useState(
     `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
@@ -36,91 +41,112 @@ const FormInviteUser = ({ rolesUser }) => {
     } người `
   );
 
-  const HandleSearchUser = async (e) => {
+  const handleSearchUser = useCallback(
+    debounce(async (inputKeyword) => {
+      setIsLoading(true);
+      setSearchError(false); // Reset lỗi tìm kiếm
+      try {
+        const data = await searchUser({ keyword: inputKeyword, limit: 6 });
+        if (data.status === 200) {
+          const users = data.data;
+          setUsersSearch(users);
+          setSearchResultsValid(users.length > 0);
+        } else {
+          setUsersSearch([]);
+          setSearchResultsValid(false);
+        }
+      } catch (error) {
+        setSearchError(true); // Đặt trạng thái lỗi tìm kiếm
+        console.error("Search error:", error);
+      }
+      setIsLoading(false);
+    }, 2000),
+    []
+  );
+
+  const handleInputChange = (e) => {
     const inputKeyword = e.target.value.trim();
-    setIsSearch(inputKeyword !== "");
-    setKeyWord(e.target.value);
+    setKeyWord(inputKeyword);
 
-    // Xóa timeout trước đó (nếu có)
-    clearTimeout(timeoutId);
-
-    // Thiết lập timeout mới
-    if (inputKeyword !== "" && inputKeyword.length > 2) {
-      const newTimeoutId = setTimeout(async () => {
-        setIsLoading(true);
-        searchUser({ keyword: inputKeyword, limit: 6 }).then((data) => {
-          if (data.status === 200) {
-            const users = data.data;
-            setIsLoading(false);
-            setUsersSearch(users);
-          }
-        });
-      }, 1000); // Thời gian trễ là 2 giây
-
-      // Lưu ID của timeout mới vào state
-      setTimeoutId(newTimeoutId);
+    if (inputKeyword.length >= 2) {
+      setIsSearch(true);
+      handleSearchUser(inputKeyword);
     } else {
+      setIsSearch(false);
       setUsersSearch([]);
+      setSearchResultsValid(true); // Reset trạng thái kết quả tìm kiếm
+      setSearchError(false); // Reset lỗi tìm kiếm
     }
   };
-  const HandleInviteUser = async (e) => {
+
+  const handleInviteUser = async (e) => {
     e.preventDefault();
-    const checkUserInvited = workspace.users.some(
+
+    if (!userInvite) return;
+
+    const isUserInvited = workspace.users.some(
       (user) => user.id === userInvite.id
     );
-    const roleUser = [...role][0];
-    if (checkUserInvited) {
+    const selectedRole = [...role][0];
+
+    if (isUserInvited) {
       setMessage("Người dùng này đã có trong Không gian làm việc của bạn");
     } else {
-      inviteUserApi({
-        user_id: userInvite.id,
-        role: roleUser,
-        workspace_id: workspace.id,
-      }).then((data) => {
+      try {
+        const data = await inviteUserApi({
+          user_id: userInvite.id,
+          role: selectedRole,
+          workspace_id: workspace.id,
+        });
         if (data.status === 200) {
-          const workspaceUpdate = {
+          const updatedWorkspace = {
             ...workspace,
             total_user: workspace.total_user + 1,
-            users: [...workspace.users, { ...userInvite, role: roleUser }],
-            activities:
-              workspace.activities.length > 0
-                ? [...workspace.activities, data.data]
-                : [data.data],
+            users: [...workspace.users, { ...userInvite, role: selectedRole }],
+            activities: [...workspace.activities, data.data],
           };
-          dispatch(updateWorkspace(workspaceUpdate));
+          dispatch(updateWorkspace(updatedWorkspace));
           socket.emit("sendNotification", {
             user_id: userInvite.id,
             userName: user.name,
             userAvatar: user.avatar,
             type: "invite_user",
-            content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${roleUser}`,
+            content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
           });
           toast.success("Mời người dùng vào Không gian làm việc thành công");
-          setIsInvite(false);
-          setUserInvite(null);
-          setMessage(
-            `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
-              workspace.users ? workspace.users.length : "1"
-            } người `
-          );
-          setKeyWord("");
+          resetForm();
           socket.emit("inviteUser", {
             userInviteId: user.id,
             userInvitedId: userInvite.id,
           });
         } else {
-          const error = data.error;
-          setMessage(error);
+          setMessage(data.error);
         }
-      });
+      } catch (error) {
+        console.error("Invite error:", error);
+        setMessage("Có lỗi xảy ra khi mời người dùng.");
+      }
     }
   };
 
-  const HandleSelectUserInvite = async (userSelected) => {
+  const handleSelectUserInvite = (userSelected) => {
     setUserInvite(userSelected);
     setKeyWord(userSelected.name);
     setIsSearch(false);
   };
+
+  const resetForm = () => {
+    setIsInvite(false);
+    setUserInvite(null);
+    setKeyWord("");
+    setUsersSearch([]);
+    setMessage(
+      `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
+        workspace.users ? workspace.users.length : "1"
+      } người`
+    );
+  };
+  console.log(isSearch);
 
   return (
     <div>
@@ -138,37 +164,19 @@ const FormInviteUser = ({ rolesUser }) => {
       >
         Mời
       </Button>
-      {isInvite ? (
+      {isInvite && (
         <div className="fixed inset-0 z-50">
           <div
-            onClick={() => {
-              setIsInvite(false);
-              setUserInvite(null);
-
-              setMessage(
-                `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
-                  workspace.users ? workspace.users.length : "1"
-                } người `
-              );
-            }}
-            className=" fixed inset-0 bg-overlay/50 z-50"
+            onClick={resetForm}
+            className="fixed inset-0 bg-overlay/50 z-50"
           ></div>
           <div
             style={{ zIndex: "51" }}
-            className="w-3/4 md:w-[600px] absolute top-1/2 left-1/2  bg-white p-8 px-8  rounded-2xl -translate-y-1/2 -translate-x-1/2"
+            className="w-3/4 md:w-[600px] absolute top-1/2 left-1/2 bg-white p-8 px-8 rounded-2xl -translate-y-1/2 -translate-x-1/2"
           >
-            <div className=" flex flex-col items-center relative">
+            <div className="flex flex-col items-center relative">
               <button
-                onClick={() => {
-                  setIsInvite(false);
-                  setUserInvite(null);
-
-                  setMessage(
-                    `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
-                      workspace.users ? workspace.users.length : "1"
-                    } người `
-                  );
-                }}
+                onClick={resetForm}
                 className="absolute -top-6 -right-6 w-[24px] h-[24px] flex items-center justify-center hover:bg-default-200 rounded-lg"
               >
                 <CloseIcon size={18} />
@@ -178,8 +186,8 @@ const FormInviteUser = ({ rolesUser }) => {
               </h2>
               <Message message={message} />
               <form
-                className="flex w-full  gap-2 mt-4"
-                onSubmit={(e) => HandleInviteUser(e)}
+                className="flex w-full gap-2 mt-4"
+                onSubmit={handleInviteUser}
               >
                 <div className="grow relative">
                   <Input
@@ -189,10 +197,10 @@ const FormInviteUser = ({ rolesUser }) => {
                     name="keyword"
                     id="keyword"
                     placeholder="Địa chỉ email hoặc tên..."
-                    className=" text-sm rounded-md  focus-visible:outline-0  w-full"
+                    className="text-sm rounded-md focus-visible:outline-0 w-full"
                     size="xs"
                     value={keyword}
-                    onChange={(e) => HandleSearchUser(e)}
+                    onChange={handleInputChange}
                     startContent={
                       userInvite && (
                         <Avatar
@@ -220,11 +228,11 @@ const FormInviteUser = ({ rolesUser }) => {
                       )
                     }
                   />
-                  {isSearch ? (
+                  {isSearch && (
                     <div
-                      className={`absolute bg-white p-3 rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
-                        isLoading && "flex items-center justify-center"
-                      } `}
+                      className={`absolute bg-white p-3  empty:block rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
+                        isLoading ? "flex items-center justify-center " : ""
+                      }`}
                       style={{
                         boxShadow:
                           "0px 8px 12px #091E4226, 0px 0px 1px #091E424F",
@@ -232,46 +240,39 @@ const FormInviteUser = ({ rolesUser }) => {
                     >
                       {isLoading ? (
                         <CircularProgress size={18} />
+                      ) : searchError ? (
+                        "Đã xảy ra lỗi trong quá trình tìm kiếm."
+                      ) : searchResultsValid ? (
+                        usersSearch.length > 0 &&
+                        usersSearch.map((userSearch) => (
+                          <div
+                            key={userSearch.id}
+                            className="mt-2 hover:bg-default-300 rounded-lg p-1 px-3 cursor-pointer"
+                            onClick={() => handleSelectUserInvite(userSearch)}
+                          >
+                            <User
+                              avatarProps={{
+                                radius: "full",
+                                size: "sm",
+                                src: userSearch.avatar,
+                                color: "secondary",
+                                name: userSearch.name.charAt(0).toUpperCase(),
+                              }}
+                              classNames={{ description: "text-default-500" }}
+                              description={userSearch.email}
+                              name={userSearch.name}
+                            >
+                              {userSearch.email}
+                            </User>
+                          </div>
+                        ))
                       ) : (
-                        <>
-                          {usersSearch.length > 0
-                            ? usersSearch.map((userSearch) => (
-                                <div
-                                  key={userSearch.id}
-                                  className="mt-2 hover:bg-default-300 rounded-lg p-1 px-3 cursor-pointer"
-                                  onClick={() =>
-                                    HandleSelectUserInvite(userSearch)
-                                  }
-                                >
-                                  <User
-                                    avatarProps={{
-                                      radius: "full",
-                                      size: "sm",
-                                      src: userSearch.avatar,
-                                      color: "secondary",
-                                      name: userSearch.name
-                                        .charAt(0)
-                                        .toUpperCase(),
-                                    }}
-                                    classNames={{
-                                      description: "text-default-500",
-                                    }}
-                                    description={userSearch.email}
-                                    name={userSearch.name}
-                                  >
-                                    {userSearch.email}
-                                  </User>
-                                </div>
-                              ))
-                            : "Có vẻ như người đó không phải là thành viên của Trello. Thêm địa chỉ email của họ để mời họ"}
-                        </>
+                        "Có vẻ như người đó không phải là thành viên của Trello. Thêm địa chỉ email của họ để mời họ"
                       )}
                     </div>
-                  ) : (
-                    ""
                   )}
                 </div>
-                {userInvite ? (
+                {userInvite && (
                   <div className="flex gap-2">
                     <Select
                       variant="bordered"
@@ -290,21 +291,18 @@ const FormInviteUser = ({ rolesUser }) => {
                         </SelectItem>
                       ))}
                     </Select>
-                    <Button type="submit" color="primary" className=" text-sm">
+                    <Button type="submit" color="primary" className="text-sm">
                       Thêm
                     </Button>
                   </div>
-                ) : (
-                  ""
                 )}
               </form>
             </div>
           </div>
         </div>
-      ) : (
-        ""
       )}
     </div>
   );
 };
+
 export default FormInviteUser;

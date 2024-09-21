@@ -7,7 +7,11 @@ import { EyeFilledIcon } from "../_component/LoginRegister/EyeFilledIcon";
 import { EyeSlashFilledIcon } from "../_component/LoginRegister/EyeSlashFilledIcon ";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginGoogleApi, loginLocalApi } from "@/services/authApi";
+import {
+  loginGoogleApi,
+  loginLocalApi,
+  loginGithubApi,
+} from "@/services/authApi";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
@@ -50,14 +54,45 @@ const PageLogin = () => {
 
   const loginSocialGoogle = async () => {
     try {
-      loginGoogleApi().then((data) => {
-        const url_redirect = data.data.urlRedirect;
-        window.location.href = url_redirect;
-      });
+      const { status, data, error } = await loginGoogleApi();
+      console.log(status, data, error);
+
+      if (status >= 200 && status < 300) {
+        const url_redirect = data?.urlRedirect;
+        if (url_redirect) {
+          window.location.href = url_redirect;
+        } else {
+          toast.error("Không tìm thấy URL chuyển hướng.");
+        }
+      } else {
+        toast.error(error || `Mã trạng thái không mong đợi: ${status}`);
+      }
     } catch (error) {
-      console.error("Error login google:", error);
+      console.log("Error login google:", error);
+      // toast.error("Có lỗi xảy ra, vui lòng thử lại.");
     }
   };
+
+  const loginSocialGithub = async () => {
+    try {
+      const { status, data, error } = await loginGithubApi();
+
+      if (status >= 200 && status < 300) {
+        const url_redirect = data?.urlRedirect;
+        if (url_redirect) {
+          window.location.href = url_redirect;
+        } else {
+          toast.error("Không tìm thấy URL chuyển hướng.");
+        }
+      } else {
+        toast.error(error || `Mã trạng thái không mong đợi: ${status}`);
+      }
+    } catch (error) {
+      console.error("Error login github:", error);
+      // toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+    }
+  };
+
   return (
     <Card className="login max-w-full w-[400px] h-auto pb-4 ">
       <CardBody className="container   ">
@@ -129,7 +164,12 @@ const PageLogin = () => {
             <span className="text-sm">hoặc</span>
           </div>
           <div className="flex gap-3 w-full ">
-            <Button type="button" variant="ghost" className="flex-1 text-md ">
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex-1 text-md "
+              onClick={loginSocialGithub}
+            >
               <GithubIcon size={24} /> Github
             </Button>
             <Button

@@ -115,8 +115,93 @@ router.get(
   }
 );
 
-router.get("/github", passport.authenticate("github"));
-router.get("/github/callback", passport.authenticate("github"));
+router.get("/github/redirect", (req, res) => {
+  const emptyResponse = new http.ServerResponse(req);
+
+  passport.authenticate("github", (err, user, info) => {
+    console.log(err, user, info);
+  })(req, emptyResponse);
+
+  const url = emptyResponse.getHeader("location");
+
+  return res.status(200).json({
+    status: 200,
+    message: "Thành công",
+
+    data: {
+      urlRedirect: url,
+    },
+  });
+});
+
+router.get(
+  "/github/callback",
+  passport.authenticate("github", {
+    session: false,
+  }),
+  async (req, res) => {
+    const userAgent = req.headers["user-agent"];
+    const parser = new UAParser(userAgent);
+    const browser = parser.getBrowser();
+    const os = parser.getOS();
+    const user = await User.findOne({
+      where: { github_id: req.user.github_id },
+    });
+    const { JWT_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE } = process.env;
+    const token = jwt.sign(
+      {
+        data: user.id,
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRE }
+    );
+    const refresh = jwt.sign(
+      {
+        data: new Date().getTime() + Math.random(),
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_REFRESH_EXPIRE }
+    );
+    // Tìm hoặc tạo mới thông tin thiết bị
+    const [device, created] = await Device.findOrCreate({
+      where: {
+        user_id: user.id,
+        browser: browser.name,
+        system: os.name,
+        ip: ip.address(),
+      },
+      defaults: {
+        user_id: user.id,
+        browser: browser.name,
+        system: os.name,
+        ip: ip.address(),
+        login_time: new Date(),
+        active_time: new Date(),
+        status: true,
+      },
+    });
+
+    // Nếu thiết bị đã tồn tại, cập nhật lại thông tin
+    if (!created) {
+      await Device.update(
+        { active_time: new Date(), status: true },
+        {
+          where: {
+            id: device.id,
+          },
+        }
+      );
+    }
+    return res.json({
+      status: 200,
+      message: "Success",
+      access_token: token,
+      refresh_token: refresh,
+      device_id_current: device.id,
+    });
+  }
+);
+
 router.get("/profile", authMiddleware, authController.profile);
 router.post("/logout", authMiddleware, authController.logout);
 router.post("/refresh", authController.refresh);
