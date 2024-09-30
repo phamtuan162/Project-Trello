@@ -21,7 +21,6 @@ module.exports = {
     const {
       order = "desc",
       sort = "updated_at",
-
       q,
       isActive,
       limit,
@@ -113,6 +112,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   store: async (req, res) => {
     const { user_id } = req.query;
     const response = {};
@@ -196,6 +196,7 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   update: async (req, res) => {
     const { id } = req.params;
     const method = req.method;
@@ -247,6 +248,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};
@@ -290,6 +292,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   inviteUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { user_id, workspace_id, role } = req.body;
@@ -355,6 +358,7 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   leaveWorkspace: async (req, res) => {
     const { user_id, workspace_id } = req.body;
     const response = {};

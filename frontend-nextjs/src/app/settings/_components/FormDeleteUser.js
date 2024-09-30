@@ -9,7 +9,6 @@ import {
 import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteUser } from "@/services/userApi";
-import { useSelector } from "react-redux";
 const FormDeleteUser = (user) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(
@@ -49,9 +48,9 @@ const FormDeleteUser = (user) => {
     });
   };
   return (
-    <div className="mt-6">
-      <h2 className="text-2xl font-medium">Xóa tài khoản</h2>
-      <p className="mt-1 max-w-[500px]">
+    <div className="mt-6" style={{ borderTop: "1px solid rgb(230, 230, 230)" }}>
+      <h2 className="text-2xl font-medium mt-4">Xóa tài khoản</h2>
+      <p className="mt-1 ">
         Khi bạn xóa tài khoản và dữ liệu tài khoản của mình, bạn sẽ không thể
         quay lại.
       </p>

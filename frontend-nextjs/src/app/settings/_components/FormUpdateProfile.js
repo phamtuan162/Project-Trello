@@ -41,11 +41,7 @@ const FormUpdateProfile = ({ user }) => {
   };
   const { name, background, phone } = form;
   return (
-    <form
-      action={handleUpdateProfile}
-      className="pb-8"
-      style={{ borderBottom: "1px solid rgb(230, 230, 230)" }}
-    >
+    <form action={handleUpdateProfile} className="pb-8">
       <h1 className="text-2xl font-medium">Tài khoản hồ sơ</h1>
       <p className="mt-1">
         Quản lý tài khoản ProManage của bạn. Tất cả các thay đổi trong tài khoản

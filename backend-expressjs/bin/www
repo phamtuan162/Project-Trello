@@ -158,6 +158,7 @@ io.on("connection", (socket) => {
       io.to(receiver.socketId).emit("getNotification", notification);
     }
   });
+
   socket.on("logout", async (body) => {
     const user_id = body;
     const userOff = onlineUsers.find((user) => +user.id === +user_id);
@@ -189,6 +190,7 @@ io.on("connection", (socket) => {
 
     removeUser(socket.id);
   });
+
   socket.on("visitBoard", async (body) => {
     const { board_id, user_id } = body;
     const receiver = getUser(user_id);

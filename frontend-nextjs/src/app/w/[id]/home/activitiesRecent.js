@@ -4,7 +4,6 @@ import vi from "date-fns/locale/vi";
 import { Avatar } from "@nextui-org/react";
 import { generateActivityMessage } from "@/utils/formatters";
 import { useRouter, useParams } from "next/navigation";
-import { useSelector } from "react-redux";
 const ActivitiesRecent = ({ activitiesRecent }) => {
   const router = useRouter();
   const { id } = useParams();
@@ -31,7 +30,7 @@ const ActivitiesRecent = ({ activitiesRecent }) => {
               <div className="flex flex-col space-y-0.5">
                 <p className="text-xs text-muted-foreground">
                   <span className="font-semibold  text-neutral-700">
-                    {activity?.userName}
+                    {activity?.userName}{" "}
                   </span>
                   {generateActivityMessage(activity)}
                 </p>

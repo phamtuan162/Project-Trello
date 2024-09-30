@@ -3,6 +3,7 @@ const { User, BlacklistToken, Device } = require("../../models/index");
 
 module.exports = async (req, res, next) => {
   const bearer = req.get("Authorization");
+
   const response = {};
   if (bearer) {
     const token = bearer.replace("Bearer", "").trim();

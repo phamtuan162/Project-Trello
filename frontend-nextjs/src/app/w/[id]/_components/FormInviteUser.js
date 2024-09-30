@@ -140,13 +140,13 @@ const FormInviteUser = ({ rolesUser }) => {
     setUserInvite(null);
     setKeyWord("");
     setUsersSearch([]);
+    setIsSearch(false);
     setMessage(
       `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
         workspace.users ? workspace.users.length : "1"
       } người`
     );
   };
-  console.log(isSearch);
 
   return (
     <div>
@@ -230,7 +230,7 @@ const FormInviteUser = ({ rolesUser }) => {
                   />
                   {isSearch && (
                     <div
-                      className={`absolute bg-white p-3  empty:block rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
+                      className={`absolute max-h-[180px] empty:hidden overflow-x-auto bg-white px-1.5 rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
                         isLoading ? "flex items-center justify-center " : ""
                       }`}
                       style={{

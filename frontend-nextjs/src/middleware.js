@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
 function middleware(request) {
   const { pathname } = request.nextUrl;
   const access_token = request.cookies.get("access_token");

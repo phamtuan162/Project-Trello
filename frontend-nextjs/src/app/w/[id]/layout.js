@@ -1,7 +1,6 @@
 import SidebarWorkspace from "./_components/SidebarWorkspace";
 import BreadcrumbWorkspace from "./_components/BreadcrumbWorkspace";
 import { ActivityIcon } from "lucide-react";
-import { CalendarIcon } from "@/components/Icon/CalenderIcon";
 import { MissionIcon } from "@/components/Icon/MissionIcon";
 import { HomeIcon } from "@/components/Icon/HomeIcon";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
