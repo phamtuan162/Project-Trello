@@ -46,7 +46,7 @@ const FormInviteUser = ({ rolesUser }) => {
       setIsLoading(true);
       setSearchError(false); // Reset lỗi tìm kiếm
       try {
-        const data = await searchUser({ keyword: inputKeyword, limit: 6 });
+        const data = await searchUser({ keyword: inputKeyword, limit: 4 });
         if (data.status === 200) {
           const users = data.data;
           setUsersSearch(users);
@@ -56,7 +56,7 @@ const FormInviteUser = ({ rolesUser }) => {
           setSearchResultsValid(false);
         }
       } catch (error) {
-        setSearchError(true); // Đặt trạng thái lỗi tìm kiếm
+        setSearchError(true);
         console.error("Search error:", error);
       }
       setIsLoading(false);
@@ -74,8 +74,8 @@ const FormInviteUser = ({ rolesUser }) => {
     } else {
       setIsSearch(false);
       setUsersSearch([]);
-      setSearchResultsValid(true); // Reset trạng thái kết quả tìm kiếm
-      setSearchError(false); // Reset lỗi tìm kiếm
+      setSearchResultsValid(true);
+      setSearchError(false);
     }
   };
 

@@ -6,9 +6,6 @@ import {
   Modal,
   ModalBody,
   ModalContent,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
   Button,
 } from "@nextui-org/react";
 import { useDispatch } from "react-redux";
@@ -32,6 +29,9 @@ const FormLinkPhoneNumber = ({ user }) => {
   const handleChange = (e) => {
     const phoneNumber = e.target.value;
     setPhone(phoneNumber);
+    if (validPhone) {
+      setValidPhone(false);
+    }
   };
 
   const handleClick = () => {

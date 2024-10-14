@@ -3,17 +3,18 @@ import "../_component/LoginRegister/loginregister.scss";
 import { Mail } from "lucide-react";
 import { Input, Button, Card, CardBody, Link } from "@nextui-org/react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+// import { useRouter } from "next/navigation";
+// import { toast } from "react-toastify";
 import { Message } from "../../../components/Message/Message";
 import { forgotPasswordApi } from "@/services/authApi";
 const PageForgotPassword = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [typeMessage, setTypeMessage] = useState(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const toggleVisibility = () => setIsVisible(!isVisible);
+  const [isSend, setIsSend] = useState(false);
+  // const [isVisible, setIsVisible] = useState(false);
+  // const toggleVisibility = () => setIsVisible(!isVisible);
 
   const HandleForgotPassword = async (e) => {
     e.preventDefault();
@@ -23,12 +24,18 @@ const PageForgotPassword = () => {
         const message = data.message;
         setTypeMessage("success");
         setMessage(message);
+        setIsSend(true);
       } else {
         const error = data.error;
         setTypeMessage("warning");
         setMessage(error);
       }
     });
+  };
+
+  const HandleReSend = async () => {
+    setMessage(null);
+    setIsSend(false);
   };
 
   return (
@@ -64,8 +71,20 @@ const PageForgotPassword = () => {
             placeholder="Nhập email của bạn..."
           />
 
-          <Button type="submit" color="primary" className="w-full text-md ">
+          <Button
+            type="submit"
+            color="primary"
+            className={`w-full text-md ${isSend && "hidden"}`}
+          >
             Gửi link
+          </Button>
+          <Button
+            type="button"
+            color="primary"
+            className={`w-full text-md ${!isSend && "hidden"}`}
+            onClick={HandleReSend}
+          >
+            Gửi lại
           </Button>
           <Link href="/auth/login">Quay lại Đăng nhập</Link>
         </form>

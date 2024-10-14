@@ -193,15 +193,21 @@ module.exports = {
           }
         );
         const link = `http://localhost:3000/auth/register/verify?token=${token}`;
-        const html = `<a href="${link}" style="background-color: #7b68ee; color: #ffffff !important; display: inline-block;text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; line-height: 48px; margin: 0 !important; max-width: 220px; padding: 0; text-decoration: none; width: 220px !important;border-radius: 3px;
-        border-spacing: 0">Xác thực tài khoản</a>`;
+        const html = `
+        <p>Xin chào,</p>
+        <p>Liên kết dưới đây sẽ có tác dụng trong <strong>15 phút</strong>. Vui lòng nhấn vào liên kết để xác thực tài khoản của bạn trong khoảng thời gian đó!</p>
+        <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Xác thực tài khoản</a>
+        <p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
+        <p>Trân trọng,</p>
+        <p>Đội ngũ hỗ trợ</p>
+    `;
 
         await sendMail(email, "Xác thực tài khoản", html);
 
         Object.assign(response, {
           status: 200,
           message:
-            "Bạn đã đăng ký thành công,Vui lòng vào email để xác thực tài khoản!",
+            "Bạn đã đăng ký thành công. Vui lòng vào email để xác thực tài khoản!",
         });
       }
     }
@@ -439,15 +445,20 @@ module.exports = {
           }
         );
         const link = `http://localhost:3000/auth/reset-password?token=${token}`;
-        const html = `<a href="${link}" style="background-color: #7b68ee; color: #ffffff !important; display: inline-block;text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; line-height: 48px; margin: 0 !important; max-width: 220px; padding: 0; text-decoration: none; width: 220px !important;border-radius: 3px;
-        border-spacing: 0">Làm mới mật khẩu</a>`;
+        const html = `
+        <p>Xin chào,</p>
+        <p>Bạn vừa yêu cầu làm mới mật khẩu. Vui lòng nhấn vào liên kết bên dưới trong vòng <strong>15 phút</strong> để thực hiện yêu cầu này.</p>
+        <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Làm mới mật khẩu</a>
+        <p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
+        <p>Trân trọng,</p>
+        <p>Đội ngũ hỗ trợ</p>
+    `;
 
         await sendMail(email, "Làm mới mật khẩu", html);
 
         Object.assign(response, {
           status: 200,
-          message:
-            "Đường link đã được gửi vào email, Vui lòng vào email kiểm tra!",
+          message: "Thành công. Vui lòng vào email kiểm tra!",
         });
       }
     }

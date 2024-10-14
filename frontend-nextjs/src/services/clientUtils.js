@@ -1,5 +1,5 @@
 export const client = {
-  serverApi: "http://localhost:3001/api/v1",
+  serverApi: "https://backend-expressjs-swart.vercel.app/api/v1",
   setUrl: function (url) {
     this.serverApi = url;
   },
