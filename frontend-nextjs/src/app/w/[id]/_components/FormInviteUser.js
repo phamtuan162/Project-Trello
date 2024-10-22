@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Select,
   SelectItem,
@@ -64,7 +64,13 @@ const FormInviteUser = ({ rolesUser }) => {
     []
   );
 
-  const handleInputChange = (e) => {
+  useEffect(() => {
+    return () => {
+      handleSearchUser.cancel(); // Hủy bỏ debounce nếu component unmount
+    };
+  }, [handleSearchUser]);
+
+  const handleInputChange = useCallback((e) => {
     const inputKeyword = e.target.value.trim();
     setKeyWord(inputKeyword);
 
@@ -77,7 +83,7 @@ const FormInviteUser = ({ rolesUser }) => {
       setSearchResultsValid(true);
       setSearchError(false);
     }
-  };
+  }, []);
 
   const handleInviteUser = async (e) => {
     e.preventDefault();
@@ -91,6 +97,7 @@ const FormInviteUser = ({ rolesUser }) => {
 
     if (isUserInvited) {
       setMessage("Người dùng này đã có trong Không gian làm việc của bạn");
+      return;
     } else {
       try {
         const data = await inviteUserApi({

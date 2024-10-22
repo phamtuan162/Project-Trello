@@ -30,17 +30,22 @@ const PopoverAddColorWorkspace = ({ workspace, workspaces }) => {
     "#936316",
     "#fbdba7",
   ];
+
   const [colorWorkspace, setColorWorkspace] = useState("");
+
   useEffect(() => {
     if (workspace.color) {
       setColorWorkspace(workspace.color);
     }
   }, [workspace]);
+
   const addColorWorkspace = async () => {
     updateWorkspaceApi(workspace.id, { color: colorWorkspace }).then((data) => {
       if (data.status === 200) {
         dispatch(updateWorkspace({ ...workspace, color: colorWorkspace }));
         toast.success("Thêm màu không gian làm việc thành công");
+      } else {
+        console.log(data.message);
       }
     });
   };

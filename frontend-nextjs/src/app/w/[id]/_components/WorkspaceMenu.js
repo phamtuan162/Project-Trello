@@ -27,15 +27,35 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
+
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateUser } = userSlice.actions;
+
+const options = [
+  {
+    href: "/settings",
+    label: "Cài đặt",
+    icon: <SettingIcon />,
+  },
+  {
+    href: "/upgrade",
+    label: "Nâng cấp",
+    icon: <UpgradeIcon />,
+  },
+  {
+    href: "/users",
+    label: "Quản lý người dùng",
+    icon: <UserIcon />,
+  },
+];
+
 export default function WorkspaceMenu({
   children,
   placement = "bottom",
   workspace,
 }) {
   const dispatch = useDispatch();
-  const { id: workspaceId } = useParams();
+  // const { id: workspaceId } = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
@@ -47,24 +67,6 @@ export default function WorkspaceMenu({
   const workspacesSwitched = useMemo(() => {
     return user?.workspaces?.filter((item) => +item.id !== +workspace.id) || [];
   }, [user, workspace]);
-
-  const options = [
-    {
-      href: "/settings",
-      label: "Cài đặt",
-      icon: <SettingIcon />,
-    },
-    {
-      href: "/upgrade",
-      label: "Nâng cấp",
-      icon: <UpgradeIcon />,
-    },
-    {
-      href: "/users",
-      label: "Quản lý người dùng",
-      icon: <UserIcon />,
-    },
-  ];
 
   const [filterValue, setFilterValue] = useState("");
 
@@ -105,7 +107,6 @@ export default function WorkspaceMenu({
             workspace_id: workspace_id_witched,
           })
         );
-        console.log(workspaceActive);
         dispatch(updateWorkspace(workspaceActive));
         router.push(`/w/${workspaceActive.id}/home`);
         // if (pathname.startsWith(`/w/${workspaceId}`)) {
@@ -122,13 +123,16 @@ export default function WorkspaceMenu({
       setIsChange(false);
     }
   };
+
   const handleClose = () => {
     setFilterValue("");
     setIsSearch(false);
   };
+
   if (isChange) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;
   }
+
   return (
     <Popover
       onClose={handleClose}

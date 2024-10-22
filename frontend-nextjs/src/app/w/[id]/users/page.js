@@ -119,6 +119,7 @@ export default function PageWorkspaceUsers() {
       };
     }
   }, [socket]);
+
   const rolesUser = React.useMemo(() => {
     if (userActive?.role?.toLowerCase() === "admin") {
       return roles.filter(
@@ -132,6 +133,7 @@ export default function PageWorkspaceUsers() {
     }
     return roles;
   }, [userActive]);
+
   const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -182,6 +184,7 @@ export default function PageWorkspaceUsers() {
       return sortDescriptor.direction === "descending" ? -cmp : cmp;
     });
   }, [sortDescriptor, items]);
+
   const handleDecentRole = React.useCallback(async (role, user) => {
     const roleNew = [...role][0];
     if (roleNew && user.id) {

@@ -8,10 +8,10 @@ import { handleRefreshTokenExpired } from "./handleRefreshTokenExpried";
 export const getAccessToken = async () => {
   const refresh_token = Cookies.get("refresh_token");
   if (refresh_token) {
-    const { data } = await client.post(`/auth/refresh`, {
+    const { response, data } = await client.post(`/auth/refresh`, {
       refresh_token: refresh_token,
     });
-    if (data.status === 200) {
+    if (response.ok) {
       Cookies.set("access_token", data.access_token);
       return data.access_token;
     } else {
@@ -76,7 +76,7 @@ export const logoutApi = async () => {
     null,
     access_token
   );
-  if (data.status === 200) {
+  if (response.ok) {
     return data;
   } else {
     const newAccessToken = await getAccessToken();
@@ -90,9 +90,9 @@ export const logoutApi = async () => {
 export const getProfile = async () => {
   const access_token = Cookies.get("access_token");
 
-  const { data } = await client.get(`/auth/profile`, access_token);
+  const { data, response } = await client.get(`/auth/profile`, access_token);
 
-  if (data.status === 200) {
+  if (response.ok) {
     return data;
   } else {
     const newAccessToken = await getAccessToken();

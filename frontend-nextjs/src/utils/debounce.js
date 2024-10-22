@@ -2,12 +2,18 @@ import { useState, useEffect } from "react";
 
 export const debounce = (fn, t) => {
   let timeoutId;
-  return function (...args) {
+  const debounced = function (...args) {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    timeoutId = setTimeout(() => fn(...args), t);
+    timeoutId = setTimeout(() => fn.apply(this, args), t);
   };
+
+  debounced.cancel = () => {
+    clearTimeout(timeoutId); // Hủy bỏ timeout hiện tại nếu có
+  };
+
+  return debounced;
 };
 
 export const useDebounce = (value, delay) => {

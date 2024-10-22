@@ -88,11 +88,13 @@ const CommentItem = ({ comment }) => {
         setIsLoading(false);
       }
     } catch (error) {
+      console.log(error);
       toast.error("Đã xảy ra lỗi khi chỉnh sửa bình luận.");
     } finally {
       setIsEdit(false);
     }
   };
+
   return (
     <li className="flex items-start gap-1.5 w-full">
       <Avatar

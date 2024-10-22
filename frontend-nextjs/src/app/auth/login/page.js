@@ -50,8 +50,6 @@ const PageLogin = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const { email, password } = form;
-
   const loginSocialGoogle = async () => {
     try {
       const { status, data, error } = await loginGoogleApi();
@@ -92,6 +90,8 @@ const PageLogin = () => {
       // toast.error("Có lỗi xảy ra, vui lòng thử lại.");
     }
   };
+
+  const { email, password } = form;
 
   return (
     <Card className="login max-w-full w-[400px] h-auto pb-4 ">
