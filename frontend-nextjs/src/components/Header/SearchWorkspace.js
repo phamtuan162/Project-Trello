@@ -71,7 +71,7 @@ const SearchWorkspace = () => {
   };
 
   return (
-    <div className="w-[300px] relative">
+    <div className=" sm:w-[300px] w-[240px] hidden sm:inline-block  relative">
       <Input
         variant="bordered"
         isRequired

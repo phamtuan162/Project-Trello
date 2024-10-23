@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -12,9 +12,8 @@ import {
   Avatar,
   Input,
 } from "@nextui-org/react";
-import { usePathname, useRouter, useParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SettingIcon } from "@/components/Icon/SettingIcon";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { SearchIcon } from "@/components/Icon/SearchIcon";
 import { PrivateIcon } from "@/components/Icon/PrivateIcon";
 import { UserIcon } from "@/components/Icon/UserIcon";
@@ -27,7 +26,9 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
+import { missionSlice } from "@/stores/slices/missionSlice";
 
+const { updateMission } = missionSlice.actions;
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateUser } = userSlice.actions;
 
@@ -90,24 +91,23 @@ export default function WorkspaceMenu({
   const handleSwitchWorkspace = async (workspace_id_witched) => {
     setIsChange(true);
     try {
-      const data = await switchWorkspace(workspace_id_witched, {
+      const { data, status } = await switchWorkspace(workspace_id_witched, {
         user_id: user.id,
       });
-      if (data.status === 200) {
-        const workspaceActive = data.data;
+
+      if (status >= 200 && status <= 299) {
+        const workspaceActive = data;
         if (workspaceActive.users) {
           const userNeedToFind = workspaceActive.users.find(
             (item) => +item.id === +user.id
           );
           dispatch(updateUser({ ...user, role: userNeedToFind.role }));
         }
-        dispatch(
-          fetchMission({
-            user_id: user.id,
-            workspace_id: workspace_id_witched,
-          })
-        );
+
         dispatch(updateWorkspace(workspaceActive));
+
+        dispatch(fetchMission());
+
         router.push(`/w/${workspaceActive.id}/home`);
         // if (pathname.startsWith(`/w/${workspaceId}`)) {
         //   let currentURL = window.location.href;

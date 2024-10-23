@@ -268,16 +268,20 @@ module.exports = {
       ],
       attributes: { exclude: ["password"] },
     });
+
     await user.update({ isOnline: true });
+
     const user_workspace_role = await UserWorkspaceRole.findOne({
       where: { user_id: id, workspace_id: user.workspace_id_active },
     });
+
     if (user_workspace_role?.role_id) {
       const role = await Role.findByPk(user_workspace_role.role_id);
       if (role) {
         user.dataValues.role = role.name;
       }
     }
+
     if (user.workspaces.length > 0) {
       for (const workspace of user.workspaces) {
         const user_workspace_role_item = await UserWorkspaceRole.findOne({

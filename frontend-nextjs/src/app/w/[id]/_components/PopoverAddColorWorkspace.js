@@ -10,11 +10,16 @@ import {
 import { useEffect, useState } from "react";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { userSlice } from "@/stores/slices/userSlice";
+
 const { updateWorkspace } = workspaceSlice.actions;
 
-const PopoverAddColorWorkspace = ({ workspace, workspaces }) => {
+const { updateUser } = userSlice.actions;
+
+const PopoverAddColorWorkspace = ({ workspace }) => {
+  const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
   const colors = [
     "#338EF7",
@@ -40,14 +45,27 @@ const PopoverAddColorWorkspace = ({ workspace, workspaces }) => {
   }, [workspace]);
 
   const addColorWorkspace = async () => {
-    updateWorkspaceApi(workspace.id, { color: colorWorkspace }).then((data) => {
-      if (data.status === 200) {
+    try {
+      const { data, status, message } = await updateWorkspaceApi(workspace.id, {
+        color: colorWorkspace,
+      });
+
+      if (status >= 200 && status <= 299) {
         dispatch(updateWorkspace({ ...workspace, color: colorWorkspace }));
+
+        const updatedWorkspaces = user.workspaces.map((ws) =>
+          ws.id === workspace.id ? { ...ws, color: colorWorkspace } : ws
+        );
+
+        dispatch(updateUser({ ...user, workspaces: updatedWorkspaces }));
+
         toast.success("Thêm màu không gian làm việc thành công");
       } else {
-        console.log(data.message);
+        console.log(message);
       }
-    });
+    } catch (error) {
+      console.log("Error updating workspace color:", error);
+    }
   };
 
   return (

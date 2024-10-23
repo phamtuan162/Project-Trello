@@ -33,7 +33,9 @@ const BreadcrumbWorkspace = ({ options }) => {
                 name={workspace?.name?.charAt(0).toUpperCase()}
               />
             </div>
-            {workspace?.name}
+            <p className="max-w-[160px] sm:max-w-[400px]  truncate">
+              {workspace?.name}{" "}
+            </p>
           </div>
         </li>
         {optionsSorted?.map((optionSorted, index) => (

@@ -50,7 +50,7 @@ export default function WorkspaceLayout({ children }) {
     <div className="flex gap-x-7 justify-center h-full ">
       <SidebarWorkspace workspaceOptions={workspaceOptions} />
       <div
-        className="work-space grow mt-5 px-8 "
+        className="work-space grow mt-5 sm:px-8 pr-4"
         style={{ maxHeight: "calc(100vh - 64px)", overflow: "auto" }}
       >
         <BreadcrumbWorkspace

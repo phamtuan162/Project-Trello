@@ -102,6 +102,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   store: async (req, res) => {
     const user = req.user.dataValues;
     const rules = {};
@@ -155,6 +156,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   update: async (req, res) => {
     const { id } = req.params;
     const method = req.method;
@@ -212,6 +214,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   moveCard: async (req, res) => {
     const user = req.user.dataValues;
     const { id } = req.params;

@@ -205,20 +205,13 @@ export const getBoardDetail = async (boardId) => {
     access_token
   );
 
-  if (response.ok || data.error) {
-    if (data.status === 401) {
-      window.location.href = "/";
-      return null;
-    }
-    return data;
-  }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getBoardDetail(boardId);
     }
   }
-  return null;
+  return data;
 };
 
 export const createBoard = async (body) => {

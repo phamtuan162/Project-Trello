@@ -3,9 +3,9 @@ var router = express.Router();
 const boardController = require("../../../controllers/api/workspace/board.controller");
 const permission = require("../../../middlewares/api/permission.middleware");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
-
+const checkBoardInWorkspace = require("../../../middlewares/api/board.middleware");
 router.get("/", boardController.index);
-router.get("/:id", permission("board.read"), boardController.find);
+router.get("/:id", authMiddleware, checkBoardInWorkspace, boardController.find);
 router.post("/", permission("board.create"), boardController.store);
 router.put("/move-card", authMiddleware, boardController.moveCard);
 

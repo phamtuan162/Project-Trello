@@ -52,6 +52,7 @@ export default function BoardNavbar({ setIsActivity }) {
   const board = useSelector((state) => state.board.board);
   const socket = useSelector((state) => state.socket.socket);
   const [userVisit, setUserVisit] = useState([]);
+
   const usersVisitBoard = useMemo(() => {
     if (userVisit.length > 0 && workspace?.users?.length > 0) {
       return workspace.users.filter(
@@ -66,6 +67,7 @@ export default function BoardNavbar({ setIsActivity }) {
       inputRef.current.focus();
     }
   }, [isEditing]);
+
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
@@ -93,9 +95,9 @@ export default function BoardNavbar({ setIsActivity }) {
     const fetchBoardDetail = async () => {
       try {
         // dispatch(updateCard({}));
-        const data = await getBoardDetail(boardId);
-        if (data.status === 200) {
-          let boardData = data.data;
+        const { data, status, message } = await getBoardDetail(boardId);
+        if (status >= 200 && status <= 299) {
+          let boardData = data;
           boardData.columns = mapOrder(
             boardData.columns,
             boardData.columnOrderIds,
@@ -111,24 +113,27 @@ export default function BoardNavbar({ setIsActivity }) {
             }
           });
 
-          if (user.id) {
-            socket.emit("visitBoard", {
-              board_id: boardData.id,
-              user_id: user.id,
-            });
-          }
+          // if (user.id) {
+          //   socket.emit("visitBoard", {
+          //     board_id: boardData.id,
+          //     user_id: user.id,
+          //   });
+          // }
           if (!board.id || +board.id !== +boardId) {
             dispatch(boardSlice.actions.updateBoard(boardData));
           }
+        } else {
+          toast.error(message);
+          router.push(`/w/${user.workspace_id_active}/home`);
         }
       } catch (error) {
-        console.error("Error fetching board detail:", error);
+        console.log("Error fetching board detail:", error);
       }
     };
-    if ((!board || +boardId !== +board.id) && user.id) {
+    if ((!board || +boardId !== +board.id) && user.id && workspace.id) {
       fetchBoardDetail();
     }
-  }, [user]);
+  }, [user, workspace]);
 
   useEffect(() => {
     const handleUserVisitBoard = (data) => {

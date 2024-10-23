@@ -64,6 +64,7 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   find: async (req, res) => {
     const { id } = req.params;
     const response = {};
@@ -89,6 +90,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   store: async (req, res) => {
     const user = req.user.dataValues;
     const rules = {};
@@ -130,6 +132,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   update: async (req, res) => {
     const user = req.user.dataValues;
     const { id } = req.params;
@@ -188,6 +191,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};
@@ -217,6 +221,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   transferCard: async (req, res) => {
     const { id } = req.params;
     const { column_id } = req.body;

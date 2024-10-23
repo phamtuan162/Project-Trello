@@ -22,7 +22,7 @@ export function UserMenu({ user }) {
       onClick: async () => {
         logoutApi().then((data) => {
           if (data) {
-            socket.emit("logout", user.id);
+            // socket.emit("logout", user.id);
 
             Cookies.remove("access_token");
             Cookies.remove("refresh_token");

@@ -16,7 +16,7 @@ import { toast } from "react-toastify";
 import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
 import { setLocalStorage } from "@/utils/localStorage";
-import { Mail, LockKeyhole, User } from "lucide-react";
+import { Mail, LockKeyhole } from "lucide-react";
 
 const PageLogin = () => {
   const router = useRouter();
@@ -28,6 +28,10 @@ const PageLogin = () => {
 
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
+
+  const HandleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
@@ -44,10 +48,6 @@ const PageLogin = () => {
         setErrorMessage(error);
       }
     });
-  };
-
-  const HandleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const loginSocialGoogle = async () => {
@@ -120,6 +120,7 @@ const PageLogin = () => {
             value={email}
             className="bg-white"
             isRequired
+            tabIndex={1}
           />
           <Input
             startContent={<LockKeyhole size={20} color={"#b9bec7"} />}
@@ -150,6 +151,7 @@ const PageLogin = () => {
               </button>
             }
             type={isVisible ? "text" : "password"}
+            tabIndex={1}
           />
           <a
             href="/auth/forgot-password"

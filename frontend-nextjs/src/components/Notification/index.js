@@ -96,7 +96,7 @@ const Notification = ({ children, handleClickNotify }) => {
             </button>
           </div>
 
-          <ol className="space-y-2 mt-4 pb-2 px-2 cursor-pointer max-h-[450px] overflow-x-auto">
+          <ol className="space-y-2 mt-4 pb-2 px-2 cursor-pointer max-h-[400px] overflow-x-auto">
             <div className="flex justify-end gap-2 mb-4">
               {isSelected && (
                 <button

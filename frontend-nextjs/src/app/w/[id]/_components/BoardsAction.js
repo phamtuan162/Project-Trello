@@ -13,6 +13,7 @@ export function BoardsAction({ setBoards, boards }) {
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const hasSearchFilter = Boolean(filterValue);
+
   useEffect(() => {
     let filteredBoards =
       workspace?.boards?.filter(

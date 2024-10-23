@@ -2,15 +2,18 @@
 import { useState } from "react";
 import { RadioGroup, Radio, Input } from "@nextui-org/react";
 import { SearchIcon } from "lucide-react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useMemo } from "react";
-import MissionItem from "./mission";
+
+import MissionList from "./mission-list";
+
 const statusOptions = [
   { name: "Tất cả", value: "all" },
   { name: "Hoàn thành", value: "success" },
   { name: "Sắp hết hạn", value: "imminent" },
   { name: "Hết hạn", value: "expired" },
 ];
+
 export default function MissionsWorkspace() {
   const missionsActive = useSelector((state) => state.mission.missions);
   const missions = useMemo(() => {
@@ -50,7 +53,6 @@ export default function MissionsWorkspace() {
         làm việc này và tìm kiếm các nhiệm vụ theo tên và các tiêu chí khác.
       </p>
       <Input
-        isClearable
         classNames={{
           base: "w-full sm:max-w-[44%] mt-3",
           inputWrapper: "border-1",
@@ -76,14 +78,7 @@ export default function MissionsWorkspace() {
           </Radio>
         ))}
       </RadioGroup>
-      <ol className="space-y-4 mt-4 pb-4">
-        <p className="hidden last:block text-xs  text-center text-muted-foreground">
-          Không có nhiệm vụ nào trong không gian làm việc
-        </p>
-        {filteredItems?.map((mission) => (
-          <MissionItem key={mission.id} mission={mission} />
-        ))}
-      </ol>
+      <MissionList missions={filteredItems} />
     </div>
   );
 }

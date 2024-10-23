@@ -76,7 +76,6 @@ export default function pageActivity() {
       <div className="mt-3 ">
         <div className="flex gap-2 items-end">
           <Input
-            isClearable
             classNames={{
               base: "w-full sm:max-w-[44%]",
               inputWrapper: "border-1",

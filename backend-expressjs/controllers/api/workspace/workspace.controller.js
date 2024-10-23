@@ -438,6 +438,7 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   cancelUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { user_id, workspace_id } = req.body;
@@ -518,14 +519,17 @@ module.exports = {
     }
     res.status(response.status).json(response);
   },
+
   changeWorkspace: async (req, res) => {
     const { id } = req.params;
     const { user_id } = req.body;
 
     const response = {};
+
     if (!user_id) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
+
     const workspace = await Workspace.findByPk(id, {
       include: [
         {
@@ -540,12 +544,15 @@ module.exports = {
           model: Activity,
           as: "activities",
         },
+      
       ],
       order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
     });
+
     if (!workspace) {
       return res.status(404).json({ status: 404, message: "Not found" });
     }
+
     if (workspace.users) {
       for (const user of workspace.users) {
         const user_workspace_role = await UserWorkspaceRole.findOne({
@@ -556,6 +563,7 @@ module.exports = {
         user.dataValues.role = role.name;
       }
     }
+
     await User.update(
       { workspace_id_active: workspace.id },
       { where: { id: user_id } }
@@ -567,6 +575,7 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
+
   decentRoleUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
@@ -616,6 +625,7 @@ module.exports = {
     });
     res.status(response.status).json(response);
   },
+
   restore: async (req, res) => {
     const { id } = req.params;
     const response = {};
