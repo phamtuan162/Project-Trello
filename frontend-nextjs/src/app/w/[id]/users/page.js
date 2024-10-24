@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Select,
@@ -20,7 +20,7 @@ import {
   User,
   Pagination,
 } from "@nextui-org/react";
-import { SearchIcon, ChevronDownIcon, X } from "lucide-react";
+import { SearchIcon, ChevronDownIcon } from "lucide-react";
 import FormInviteUser from "../_components/FormInviteUser";
 import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
@@ -30,7 +30,7 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "role", "status", "actions"];
+const INITIAL_VISIBLE_COLUMNS = ["name", "email", "role", "status", "actions"];
 const columns = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
@@ -71,7 +71,7 @@ export default function PageWorkspaceUsers() {
   const workspace = useSelector((state) => state.workspace.workspace);
   const userActive = useSelector((state) => state.user.user);
   const socket = useSelector((state) => state.socket.socket);
-  const sortedUsers = React.useMemo(() => {
+  const sortedUsers = useMemo(() => {
     return workspace && workspace.users
       ? [...workspace.users].sort((a, b) => {
           const roleA = a.role.toLowerCase();
@@ -84,18 +84,18 @@ export default function PageWorkspaceUsers() {
         })
       : [];
   }, [workspace]);
-  const [filterValue, setFilterValue] = React.useState("");
-  const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
-  const [visibleColumns, setVisibleColumns] = React.useState(
+  const [filterValue, setFilterValue] = useState("");
+  const [selectedKeys, setSelectedKeys] = useState(new Set([]));
+  const [visibleColumns, setVisibleColumns] = useState(
     new Set(INITIAL_VISIBLE_COLUMNS)
   );
-  const [statusFilter, setStatusFilter] = React.useState("all");
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [sortDescriptor, setSortDescriptor] = React.useState({
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [sortDescriptor, setSortDescriptor] = useState({
     column: "age",
     direction: "ascending",
   });
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = useState(1);
   useEffect(() => {
     const handleUserOnline = (data) => {
       if (data?.id && workspace?.users?.length > 0) {
@@ -120,7 +120,7 @@ export default function PageWorkspaceUsers() {
     }
   }, [socket]);
 
-  const rolesUser = React.useMemo(() => {
+  const rolesUser = useMemo(() => {
     if (userActive?.role?.toLowerCase() === "admin") {
       return roles.filter(
         (role) =>
@@ -134,11 +134,9 @@ export default function PageWorkspaceUsers() {
     return roles;
   }, [userActive]);
 
-  const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
-
   const hasSearchFilter = Boolean(filterValue);
 
-  const headerColumns = React.useMemo(() => {
+  const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
 
     return columns.filter((column) =>
@@ -146,7 +144,7 @@ export default function PageWorkspaceUsers() {
     );
   }, [visibleColumns]);
 
-  const filteredItems = React.useMemo(() => {
+  const filteredItems = useMemo(() => {
     let filteredUsers = workspace?.users
       ? sortedUsers.filter((user) => user !== null && user !== undefined)
       : [];
@@ -168,14 +166,16 @@ export default function PageWorkspaceUsers() {
     return filteredUsers;
   }, [workspace, filterValue, statusFilter]);
 
-  const items = React.useMemo(() => {
+  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+
+  const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
 
     return filteredItems.slice(start, end);
   }, [page, filteredItems, rowsPerPage]);
 
-  const sortedItems = React.useMemo(() => {
+  const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
       const first = a[sortDescriptor.column];
       const second = b[sortDescriptor.column];
@@ -185,7 +185,7 @@ export default function PageWorkspaceUsers() {
     });
   }, [sortDescriptor, items]);
 
-  const handleDecentRole = React.useCallback(async (role, user) => {
+  const handleDecentRole = useCallback(async (role, user) => {
     const roleNew = [...role][0];
     if (roleNew && user.id) {
       try {
@@ -230,7 +230,7 @@ export default function PageWorkspaceUsers() {
     }
   }, []);
 
-  const renderCell = React.useCallback((user, columnKey) => {
+  const renderCell = useCallback((user, columnKey) => {
     const cellValue = user[columnKey];
 
     switch (columnKey) {
@@ -296,24 +296,24 @@ export default function PageWorkspaceUsers() {
     }
   }, []);
 
-  const onNextPage = React.useCallback(() => {
+  const onNextPage = useCallback(() => {
     if (page < pages) {
       setPage(page + 1);
     }
   }, [page, pages]);
 
-  const onPreviousPage = React.useCallback(() => {
+  const onPreviousPage = useCallback(() => {
     if (page > 1) {
       setPage(page - 1);
     }
   }, [page]);
 
-  const onRowsPerPageChange = React.useCallback((e) => {
+  const onRowsPerPageChange = useCallback((e) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
   }, []);
 
-  const onSearchChange = React.useCallback((value) => {
+  const onSearchChange = useCallback((value) => {
     if (value) {
       setFilterValue(value);
       setPage(1);
@@ -322,7 +322,7 @@ export default function PageWorkspaceUsers() {
     }
   }, []);
 
-  const topContent = React.useMemo(() => {
+  const topContent = useMemo(() => {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex justify-between gap-3 items-end">
@@ -431,7 +431,7 @@ export default function PageWorkspaceUsers() {
     hasSearchFilter,
   ]);
 
-  const bottomContent = React.useMemo(() => {
+  const bottomContent = useMemo(() => {
     return (
       <div className="py-2 px-2 flex justify-between items-center">
         <span className="w-[30%] text-small text-default-400">
@@ -469,9 +469,9 @@ export default function PageWorkspaceUsers() {
     );
   }, [selectedKeys, items.length, page, pages, hasSearchFilter]);
 
-  const classNames = React.useMemo(
+  const classNames = useMemo(
     () => ({
-      wrapper: ["max-h-[382px]", "max-w-3xl"],
+      wrapper: ["max-h-[382px]", "max-w-5xl"],
       th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
       td: [
         // changing the rows border radius
@@ -489,19 +489,18 @@ export default function PageWorkspaceUsers() {
   );
 
   return (
-    <div>
+    <div className="max-w-5xl">
       <h1 className="text-xl font-medium mt-4">
         Thành viên không gian làm việc
       </h1>
-      <p className="mt-1">
+      <p className="mt-1 ">
         Các thành viên trong Không gian làm việc có thể xem và tham gia tất cả
         các bảng Không gian làm việc hiển thị và tạo ra các bảng mới trong Không
         gian làm việc.
       </p>
       <Table
         isCompact
-        removeWrapper
-        aria-label="Example table with custom cells, pagination and sorting"
+        aria-label="Table members of workspace"
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         checkboxesProps={{
@@ -510,7 +509,6 @@ export default function PageWorkspaceUsers() {
               "after:bg-foreground after:text-background text-background ",
           },
         }}
-        classNames={classNames}
         selectedKeys={selectedKeys}
         selectionMode="multiple"
         sortDescriptor={sortDescriptor}

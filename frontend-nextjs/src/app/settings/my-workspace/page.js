@@ -1,4 +1,6 @@
 "use client";
+import { useMemo, useState, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Table,
   TableHeader,
@@ -16,8 +18,6 @@ import {
   User,
   Pagination,
 } from "@nextui-org/react";
-import { useMemo, useState, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import { PlusIcon, ChevronDownIcon } from "lucide-react";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import RestoreWorkspace from "./storeWorkspace";
@@ -25,7 +25,13 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-const INITIAL_VISIBLE_COLUMNS = ["name", "total_user", "deleted_at", "actions"];
+const INITIAL_VISIBLE_COLUMNS = [
+  "name",
+  "desc",
+  "total_user",
+  "deleted_at",
+  "actions",
+];
 const columns = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
@@ -44,8 +50,6 @@ const PageMyWorkspace = () => {
   const my_workspaces = useSelector(
     (state) => state.my_workspaces.my_workspaces
   );
-  const workspace = useSelector((state) => state.workspace.workspace);
-
   const my_workspaces_sort = useMemo(() => {
     return (
       my_workspaces?.filter((item) => item.role.toLowerCase() === "owner") || []
@@ -64,7 +68,6 @@ const PageMyWorkspace = () => {
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
-  const pages = Math.ceil(workspace?.users?.length / rowsPerPage);
   const hasSearchFilter = Boolean(filterValue);
 
   const headerColumns = useMemo(() => {
@@ -99,6 +102,8 @@ const PageMyWorkspace = () => {
 
     return filteredWorkspaces;
   }, [my_workspaces_sort, filterValue, statusFilter]);
+
+  const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -142,12 +147,14 @@ const PageMyWorkspace = () => {
               description: "text-default-500",
             }}
             name={cellValue}
-          >
-            {item.name}
-          </User>
+          />
         );
+
       case "total_user":
-        return `${item.total_user} thành viên`;
+        return (
+          <p className="text-bold text-small capitalize">{`${cellValue} thành viên`}</p>
+        );
+
       case "deleted_at":
         return (
           <Chip
@@ -177,6 +184,7 @@ const PageMyWorkspace = () => {
         return cellValue;
     }
   }, []);
+
   const onNextPage = useCallback(() => {
     if (page < pages) {
       setPage(page + 1);
@@ -282,12 +290,12 @@ const PageMyWorkspace = () => {
             </Dropdown>
             <FormCreateWorkspace>
               <button
-                className="bg-foreground text-background text-white flex gap-1 justify-center items-center px-2 py-1.5 rounded-lg text-sm"
+                className=" bg-foreground text-background text-white flex gap-1 justify-center items-center px-2 py-1.5 rounded-lg text-sm"
                 style={{ background: "#7f77f1" }}
                 size="sm"
               >
-                <PlusIcon size={18} />
-                Thêm mới
+                <PlusIcon size={16} />
+                Thêm
               </button>
             </FormCreateWorkspace>
           </div>
@@ -360,7 +368,7 @@ const PageMyWorkspace = () => {
 
   const classNames = useMemo(
     () => ({
-      wrapper: ["max-h-[382px]", "max-w-3xl"],
+      wrapper: ["max-h-[400px]", "max-w-5xl"],
       th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
       td: [
         // changing the rows border radius
@@ -376,8 +384,9 @@ const PageMyWorkspace = () => {
     }),
     []
   );
+
   return (
-    <div className="mt-2">
+    <div className="mt-2 max-w-5xl">
       <h1 className="text-2xl font-medium">Không gian làm việc của tôi</h1>
       <p className="mt-1">
         Các không gian làm việc do bạn tạo ra là nơi bạn có thể quản lý dự án,
@@ -388,10 +397,16 @@ const PageMyWorkspace = () => {
 
       <Table
         isCompact
-        removeWrapper
-        aria-label="Example table with custom cells, pagination and sorting"
+        aria-label="Table my-workspaces"
+        classNames={classNames}
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
+        checkboxesProps={{
+          classNames: {
+            wrapper:
+              "after:bg-foreground after:text-background text-background ",
+          },
+        }}
         selectedKeys={selectedKeys}
         selectionMode="multiple"
         sortDescriptor={sortDescriptor}
@@ -412,7 +427,7 @@ const PageMyWorkspace = () => {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody emptyContent={"No users found"} items={sortedItems}>
+        <TableBody emptyContent={"No workspace found"} items={sortedItems}>
           {(item) => (
             <TableRow key={item.id}>
               {(columnKey) => (
