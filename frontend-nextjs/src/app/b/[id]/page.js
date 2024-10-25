@@ -2,7 +2,7 @@
 import { useParams } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
-
+import { useEffect } from "react";
 import {
   updateBoardDetail,
   updateColumnDetail,
@@ -17,7 +17,7 @@ import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
-import { useEffect } from "react";
+
 const { updateCard } = cardSlice.actions;
 const { updateBoard } = boardSlice.actions;
 export default function BoardIdPage() {
@@ -26,23 +26,28 @@ export default function BoardIdPage() {
   const workspace = useSelector((state) => state.workspace.workspace);
   const card = useSelector((state) => state.card.card);
   const { id: boardId } = useParams();
-  useEffect(() => {
-    if (board?.id && card?.id) {
-      const columnsUpdate = board.columns.map((column) => {
-        const index = column.cards.findIndex((c) => +c.id === +card.id);
-        if (index !== -1) {
-          const updatedColumn = {
-            ...column,
-            cards: column.cards.map((c, i) => (i === index ? card : c)),
-          };
-          return updatedColumn;
-        }
-        return column;
-      });
 
-      dispatch(updateBoard({ ...board, columns: columnsUpdate }));
-    }
+  useEffect(() => {
+    if (!board?.id || !card?.id) return;
+
+    let isSearchSuccess = false;
+    const updatedColumns = board.columns.map((column) => {
+      if (!isSearchSuccess) {
+        const cardFound = column.cards.some((c) => +c.id === +card.id);
+        if (cardFound) {
+          isSearchSuccess = true; //
+          return {
+            ...column,
+            cards: column.cards.map((c) => (c.id === card.id ? card : c)),
+          };
+        }
+      }
+      return column;
+    });
+
+    dispatch(updateBoard({ ...board, columns: updatedColumns }));
   }, [card]);
+
   const moveColumns = async (dndOrderedColumns) => {
     const newBoard = {
       ...board,
@@ -50,43 +55,41 @@ export default function BoardIdPage() {
       columnOrderIds: dndOrderedColumns.map((c) => c.id),
     };
     dispatch(boardSlice.actions.updateBoard(newBoard));
-    try {
-      const data = await updateBoardDetail(newBoard.id, {
-        columnOrderIds: newBoard.columnOrderIds,
-      });
-      if (data.status === 200) {
-      } else {
-        toast.error(data.error);
-        document.location.href = `/b/${board.id}`;
-      }
-    } catch (error) {
-      console.error("Error moving columns:", error);
+
+    const { error } = await updateBoardDetail(newBoard.id, {
+      columnOrderIds: newBoard.columnOrderIds,
+    });
+
+    if (error) {
+      console.log(error);
     }
   };
+
   const moveCardInTheSameColumn = async (
     dndOrderedCards,
     dndOrderedCardIds,
     columnId
   ) => {
-    const updatedColumns = board.columns.map((column) =>
-      column.id === columnId
-        ? { ...column, cards: dndOrderedCards, cardOrderIds: dndOrderedCardIds }
-        : column
-    );
+    const updatedColumns = board.columns.map((column) => {
+      if (column.id === columnId) {
+        return {
+          ...column,
+          cards: dndOrderedCards,
+          cardOrderIds: dndOrderedCardIds,
+        };
+      }
+      return column;
+    });
 
     const newBoard = { ...board, columns: updatedColumns };
     dispatch(boardSlice.actions.updateBoard(newBoard));
-    try {
-      const data = await updateColumnDetail(columnId, {
-        cardOrderIds: dndOrderedCardIds,
-      });
-      if (data.status === 200) {
-      } else {
-        toast.error(data.error);
-        document.location.href = `/b/${board.id}`;
-      }
-    } catch (error) {
-      console.error("Error moving card in the same column:", error);
+
+    const { error } = await updateColumnDetail(columnId, {
+      cardOrderIds: dndOrderedCardIds,
+    });
+
+    if (error) {
+      console.log(error);
     }
   };
 
@@ -104,32 +107,33 @@ export default function BoardIdPage() {
 
     dispatch(boardSlice.actions.updateBoard(newBoard));
 
-    const updatedColumns = newBoard.columns.map((column) =>
-      column.cardOrderIds.includes("placeholder-card")
-        ? { ...column, cardOrderIds: [], cards: [] }
-        : column
-    );
+    const updatedColumns = newBoard.columns.map((column) => {
+      const isPlaceholderExist =
+        column.cardOrderIds.includes("placeholder-card");
+      if (isPlaceholderExist) {
+        return { ...column, cardOrderIds: [], cards: [] };
+      }
+      return column;
+    });
 
     const updatedBoard = { ...newBoard, columns: updatedColumns };
 
     try {
-      const data = await moveCardToDifferentColumnAPI({
+      const { data, status, error } = await moveCardToDifferentColumnAPI({
         updateBoard: updatedBoard,
         card_id: currentCardId,
         prevColumnId: prevColumnId,
         nextColumnId: nextColumnId,
       });
-      if (data.status === 200) {
+      if (200 <= status && status <= 299) {
         const updatedCard = {
           ...card,
           activities:
-            card.activities.length > 0
-              ? [data.data, ...card.activities]
-              : [data.data],
+            card.activities.length > 0 ? [data, ...card.activities] : [data],
         };
         dispatch(updateCard(updatedCard));
       } else {
-        document.location.href = `/b/${board.id}`;
+        console.log(error);
       }
     } catch (error) {
       console.error("Error moving card to different column:", error);
@@ -138,24 +142,33 @@ export default function BoardIdPage() {
 
   const createNewColumn = async (newColumnData) => {
     try {
-      const data = await createColumn({ ...newColumnData, board_id: board.id });
-      if (data.status === 200) {
-        const createdColumn = data.data;
+      const { data, status, error } = await createColumn({
+        ...newColumnData,
+        board_id: board.id,
+      });
+      if (200 <= status && status <= 299) {
+        const createdColumn = data;
         const placeholderCard = generatePlaceholderCard(createdColumn);
         createdColumn.cards = [placeholderCard];
         createdColumn.cardOrderIds = [placeholderCard.id];
 
-        const newColumns = [...board.columns, createdColumn];
-        const newBoard = {
-          ...board,
-          columns: newColumns,
-          columnOrderIds: newColumns.map((c) => c.id),
-        };
+        // const newColumns = [...board.columns, createdColumn];
+        // const newBoard = {
+        //   ...board,
+        //   columns: newColumns,
+        //   columnOrderIds: [...board.columnOrderIds, createdColumn.id],
+        // };
+
+        const newBoard = { ...board };
+        newBoard.columns = newBoard.columns.concat(createdColumn);
+        newBoard.columnOrderIds = newBoard.columnOrderIds.concat(
+          createdColumn.id
+        );
 
         dispatch(boardSlice.actions.updateBoard(newBoard));
         toast.success("Tạo danh sách thành công");
       } else {
-        toast.error(data.error);
+        toast.error(error);
       }
     } catch (error) {
       console.error("Error creating new column:", error);
@@ -197,14 +210,14 @@ export default function BoardIdPage() {
 
   const createNewCard = async (newCardData, columnId) => {
     try {
-      const data = await createCard({
+      const { status, data, error } = await createCard({
         ...newCardData,
         workspace_id: workspace.id,
         column_id: columnId,
       });
 
-      if (data.status === 200) {
-        const createdCard = data.data;
+      if (200 <= status && status <= 299) {
+        const createdCard = data;
         const updatedColumns = board.columns.map((column) => {
           if (+column.id === +columnId) {
             const isPlaceholderExist = column.cards.some(
@@ -227,7 +240,7 @@ export default function BoardIdPage() {
         dispatch(boardSlice.actions.updateBoard(updatedBoard));
         toast.success("Tạo thẻ thành công");
       } else {
-        toast.error(data.error);
+        toast.error(error);
       }
     } catch (error) {
       console.error("Error creating new card:", error);

@@ -17,7 +17,6 @@ const MissionsRecent = () => {
     }
     return [];
   }, [missions]);
-  console.log(missionsRecent);
 
   return (
     <div className="border-1 border-solid rounded-lg border-default-200 p-2 px-4 flex flex-col">

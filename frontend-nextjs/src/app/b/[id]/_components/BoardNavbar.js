@@ -21,6 +21,7 @@ import { isEmpty } from "lodash";
 import { getBoardDetail } from "@/services/workspaceApi";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
+import { fetchBoard } from "@/stores/middleware/fetchBoard";
 
 const options = [
   {
@@ -36,6 +37,7 @@ const options = [
     icon: <DashBoardIcon size={16} />,
   },
 ];
+
 export default function BoardNavbar({ setIsActivity }) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -93,42 +95,43 @@ export default function BoardNavbar({ setIsActivity }) {
 
   useEffect(() => {
     const fetchBoardDetail = async () => {
-      try {
-        // dispatch(updateCard({}));
-        const { data, status, message } = await getBoardDetail(boardId);
-        if (status >= 200 && status <= 299) {
-          let boardData = data;
-          boardData.columns = mapOrder(
-            boardData.columns,
-            boardData.columnOrderIds,
-            "id"
-          );
+      // try {
+      //   // dispatch(updateCard({}));
+      //   const { data, status, message } = await getBoardDetail(boardId);
+      //   if (status >= 200 && status <= 299) {
+      //     let boardData = data;
+      //     boardData.columns = mapOrder(
+      //       boardData.columns,
+      //       boardData.columnOrderIds,
+      //       "id"
+      //     );
 
-          boardData.columns.forEach((column) => {
-            if (isEmpty(column.cards)) {
-              column.cards = [generatePlaceholderCard(column)];
-              column.cardOrderIds = [generatePlaceholderCard(column).id];
-            } else {
-              column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-            }
-          });
+      //     boardData.columns.forEach((column) => {
+      //       if (isEmpty(column.cards)) {
+      //         column.cards = [generatePlaceholderCard(column)];
+      //         column.cardOrderIds = [generatePlaceholderCard(column).id];
+      //       } else {
+      //         column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
+      //       }
+      //     });
 
-          // if (user.id) {
-          //   socket.emit("visitBoard", {
-          //     board_id: boardData.id,
-          //     user_id: user.id,
-          //   });
-          // }
-          if (!board.id || +board.id !== +boardId) {
-            dispatch(boardSlice.actions.updateBoard(boardData));
-          }
-        } else {
-          toast.error(message);
-          router.push(`/w/${user.workspace_id_active}/home`);
-        }
-      } catch (error) {
-        console.log("Error fetching board detail:", error);
-      }
+      //     // if (user.id) {
+      //     //   socket.emit("visitBoard", {
+      //     //     board_id: boardData.id,
+      //     //     user_id: user.id,
+      //     //   });
+      //     // }
+      //     if (!board.id || +board.id !== +boardId) {
+      //       dispatch(boardSlice.actions.updateBoard(boardData));
+      //     }
+      //   } else {
+      //     toast.error(message);
+      //     router.push(`/w/${user.workspace_id_active}/home`);
+      //   }
+      // } catch (error) {
+      //   console.log("Error fetching board detail:", error);
+      // }
+      dispatch(fetchBoard({ boardId, router }));
     };
     if ((!board || +boardId !== +board.id) && user.id && workspace.id) {
       fetchBoardDetail();
