@@ -21,11 +21,10 @@ export function ListOptions({ column }) {
   const user = useSelector((state) => state.user.user);
 
   const isAdminOrOwner = useMemo(() => {
-    if (!user) {
-      return null;
-    }
+    if (!user) return null;
 
     const role = user.role.toLowerCase();
+
     return role === "admin" || role === "owner";
   }, [user]);
 

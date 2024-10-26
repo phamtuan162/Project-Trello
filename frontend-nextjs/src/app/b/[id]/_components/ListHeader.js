@@ -2,7 +2,7 @@
 import { useSelector } from "react-redux";
 import { useState, useEffect, useRef } from "react";
 import { ListOptions } from "./ListOptions";
-export function ListHeader({ column, createNewCard, updateColumn }) {
+export function ListHeader({ column, updateColumn }) {
   const user = useSelector((state) => state.user.user);
   const inputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,7 +53,7 @@ export function ListHeader({ column, createNewCard, updateColumn }) {
 
       {(user?.role?.toLowerCase() === "admin" ||
         user?.role?.toLowerCase() === "owner") && (
-        <ListOptions column={column} createNewCard={createNewCard} />
+        <ListOptions column={column} />
       )}
     </div>
   );

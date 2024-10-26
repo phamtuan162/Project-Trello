@@ -6,7 +6,7 @@ import { ListCard } from "./ListCard";
 import { ListHeader } from "./ListHeader";
 import { CardForm } from "./Cardform";
 import { useSelector } from "react-redux";
-export function Column({ column, createNewCard, updateColumn }) {
+export function Column({ column, updateColumn }) {
   const user = useSelector((state) => state.user.user);
   const {
     attributes,
@@ -42,13 +42,9 @@ export function Column({ column, createNewCard, updateColumn }) {
         ) : (
           <div className="h-4"></div>
         )}
-        <ListHeader
-          column={column}
-          createNewCard={createNewCard}
-          updateColumn={updateColumn}
-        />
+        <ListHeader column={column} updateColumn={updateColumn} />
         <ListCard cards={column?.cards} />
-        <CardForm createNewCard={createNewCard} column={column} />
+        <CardForm column={column} />
       </div>
     </li>
   );

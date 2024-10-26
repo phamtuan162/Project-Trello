@@ -10,7 +10,6 @@ export function ListColumn({
   columns,
 
   createNewColumn,
-  createNewCard,
   updateColumn,
 }) {
   return (
@@ -20,12 +19,7 @@ export function ListColumn({
         strategy={horizontalListSortingStrategy}
       >
         {columns?.map((column) => (
-          <Column
-            column={column}
-            key={column.id}
-            createNewCard={createNewCard}
-            updateColumn={updateColumn}
-          />
+          <Column column={column} key={column.id} updateColumn={updateColumn} />
         ))}
       </SortableContext>
       <ListForm createNewColumn={createNewColumn} />

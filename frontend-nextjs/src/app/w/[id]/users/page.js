@@ -264,11 +264,11 @@ export default function PageWorkspaceUsers() {
           </User>
         );
       case "role":
-        const isOwner = user.role.toLowerCase() === "owner";
+        const isOwner = user?.role?.toLowerCase() === "owner";
         const isNotAdminOrOwner =
           userActive?.role?.toLowerCase() !== "admin" &&
           userActive?.role?.toLowerCase() !== "owner";
-        const isCurrentUser = +userActive.id === +user.id;
+        const isCurrentUser = +userActive?.id === +user?.id;
 
         const shouldDisplayText = isOwner || isNotAdminOrOwner || isCurrentUser;
         return shouldDisplayText ? (

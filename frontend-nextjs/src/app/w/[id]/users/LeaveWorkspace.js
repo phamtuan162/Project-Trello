@@ -69,7 +69,7 @@ const LeaveWorkspace = ({ user }) => {
   };
 
   if (user?.role?.toLowerCase() === "owner" && +userActive?.id !== +user.id) {
-    return;
+    return null;
   }
 
   if (
@@ -77,7 +77,7 @@ const LeaveWorkspace = ({ user }) => {
     userActive?.role?.toLowerCase() !== "owner" &&
     +userActive?.id !== +user.id
   ) {
-    return;
+    return null;
   }
 
   return (

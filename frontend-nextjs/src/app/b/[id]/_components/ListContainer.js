@@ -33,7 +33,6 @@ export function ListContainer({
   moveCardInTheSameColumn,
   moveCardToDifferentColumn,
   createNewColumn,
-  createNewCard,
   updateColumn,
 }) {
   const user = useSelector((state) => state.user.user);
@@ -339,7 +338,6 @@ export function ListContainer({
       <ListColumn
         columns={orderedColumns}
         createNewColumn={createNewColumn}
-        createNewCard={createNewCard}
         updateColumn={updateColumn}
       />
       ;

@@ -1,39 +1,89 @@
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/react";
+import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { useSelector } from "react-redux";
+import { createCard } from "@/services/workspaceApi";
+import { toast } from "react-toastify";
+import { boardSlice } from "@/stores/slices/boardSlice";
 
-export function CardForm({ createNewCard, column }) {
+const { updateBoard } = boardSlice.actions;
+export function CardForm({ column }) {
+  const dispatch = useDispatch();
   const textareaRef = useRef(null);
-  const btnaddRef = useRef(null);
+  const btnAddRef = useRef(null);
   const user = useSelector((state) => state.user.user);
+  const board = useSelector((state) => state.board.board);
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [isEditing]);
 
-  const onCreateCard = async () => {
+  const createNewCard = async () => {
     const trimmedValue = textareaRef.current.value.trim();
-    if (trimmedValue) {
-      createNewCard({ title: trimmedValue }, column.id);
+
+    if (trimmedValue.length < 3) {
+      toast.error("Title thẻ phải ít nhất 3 ký tự");
+      return;
     }
-    setIsEditing(false);
+
+    try {
+      const { status, data, error } = await createCard({
+        title: trimmedValue,
+        workspace_id: workspace.id,
+        column_id: column.id,
+      });
+
+      if (status >= 200 && status < 300) {
+        const createdCard = data;
+        const updatedColumns = board.columns.map((item) => {
+          if (+item.id !== +column.id) return item;
+
+          const isPlaceholderExist = item.cards.some(
+            (card) => card.FE_PlaceholderCard
+          );
+          return {
+            ...item,
+            cards: isPlaceholderExist
+              ? [createdCard]
+              : [...item.cards, createdCard],
+            cardOrderIds: isPlaceholderExist
+              ? [createdCard.id]
+              : [...item.cardOrderIds, createdCard.id],
+          };
+        });
+
+        dispatch(updateBoard({ ...board, columns: updatedColumns }));
+        toast.success("Tạo thẻ thành công");
+      } else {
+        toast.error(error || "Đã xảy ra lỗi không xác định");
+      }
+    } catch (error) {
+      console.error("Error creating new card:", error);
+      toast.error("Có lỗi xảy ra khi tạo thẻ mới");
+    } finally {
+      setIsEditing(false);
+    }
   };
+
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
       textareaRef.current.blur();
     }
   };
+
   if (
     user?.role?.toLowerCase() !== "admin" &&
     user?.role?.toLowerCase() !== "owner"
   ) {
-    return;
+    return null;
   }
+
   return isEditing ? (
     <div className="p-2 pb-0">
       <Textarea
@@ -41,12 +91,12 @@ export function CardForm({ createNewCard, column }) {
         ref={textareaRef}
         className="text-lg"
         maxRows={1}
-        onBlur={() => onCreateCard()}
+        onBlur={() => createNewCard()}
         onKeyDown={handleKeyDown}
       />
 
       <div className="flex items-center gap-x-2 mt-2">
-        <Button color="primary" onClick={() => onCreateCard()} ref={btnaddRef}>
+        <Button color="primary" onClick={() => createNewCard()} ref={btnAddRef}>
           Thêm danh sách
         </Button>
         <Button

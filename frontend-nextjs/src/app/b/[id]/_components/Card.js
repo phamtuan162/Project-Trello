@@ -183,6 +183,7 @@ export function Card({ card }) {
       cardModal.onOpen(cardUpdate.id);
     }
   };
+
   return (
     <div
       ref={setNodeRef}

@@ -8,7 +8,6 @@ import {
   updateColumnDetail,
   moveCardToDifferentColumnAPI,
   createColumn,
-  createCard,
 } from "@/services/workspaceApi";
 import { mapOrder } from "@/utils/sorts";
 import { generatePlaceholderCard } from "@/utils/formatters";
@@ -23,7 +22,6 @@ const { updateBoard } = boardSlice.actions;
 export default function BoardIdPage() {
   const dispatch = useDispatch();
   const board = useSelector((state) => state.board.board);
-  const workspace = useSelector((state) => state.workspace.workspace);
   const card = useSelector((state) => state.card.card);
   const { id: boardId } = useParams();
 
@@ -208,45 +206,6 @@ export default function BoardIdPage() {
     }
   };
 
-  const createNewCard = async (newCardData, columnId) => {
-    try {
-      const { status, data, error } = await createCard({
-        ...newCardData,
-        workspace_id: workspace.id,
-        column_id: columnId,
-      });
-
-      if (200 <= status && status <= 299) {
-        const createdCard = data;
-        const updatedColumns = board.columns.map((column) => {
-          if (+column.id === +columnId) {
-            const isPlaceholderExist = column.cards.some(
-              (card) => card.FE_PlaceholderCard
-            );
-            return {
-              ...column,
-              cards: isPlaceholderExist
-                ? [createdCard]
-                : [...column.cards, createdCard],
-              cardOrderIds: isPlaceholderExist
-                ? [createdCard.id]
-                : [...column.cardOrderIds, createdCard.id],
-            };
-          }
-          return column;
-        });
-
-        const updatedBoard = { ...board, columns: updatedColumns };
-        dispatch(boardSlice.actions.updateBoard(updatedBoard));
-        toast.success("Tạo thẻ thành công");
-      } else {
-        toast.error(error);
-      }
-    } catch (error) {
-      console.error("Error creating new card:", error);
-    }
-  };
-
   if (!board.id || +board.id !== +boardId) {
     return <Loading />;
   }
@@ -267,7 +226,6 @@ export default function BoardIdPage() {
             moveCardInTheSameColumn={moveCardInTheSameColumn}
             moveCardToDifferentColumn={moveCardToDifferentColumn}
             createNewColumn={createNewColumn}
-            createNewCard={createNewCard}
             updateColumn={updateColumn}
           />
         </div>
