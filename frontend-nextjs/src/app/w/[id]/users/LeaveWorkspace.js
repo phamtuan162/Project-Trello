@@ -11,6 +11,7 @@ import {
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
 const { cancelUser, updateWorkspace } = workspaceSlice.actions;
+
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -66,9 +67,11 @@ const LeaveWorkspace = ({ user }) => {
       });
     }
   };
+
   if (user?.role?.toLowerCase() === "owner" && +userActive?.id !== +user.id) {
     return;
   }
+
   if (
     userActive?.role?.toLowerCase() !== "admin" &&
     userActive?.role?.toLowerCase() !== "owner" &&
@@ -76,6 +79,7 @@ const LeaveWorkspace = ({ user }) => {
   ) {
     return;
   }
+
   return (
     <Popover
       placement="bottom"

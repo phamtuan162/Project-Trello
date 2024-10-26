@@ -26,6 +26,7 @@ import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
+
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -65,7 +66,8 @@ const roles = [
     desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
   },
 ];
-const { updateWorkspace } = workspaceSlice.actions;
+const { updateWorkspace, updateStatusUser } = workspaceSlice.actions;
+
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -96,42 +98,42 @@ export default function PageWorkspaceUsers() {
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
+
   useEffect(() => {
+    if (!socket || workspace?.users?.length === 0) return;
+
     const handleUserOnline = (data) => {
-      if (data?.id && workspace?.users?.length > 0) {
-        const usersUpdate = workspace.users.map((item) => {
-          if (+item.id === +data.id) {
-            return { ...item, isOnline: data.isOnline };
-          }
-          return item;
-        });
-        if (usersUpdate) {
-          dispatch(updateWorkspace({ ...workspace, users: usersUpdate }));
+      if (!data?.id) return;
+      for (const item of workspace.users) {
+        if (item.id === data.id) {
+          if (item.isOnline === data.isOnline) return;
         }
       }
+      dispatch(updateStatusUser({ payload: data }));
     };
 
-    if (socket) {
-      socket.on("getUserOnline", handleUserOnline);
+    socket.on("getUserOnline", handleUserOnline);
 
-      return () => {
-        socket.off("getUserOnline", handleUserOnline);
-      };
-    }
+    return () => {
+      socket.off("getUserOnline", handleUserOnline);
+    };
   }, [socket]);
 
   const rolesUser = useMemo(() => {
-    if (userActive?.role?.toLowerCase() === "admin") {
-      return roles.filter(
-        (role) =>
-          role.value.toLowerCase() !== "admin" &&
-          role.value.toLowerCase() !== "owner"
-      );
+    if (!userActive) return roles;
+
+    const roleUserActive = userActive.role.toLowerCase();
+
+    let excludedRoles = [];
+    if (roleUserActive === "admin") {
+      excludedRoles = ["admin", "owner"];
+    } else if (roleUserActive === "owner") {
+      excludedRoles = ["owner"];
     }
-    if (userActive?.role?.toLowerCase() === "owner") {
-      return roles.filter((role) => role.value.toLowerCase() !== "owner");
-    }
-    return roles;
+
+    return roles.filter(
+      (role) => !excludedRoles.includes(role.value.toLowerCase())
+    );
   }, [userActive]);
 
   const hasSearchFilter = Boolean(filterValue);
@@ -187,46 +189,54 @@ export default function PageWorkspaceUsers() {
 
   const handleDecentRole = useCallback(async (role, user) => {
     const roleNew = [...role][0];
-    if (roleNew && user.id) {
-      try {
-        const data = await decentRoleApi(workspace.id, {
-          user_id: user.id,
-          role: roleNew,
+
+    if (!roleNew && !user.id) {
+      console.log((roleNew, user.id));
+      return;
+    }
+
+    try {
+      const { data, status, error } = await decentRoleApi(workspace.id, {
+        user_id: user.id,
+        role: roleNew,
+      });
+
+      if (200 <= status && status <= 299) {
+        const activity = data;
+
+        const updatedUsers = workspace.users.map((item) => {
+          if (item.id === user.id) {
+            return { ...item, role: roleNew };
+          }
+          return item;
         });
 
-        if (data.status === 200) {
-          const activity = data.data;
-          const updatedUsers = workspace.users.map((item) => {
-            return +item.id === +user.id ? { ...item, role: roleNew } : item;
-          });
+        const newActivities =
+          workspace.activities.length > 0
+            ? [activity, ...workspace.activities]
+            : [activity];
 
-          const newActivities =
-            workspace.activities.length > 0
-              ? [activity, ...workspace.activities]
-              : [activity];
+        const workspaceUpdate = {
+          ...workspace,
+          users: updatedUsers,
+          activities: newActivities,
+        };
 
-          const workspaceUpdate = {
-            ...workspace,
-            users: updatedUsers,
-            activities: newActivities,
-          };
+        dispatch(updateWorkspace(workspaceUpdate));
 
-          dispatch(updateWorkspace(workspaceUpdate));
-
-          socket.emit("sendNotification", {
-            user_id: user.id,
-            userName: userActive.name,
-            userAvatar: userActive.avatar,
-            type: "cancel_user",
-            content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
-          });
-        } else {
-          const error = data.error;
-          toast.error(error);
-        }
-      } catch (error) {
-        toast.error("Đã xảy ra lỗi khi cập nhật vai trò.");
+        socket.emit("sendNotification", {
+          user_id: user.id,
+          userName: userActive.name,
+          userAvatar: userActive.avatar,
+          type: "cancel_user",
+          content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
+        });
+      } else {
+        toast.error(error);
       }
+    } catch (error) {
+      console.log(error);
+      toast.error("Đã xảy ra lỗi khi cập nhật vai trò.");
     }
   }, []);
 
@@ -254,10 +264,14 @@ export default function PageWorkspaceUsers() {
           </User>
         );
       case "role":
-        return user.role.toLowerCase() === "owner" ||
-          (userActive?.role?.toLowerCase() !== "admin" &&
-            userActive?.role?.toLowerCase() !== "owner") ||
-          +userActive.id === +user.id ? (
+        const isOwner = user.role.toLowerCase() === "owner";
+        const isNotAdminOrOwner =
+          userActive?.role?.toLowerCase() !== "admin" &&
+          userActive?.role?.toLowerCase() !== "owner";
+        const isCurrentUser = +userActive.id === +user.id;
+
+        const shouldDisplayText = isOwner || isNotAdminOrOwner || isCurrentUser;
+        return shouldDisplayText ? (
           <p className="text-bold text-small capitalize">{cellValue}</p>
         ) : (
           <Select
@@ -405,7 +419,7 @@ export default function PageWorkspaceUsers() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Tổng cộng {workspace?.total_user} người dùng tham gia
+            Tổng cộng {workspace?.total_user} thành viên
           </span>
           <label className="flex items-center text-default-400 text-small">
             Hàng trên mỗi trang:
@@ -509,6 +523,7 @@ export default function PageWorkspaceUsers() {
               "after:bg-foreground after:text-background text-background ",
           },
         }}
+        classNames={classNames}
         selectedKeys={selectedKeys}
         selectionMode="multiple"
         sortDescriptor={sortDescriptor}

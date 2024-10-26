@@ -25,6 +25,7 @@ export const workspaceSlice = createSlice({
         ),
       };
     },
+
     decentRoleUser: (state, action) => {
       const usersUpdate = state.workspace.users.map((user) => {
         if (+user.id === +action.payload.id) {
@@ -35,6 +36,19 @@ export const workspaceSlice = createSlice({
       state.workspace = {
         ...state.workspace,
         users: usersUpdate,
+      };
+    },
+
+    updateStatusUser: (state, action) => {
+      const usersUpdated = state.workspace.users.map((user) => {
+        if (user.id === action.payload.id) {
+          return { ...user, isOnline: action.payload.isOnline };
+        }
+        return user;
+      });
+      state.workspace = {
+        ...state.workspace,
+        users: usersUpdated,
       };
     },
   },

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Select,
   SelectItem,
@@ -41,14 +41,23 @@ const FormInviteUser = ({ rolesUser }) => {
     } người `
   );
 
+  const isAdminOrOwner = useMemo(() => {
+    if (!user) return false;
+    const role = user.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user.role]);
+
   const handleSearchUser = useCallback(
     debounce(async (inputKeyword) => {
       setIsLoading(true);
       setSearchError(false); // Reset lỗi tìm kiếm
       try {
-        const data = await searchUser({ keyword: inputKeyword, limit: 4 });
-        if (data.status === 200) {
-          const users = data.data;
+        const { data, status } = await searchUser({
+          keyword: inputKeyword,
+          limit: 4,
+        });
+        if (200 <= status && status <= 299) {
+          const users = data;
           setUsersSearch(users);
           setSearchResultsValid(users.length > 0);
         } else {
@@ -57,7 +66,7 @@ const FormInviteUser = ({ rolesUser }) => {
         }
       } catch (error) {
         setSearchError(true);
-        console.error("Search error:", error);
+        console.log("Search error:", error);
       }
       setIsLoading(false);
     }, 2000),
@@ -98,41 +107,40 @@ const FormInviteUser = ({ rolesUser }) => {
     if (isUserInvited) {
       setMessage("Người dùng này đã có trong Không gian làm việc của bạn");
       return;
-    } else {
-      try {
-        const data = await inviteUserApi({
-          user_id: userInvite.id,
-          role: selectedRole,
-          workspace_id: workspace.id,
-        });
-        if (data.status === 200) {
-          const updatedWorkspace = {
-            ...workspace,
-            total_user: workspace.total_user + 1,
-            users: [...workspace.users, { ...userInvite, role: selectedRole }],
-            activities: [...workspace.activities, data.data],
-          };
-          dispatch(updateWorkspace(updatedWorkspace));
-          socket.emit("sendNotification", {
-            user_id: userInvite.id,
-            userName: user.name,
-            userAvatar: user.avatar,
-            type: "invite_user",
-            content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
-          });
-          toast.success("Mời người dùng vào Không gian làm việc thành công");
-          resetForm();
-          socket.emit("inviteUser", {
-            userInviteId: user.id,
-            userInvitedId: userInvite.id,
-          });
-        } else {
-          setMessage(data.error);
-        }
-      } catch (error) {
-        console.error("Invite error:", error);
-        setMessage("Có lỗi xảy ra khi mời người dùng.");
+    }
+    try {
+      const { data, status, error } = await inviteUserApi({
+        user_id: userInvite.id,
+        role: selectedRole,
+        workspace_id: workspace.id,
+      });
+      if (200 <= status && status <= 200) {
+        const updatedWorkspace = {
+          ...workspace,
+          total_user: workspace.total_user + 1,
+          users: [...workspace.users, { ...userInvite, role: selectedRole }],
+          activities: [...workspace.activities, data.data],
+        };
+        dispatch(updateWorkspace(updatedWorkspace));
+        // socket.emit("sendNotification", {
+        //   user_id: userInvite.id,
+        //   userName: user.name,
+        //   userAvatar: user.avatar,
+        //   type: "invite_user",
+        //   content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
+        // });
+        toast.success("Mời người dùng vào Không gian làm việc thành công");
+        resetForm();
+        // socket.emit("inviteUser", {
+        //   userInviteId: user.id,
+        //   userInvitedId: userInvite.id,
+        // });
+      } else {
+        setMessage(error);
       }
+    } catch (error) {
+      console.log("Invite error:", error);
+      setMessage("Có lỗi xảy ra khi mời người dùng.");
     }
   };
 
@@ -158,12 +166,7 @@ const FormInviteUser = ({ rolesUser }) => {
   return (
     <div>
       <Button
-        isDisabled={
-          !(
-            user?.role?.toLowerCase() === "admin" ||
-            user?.role?.toLowerCase() === "owner"
-          )
-        }
+        isDisabled={!isAdminOrOwner}
         onClick={() => setIsInvite(true)}
         style={{ background: "#7f77f1" }}
         size="sm"
@@ -237,7 +240,7 @@ const FormInviteUser = ({ rolesUser }) => {
                   />
                   {isSearch && (
                     <div
-                      className={`absolute max-h-[180px] empty:hidden overflow-x-auto bg-white px-1.5 rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
+                      className={`absolute max-h-[180px] empty:hidden overflow-x-auto bg-white p-2 rounded-lg left-0 right-0 text-xs top-full translate-y-2 ${
                         isLoading ? "flex items-center justify-center " : ""
                       }`}
                       style={{

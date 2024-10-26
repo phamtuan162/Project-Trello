@@ -51,9 +51,12 @@ const FormUpdateWorkspace = ({ workspace }) => {
     if (name === workspace.name && desc === workspace.desc) return;
 
     try {
-      const data = await updateWorkspaceApi(workspace.id, { name, desc });
+      const { status, error } = await updateWorkspaceApi(workspace.id, {
+        name,
+        desc,
+      });
 
-      if (data.status === 200) {
+      if (200 <= status && status <= 299) {
         dispatch(updateWorkspace({ ...workspace, name, desc }));
         toast.success("Cập nhật thành công");
         socket.emit("updateWorkspace", {
@@ -61,10 +64,10 @@ const FormUpdateWorkspace = ({ workspace }) => {
           workspace_id: workspace.id,
         });
       } else {
-        toast.error(data.error);
+        toast.error(error);
       }
     } catch (error) {
-      toast.error(error.message);
+      console.log(error);
       setForm({ name: workspace.name, desc: workspace.desc, isChange: false });
     }
   };
