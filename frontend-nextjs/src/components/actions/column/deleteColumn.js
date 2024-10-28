@@ -9,10 +9,14 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { boardSlice } from "@/stores/slices/boardSlice";
 import { toast } from "react-toastify";
+
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { columnSlice } from "@/stores/slices/columnSlice";
 import { deleteColumn } from "@/services/workspaceApi";
+
 const { updateBoard } = boardSlice.actions;
+const { updateColumn } = columnSlice.actions;
 
 const DeleteColumn = ({ children, column }) => {
   const dispatch = useDispatch();
@@ -25,22 +29,26 @@ const DeleteColumn = ({ children, column }) => {
 
   const handleDeleteColumn = async () => {
     setIsLoading(true);
+
+    const columnsUpdate = board.columns.filter((c) => c.id !== column.id);
+
     const newBoard = {
       ...board,
-      columns: board.columns.filter((c) => c.id !== column.id),
+      columns: columnsUpdate,
       columnOrderIds: board.columnOrderIds.filter((id) => id !== column.id),
     };
 
     try {
-      const data = await deleteColumn(column.id);
-      if (data.status === 200) {
+      const { data, status, error } = await deleteColumn(column.id);
+      if (200 <= status && status <= 299) {
         dispatch(updateBoard(newBoard));
         toast.success("Bạn đã xóa danh sách này thành công");
+        dispatch(updateColumn(columnsUpdate));
       } else {
-        toast.error(data.error);
+        toast.error(error);
       }
     } catch (error) {
-      console.error("Error deleting column:", error);
+      console.log("Error deleting column:", error);
     } finally {
       setIsLoading(false);
     }

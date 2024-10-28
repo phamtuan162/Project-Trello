@@ -21,15 +21,13 @@ import {
   Pagination,
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon } from "lucide-react";
+import { toast } from "react-toastify";
+
 import FormInviteUser from "../_components/FormInviteUser";
 import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { toast } from "react-toastify";
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import capitalize from "@/utils/capitalize";
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "role", "status", "actions"];
 const columns = [

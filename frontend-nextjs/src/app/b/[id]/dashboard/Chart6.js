@@ -26,6 +26,7 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
     });
     return { ...board, columns: updatedColumns };
   }, [card, board]);
+
   const check = useMemo(
     () =>
       updatedBoard?.columns?.some((column) =>
@@ -33,6 +34,7 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
       ) || false,
     [updatedBoard]
   );
+
   useEffect(() => {
     if (chartRef.current && check && workspace?.users?.length > 0) {
       if (chartRef.current.chart) {
@@ -47,9 +49,9 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
         let attachmentsCounts = [];
         let users = [];
         updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
-              if (card.attachments.length > 0) {
+              if (card?.attachments?.length > 0) {
                 card.attachments.forEach((attachment) => {
                   if (
                     checkCardCreationDate(selected, attachment.created_at) &&
@@ -95,9 +97,9 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
         }
 
         updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
-              if (card.attachments.length > 0) {
+              if (card?.attachments?.length > 0) {
                 card.attachments.forEach((attachment) => {
                   if (attachment.created_at) {
                     const created_at = format(
@@ -146,7 +148,7 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card.attachments.length > 0) {
+              if (card?.attachments?.length > 0) {
                 card.attachments.forEach((attachment) => {
                   const user = workspace?.users?.find(
                     (user) => +user.id === +attachment.user_id

@@ -31,7 +31,9 @@ const CopyColumn = ({ children, column }) => {
     setIsLoading(true);
     let filteredCards = column.cards.filter((card) => !card.FE_PlaceholderCard);
 
-    const columnUpdated = column.cards.some((card) => card.FE_PlaceholderCard)
+    const isPlaceholderExist = filteredCards.length < column.cards.length;
+
+    const columnUpdated = isPlaceholderExist
       ? {
           ...column,
           cards: filteredCards,
@@ -40,13 +42,13 @@ const CopyColumn = ({ children, column }) => {
       : column;
 
     try {
-      const data = await copyColumnApi({
+      const { data, status, error } = await copyColumnApi({
         column: columnUpdated,
         board_id: board.id,
         title: title,
       });
-      if (data.status === 200) {
-        let columnUpdate = data.data;
+      if (200 <= status && status <= 299) {
+        let columnUpdate = data;
         columnUpdate.cards = mapOrder(
           columnUpdate.cards,
           columnUpdate.cardOrderIds,
@@ -63,11 +65,10 @@ const CopyColumn = ({ children, column }) => {
         setIsOpen(false);
         dispatch(updateColumn(newBoard.columns));
       } else {
-        const error = data.error;
         toast.error(error);
       }
     } catch (error) {
-      toast.error(error);
+      console.log(error);
     } finally {
       setIsLoading(false);
     }

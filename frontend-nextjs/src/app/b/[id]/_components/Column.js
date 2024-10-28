@@ -1,12 +1,11 @@
 "use client";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useRef } from "react";
 import { ListCard } from "./ListCard";
 import { ListHeader } from "./ListHeader";
 import { CardForm } from "./Cardform";
 import { useSelector } from "react-redux";
-export function Column({ column, updateColumn }) {
+export function Column({ column }) {
   const user = useSelector((state) => state.user.user);
   const {
     attributes,
@@ -42,7 +41,7 @@ export function Column({ column, updateColumn }) {
         ) : (
           <div className="h-4"></div>
         )}
-        <ListHeader column={column} updateColumn={updateColumn} />
+        <ListHeader column={column} />
         <ListCard cards={column?.cards} />
         <CardForm column={column} />
       </div>

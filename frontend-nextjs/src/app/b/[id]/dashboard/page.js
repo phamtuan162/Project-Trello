@@ -9,6 +9,7 @@ import Chart6 from "./Chart6";
 
 import Loading from "@/components/Loading/Loading";
 import { useParams } from "next/navigation";
+
 const typeCharts = [
   {
     type: "bar",
@@ -31,6 +32,7 @@ const typeCharts = [
     label: "Biểu đồ dạng bánh",
   },
 ];
+
 const times = [
   { label: "Tuần qua", value: "week" },
   {
@@ -94,7 +96,7 @@ export default function dashboardPage() {
           style={{ backgroundColor: "#f1f2f4" }}
           className=" mt-14 mx-2 grow p-4   rounded-lg "
         >
-          <div className="h-full w-full overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 grid-row-2 py-1">
+          <div className="h-full w-full overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 grid-row-2 p-2">
             <Chart1
               typeCharts={typeCharts}
               times={times}

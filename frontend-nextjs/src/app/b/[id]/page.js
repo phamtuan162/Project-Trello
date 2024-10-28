@@ -1,21 +1,16 @@
 "use client";
 import { useParams } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "react-toastify";
 import { useEffect } from "react";
 import {
   updateBoardDetail,
   updateColumnDetail,
   moveCardToDifferentColumnAPI,
-  createColumn,
 } from "@/services/workspaceApi";
-import { mapOrder } from "@/utils/sorts";
-import { generatePlaceholderCard } from "@/utils/formatters";
 import { ListContainer } from "./_components/ListContainer";
 import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
 
 const { updateCard } = cardSlice.actions;
 const { updateBoard } = boardSlice.actions;
@@ -138,74 +133,6 @@ export default function BoardIdPage() {
     }
   };
 
-  const createNewColumn = async (newColumnData) => {
-    try {
-      const { data, status, error } = await createColumn({
-        ...newColumnData,
-        board_id: board.id,
-      });
-      if (200 <= status && status <= 299) {
-        const createdColumn = data;
-        const placeholderCard = generatePlaceholderCard(createdColumn);
-        createdColumn.cards = [placeholderCard];
-        createdColumn.cardOrderIds = [placeholderCard.id];
-
-        // const newColumns = [...board.columns, createdColumn];
-        // const newBoard = {
-        //   ...board,
-        //   columns: newColumns,
-        //   columnOrderIds: [...board.columnOrderIds, createdColumn.id],
-        // };
-
-        const newBoard = { ...board };
-        newBoard.columns = newBoard.columns.concat(createdColumn);
-        newBoard.columnOrderIds = newBoard.columnOrderIds.concat(
-          createdColumn.id
-        );
-
-        dispatch(boardSlice.actions.updateBoard(newBoard));
-        toast.success("Tạo danh sách thành công");
-      } else {
-        toast.error(error);
-      }
-    } catch (error) {
-      console.error("Error creating new column:", error);
-    }
-  };
-
-  const updateColumn = async (columnId, updateData) => {
-    try {
-      const data = await updateColumnDetail(columnId, updateData);
-      if (data.status === 200) {
-        const updatedColumn = data.data;
-        const updatedColumns = board.columns.map((column) =>
-          column.id === updatedColumn.id ? updatedColumn : column
-        );
-
-        const updatedBoard = {
-          ...board,
-          columns: updatedColumns.map((column) => {
-            if (column.id === columnId) {
-              return {
-                ...column,
-                cards: mapOrder(column.cards, column.cardOrderIds, "id"),
-              };
-            }
-            return column;
-          }),
-        };
-
-        dispatch(boardSlice.actions.updateBoard(updatedBoard));
-        toast.success("Cập nhật thành công");
-        dispatch(columnSlice.actions.updateColumn(updatedColumns));
-      } else {
-        toast.error(data.error);
-      }
-    } catch (error) {
-      console.error("Error updating column:", error);
-    }
-  };
-
   if (!board.id || +board.id !== +boardId) {
     return <Loading />;
   }
@@ -225,8 +152,6 @@ export default function BoardIdPage() {
             moveColumns={moveColumns}
             moveCardInTheSameColumn={moveCardInTheSameColumn}
             moveCardToDifferentColumn={moveCardToDifferentColumn}
-            createNewColumn={createNewColumn}
-            updateColumn={updateColumn}
           />
         </div>
       </div>

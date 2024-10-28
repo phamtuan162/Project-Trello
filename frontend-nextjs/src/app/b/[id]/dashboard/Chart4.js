@@ -26,13 +26,15 @@ const Chart4 = ({ typeCharts, times, colors, handleDownload }) => {
     });
     return { ...board, columns: updatedColumns };
   }, [card, board]);
+
   const check = useMemo(
     () =>
       updatedBoard?.columns?.some((column) =>
-        column.cards.some((card) => card.comments.length > 0)
+        column.cards.some((card) => card?.comments?.length > 0)
       ) || false,
     [updatedBoard]
   );
+
   useEffect(() => {
     if (chartRef.current && check) {
       if (chartRef.current.chart) {
@@ -90,9 +92,9 @@ const Chart4 = ({ typeCharts, times, colors, handleDownload }) => {
         }
 
         updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
-              if (card.comments.length > 0) {
+              if (card?.comments?.length > 0) {
                 card.comments.forEach((comment) => {
                   if (comment.created_at) {
                     const created_at = format(
@@ -137,7 +139,7 @@ const Chart4 = ({ typeCharts, times, colors, handleDownload }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card.comments.length > 0) {
+              if (card?.comments?.length > 0) {
                 card.comments.forEach((comment) => {
                   if (!users.includes(comment.userName)) {
                     users.unshift(comment.userName);

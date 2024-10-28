@@ -1,5 +1,5 @@
 "use client";
-import { HelpCircle, User2 } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
 import { useSelector } from "react-redux";
@@ -7,11 +7,7 @@ import Link from "next/link";
 export function BoardList({ boards }) {
   const user = useSelector((state) => state.user.user);
   return (
-    <div className="space-y-4">
-      <div className="flex items-center font-semibold text-lg text-neutral-700">
-        <User2 className="h-6 w-6 mr-2" />
-        Các bảng của bạn
-      </div>
+    <div className="space-y-4 mt-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {boards?.map((board) => (
           <Link

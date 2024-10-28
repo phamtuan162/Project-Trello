@@ -29,7 +29,7 @@ const Chart1 = ({ typeCharts, times, colors, handleDownload }) => {
         let cardCounts = [];
         let columns = [];
         board.columns.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
               if (
                 checkCardCreationDate(selected, card.created_at) &&

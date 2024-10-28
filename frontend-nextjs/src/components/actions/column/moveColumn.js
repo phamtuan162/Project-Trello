@@ -43,37 +43,41 @@ const MoveColumn = ({ children, column }) => {
   );
 
   useEffect(() => {
-    if (valueBoard) {
-      const fetchBoardDetails = async () => {
-        try {
-          const data = await getBoardDetail(valueBoard);
-          if (data.status === 200) {
-            const boardData = data.data;
-            boardData.columns = mapOrder(
-              boardData.columns,
-              boardData.columnOrderIds,
-              "id"
-            );
-            boardData.columns.forEach((col) => {
-              if (isEmpty(col.cards)) {
-                const placeholderCard = generatePlaceholderCard(col);
-                col.cards = [placeholderCard];
-                col.cardOrderIds = [placeholderCard.id];
-              } else {
-                col.cards = mapOrder(col.cards, col.cardOrderIds, "id");
-              }
-            });
-            dispatch(updateColumn(boardData.columns));
-            setBoardMove(boardData);
-          }
-        } catch (error) {
-          toast.error("Failed to fetch board details");
-        }
-      };
-      fetchBoardDetails();
-    } else {
+    if (!valueBoard) {
       setBoardMove(board);
+      return;
     }
+
+    const fetchBoardDetails = async () => {
+      try {
+        const { data, status, error } = await getBoardDetail(valueBoard);
+        if (200 <= status && status <= 299) {
+          const boardData = data;
+
+          boardData.columns = mapOrder(
+            boardData.columns,
+            boardData.columnOrderIds,
+            "id"
+          );
+
+          boardData.columns.forEach((col) => {
+            if (isEmpty(col.cards)) {
+              const placeholderCard = generatePlaceholderCard(col);
+              col.cards = [placeholderCard];
+              col.cardOrderIds = [placeholderCard.id];
+            } else {
+              col.cards = mapOrder(col.cards, col.cardOrderIds, "id");
+            }
+          });
+
+          dispatch(updateColumn(boardData.columns));
+          setBoardMove(boardData);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchBoardDetails();
   }, [valueBoard]);
 
   const handleSubmit = async (e) => {
@@ -81,31 +85,7 @@ const MoveColumn = ({ children, column }) => {
     setIsLoading(true);
 
     try {
-      if (+valueBoard === +column.board_id) {
-        if (+column.id !== +valueColumn) {
-          const newColumns = arrayMove(
-            columns,
-            columns.findIndex((c) => +c.id === +column.id),
-            columns.findIndex((c) => +c.id === +valueColumn)
-          );
-          const newBoard = {
-            ...board,
-            columns: newColumns,
-            columnOrderIds: newColumns.map((c) => c.id),
-          };
-          const data = await updateBoardDetail(newBoard.id, {
-            columnOrderIds: newBoard.columnOrderIds,
-          });
-
-          if (data.status === 200) {
-            dispatch(updateBoard(newBoard));
-            dispatch(updateColumn(newColumns));
-            setIsOpen(false);
-          } else {
-            toast.error(data.error);
-          }
-        }
-      } else {
+      if (+valueBoard !== +column.board_id) {
         const boardActive = cloneDeep(board);
         const boardOver = cloneDeep(boardMove);
         const newColumnIndex = columns.findIndex((c) => c.id === +valueColumn);
@@ -123,22 +103,53 @@ const MoveColumn = ({ children, column }) => {
         );
         boardOver.columnOrderIds = boardOver.columns.map((c) => c.id);
 
-        const data = await moveColumnToDifferentBoardAPI(column.id, {
-          user_id: user.id,
-          boardActive,
-          boardOver,
-        });
+        const { data, status, error } = await moveColumnToDifferentBoardAPI(
+          column.id,
+          {
+            user_id: user.id,
+            boardActive,
+            boardOver,
+          }
+        );
 
-        if (data.status === 200) {
+        if (200 <= status && status <= 299) {
           dispatch(updateBoard(boardActive));
           dispatch(updateColumn(boardActive.columns));
           setIsOpen(false);
         } else {
-          toast.error(data.error);
+          toast.error(error);
+        }
+
+        return;
+      }
+
+      if (+column.id !== +valueColumn) {
+        const newColumns = arrayMove(
+          columns,
+          columns.findIndex((c) => +c.id === +column.id),
+          columns.findIndex((c) => +c.id === +valueColumn)
+        );
+
+        const newBoard = {
+          ...board,
+          columns: newColumns,
+          columnOrderIds: newColumns.map((c) => c.id),
+        };
+
+        const { data, status, error } = await updateBoardDetail(newBoard.id, {
+          columnOrderIds: newBoard.columnOrderIds,
+        });
+
+        if (200 <= status && status <= 299) {
+          dispatch(updateBoard(newBoard));
+          dispatch(updateColumn(newColumns));
+          setIsOpen(false);
+        } else {
+          toast.error(error);
         }
       }
     } catch (error) {
-      toast.error("Failed to move column");
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +160,7 @@ const MoveColumn = ({ children, column }) => {
     setValueBoard(board.id);
     setValueColumn(column.id);
   };
+
   return (
     <Popover
       placement="right"

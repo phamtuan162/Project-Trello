@@ -13,6 +13,7 @@ export function CardForm({ column }) {
   const dispatch = useDispatch();
   const textareaRef = useRef(null);
   const btnAddRef = useRef(null);
+  const formRef = useRef(null);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -22,6 +23,15 @@ export function CardForm({ column }) {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
+
+    const handleClickOutside = async (event) => {
+      if (formRef.current && !formRef.current.contains(event.target)) {
+        await createNewCard();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isEditing]);
 
   const createNewCard = async () => {
@@ -71,9 +81,10 @@ export function CardForm({ column }) {
     }
   };
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = async (event) => {
     if (event.key === "Enter") {
-      textareaRef.current.blur();
+      event.preventDefault();
+      await createNewCard();
     }
   };
 
@@ -85,13 +96,12 @@ export function CardForm({ column }) {
   }
 
   return isEditing ? (
-    <div className="p-2 pb-0">
+    <div className="p-2 pb-0" ref={formRef}>
       <Textarea
         placeholder="Nhập tiêu đề cho thẻ..."
         ref={textareaRef}
         className="text-lg"
         maxRows={1}
-        onBlur={() => createNewCard()}
         onKeyDown={handleKeyDown}
       />
 

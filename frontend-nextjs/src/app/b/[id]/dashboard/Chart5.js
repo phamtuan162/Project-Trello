@@ -59,11 +59,11 @@ const Chart5 = ({ typeCharts, times, colors, handleDownload }) => {
         let missionCounts = [];
         let users = ["Không được giao"];
         updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
-              if (card.works.length > 0) {
+              if (card?.works?.length > 0) {
                 for (const work of card.works) {
-                  if (work.missions.length > 0) {
+                  if (work?.missions?.length > 0) {
                     work.missions.forEach((mission) => {
                       if (
                         checkCardCreationDate(selected, mission.created_at) &&
@@ -111,11 +111,11 @@ const Chart5 = ({ typeCharts, times, colors, handleDownload }) => {
         }
 
         updatedBoard?.columns?.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             column.cards.forEach((card) => {
-              if (card.works.length > 0) {
+              if (card?.works?.length > 0) {
                 for (const work of card.works) {
-                  if (work.missions.length > 0) {
+                  if (work?.missions?.length > 0) {
                     work.missions.forEach((mission) => {
                       if (mission.created_at) {
                         const created_at = format(
@@ -167,9 +167,9 @@ const Chart5 = ({ typeCharts, times, colors, handleDownload }) => {
         updatedBoard?.columns?.forEach((column) => {
           if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card.works.length > 0) {
+              if (card?.works?.length > 0) {
                 for (const work of card.works) {
-                  if (work.missions.length > 0) {
+                  if (work?.missions?.length > 0) {
                     work.missions.forEach((mission) => {
                       if (mission.user_id) {
                         const user = workspace?.users?.find(
@@ -242,6 +242,7 @@ const Chart5 = ({ typeCharts, times, colors, handleDownload }) => {
       setType(typeChart);
     }
   };
+
   return (
     <div
       className="group p-4 rounded-lg bg-white flex flex-col"

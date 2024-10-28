@@ -53,9 +53,11 @@ const Chart3 = ({ typeCharts, times, handleDownload }) => {
     });
     return { ...board, columns: updatedColumns };
   }, [card, board]);
+
   const check = useMemo(
     () =>
-      updatedBoard?.columns?.some((column) => column.cards.length > 0) || false,
+      updatedBoard?.columns?.some((column) => column?.cards?.length > 0) ||
+      false,
     [updatedBoard]
   );
 
@@ -135,7 +137,7 @@ const Chart3 = ({ typeCharts, times, handleDownload }) => {
       let backgroundColors = [];
       let borderColors = [];
       updatedBoard.columns.forEach((column) => {
-        column.cards.forEach((card) => {
+        column?.cards?.forEach((card) => {
           const statusIndex = card.endDateTime
             ? status.findIndex((item) => item.value === card.status)
             : 4;

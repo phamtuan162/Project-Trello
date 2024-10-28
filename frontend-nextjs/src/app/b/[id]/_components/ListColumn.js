@@ -6,12 +6,7 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-export function ListColumn({
-  columns,
-
-  createNewColumn,
-  updateColumn,
-}) {
+export function ListColumn({ columns }) {
   return (
     <ol className="flex gap-x-3 h-full">
       <SortableContext
@@ -19,10 +14,10 @@ export function ListColumn({
         strategy={horizontalListSortingStrategy}
       >
         {columns?.map((column) => (
-          <Column column={column} key={column.id} updateColumn={updateColumn} />
+          <Column column={column} key={column.id} />
         ))}
       </SortableContext>
-      <ListForm createNewColumn={createNewColumn} />
+      <ListForm />
       <div className="flex-shrink-0 w-1" />
     </ol>
   );

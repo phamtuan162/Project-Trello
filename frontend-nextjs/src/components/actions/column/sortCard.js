@@ -14,8 +14,10 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { columnSlice } from "@/stores/slices/columnSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
+
 const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
+
 const SortCard = ({ children, column }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -24,156 +26,83 @@ const SortCard = ({ children, column }) => {
   );
   const board = useSelector((state) => state.board.board);
   const columns = useSelector((state) => state.column.columns);
-  const sortCardsByName = (order) => {
-    const sortedCards = [...column.cards].sort((a, b) =>
-      a.title.localeCompare(b.title)
+
+  const handleColumnUpdate = async (sortedColumn, order) => {
+    const updatedColumns = columns.map((col) =>
+      col.id === column.id ? sortedColumn : col
     );
+
+    try {
+      const { status, error } = await updateColumnDetail(column.id, {
+        order,
+        cardOrderIds: sortedColumn.cardOrderIds,
+      });
+
+      if (200 <= status && status <= 299) {
+        dispatch(updateBoard({ ...board, columns: updatedColumns }));
+        dispatch(updateColumn(updatedColumns));
+      } else {
+        toast.error(error);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const sortCards = (order, compareFn) => {
+    const sortedCards = [...column.cards].sort(compareFn);
     const sortedColumn = {
       ...column,
       cards: sortedCards,
-      cardOrderIds: sortedCards.map((item) => item.id),
+      cardOrderIds: sortedCards.map((card) => card.id),
     };
-
-    const updatedColumns = columns.map((item) => {
-      return item.id === column.id ? sortedColumn : item;
-    });
-
-    updateColumnDetail(column.id, {
-      order: order,
-      cardOrderIds: sortedColumn.cardOrderIds,
-    }).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateBoard({ ...board, columns: updatedColumns }));
-        toast.success("Sắp xếp thành công");
-
-        dispatch(updateColumn(updatedColumns));
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
+    handleColumnUpdate(sortedColumn, order);
   };
 
-  const sortCardsByCreatedAt = (order = "asc") => {
-    const ascending = order === "asc";
-    const sortedCards = [...column.cards].sort((a, b) => {
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-      return ascending ? dateA - dateB : dateB - dateA;
-    });
-
-    const sortedColumn = {
-      ...column,
-      cards: sortedCards,
-      cardOrderIds: sortedCards.map((item) => item.id),
-    };
-
-    const updatedColumns = columns.map((item) => {
-      return item.id === column.id ? sortedColumn : item;
-    });
-
-    updateColumnDetail(column.id, {
-      order: order,
-      cardOrderIds: sortedColumn.cardOrderIds,
-    }).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateBoard({ ...board, columns: updatedColumns }));
-        toast.success("Sắp xếp thành công");
-
-        dispatch(updateColumn(updatedColumns));
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
-  };
-
-  const sortCardsByEndDate = (order) => {
-    const sortedCards = [...column.cards].sort((a, b) => {
-      // Sắp xếp thẻ có ngày kết thúc trước
-      if (a.endDateTime && b.endDateTime) {
+  const sortFunctions = {
+    name: (a, b) => a.title.localeCompare(b.title),
+    endDateTime: (a, b) => {
+      if (a.endDateTime && b.endDateTime)
         return new Date(a.endDateTime) - new Date(b.endDateTime);
-      }
-      // Nếu chỉ có một trong hai thẻ có ngày kết thúc
-      if (a.endDateTime) return -1;
-      if (b.endDateTime) return 1;
-      // Nếu cả hai thẻ không có ngày kết thúc, sắp xếp theo tên
-      return a.title.localeCompare(b.title);
-    });
-
-    const sortedColumn = {
-      ...column,
-      cards: sortedCards,
-      cardOrderIds: sortedCards.map((item) => item.id),
-    };
-
-    const updatedColumns = columns.map((item) => {
-      return item.id === column.id ? sortedColumn : item;
-    });
-
-    updateColumnDetail(column.id, {
-      order: order,
-      cardOrderIds: sortedColumn.cardOrderIds,
-    }).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateBoard({ ...board, columns: updatedColumns }));
-        toast.success("Sắp xếp thành công");
-        dispatch(updateColumn(updatedColumns));
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
+      return a.endDateTime
+        ? -1
+        : b.endDateTime
+        ? 1
+        : a.title.localeCompare(b.title);
+    },
+    createdAtAsc: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    createdAtDesc: (a, b) => new Date(b.created_at) - new Date(a.created_at),
   };
+
   const options = [
-    {
-      order: "desc",
-      label: "Ngày tạo (Gần Nhất Trước)",
-      function: sortCardsByCreatedAt,
-    },
-    {
-      order: "asc",
-      label: "Ngày tạo (Xa Nhất Trước)",
-      function: sortCardsByCreatedAt,
-    },
-    {
-      order: "name",
-      label: "Tên thẻ (theo thứ tự bảng chữ cái)",
-      function: sortCardsByName,
-    },
-    {
-      order: "endDateTime",
-      label: "Ngày hết hạn",
-      function: sortCardsByEndDate,
-    },
+    { order: "createdAtDesc", label: "Ngày tạo (Gần Nhất Trước)" },
+    { order: "createdAtAsc", label: "Ngày tạo (Xa Nhất Trước)" },
+    { order: "name", label: "Tên thẻ (theo thứ tự bảng chữ cái)" },
+    { order: "endDateTime", label: "Ngày hết hạn" },
   ];
 
   const handleSort = useCallback(() => {
     const order = [...selectedKeys][0];
-    const option = options.find((item) => item.order === order);
-    option.function(order);
+    const compareFn = sortFunctions[order];
+    sortCards(order, compareFn);
   }, [selectedKeys]);
 
   return (
     <Popover
       placement="right"
       isOpen={isOpen}
-      onOpenChange={(open) => {
-        setIsOpen(open);
-      }}
-      classNames={{
-        content: ["p-0 py-2"],
-      }}
+      onOpenChange={setIsOpen}
+      classNames={{ content: ["p-0 py-2"] }}
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent className="w-[260px]">
         <div className="w-full">
-          <div className="flex justify-between items-center relative  ">
+          <div className="flex justify-between items-center relative">
             <h1 className="grow text-center font-medium text-xs">
               Sắp xếp danh sách
             </h1>
             <Button
-              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-2 h-auto"
+              className="min-w-3 rounded-lg border-0 hover:bg-default-300 p-1 absolute right-2 h-auto"
               onClick={() => setIsOpen(false)}
               variant="ghost"
             >
@@ -190,7 +119,7 @@ const SortCard = ({ children, column }) => {
               onSelectionChange={setSelectedKeys}
             >
               {options.map((option) => (
-                <ListboxItem key={option.order} onClick={() => handleSort()}>
+                <ListboxItem key={option.order} onClick={handleSort}>
                   {option.label}
                 </ListboxItem>
               ))}
@@ -201,4 +130,5 @@ const SortCard = ({ children, column }) => {
     </Popover>
   );
 };
+
 export default SortCard;

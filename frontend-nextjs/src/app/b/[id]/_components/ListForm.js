@@ -1,38 +1,84 @@
 "use client";
 import { Input, Button } from "@nextui-org/react";
-import { AddIcon } from "@/components/Icon/AddIcon";
+import { toast } from "react-toastify";
 import { useState, useRef, useEffect } from "react";
+
+import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { useSelector } from "react-redux";
-export function ListForm({ createNewColumn }) {
+import { useSelector, useDispatch } from "react-redux";
+import { createColumn } from "@/services/workspaceApi";
+import { generatePlaceholderCard } from "@/utils/formatters";
+import { boardSlice } from "@/stores/slices/boardSlice";
+
+const { updateBoard } = boardSlice.actions;
+
+export function ListForm() {
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
+  const board = useSelector((state) => state.board.board);
+
   const inputRef = useRef(null);
-  const btnaddRef = useRef(null);
+  const btnAddRef = useRef(null);
   const [isCreate, setIsCreate] = useState(false);
+
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && isCreate) {
       inputRef.current.focus();
     }
   }, [isCreate]);
-  const createColumn = async () => {
-    const title = inputRef.current.value.trim();
-    if (title) {
-      createNewColumn({ title: title });
+
+  const createNewColumn = async () => {
+    const trimmedValue = inputRef.current.value.trim();
+
+    if (trimmedValue.length < 3) {
+      toast.error("Title cột phải ít nhất 3 ký tự");
+      return;
+    }
+
+    try {
+      const { data, status, error } = await createColumn({
+        title: trimmedValue,
+        board_id: board.id,
+      });
+
+      if (200 <= status && status <= 299) {
+        const createdColumn = data;
+        const placeholderCard = generatePlaceholderCard(createdColumn);
+        createdColumn.cards = [placeholderCard];
+        createdColumn.cardOrderIds = [placeholderCard.id];
+
+        const newBoard = { ...board };
+        newBoard.columns = newBoard.columns.concat(createdColumn);
+        newBoard.columnOrderIds = newBoard.columnOrderIds.concat(
+          createdColumn.id
+        );
+
+        dispatch(updateBoard(newBoard));
+        toast.success("Tạo danh sách thành công");
+      } else {
+        toast.error(error);
+      }
+    } catch (error) {
+      console.log("Error creating new column:", error);
+    } finally {
       setIsCreate(false);
     }
   };
 
-  const handleKeyDown = (event) => {
+  const handleKeyDown = async (event) => {
     if (event.key === "Enter") {
-      btnaddRef.current.click();
+      event.preventDefault();
+      await createNewColumn();
     }
   };
+
   if (
     user?.role?.toLowerCase() !== "admin" &&
     user?.role?.toLowerCase() !== "owner"
   ) {
-    return;
+    return null;
   }
+
   return (
     <li className="shrink-0 h-full w-[272px] select-none   ">
       {isCreate ? (
@@ -56,8 +102,8 @@ export function ListForm({ createNewColumn }) {
               <Button
                 type="button"
                 color="primary"
-                ref={btnaddRef}
-                onClick={() => createColumn()}
+                ref={btnAddRef}
+                onClick={() => createNewColumn()}
               >
                 Thêm danh sách
               </Button>

@@ -25,6 +25,7 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
     });
     return { ...board, columns: updatedColumns };
   }, [card, board]);
+
   const check = useMemo(
     () =>
       updatedBoard?.columns?.some((column) => column.cards.length > 0) || false,
@@ -138,9 +139,9 @@ const Chart2 = ({ typeCharts, times, colors, handleDownload }) => {
         let backgroundColors = [];
         let borderColors = [];
         updatedBoard.columns.forEach((column) => {
-          if (column.cards.length > 0) {
+          if (column?.cards?.length > 0) {
             for (const card of column.cards) {
-              if (card.users.length > 0) {
+              if (card?.users?.length > 0) {
                 for (const user of card.users) {
                   if (!users.includes(user.name)) {
                     users.unshift(user.name);

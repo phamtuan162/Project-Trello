@@ -32,8 +32,6 @@ export function ListContainer({
   moveColumns,
   moveCardInTheSameColumn,
   moveCardToDifferentColumn,
-  createNewColumn,
-  updateColumn,
 }) {
   const user = useSelector((state) => state.user.user);
   const checkUser = useMemo(
@@ -335,12 +333,7 @@ export function ListContainer({
       onDragEnd={HandleDragEnd}
       collisionDetection={collisionDetectionStrategy}
     >
-      <ListColumn
-        columns={orderedColumns}
-        createNewColumn={createNewColumn}
-        updateColumn={updateColumn}
-      />
-      ;
+      <ListColumn columns={orderedColumns} />;
       <DragOverlay dropAnimation={dropAnimation}>
         {!activeDragItemType && null}
         {activeDragItemType === ACTIVE_DRAG_ITEM_TYPE.COLUMN && (
