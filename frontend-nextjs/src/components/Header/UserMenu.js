@@ -23,7 +23,6 @@ export function UserMenu({ user }) {
         logoutApi().then((data) => {
           if (data) {
             // socket.emit("logout", user.id);
-
             Cookies.remove("access_token");
             Cookies.remove("refresh_token");
             window.location.href = "/auth/login";

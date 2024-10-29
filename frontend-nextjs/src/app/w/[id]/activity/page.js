@@ -16,7 +16,7 @@ import { ChevronDownIcon } from "lucide-react";
 export default function pageActivity() {
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("desc");
   const statusOptions = [
     { name: "Gần Nhất Trước ↓", uid: "desc" },
     { name: "Xa Nhất Trước ↑", uid: "asc" },
@@ -44,20 +44,17 @@ export default function pageActivity() {
       );
     }
 
-    if (
-      statusFilter !== "all" &&
-      Array.from(statusFilter).length !== statusOptions.length
-    ) {
-      console.log(statusFilter);
-      if (Array.from(statusFilter).includes("asc")) {
-        filteredActivities.sort(
-          (a, b) => new Date(a.created_at) - new Date(b.created_at)
-        );
-      } else if (Array.from(statusFilter).includes("desc")) {
-        filteredActivities.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-      }
+    if (statusFilter) {
+      filteredActivities.sort((a, b) => {
+        switch (statusFilter) {
+          case "asc":
+            return new Date(a.created_at) - new Date(b.created_at); // Ngày tạo tăng dần
+          case "desc":
+            return new Date(b.created_at) - new Date(a.created_at); // Ngày tạo giảm dần
+          default:
+            return 0; // Không thay đổi thứ tự nếu không khớp
+        }
+      });
     }
 
     return filteredActivities;
@@ -101,11 +98,11 @@ export default function pageActivity() {
             </DropdownTrigger>
             <DropdownMenu
               disallowEmptySelection
-              aria-label="Table Columns"
+              aria-label="status activities"
               closeOnSelect={false}
-              selectedKeys={statusFilter}
-              selectionMode="multiple"
-              onSelectionChange={setStatusFilter}
+              selectedKeys={[statusFilter]}
+              selectionMode="single"
+              onSelectionChange={(value) => setStatusFilter([...value][0])}
             >
               {statusOptions.map((status) => (
                 <DropdownItem key={status.uid} className="capitalize">

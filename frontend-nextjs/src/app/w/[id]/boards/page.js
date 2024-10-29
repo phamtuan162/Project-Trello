@@ -72,11 +72,11 @@ export default function PageBoards({ params }) {
 
   return (
     <div className="w-full mb-20">
-      <div className="flex items-center font-semibold text-lg text-neutral-700 mt-2">
-        <User2 className="h-6 w-6 mr-2" />
-        Các bảng của bạn
-      </div>
       <div className="px-2 md:px-4 mt-4">
+        <div className="flex items-center font-semibold text-lg text-neutral-700 mt-2">
+          <User2 className="h-6 w-6 mr-2" />
+          Các bảng của bạn
+        </div>
         <Skeleton isLoaded={Boolean(workspace?.boards)}>
           <Suspense fallback={<BoardList.Skeleton />}>
             <div className="flex flex-col gap-4">

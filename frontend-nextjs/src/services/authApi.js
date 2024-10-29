@@ -27,6 +27,8 @@ export const getAccessToken = async () => {
 /** Login */
 export const loginLocalApi = async (body) => {
   const { response, data } = await client.post(`/auth/login`, body);
+  console.log(data);
+
   return data;
 };
 

@@ -19,52 +19,51 @@ const LeaveWorkspace = ({ user }) => {
   const socket = useSelector((state) => state.socket.socket);
   const [isOpen, setIsOpen] = useState(false);
   const handleLeaveOrCancelWorkspace = async () => {
-    if (+user.id === +userActive.id) {
-      leaveWorkspaceApi({ user_id: user.id, workspace_id: workspace.id }).then(
-        (data) => {
-          if (data.status === 200) {
-            dispatch(cancelUser(user));
-            window.location.href = "/";
-            socket.emit("removeUser", {
-              userActionId: userActive.id,
-              userRemoveId: userActive.id,
-            });
-          }
-        }
-      );
-    } else {
-      cancelUserWorkspaceApi({
+    try {
+      const isSelfAction = +user.id === +userActive.id;
+      const apiMethod = isSelfAction
+        ? leaveWorkspaceApi
+        : cancelUserWorkspaceApi;
+
+      const { status, data, error } = await apiMethod({
         user_id: user.id,
         workspace_id: workspace.id,
-      }).then((data) => {
-        if (data.status === 200) {
-          const workspaceUpdate = {
+      });
+
+      if (200 <= status && status <= 299) {
+        if (isSelfAction) {
+          dispatch(cancelUser(user));
+          window.location.href = "/";
+        } else {
+          const updatedWorkspace = {
             ...workspace,
             total_user: workspace.total_user - 1,
             users: workspace.users.filter((item) => +item.id !== +user.id),
-            activities:
-              workspace.activities.length > 0
-                ? [...workspace.activities, data.data]
-                : [data.data],
+            activities: [...workspace.activities, data],
           };
-          dispatch(updateWorkspace(workspaceUpdate));
+          dispatch(updateWorkspace(updatedWorkspace));
+          toast.success("Loại bỏ thành viên thành công");
+        }
+
+        socket.emit("removeUser", {
+          userActionId: userActive.id,
+          userRemoveId: isSelfAction ? userActive.id : user.id,
+        });
+
+        if (!isSelfAction) {
           socket.emit("sendNotification", {
             user_id: user.id,
             userName: userActive.name,
             userAvatar: userActive.avatar,
             type: "cancel_user",
-            content: `đã loại bạn khỏi Không gian làm việc ${workspace.name} `,
+            content: `đã loại bạn khỏi Không gian làm việc ${workspace.name}`,
           });
-          toast.success("Loại bỏ thành viên thành công");
-          socket.emit("removeUser", {
-            userActionId: userActive.id,
-            userRemoveId: user.id,
-          });
-        } else {
-          const message = data.error;
-          toast.error(message);
         }
-      });
+      } else {
+        toast.error(error);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 

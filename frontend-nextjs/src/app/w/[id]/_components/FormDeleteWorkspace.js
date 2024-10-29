@@ -119,7 +119,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
 
                 <p className="mt-2">
                   Vui lòng nhập lại
-                  <span className="font-bold text-md mx-1">
+                  <span className="font-bold text-sm mx-1 ">
                     {workspace.name}
                   </span>
                   để xác nhận
@@ -140,7 +140,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
               <ModalFooter>
                 <div className="flex w-full justify-end gap-3 mt-4">
                   <Button
-                    isDisabled={isDelete ? true : false}
+                    isDisabled={isDelete}
                     onPress={onClose}
                     type="button"
                     className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
@@ -150,7 +150,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
                   </Button>
                   <Button
                     onClick={() => HandleDeleteWorkspace()}
-                    isDisabled={isDelete ? true : false}
+                    isDisabled={isDelete}
                     type="submit"
                     className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
                     color="danger"

@@ -17,7 +17,7 @@ import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
 import { setLocalStorage } from "@/utils/localStorage";
 import { Mail, LockKeyhole } from "lucide-react";
-
+import { PASSWORD_RULE } from "@/utils/validators";
 const PageLogin = () => {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -35,19 +35,23 @@ const PageLogin = () => {
 
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
+    try {
+      const { device_id_current, access_token, refresh_token, status, error } =
+        await loginLocalApi(form);
 
-    loginLocalApi(form).then((data) => {
-      if (!data.error) {
+      if (200 <= status && status <= 299) {
         toast.success("Đăng nhập thành công");
-        setLocalStorage("device_id_current", data.device_id_current);
-        Cookies.set("access_token", data.access_token, { expires: 7 });
-        Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
+        setLocalStorage("device_id_current", device_id_current);
+        Cookies.set("access_token", access_token, { expires: 7 });
+        Cookies.set("refresh_token", refresh_token, { expires: 7 });
+
         router.push("/");
       } else {
-        const error = data.error;
         setErrorMessage(error);
       }
-    });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const loginSocialGoogle = async () => {
@@ -99,7 +103,7 @@ const PageLogin = () => {
         <h1 className="title text-md">Đăng nhập</h1>
 
         <form
-          className="form flex flex-col justify-center items-center gap-4 w-full  px-10 mt-10"
+          className="form flex flex-col justify-center items-center gap-2 w-full  px-10 mt-10"
           onSubmit={HandleLoginLocal}
         >
           <Message message={errorMessage} />

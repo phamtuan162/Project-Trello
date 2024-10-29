@@ -118,7 +118,7 @@ export default function PageWorkspaceUsers() {
   }, [socket]);
 
   const rolesUser = useMemo(() => {
-    if (!userActive) return roles;
+    if (!userActive?.role) return roles;
 
     const roleUserActive = userActive.role.toLowerCase();
 
