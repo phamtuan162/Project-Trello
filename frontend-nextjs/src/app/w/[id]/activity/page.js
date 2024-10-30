@@ -24,20 +24,20 @@ export default function pageActivity() {
 
   const hasSearchFilter = Boolean(filterValue);
 
-  const activities = useMemo(() => {
-    return workspace?.activities?.length > 0
-      ? workspace.activities
-          .filter((activity) => activity.workspace_id)
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      : [];
-  }, [workspace]);
+  const activitiesSort = useMemo(() => {
+    if (!workspace?.activities?.length) return [];
+
+    return workspace.activities
+      .filter(({ workspace_id }) => workspace_id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [workspace.activities]);
 
   const filteredItems = useMemo(() => {
-    let filteredActivities = workspace?.activities
-      ? activities.filter(
-          (activity) => activity !== null && activity !== undefined
-        )
-      : [];
+    let filteredActivities =
+      activitiesSort.filter(
+        (activity) => activity !== null && activity !== undefined
+      ) || [];
+
     if (hasSearchFilter) {
       filteredActivities = filteredActivities.filter((activity) =>
         activity.userName.toLowerCase().includes(filterValue.toLowerCase())
@@ -58,7 +58,7 @@ export default function pageActivity() {
     }
 
     return filteredActivities;
-  }, [workspace, filterValue, statusFilter]);
+  }, [activitiesSort, filterValue, statusFilter]);
 
   return workspace.activities ? (
     <div className="h-full ">

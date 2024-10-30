@@ -29,14 +29,20 @@ export const workspaceSlice = createSlice({
     decentRoleUser: (state, action) => {
       const usersUpdate = state.workspace.users.map((user) => {
         if (+user.id === +action.payload.id) {
-          return action.payload;
+          return { ...user, role: action.payload.role };
         }
         return user;
       });
-      state.workspace = {
-        ...state.workspace,
-        users: usersUpdate,
-      };
+      state.workspace.users = usersUpdate;
+    },
+    updateActivities: (state, action) => {
+      const activitiesUpdate = state.workspace.activities.map((activity) => {
+        if (+activity.id === +action.payload.id) {
+          return action.payload;
+        }
+        return activity;
+      });
+      state.workspace.activities = activitiesUpdate;
     },
 
     updateStatusUser: (state, action) => {

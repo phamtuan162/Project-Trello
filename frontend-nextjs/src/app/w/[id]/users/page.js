@@ -28,6 +28,7 @@ import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import capitalize from "@/utils/capitalize";
+import { useParams } from "next/navigation";
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "role", "status", "actions"];
 const columns = [
@@ -64,26 +65,16 @@ const roles = [
     desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
   },
 ];
-const { updateWorkspace, updateStatusUser } = workspaceSlice.actions;
+const { updateActivities, updateStatusUser, decentRoleUser } =
+  workspaceSlice.actions;
 
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
+
   const userActive = useSelector((state) => state.user.user);
   const socket = useSelector((state) => state.socket.socket);
-  const sortedUsers = useMemo(() => {
-    return workspace && workspace.users
-      ? [...workspace.users].sort((a, b) => {
-          const roleA = a.role.toLowerCase();
-          const roleB = b.role.toLowerCase();
-          if (roleA === "owner") return -1;
-          if (roleB === "owner") return 1;
-          if (roleA === "admin") return -1;
-          if (roleB === "admin") return 1;
-          return 0; // Mặc định sắp xếp không thay đổi vị trí
-        })
-      : [];
-  }, [workspace]);
+  const { id } = useParams();
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState(
@@ -117,6 +108,27 @@ export default function PageWorkspaceUsers() {
     };
   }, [socket]);
 
+  const sortedUsers = useMemo(() => {
+    if (!workspace?.users) return [];
+
+    const rolePriority = {
+      owner: 1,
+      admin: 2,
+    };
+
+    return [...workspace.users].sort((a, b) => {
+      const priorityA = rolePriority[a.role.toLowerCase()] || 3;
+      const priorityB = rolePriority[b.role.toLowerCase()] || 3;
+
+      // So sánh theo mức độ ưu tiên, nếu bằng nhau thì giữ nguyên thứ tự
+      if (priorityA === priorityB) {
+        return 0;
+      }
+
+      return priorityA - priorityB;
+    });
+  }, [workspace.users]);
+
   const rolesUser = useMemo(() => {
     if (!userActive?.role) return roles;
 
@@ -132,7 +144,7 @@ export default function PageWorkspaceUsers() {
     return roles.filter(
       (role) => !excludedRoles.includes(role.value.toLowerCase())
     );
-  }, [userActive]);
+  }, [userActive.role]);
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -145,9 +157,8 @@ export default function PageWorkspaceUsers() {
   }, [visibleColumns]);
 
   const filteredItems = useMemo(() => {
-    let filteredUsers = workspace?.users
-      ? sortedUsers.filter((user) => user !== null && user !== undefined)
-      : [];
+    let filteredUsers =
+      sortedUsers.filter((user) => user !== null && user !== undefined) || [];
 
     if (hasSearchFilter) {
       filteredUsers = filteredUsers.filter((user) =>
@@ -164,7 +175,7 @@ export default function PageWorkspaceUsers() {
     }
 
     return filteredUsers;
-  }, [workspace, filterValue, statusFilter]);
+  }, [sortedUsers, filterValue, statusFilter]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage);
 
@@ -185,7 +196,7 @@ export default function PageWorkspaceUsers() {
     });
   }, [sortDescriptor, items]);
 
-  const handleDecentRole = useCallback(async (role, user) => {
+  const handleDecentRole = async (role, user) => {
     const roleNew = [...role][0];
 
     if (!roleNew && !user.id) {
@@ -194,119 +205,106 @@ export default function PageWorkspaceUsers() {
     }
 
     try {
-      const { data, status, error } = await decentRoleApi(workspace.id, {
+      const { data, status, error } = await decentRoleApi(id, {
         user_id: user.id,
         role: roleNew,
       });
 
       if (200 <= status && status <= 299) {
-        const activity = data;
+        dispatch(decentRoleUser({ id: user.id, role: roleNew }));
+        dispatch(updateActivities(data));
+        toast.success("Cập nhật role cho thành viên thành công");
 
-        const updatedUsers = workspace.users.map((item) => {
-          if (item.id === user.id) {
-            return { ...item, role: roleNew };
-          }
-          return item;
-        });
-
-        const newActivities =
-          workspace.activities.length > 0
-            ? [activity, ...workspace.activities]
-            : [activity];
-
-        const workspaceUpdate = {
-          ...workspace,
-          users: updatedUsers,
-          activities: newActivities,
-        };
-
-        dispatch(updateWorkspace(workspaceUpdate));
-
-        socket.emit("sendNotification", {
-          user_id: user.id,
-          userName: userActive.name,
-          userAvatar: userActive.avatar,
-          type: "cancel_user",
-          content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
-        });
+        // socket.emit("sendNotification", {
+        //   user_id: user.id,
+        //   userName: userActive.name,
+        //   userAvatar: userActive.avatar,
+        //   type: "cancel_user",
+        //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
+        // });
       } else {
         toast.error(error);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Đã xảy ra lỗi khi cập nhật vai trò.");
     }
-  }, []);
+  };
 
-  const renderCell = useCallback((user, columnKey) => {
-    const cellValue = user[columnKey];
+  const renderCell = useCallback(
+    (user, columnKey) => {
+      const cellValue = user[columnKey];
 
-    switch (columnKey) {
-      case "name":
-        return (
-          <User
-            avatarProps={{
-              radius: "full",
-              size: "sm",
-              src: user.avatar,
-              color: "secondary",
-              name: cellValue.charAt(0).toUpperCase(),
-            }}
-            classNames={{
-              description: "text-default-500",
-            }}
-            description={user.email}
-            name={cellValue}
-          >
-            {user.email}
-          </User>
-        );
-      case "role":
-        const isOwner = user?.role?.toLowerCase() === "owner";
-        const isNotAdminOrOwner =
-          userActive?.role?.toLowerCase() !== "admin" &&
-          userActive?.role?.toLowerCase() !== "owner";
-        const isCurrentUser = +userActive?.id === +user?.id;
+      switch (columnKey) {
+        case "name":
+          return (
+            <User
+              avatarProps={{
+                radius: "full",
+                size: "sm",
+                src: user.avatar,
+                color: "secondary",
+                name: cellValue.charAt(0).toUpperCase(),
+              }}
+              classNames={{
+                description: "text-default-500",
+              }}
+              description={user.email}
+              name={cellValue}
+            >
+              {user.email}
+            </User>
+          );
+        case "role":
+          const isOwner = user?.role?.toLowerCase() === "owner";
+          const isNotAdminOrOwner =
+            userActive?.role?.toLowerCase() !== "admin" &&
+            userActive?.role?.toLowerCase() !== "owner";
+          const isCurrentUser = +userActive?.id === +user?.id;
 
-        const shouldDisplayText = isOwner || isNotAdminOrOwner || isCurrentUser;
-        return shouldDisplayText ? (
-          <p className="text-bold text-small capitalize">{cellValue}</p>
-        ) : (
-          <Select
-            variant="bordered"
-            size="xs"
-            aria-label="Roles"
-            classNames={{
-              label: "group-data-[filled=true]:-translate-y-5",
-              trigger: "w-[100px]",
-            }}
-            selectedKeys={new Set([user.role.toLowerCase()])}
-            onSelectionChange={(role) => handleDecentRole(role, user)}
-          >
-            {rolesUser.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.name}
-              </SelectItem>
-            ))}
-          </Select>
-        );
-      case "status":
-        return (
-          <Chip
-            className="capitalize border-none gap-1 text-default-600"
-            color={user.isOnline ? "success" : "default"}
-            size="sm"
-            variant="dot"
-          >
-            {cellValue}
-          </Chip>
-        );
-      case "actions":
-        return <LeaveWorkspace user={user} />;
-      default:
-        return cellValue;
-    }
-  }, []);
+          const shouldDisplayText =
+            isOwner || isNotAdminOrOwner || isCurrentUser;
+          return shouldDisplayText ? (
+            <p className="text-bold text-small capitalize">{cellValue}</p>
+          ) : (
+            <Select
+              variant="bordered"
+              size="xs"
+              aria-label="Roles"
+              classNames={{
+                label: "group-data-[filled=true]:-translate-y-5",
+                trigger: "w-[100px]",
+              }}
+              selectedKeys={new Set([user.role.toLowerCase()])}
+              onSelectionChange={(role) => {
+                handleDecentRole(role, user);
+              }}
+            >
+              {rolesUser.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </Select>
+          );
+        case "status":
+          return (
+            <Chip
+              className="capitalize border-none gap-1 text-default-600"
+              color={user.isOnline ? "success" : "default"}
+              size="sm"
+              variant="dot"
+            >
+              {cellValue}
+            </Chip>
+          );
+        case "actions":
+          return <LeaveWorkspace user={user} />;
+        default:
+          return cellValue;
+      }
+    },
+    [workspace.users]
+  );
 
   const onNextPage = useCallback(() => {
     if (page < pages) {
