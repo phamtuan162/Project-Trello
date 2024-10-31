@@ -24,18 +24,17 @@ const Notification = ({ children, handleClickNotify }) => {
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
+
   const notificationsFilter = useMemo(() => {
     return notifications?.filter(
-      (notification) =>
-        notification?.status?.toLowerCase().trim() ===
-        (isSelected ? "unread" : "read")
+      ({ status }) =>
+        status.toLowerCase().trim() === (isSelected ? "unread" : "read")
     );
   }, [isSelected, notifications]);
 
   useEffect(() => {
     const handleGetNotification = (data) => {
-      const notificationsUpdate =
-        notifications.length > 0 ? [data, ...notifications] : [data];
+      const notificationsUpdate = [data, ...notifications];
       dispatch(updateNotification(notificationsUpdate));
     };
 
@@ -49,19 +48,26 @@ const Notification = ({ children, handleClickNotify }) => {
   }, [socket]);
 
   const handleMarkAsReadNotification = async () => {
-    if (notifications.length > 0) {
-      markAsReadNotification({ user_id: user.id }).then((data) => {
-        if (data.status === 200) {
-          const notificationsUpdate = notifications.map((notification) => {
-            return { ...notification, status: "read" };
-          });
-          dispatch(updateNotification(notificationsUpdate));
-        } else {
-          toast.error(data.error);
-        }
+    if (!notifications.length) return;
+
+    try {
+      const { status, error } = await markAsReadNotification({
+        user_id: user.id,
       });
+      if (200 <= status && status <= 299) {
+        const notificationsUpdate = notifications.map((notification) => ({
+          ...notification,
+          status: "read",
+        }));
+        dispatch(updateNotification(notificationsUpdate));
+      } else {
+        toast.error(error);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
+
   return (
     <Popover
       placement="bottom"

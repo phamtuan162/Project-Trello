@@ -16,19 +16,21 @@ const statusOptions = [
 
 export default function MissionsWorkspace() {
   const missionsActive = useSelector((state) => state.mission.missions);
-  const missions = useMemo(() => {
-    return missionsActive.filter((item) => item.card_id) || [];
-  }, [missionsActive]);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [selected, setSelected] = useState("all");
 
   const hasSearchFilter = Boolean(filterValue);
 
+  const missionsSort = useMemo(() => {
+    return missionsActive.filter((item) => item.card_id) || [];
+  }, [missionsActive]);
+
   const filteredItems = useMemo(() => {
-    let filteredMissions = missions
-      ? missions.filter((mission) => mission !== null && mission !== undefined)
-      : [];
+    let filteredMissions =
+      missionsSort.filter(
+        (mission) => mission !== null && mission !== undefined
+      ) || [];
     if (hasSearchFilter) {
       const filterBoards = workspace.boards.filter((board) =>
         board.title.toLowerCase().includes(filterValue.toLowerCase())
@@ -43,7 +45,7 @@ export default function MissionsWorkspace() {
       );
     }
     return filteredMissions;
-  }, [missions, filterValue, selected]);
+  }, [missionsSort, filterValue, selected]);
 
   return (
     <div className="h-full ">

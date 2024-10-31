@@ -10,7 +10,7 @@ import {
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
-const { cancelUser, updateWorkspace } = workspaceSlice.actions;
+const { cancelUser, updateActivities } = workspaceSlice.actions;
 
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
@@ -32,16 +32,11 @@ const LeaveWorkspace = ({ user }) => {
 
       if (200 <= status && status <= 299) {
         if (isSelfAction) {
-          dispatch(cancelUser(user));
+          toast.success("Rời đi thành công");
           window.location.href = "/";
         } else {
-          const updatedWorkspace = {
-            ...workspace,
-            total_user: workspace.total_user - 1,
-            users: workspace.users.filter((item) => +item.id !== +user.id),
-            activities: [...workspace.activities, data],
-          };
-          dispatch(updateWorkspace(updatedWorkspace));
+          dispatch(cancelUser(user));
+          dispatch(updateActivities(data));
           toast.success("Loại bỏ thành viên thành công");
         }
 

@@ -49,6 +49,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
         const users = workspace.users.filter(
           (item) => +item.id !== +user.id && item.isOnline
         );
+
         users.forEach((userItem) => {
           socket.emit("sendNotification", {
             user_id: userItem.id,
@@ -68,7 +69,6 @@ const FormDeleteWorkspace = ({ workspace }) => {
       }
     } catch (error) {
       console.log(error);
-      setMessage("Có lỗi xảy ra, vui lòng thử lại sau.");
     } finally {
       setIsDelete(false);
     }

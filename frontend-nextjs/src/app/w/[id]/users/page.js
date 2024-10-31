@@ -120,11 +120,6 @@ export default function PageWorkspaceUsers() {
       const priorityA = rolePriority[a.role.toLowerCase()] || 3;
       const priorityB = rolePriority[b.role.toLowerCase()] || 3;
 
-      // So sánh theo mức độ ưu tiên, nếu bằng nhau thì giữ nguyên thứ tự
-      if (priorityA === priorityB) {
-        return 0;
-      }
-
       return priorityA - priorityB;
     });
   }, [workspace.users]);
@@ -177,7 +172,7 @@ export default function PageWorkspaceUsers() {
     return filteredUsers;
   }, [sortedUsers, filterValue, statusFilter]);
 
-  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -196,39 +191,42 @@ export default function PageWorkspaceUsers() {
     });
   }, [sortDescriptor, items]);
 
-  const handleDecentRole = async (role, user) => {
-    const roleNew = [...role][0];
+  const handleDecentRole = useCallback(
+    async (role, user) => {
+      const roleNew = [...role][0];
 
-    if (!roleNew && !user.id) {
-      console.log((roleNew, user.id));
-      return;
-    }
-
-    try {
-      const { data, status, error } = await decentRoleApi(id, {
-        user_id: user.id,
-        role: roleNew,
-      });
-
-      if (200 <= status && status <= 299) {
-        dispatch(decentRoleUser({ id: user.id, role: roleNew }));
-        dispatch(updateActivities(data));
-        toast.success("Cập nhật role cho thành viên thành công");
-
-        // socket.emit("sendNotification", {
-        //   user_id: user.id,
-        //   userName: userActive.name,
-        //   userAvatar: userActive.avatar,
-        //   type: "cancel_user",
-        //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
-        // });
-      } else {
-        toast.error(error);
+      if (!roleNew && !user.id) {
+        console.log((roleNew, user.id));
+        return;
       }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+
+      try {
+        const { data, status, error } = await decentRoleApi(id, {
+          user_id: user.id,
+          role: roleNew,
+        });
+
+        if (200 <= status && status <= 299) {
+          dispatch(decentRoleUser({ id: user.id, role: roleNew }));
+          dispatch(updateActivities(data));
+          toast.success("Cập nhật role cho thành viên thành công");
+
+          // socket.emit("sendNotification", {
+          //   user_id: user.id,
+          //   userName: userActive.name,
+          //   userAvatar: userActive.avatar,
+          //   type: "cancel_user",
+          //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
+          // });
+        } else {
+          toast.error(error);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [workspace.users]
+  );
 
   const renderCell = useCallback(
     (user, columnKey) => {
@@ -415,7 +413,7 @@ export default function PageWorkspaceUsers() {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Tổng cộng {workspace?.total_user} thành viên
+            Tổng cộng {workspace?.users?.length} thành viên
           </span>
           <label className="flex items-center text-default-400 text-small">
             Hàng trên mỗi trang:

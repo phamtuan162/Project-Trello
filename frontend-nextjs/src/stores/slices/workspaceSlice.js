@@ -12,20 +12,17 @@ export const workspaceSlice = createSlice({
       state.workspace = action.payload;
     },
     inviteUser: (state, action) => {
-      state.workspace = {
-        ...state.workspace,
-        users: [...state.workspace.users, action.payload],
-      };
+      const { userUpdate, role } = action.payload;
+
+      state.workspace.users.push({ ...userUpdate, role });
     },
     cancelUser: (state, action) => {
-      state.workspace = {
-        ...state.workspace,
-        users: state.workspace.users.filter(
-          (user) => +user.id !== +action.payload.id
-        ),
-      };
-    },
+      const usersUpdate = state.workspace.users.filter(
+        (user) => +user.id !== +action.payload.id
+      );
 
+      state.workspace.users = usersUpdate;
+    },
     decentRoleUser: (state, action) => {
       const usersUpdate = state.workspace.users.map((user) => {
         if (+user.id === +action.payload.id) {
@@ -46,16 +43,13 @@ export const workspaceSlice = createSlice({
     },
 
     updateStatusUser: (state, action) => {
-      const usersUpdated = state.workspace.users.map((user) => {
+      const usersUpdate = state.workspace.users.map((user) => {
         if (user.id === action.payload.id) {
           return { ...user, isOnline: action.payload.isOnline };
         }
         return user;
       });
-      state.workspace = {
-        ...state.workspace,
-        users: usersUpdated,
-      };
+      state.workspace.users = usersUpdate;
     },
   },
   extraReducers: (builder) => {

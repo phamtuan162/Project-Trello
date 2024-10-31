@@ -42,11 +42,14 @@ const SearchWorkspace = () => {
     }
     setIsLoading(true);
     try {
-      const data = await switchWorkspace(workspace_id_witched, {
-        user_id: user.id,
-      });
-      if (data.status === 200) {
-        const workspaceActive = data.data;
+      const { data, status, error } = await switchWorkspace(
+        workspace_id_witched,
+        {
+          user_id: user.id,
+        }
+      );
+      if (200 <= status && status <= 299) {
+        const workspaceActive = data;
         if (workspaceActive.users) {
           const userNeedToFind = workspaceActive.users.find(
             (item) => +item.id === +user.id
@@ -61,11 +64,13 @@ const SearchWorkspace = () => {
         );
         dispatch(updateWorkspace(workspaceActive));
         router.push(`/w/${workspaceActive.id}/home`);
-        setFilterValue("");
+      } else {
+        console.log(error);
       }
     } catch (error) {
-      console.error("Không thể chuyển đổi không gian làm việc", error);
+      console.log(error);
     } finally {
+      setFilterValue("");
       setIsLoading(false);
     }
   };

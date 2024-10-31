@@ -14,7 +14,6 @@ const {
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
-const UserTransformer = require("../../../transformers/user/user.transformer");
 
 module.exports = {
   index: async (req, res) => {
@@ -544,7 +543,6 @@ module.exports = {
           model: Activity,
           as: "activities",
         },
-      
       ],
       order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
     });

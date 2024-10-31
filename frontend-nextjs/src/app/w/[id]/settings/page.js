@@ -6,7 +6,6 @@ import FormDeleteWorkspace from "../_components/FormDeleteWorkspace";
 import FormUpdateWorkspace from "../_components/FormUpdateWorkspace";
 export default function pageWorkspaceSetting() {
   const workspace = useSelector((state) => state.workspace.workspace);
-  console.log(workspace.users);
 
   return workspace ? (
     <div className="pb-6">

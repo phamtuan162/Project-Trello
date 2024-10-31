@@ -19,7 +19,7 @@ import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { searchUser } from "@/services/userApi";
 
-const { updateWorkspace } = workspaceSlice.actions;
+const { inviteUser, updateActivities } = workspaceSlice.actions;
 
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
@@ -102,12 +102,13 @@ const FormInviteUser = ({ rolesUser }) => {
     const isUserInvited = workspace.users.some(
       (user) => user.id === userInvite.id
     );
-    const selectedRole = [...role][0];
 
     if (isUserInvited) {
       setMessage("Người dùng này đã có trong Không gian làm việc của bạn");
       return;
     }
+    const selectedRole = [...role][0];
+
     try {
       const { data, status, error } = await inviteUserApi({
         user_id: userInvite.id,
@@ -115,31 +116,29 @@ const FormInviteUser = ({ rolesUser }) => {
         workspace_id: workspace.id,
       });
       if (200 <= status && status <= 200) {
-        const updatedWorkspace = {
-          ...workspace,
-          total_user: workspace.total_user + 1,
-          users: [...workspace.users, { ...userInvite, role: selectedRole }],
-          activities: [...workspace.activities, data.data],
-        };
-        dispatch(updateWorkspace(updatedWorkspace));
-        // socket.emit("sendNotification", {
-        //   user_id: userInvite.id,
-        //   userName: user.name,
-        //   userAvatar: user.avatar,
-        //   type: "invite_user",
-        //   content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
-        // });
+        dispatch(inviteUser({ user: userInvite, role: selectedRole }));
+        dispatch(updateActivities(data));
+
+        socket.emit("sendNotification", {
+          user_id: userInvite.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          type: "invite_user",
+          content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
+        });
+
         toast.success("Mời người dùng vào Không gian làm việc thành công");
         resetForm();
-        // socket.emit("inviteUser", {
-        //   userInviteId: user.id,
-        //   userInvitedId: userInvite.id,
-        // });
+
+        socket.emit("inviteUser", {
+          userInviteId: user.id,
+          userInvitedId: userInvite.id,
+        });
       } else {
         setMessage(error);
       }
     } catch (error) {
-      console.log("Invite error:", error);
+      console.log(error);
       setMessage("Có lỗi xảy ra khi mời người dùng.");
     }
   };

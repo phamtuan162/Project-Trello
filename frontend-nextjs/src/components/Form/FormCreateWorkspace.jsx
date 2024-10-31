@@ -59,31 +59,28 @@ export default function FormCreateWorkspace({ children }) {
     e.preventDefault();
     setIsCreate(true);
     try {
-      const data = await createWorkspaceApi(user.id, form);
+      const { data, status, error } = await createWorkspaceApi(user.id, form);
 
-      if (data.status === 200) {
-        const workspace = data.data;
-        const userNeedToFind = workspace.users.find(
-          (item) => +item.id === +user.id
-        );
+      if (200 <= status && status <= 299) {
+        const workspace = data;
+        const roleUser = workspace.users.find(
+          (item) => item.id === user.id
+        )?.role;
 
-        if (userNeedToFind) {
-          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
-        }
+        dispatch(updateUser({ ...user, role: roleUser }));
 
         toast.success("Tạo không gian mới thành công");
         dispatch(updateWorkspace(workspace));
         dispatch(updateMission([]));
         router.push(`/w/${workspace.id}/home`);
         onClose();
-        setForm({ name: "", desc: "", color: colors[1] });
       } else {
-        const error = data.error;
         toast.error(error);
       }
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi tạo không gian mới.");
+      console.log(error);
     } finally {
+      setForm({ name: "", desc: "", color: colors[1] });
       setIsCreate(false);
     }
   };

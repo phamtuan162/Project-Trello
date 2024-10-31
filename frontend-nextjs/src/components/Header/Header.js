@@ -183,7 +183,7 @@ const Header = () => {
             }
           }
         } catch (error) {
-          console.log("Error fetching user profile:", error);
+          console.log(error);
         }
       }
     };
