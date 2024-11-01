@@ -42,7 +42,7 @@ const CopyColumn = ({ children, column }) => {
       : column;
 
     try {
-      const { data, status, error } = await copyColumnApi({
+      const { data, status, error, message } = await copyColumnApi({
         column: columnUpdated,
         board_id: board.id,
         title: title,
@@ -65,7 +65,7 @@ const CopyColumn = ({ children, column }) => {
         setIsOpen(false);
         dispatch(updateColumn(newBoard.columns));
       } else {
-        toast.error(error);
+        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);

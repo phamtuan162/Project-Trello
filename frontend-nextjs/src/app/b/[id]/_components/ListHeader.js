@@ -28,9 +28,12 @@ export function ListHeader({ column }) {
 
     if (title !== column.title.toString().trim()) {
       try {
-        const { data, status, error } = await updateColumnDetail(column.id, {
-          title: title,
-        });
+        const { data, status, error, message } = await updateColumnDetail(
+          column.id,
+          {
+            title: title,
+          }
+        );
         if (200 <= status && status <= 299) {
           const updatedColumn = data;
           const updatedColumns = board.columns.map((column) =>
@@ -54,7 +57,7 @@ export function ListHeader({ column }) {
           toast.success("Cập nhật thành công");
           dispatch(updateColumn(updatedColumns));
         } else {
-          toast.error(error);
+          toast.error(error || message);
         }
       } catch (error) {
         console.error("Error updating column:", error);

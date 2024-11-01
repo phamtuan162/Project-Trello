@@ -51,7 +51,7 @@ const Notification = ({ children, handleClickNotify }) => {
     if (!notifications.length) return;
 
     try {
-      const { status, error } = await markAsReadNotification({
+      const { status, error, message } = await markAsReadNotification({
         user_id: user.id,
       });
       if (200 <= status && status <= 299) {
@@ -61,7 +61,7 @@ const Notification = ({ children, handleClickNotify }) => {
         }));
         dispatch(updateNotification(notificationsUpdate));
       } else {
-        toast.error(error);
+        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);

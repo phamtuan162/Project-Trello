@@ -59,7 +59,10 @@ export default function FormCreateWorkspace({ children }) {
     e.preventDefault();
     setIsCreate(true);
     try {
-      const { data, status, error } = await createWorkspaceApi(user.id, form);
+      const { data, status, error, message } = await createWorkspaceApi(
+        user.id,
+        form
+      );
 
       if (200 <= status && status <= 299) {
         const workspace = data;
@@ -75,7 +78,7 @@ export default function FormCreateWorkspace({ children }) {
         router.push(`/w/${workspace.id}/home`);
         onClose();
       } else {
-        toast.error(error);
+        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);

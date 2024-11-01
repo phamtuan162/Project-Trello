@@ -33,7 +33,7 @@ const SortCard = ({ children, column }) => {
     );
 
     try {
-      const { status, error } = await updateColumnDetail(column.id, {
+      const { status, error, message } = await updateColumnDetail(column.id, {
         order,
         cardOrderIds: sortedColumn.cardOrderIds,
       });
@@ -42,7 +42,7 @@ const SortCard = ({ children, column }) => {
         dispatch(updateBoard({ ...board, columns: updatedColumns }));
         dispatch(updateColumn(updatedColumns));
       } else {
-        toast.error(error);
+        toast.error(error || message);
       }
     } catch (err) {
       console.log(err);

@@ -39,13 +39,13 @@ const DeleteColumn = ({ children, column }) => {
     };
 
     try {
-      const { data, status, error } = await deleteColumn(column.id);
+      const { data, status, error, message } = await deleteColumn(column.id);
       if (200 <= status && status <= 299) {
         dispatch(updateBoard(newBoard));
         toast.success("Bạn đã xóa danh sách này thành công");
         dispatch(updateColumn(columnsUpdate));
       } else {
-        toast.error(error);
+        toast.error(error || message);
       }
     } catch (error) {
       console.log("Error deleting column:", error);

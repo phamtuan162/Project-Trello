@@ -44,7 +44,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
     setIsDelete(true);
 
     try {
-      const { status, error } = await deleteWorkspaceApi(workspace.id);
+      const { status, error, message } = await deleteWorkspaceApi(workspace.id);
       if (200 <= status && status <= 299) {
         const users = workspace.users.filter(
           (item) => +item.id !== +user.id && item.isOnline
@@ -68,7 +68,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
         setMessage(error);
       }
     } catch (error) {
-      console.log(error);
+      console.log(error || message);
     } finally {
       setIsDelete(false);
     }

@@ -13,6 +13,7 @@ export const client = {
     if (access_token) {
       headers["Authorization"] = `Bearer ${access_token}`;
     }
+
     const options = {
       method,
       headers,

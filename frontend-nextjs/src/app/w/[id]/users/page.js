@@ -201,7 +201,7 @@ export default function PageWorkspaceUsers() {
       }
 
       try {
-        const { data, status, error } = await decentRoleApi(id, {
+        const { data, status, error, message } = await decentRoleApi(id, {
           user_id: user.id,
           role: roleNew,
         });
@@ -219,7 +219,7 @@ export default function PageWorkspaceUsers() {
           //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
           // });
         } else {
-          toast.error(error);
+          toast.error(error || message);
         }
       } catch (error) {
         console.log(error);

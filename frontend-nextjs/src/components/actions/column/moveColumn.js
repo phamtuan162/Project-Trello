@@ -50,7 +50,9 @@ const MoveColumn = ({ children, column }) => {
 
     const fetchBoardDetails = async () => {
       try {
-        const { data, status, error } = await getBoardDetail(valueBoard);
+        const { data, status, error, message } = await getBoardDetail(
+          valueBoard
+        );
         if (200 <= status && status <= 299) {
           const boardData = data;
 
@@ -74,7 +76,7 @@ const MoveColumn = ({ children, column }) => {
           setBoardMove(boardData);
         }
       } catch (error) {
-        console.log(error);
+        console.log(error || message);
       }
     };
     fetchBoardDetails();
@@ -103,21 +105,19 @@ const MoveColumn = ({ children, column }) => {
         );
         boardOver.columnOrderIds = boardOver.columns.map((c) => c.id);
 
-        const { data, status, error } = await moveColumnToDifferentBoardAPI(
-          column.id,
-          {
+        const { data, status, error, message } =
+          await moveColumnToDifferentBoardAPI(column.id, {
             user_id: user.id,
             boardActive,
             boardOver,
-          }
-        );
+          });
 
         if (200 <= status && status <= 299) {
           dispatch(updateBoard(boardActive));
           dispatch(updateColumn(boardActive.columns));
           setIsOpen(false);
         } else {
-          toast.error(error);
+          toast.error(error || message);
         }
 
         return;
@@ -136,16 +136,19 @@ const MoveColumn = ({ children, column }) => {
           columnOrderIds: newColumns.map((c) => c.id),
         };
 
-        const { data, status, error } = await updateBoardDetail(newBoard.id, {
-          columnOrderIds: newBoard.columnOrderIds,
-        });
+        const { data, status, error, message } = await updateBoardDetail(
+          newBoard.id,
+          {
+            columnOrderIds: newBoard.columnOrderIds,
+          }
+        );
 
         if (200 <= status && status <= 299) {
           dispatch(updateBoard(newBoard));
           dispatch(updateColumn(newColumns));
           setIsOpen(false);
         } else {
-          toast.error(error);
+          toast.error(error || message);
         }
       }
     } catch (error) {

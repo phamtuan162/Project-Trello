@@ -3,7 +3,7 @@
 import { client } from "@/services/clientUtils";
 import { getAccessToken } from "./authApi";
 import Cookies from "js-cookie";
-import axios from "axios";
+import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** Workspace */
 export const getWorkspace = async (query = {}) => {
   const queryString = new URLSearchParams(query).toString();
@@ -299,19 +299,16 @@ export const moveCardToDifferentBoardAPI = async (body) => {
 /** Column */
 
 export const createColumn = async (body) => {
-  const access_token = Cookies.get("access_token");
+  const { data } = await authorizedAxiosInstance.post(`/column`, body);
 
-  const { response, data } = await client.post(`/column`, body, access_token);
-  if (response.ok || data.error) {
-    return data;
-  }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createColumn(body);
     }
   }
-  return null;
+
+  return data;
 };
 
 export const updateColumnDetail = async (columnId, updateData) => {
@@ -385,19 +382,15 @@ export const copyColumnApi = async (body) => {
 
 /** Card */
 export const createCard = async (body) => {
-  const access_token = Cookies.get("access_token");
+  const { data } = await authorizedAxiosInstance.post(`/card`, body);
 
-  const { response, data } = await client.post(`/card`, body, access_token);
-  if (response.ok || data.error) {
-    return data;
-  }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createCard(body);
     }
   }
-  return null;
+  return data;
 };
 
 export const getCardDetail = async (cardId) => {

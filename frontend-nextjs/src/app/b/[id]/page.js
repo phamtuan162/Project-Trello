@@ -112,12 +112,13 @@ export default function BoardIdPage() {
     const updatedBoard = { ...newBoard, columns: updatedColumns };
 
     try {
-      const { data, status, error } = await moveCardToDifferentColumnAPI({
-        updateBoard: updatedBoard,
-        card_id: currentCardId,
-        prevColumnId: prevColumnId,
-        nextColumnId: nextColumnId,
-      });
+      const { data, status, error, message } =
+        await moveCardToDifferentColumnAPI({
+          updateBoard: updatedBoard,
+          card_id: currentCardId,
+          prevColumnId: prevColumnId,
+          nextColumnId: nextColumnId,
+        });
       if (200 <= status && status <= 299) {
         const updatedCard = {
           ...card,
@@ -126,7 +127,7 @@ export default function BoardIdPage() {
         };
         dispatch(updateCard(updatedCard));
       } else {
-        console.log(error);
+        console.log(error || message);
       }
     } catch (error) {
       console.error("Error moving card to different column:", error);

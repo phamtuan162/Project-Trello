@@ -26,6 +26,11 @@ export function CardForm({ column }) {
 
     const handleClickOutside = async (event) => {
       if (formRef.current && !formRef.current.contains(event.target)) {
+        const title = textareaRef.current.value.trim();
+        if (title === "") {
+          setIsEditing(false);
+          return;
+        }
         await createNewCard();
       }
     };
@@ -43,7 +48,7 @@ export function CardForm({ column }) {
     }
 
     try {
-      const { status, data, error } = await createCard({
+      const { status, data } = await createCard({
         title: trimmedValue,
         workspace_id: workspace.id,
         column_id: column.id,
@@ -70,12 +75,9 @@ export function CardForm({ column }) {
 
         dispatch(updateBoard({ ...board, columns: updatedColumns }));
         toast.success("Tạo thẻ thành công");
-      } else {
-        toast.error(error || "Đã xảy ra lỗi không xác định");
       }
     } catch (error) {
-      console.error("Error creating new card:", error);
-      toast.error("Có lỗi xảy ra khi tạo thẻ mới");
+      console.error(error);
     } finally {
       setIsEditing(false);
     }
@@ -106,7 +108,12 @@ export function CardForm({ column }) {
       />
 
       <div className="flex items-center gap-x-2 mt-2">
-        <Button color="primary" onClick={() => createNewCard()} ref={btnAddRef}>
+        <Button
+          className="interceptor-loading"
+          color="primary"
+          onClick={() => createNewCard()}
+          ref={btnAddRef}
+        >
           Thêm danh sách
         </Button>
         <Button

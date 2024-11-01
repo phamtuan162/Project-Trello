@@ -36,10 +36,11 @@ export function ListForm() {
     }
 
     try {
-      const { data, status, error } = await createColumn({
+      const { data, status } = await createColumn({
         title: trimmedValue,
         board_id: board.id,
       });
+      console.log(data);
 
       if (200 <= status && status <= 299) {
         const createdColumn = data;
@@ -55,11 +56,9 @@ export function ListForm() {
 
         dispatch(updateBoard(newBoard));
         toast.success("Tạo danh sách thành công");
-      } else {
-        toast.error(error);
       }
     } catch (error) {
-      console.log("Error creating new column:", error);
+      console.log(error);
     } finally {
       setIsCreate(false);
     }
@@ -100,6 +99,7 @@ export function ListForm() {
             />
             <div className="flex items-center gap-x-2 mt-2">
               <Button
+                className="interceptor-loading"
                 type="button"
                 color="primary"
                 ref={btnAddRef}

@@ -42,7 +42,7 @@ const SearchWorkspace = () => {
     }
     setIsLoading(true);
     try {
-      const { data, status, error } = await switchWorkspace(
+      const { data, status, error, message } = await switchWorkspace(
         workspace_id_witched,
         {
           user_id: user.id,
@@ -65,7 +65,7 @@ const SearchWorkspace = () => {
         dispatch(updateWorkspace(workspaceActive));
         router.push(`/w/${workspaceActive.id}/home`);
       } else {
-        console.log(error);
+        console.log(error || message);
       }
     } catch (error) {
       console.log(error);

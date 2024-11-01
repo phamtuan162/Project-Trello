@@ -28,30 +28,32 @@ const whitelist = require("./utils/cors");
 //Cors
 const cors = require("cors");
 const corsOptions = {
-  origin: "*", // Replace with your frontend's origin
-  credentials: true, // Allow cookies and authentication headers
-  optionSuccessStatus: 200, // Return 200 for preflight requests
+  origin: "http://localhost:3000",
+  credentials: true, // Cho phép cookie và xác thực
+  optionsSuccessStatus: 200, // Trả về 200 cho các yêu cầu preflight
 };
 
 var app = express();
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Headers", "X-Requested-With");
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Headers", "X-Requested-With");
+//   next();
+// });
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));
 
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header("Access-Control-Allow-Headers", true);
-  res.header("Access-Control-Allow-Credentials", true);
-  res.header("Cross-Origin-Resource-Policy", "cross-origin");
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Cung cấp nguồn gốc được phép
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  ); // Các header được phép
+  res.header("Access-Control-Allow-Credentials", "true"); // Cho phép cookie
   res.header(
     "Access-Control-Allow-Methods",
     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
+  ); // Các phương thức được phép
   next();
 });
 

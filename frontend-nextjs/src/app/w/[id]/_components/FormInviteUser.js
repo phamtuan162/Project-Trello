@@ -110,7 +110,7 @@ const FormInviteUser = ({ rolesUser }) => {
     const selectedRole = [...role][0];
 
     try {
-      const { data, status, error } = await inviteUserApi({
+      const { data, status, error, message } = await inviteUserApi({
         user_id: userInvite.id,
         role: selectedRole,
         workspace_id: workspace.id,
@@ -135,7 +135,7 @@ const FormInviteUser = ({ rolesUser }) => {
           userInvitedId: userInvite.id,
         });
       } else {
-        setMessage(error);
+        setMessage(error || message);
       }
     } catch (error) {
       console.log(error);
