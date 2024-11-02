@@ -1,5 +1,6 @@
 "use client";
-import { Input, Button, Card, CardBody, Link } from "@nextui-org/react";
+import { Button } from "@nextui-org/button";
+import { Input, Card, CardBody, Link } from "@nextui-org/react";
 import "../_component/LoginRegister/loginregister.scss";
 import { GithubIcon } from "@/components/Icon/GithubIcon";
 import { GoogleIcon } from "@/components/Icon/GoogleIcon";
@@ -17,7 +18,6 @@ import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
 import { setLocalStorage } from "@/utils/localStorage";
 import { Mail, LockKeyhole } from "lucide-react";
-import { PASSWORD_RULE } from "@/utils/validators";
 const PageLogin = () => {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -36,8 +36,9 @@ const PageLogin = () => {
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
     try {
-      const { device_id_current, access_token, refresh_token, status, error } =
+      const { device_id_current, access_token, refresh_token, status } =
         await loginLocalApi(form);
+      console.log(error);
 
       if (200 <= status && status <= 299) {
         toast.success("Đăng nhập thành công");
@@ -46,10 +47,10 @@ const PageLogin = () => {
         Cookies.set("refresh_token", refresh_token, { expires: 7 });
 
         router.push("/");
-      } else {
-        setErrorMessage(error);
       }
     } catch (error) {
+      // setErrorMessage(error.response.data.error);
+
       console.log(error);
     }
   };
@@ -71,7 +72,6 @@ const PageLogin = () => {
       }
     } catch (error) {
       console.log("Error login google:", error);
-      // toast.error("Có lỗi xảy ra, vui lòng thử lại.");
     }
   };
 

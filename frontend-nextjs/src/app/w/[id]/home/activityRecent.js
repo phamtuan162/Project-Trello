@@ -5,10 +5,7 @@ import { Avatar } from "@nextui-org/react";
 import { generateActivityMessage } from "@/utils/formatters";
 const ActivityRecent = ({ activity }) => {
   return (
-    <li
-      className="flex items-center gap-4 cursor-pointer hover:bg-default-100 p-1 rounded-lg"
-      key={activity.id}
-    >
+    <li className="flex items-center gap-4 cursor-pointer hover:bg-default-100 p-1 rounded-lg">
       <Avatar
         src={activity?.userAvatar}
         name={activity?.userName?.charAt(0).toUpperCase()}

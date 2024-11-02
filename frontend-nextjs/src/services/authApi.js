@@ -27,7 +27,11 @@ export const getAccessToken = async () => {
 
 /** Login */
 export const loginLocalApi = async (body) => {
-  const { data } = await authorizedAxiosInstance.post(`/auth/login`, body);
+  const { data, response } = await authorizedAxiosInstance.post(
+    `/auth/login`,
+    body
+  );
+  console.log(data);
 
   return data;
 };

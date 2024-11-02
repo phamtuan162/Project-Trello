@@ -13,7 +13,7 @@ const ActivitiesRecent = ({ activitiesRecent }) => {
         </p>
         {activitiesRecent?.length > 0 &&
           activitiesRecent.map((activity) => (
-            <ActivityRecent activity={activity} />
+            <ActivityRecent key={activity.id} activity={activity} />
           ))}
         {activitiesRecent?.length > 5 && (
           <div className="w-full flex justify-center grow items-end">

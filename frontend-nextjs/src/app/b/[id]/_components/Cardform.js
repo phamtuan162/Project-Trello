@@ -114,7 +114,7 @@ export function CardForm({ column }) {
           onClick={() => createNewCard()}
           ref={btnAddRef}
         >
-          Thêm danh sách
+          Thêm thẻ
         </Button>
         <Button
           size="sm"
