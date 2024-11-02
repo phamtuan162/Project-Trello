@@ -28,7 +28,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
   };
   return (
     <div
-      className="h-full md:min-w-[240px] max-w-[300px] dark-border flex flex-col justify-center md:justify-start"
+      className="h-full lg:w-64 max-w-[300px] dark-border flex flex-col justify-center lg:justify-start"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
@@ -45,7 +45,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
         >
           <ArrowLeft size={18} />
 
-          <span className="md:block hidden">Trở lại không gian làm việc</span>
+          <span className="lg:block hidden text-sm">Quay trở lại </span>
         </button>
       </div>
 
@@ -55,7 +55,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
             onClick={() => router.push(option.href)}
             key={index}
             color="foreground"
-            className={`flex p-2 gap-3 items-center  rounded-lg text-md  cursor-pointer justify-center md:justify-start  mb-1 ${
+            className={`flex p-2 gap-3 items-center  rounded-lg text-lg  cursor-pointer justify-center lg:justify-start  mb-1 ${
               (
                 check
                   ? pathname.includes(option.href)
@@ -66,7 +66,7 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
             } `}
           >
             {option.icon}
-            <span className="md:block hidden">{option.label}</span>
+            <span className="lg:block hidden text-sm">{option.label}</span>
           </div>
         ))}
       </div>
@@ -78,10 +78,10 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
       >
         <button
           onClick={() => handleLogOut()}
-          className="p-2 rounded-lg flex gap-2 items-center hover:bg-default-100 w-full text-sm justify-center md:justify-start"
+          className="p-2 rounded-lg flex gap-2 items-center hover:bg-default-100 w-full text-sm justify-center lg:justify-start"
         >
           <LogOut size={18} />
-          <span className="md:block hidden">Đăng xuất</span>
+          <span className="lg:block hidden text-sm">Đăng xuất</span>
         </button>
       </div>
     </div>

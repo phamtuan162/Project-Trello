@@ -51,6 +51,10 @@ export const workspaceSlice = createSlice({
       });
       state.workspace.users = usersUpdate;
     },
+    createNewColumn: (state, action) => {
+      state.workspace.columns = action.payload.columns;
+      state.workspace.c;
+    },
   },
   extraReducers: (builder) => {
     builder

@@ -13,21 +13,20 @@ import { toast } from "react-toastify";
 import { userSlice } from "@/stores/slices/userSlice";
 import { myWorkspacesSlice } from "@/stores/slices/myWorkspacesSlice";
 import { restoreWorkspaceApi } from "@/services/workspaceApi";
-const { updateUser } = userSlice.actions;
+const { restoreMyWorkspaces } = userSlice.actions;
 const { updateMyWorkspaces } = myWorkspacesSlice.actions;
 const RestoreWorkspace = ({ workspace, children }) => {
   const dispatch = useDispatch();
   const my_workspaces = useSelector(
     (state) => state.my_workspaces.my_workspaces
   );
-  const user = useSelector((state) => state.user.user);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const handleRestoreWorkspace = async () => {
     setIsLoading(true);
     try {
-      const data = await restoreWorkspaceApi(workspace.id);
-      if (data.status === 200) {
+      const { status } = await restoreWorkspaceApi(workspace.id);
+      if (200 <= status && status <= 299) {
         const workspacesUpdated = my_workspaces.map((w) => {
           if (+w.id === +workspace.id) {
             return { ...w, deleted_at: null };
@@ -36,22 +35,15 @@ const RestoreWorkspace = ({ workspace, children }) => {
         });
         dispatch(updateMyWorkspaces(workspacesUpdated));
         dispatch(
-          updateUser({
-            ...user,
-            workspaces: [
-              ...user.workspaces,
-              { ...workspace, deleted_at: null },
-            ],
+          restoreMyWorkspaces({
+            workspace,
           })
         );
         toast.success("Khôi phục Không gian làm việc thành công");
         setIsOpen(false);
-      } else {
-        toast.error(data.error);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Đã xảy ra lỗi khi khôi phục Không gian làm việc.");
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +89,7 @@ const RestoreWorkspace = ({ workspace, children }) => {
             <Button
               onClick={() => handleRestoreWorkspace()}
               type="button"
-              className="w-full h-[40px] mt-3"
+              className="w-full h-[40px] mt-3 interceptor-loading"
               color="danger"
               isDisabled={isLoading}
             >

@@ -11,5 +11,12 @@ export const userSlice = createSlice({
     updateUser: (state, action) => {
       state.user = action.payload;
     },
+    restoreMyWorkspaces: (state, action) => {
+      const oldWorkspaces = state.user.workspaces;
+      state.user.workspaces = [
+        ...oldWorkspaces,
+        { ...action.payload, deleted_at: null },
+      ];
+    },
   },
 });

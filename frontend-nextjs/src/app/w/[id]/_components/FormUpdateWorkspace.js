@@ -51,13 +51,10 @@ const FormUpdateWorkspace = ({ workspace }) => {
     if (name === workspace.name && desc === workspace.desc) return;
 
     try {
-      const { status, error, message } = await updateWorkspaceApi(
-        workspace.id,
-        {
-          name,
-          desc,
-        }
-      );
+      const { status } = await updateWorkspaceApi(workspace.id, {
+        name,
+        desc,
+      });
 
       if (200 <= status && status <= 299) {
         dispatch(updateWorkspace({ ...workspace, name, desc }));
@@ -66,8 +63,6 @@ const FormUpdateWorkspace = ({ workspace }) => {
           userActionId: user.id,
           workspace_id: workspace.id,
         });
-      } else {
-        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);

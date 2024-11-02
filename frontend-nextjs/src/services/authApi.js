@@ -4,6 +4,7 @@ const MAX_RETRY = 3; // Số lần tối đa thử lại
 import { client } from "@/services/clientUtils";
 import Cookies from "js-cookie";
 import { handleRefreshTokenExpired } from "./handleRefreshTokenExpried";
+import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** Access-token */
 export const getAccessToken = async () => {
   const refresh_token = Cookies.get("refresh_token");
@@ -26,8 +27,7 @@ export const getAccessToken = async () => {
 
 /** Login */
 export const loginLocalApi = async (body) => {
-  const { response, data } = await client.post(`/auth/login`, body);
-  console.log(data);
+  const { data } = await authorizedAxiosInstance.post(`/auth/login`, body);
 
   return data;
 };

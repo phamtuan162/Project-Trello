@@ -9,7 +9,7 @@ export const fetchWorkspace = createAsyncThunk(
         return data;
       }
     } catch (error) {
-      throw Error("Failed to fetch workspace data");
+      console.log(error);
     }
   }
 );

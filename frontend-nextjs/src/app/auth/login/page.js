@@ -163,7 +163,11 @@ const PageLogin = () => {
           >
             Quên mật khẩu?
           </a>
-          <Button type="submit" color="primary" className="w-full text-md ">
+          <Button
+            type="submit"
+            color="primary"
+            className="w-full text-md interceptor-loading"
+          >
             Đăng nhập
           </Button>
           <div className="modal__line">

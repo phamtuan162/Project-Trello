@@ -40,7 +40,6 @@ export function ListForm() {
         title: trimmedValue,
         board_id: board.id,
       });
-      console.log(data);
 
       if (200 <= status && status <= 299) {
         const createdColumn = data;

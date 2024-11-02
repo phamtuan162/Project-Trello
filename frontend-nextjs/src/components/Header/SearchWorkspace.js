@@ -42,12 +42,9 @@ const SearchWorkspace = () => {
     }
     setIsLoading(true);
     try {
-      const { data, status, error, message } = await switchWorkspace(
-        workspace_id_witched,
-        {
-          user_id: user.id,
-        }
-      );
+      const { data, status } = await switchWorkspace(workspace_id_witched, {
+        user_id: user.id,
+      });
       if (200 <= status && status <= 299) {
         const workspaceActive = data;
         if (workspaceActive.users) {
@@ -64,8 +61,6 @@ const SearchWorkspace = () => {
         );
         dispatch(updateWorkspace(workspaceActive));
         router.push(`/w/${workspaceActive.id}/home`);
-      } else {
-        console.log(error || message);
       }
     } catch (error) {
       console.log(error);

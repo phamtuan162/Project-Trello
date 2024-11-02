@@ -50,12 +50,6 @@ const PageMyWorkspace = () => {
   const my_workspaces = useSelector(
     (state) => state.my_workspaces.my_workspaces
   );
-  const my_workspaces_sort = useMemo(() => {
-    return (
-      my_workspaces?.filter((item) => item.role.toLowerCase() === "owner") || []
-    );
-  }, [my_workspaces]);
-
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState(
@@ -67,8 +61,15 @@ const PageMyWorkspace = () => {
     column: "name",
     direction: "ascending",
   });
+  console.log(statusFilter);
+
   const [page, setPage] = useState(1);
   const hasSearchFilter = Boolean(filterValue);
+  const my_workspaces_sort = useMemo(() => {
+    return (
+      my_workspaces?.filter((item) => item.role.toLowerCase() === "owner") || []
+    );
+  }, [my_workspaces]);
 
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
@@ -80,7 +81,7 @@ const PageMyWorkspace = () => {
 
   const filteredItems = useMemo(() => {
     let filteredWorkspaces =
-      my_workspaces_sort.filter(
+      my_workspaces_sort?.filter(
         (item) => item !== null && item !== undefined
       ) || [];
 
@@ -89,21 +90,16 @@ const PageMyWorkspace = () => {
         item.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-    if (
-      statusFilter !== "all" &&
-      Array.from(statusFilter).length !== statusOptions.length
-    ) {
-      filteredWorkspaces = filteredWorkspaces.filter((item) =>
-        Array.from(statusFilter).includes(
-          item.deleted_at ? "deleted" : "normal"
-        )
-      );
+    if (statusFilter !== "all") {
+      filteredWorkspaces = filteredWorkspaces.filter((item) => {
+        return statusFilter === "normal" ? !item.deleted_at : item.deleted_at;
+      });
     }
 
     return filteredWorkspaces;
   }, [my_workspaces_sort, filterValue, statusFilter]);
 
-  const pages = Math.ceil(filteredItems.length / rowsPerPage);
+  const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
   const items = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
@@ -129,61 +125,64 @@ const PageMyWorkspace = () => {
     });
   }, [sortDescriptor, items]);
 
-  const renderCell = useCallback((item, columnKey) => {
-    const cellValue = item[columnKey];
+  const renderCell = useCallback(
+    (item, columnKey) => {
+      const cellValue = item[columnKey];
 
-    switch (columnKey) {
-      case "name":
-        return (
-          <User
-            avatarProps={{
-              radius: "full",
-              size: "sm",
+      switch (columnKey) {
+        case "name":
+          return (
+            <User
+              avatarProps={{
+                radius: "full",
+                size: "sm",
 
-              color: "secondary",
-              name: cellValue.charAt(0).toUpperCase(),
-            }}
-            classNames={{
-              description: "text-default-500",
-            }}
-            name={cellValue}
-          />
-        );
+                color: "secondary",
+                name: cellValue.charAt(0).toUpperCase(),
+              }}
+              classNames={{
+                description: "text-default-500",
+              }}
+              name={cellValue}
+            />
+          );
 
-      case "total_user":
-        return (
-          <p className="text-bold text-small capitalize">{`${cellValue} thành viên`}</p>
-        );
+        case "total_user":
+          return (
+            <p className="text-bold text-small capitalize">{`${cellValue} thành viên`}</p>
+          );
 
-      case "deleted_at":
-        return (
-          <Chip
-            className="capitalize "
-            color={item.deleted_at ? "danger" : "success"}
-            variant="flat"
-            size="sm"
-          >
-            {item.deleted_at ? "Đã xóa" : "Bình thường"}
-          </Chip>
-        );
-      case "actions":
-        return (
-          item.deleted_at && (
-            <RestoreWorkspace workspace={item}>
-              <button
-                type="button"
-                className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
-                color="danger"
-              >
-                "Khôi phục"
-              </button>
-            </RestoreWorkspace>
-          )
-        );
-      default:
-        return cellValue;
-    }
-  }, []);
+        case "deleted_at":
+          return (
+            <Chip
+              className="capitalize "
+              color={item.deleted_at ? "danger" : "success"}
+              variant="flat"
+              size="sm"
+            >
+              {item.deleted_at ? "Đã xóa" : "Bình thường"}
+            </Chip>
+          );
+        case "actions":
+          return (
+            item.deleted_at && (
+              <RestoreWorkspace workspace={item}>
+                <button
+                  type="button"
+                  className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
+                  color="danger"
+                >
+                  "Khôi phục"
+                </button>
+              </RestoreWorkspace>
+            )
+          );
+        default:
+          return cellValue;
+      }
+    },
+    [my_workspaces_sort]
+  );
 
   const onNextPage = useCallback(() => {
     if (page < pages) {
@@ -243,11 +242,11 @@ const PageMyWorkspace = () => {
               </DropdownTrigger>
               <DropdownMenu
                 disallowEmptySelection
-                aria-label="Table Columns"
+                aria-label="status my workspaces"
                 closeOnSelect={false}
-                selectedKeys={statusFilter}
-                selectionMode="multiple"
-                onSelectionChange={setStatusFilter}
+                selectedKeys={[statusFilter]}
+                selectionMode="single"
+                onSelectionChange={(value) => setStatusFilter([...value][0])}
               >
                 {statusOptions.map((status) => (
                   <DropdownItem key={status.uid} className="capitalize">
@@ -302,7 +301,7 @@ const PageMyWorkspace = () => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Tổng cộng {my_workspaces_sort.length} Không gian làm việc
+            Tổng cộng {my_workspaces_sort?.length} Không gian làm việc
           </span>
           <label className="flex items-center text-default-400 text-small">
             Hàng trên mỗi trang:
@@ -368,7 +367,7 @@ const PageMyWorkspace = () => {
 
   const classNames = useMemo(
     () => ({
-      wrapper: ["max-h-[400px]", "max-w-5xl"],
+      wrapper: ["max-h-[382px]", "max-w-5xl"],
       th: ["bg-transparent", "text-default-500", "border-b", "border-divider"],
       td: [
         // changing the rows border radius
@@ -384,7 +383,6 @@ const PageMyWorkspace = () => {
     }),
     []
   );
-
   return (
     <div className="mt-2 max-w-5xl">
       <h1 className="text-2xl font-medium">Không gian làm việc của tôi</h1>
@@ -397,8 +395,8 @@ const PageMyWorkspace = () => {
 
       <Table
         isCompact
-        aria-label="Table my-workspaces"
         classNames={classNames}
+        aria-label="Table my-workspaces"
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         checkboxesProps={{

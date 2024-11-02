@@ -42,18 +42,18 @@ export default function BoardIdPage() {
   }, [card]);
 
   const moveColumns = async (dndOrderedColumns) => {
-    const newBoard = {
-      ...board,
-      columns: [...dndOrderedColumns],
-      columnOrderIds: dndOrderedColumns.map((c) => c.id),
-    };
-    dispatch(boardSlice.actions.updateBoard(newBoard));
+    try {
+      const newBoard = {
+        ...board,
+        columns: [...dndOrderedColumns],
+        columnOrderIds: dndOrderedColumns.map((c) => c.id),
+      };
+      dispatch(boardSlice.actions.updateBoard(newBoard));
 
-    const { error } = await updateBoardDetail(newBoard.id, {
-      columnOrderIds: newBoard.columnOrderIds,
-    });
-
-    if (error) {
+      await updateBoardDetail(newBoard.id, {
+        columnOrderIds: newBoard.columnOrderIds,
+      });
+    } catch (error) {
       console.log(error);
     }
   };
@@ -77,13 +77,9 @@ export default function BoardIdPage() {
     const newBoard = { ...board, columns: updatedColumns };
     dispatch(boardSlice.actions.updateBoard(newBoard));
 
-    const { error } = await updateColumnDetail(columnId, {
+    await updateColumnDetail(columnId, {
       cardOrderIds: dndOrderedCardIds,
     });
-
-    if (error) {
-      console.log(error);
-    }
   };
 
   const moveCardToDifferentColumn = async (
@@ -112,13 +108,12 @@ export default function BoardIdPage() {
     const updatedBoard = { ...newBoard, columns: updatedColumns };
 
     try {
-      const { data, status, error, message } =
-        await moveCardToDifferentColumnAPI({
-          updateBoard: updatedBoard,
-          card_id: currentCardId,
-          prevColumnId: prevColumnId,
-          nextColumnId: nextColumnId,
-        });
+      const { data, status } = await moveCardToDifferentColumnAPI({
+        updateBoard: updatedBoard,
+        card_id: currentCardId,
+        prevColumnId: prevColumnId,
+        nextColumnId: nextColumnId,
+      });
       if (200 <= status && status <= 299) {
         const updatedCard = {
           ...card,
@@ -126,11 +121,9 @@ export default function BoardIdPage() {
             card.activities.length > 0 ? [data, ...card.activities] : [data],
         };
         dispatch(updateCard(updatedCard));
-      } else {
-        console.log(error || message);
       }
     } catch (error) {
-      console.error("Error moving card to different column:", error);
+      console.log(error);
     }
   };
 

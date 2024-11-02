@@ -46,7 +46,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
 
   const addColorWorkspace = async () => {
     try {
-      const { data, status, message } = await updateWorkspaceApi(workspace.id, {
+      const { status } = await updateWorkspaceApi(workspace.id, {
         color: colorWorkspace,
       });
 
@@ -60,11 +60,9 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
         dispatch(updateUser({ ...user, workspaces: updatedWorkspaces }));
 
         toast.success("Thêm màu không gian làm việc thành công");
-      } else {
-        console.log(message);
       }
     } catch (error) {
-      console.log("Error updating workspace color:", error);
+      console.log(error);
     }
   };
 

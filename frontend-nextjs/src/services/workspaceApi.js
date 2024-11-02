@@ -8,10 +8,10 @@ import authorizedAxiosInstance from "@/utils/authorizedAxios";
 export const getWorkspace = async (query = {}) => {
   const queryString = new URLSearchParams(query).toString();
 
-  const { response, data } = await client.get(`/workspace?${queryString}`);
-  if (response.ok) {
-    return data.data;
-  }
+  const { data } = await authorizedAxiosInstance.get(
+    `/workspace?${queryString}`
+  );
+  return data;
 };
 // export const getWorkspaceActive = async (query = {}) => {
 //   const queryString = new URLSearchParams(query).toString();
@@ -21,7 +21,7 @@ export const getWorkspace = async (query = {}) => {
 //   }
 // };
 export const createWorkspaceApi = async (userId, body) => {
-  const { response, data } = await client.post(
+  const { data } = await authorizedAxiosInstance.post(
     `/workspace?user_id=${userId}`,
     body
   );
@@ -29,71 +29,55 @@ export const createWorkspaceApi = async (userId, body) => {
   return data;
 };
 export const getWorkspaceDetail = async (workspaceId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.get(
-    `/workspace/${workspaceId}`,
-    access_token
+  const { data } = await authorizedAxiosInstance.get(
+    `/workspace/${workspaceId}`
   );
-  if (response.ok || data.error) {
-    if (data.status === 401) {
-      window.location.href = "/";
-    }
-    return data;
-  }
+  //   if (data.status === 404) {
+  //     window.location.href = "/";
+  //   }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getWorkspaceDetail(workspaceId);
     }
   }
-  return null;
+  return data;
 };
 export const searchWorkspace = async (userId) => {
-  const { response, data } = await client.get(`/workspace?user_id=${userId}`);
-  if (response.ok) {
-    return data.data;
-  }
+  const { data } = await authorizedAxiosInstance.get(
+    `/workspace?user_id=${userId}`
+  );
+  return data;
 };
 
 export const restoreWorkspaceApi = async (workspaceId) => {
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/workspace/restore/${workspaceId}`
   );
-  if (response.ok) {
-    return data;
-  }
+  return data;
 };
 
 export const switchWorkspace = async (workspaceId, body) => {
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/workspace/change-workspace/${workspaceId}`,
     body
   );
-  if (response.ok) {
-    return data;
-  }
+  return data;
 };
 
 export const updateWorkspaceApi = async (workspaceId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/workspace/${workspaceId}`,
-    body,
-    access_token
+    body
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateWorkspaceApi(workspaceId, body);
     }
   }
-  return null;
+  return data;
 };
 
 export const deleteWorkspaceApi = async (workspaceId) => {
@@ -231,23 +215,18 @@ export const createBoard = async (body) => {
 };
 
 export const updateBoardDetail = async (boardId, updateData) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/board/${boardId}`,
-    updateData,
-    access_token
+    updateData
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateBoardDetail(boardId, updateData);
     }
   }
-  return null;
+  return data;
 };
 
 export const deleteBoard = async (boardId) => {
@@ -270,30 +249,21 @@ export const deleteBoard = async (boardId) => {
 };
 
 export const moveCardToDifferentColumnAPI = async (body) => {
-  const access_token = Cookies.get("access_token");
+  const { data } = await authorizedAxiosInstance.put(`/board/move-card`, body);
 
-  const { response, data } = await client.put(
-    `/board/move-card`,
-    body,
-    access_token
-  );
-  if (response.ok || data.error) {
-    return data;
-  }
   if (data.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await moveCardToDifferentColumnAPI(body);
     }
   }
-  return null;
+  return data;
 };
 
 export const moveCardToDifferentBoardAPI = async (body) => {
-  const { response, data } = await client.put(`/column/move-card`, body);
-  if (response.ok) {
-    return data;
-  }
+  const { data } = await authorizedAxiosInstance.put(`/column/move-card`, body);
+
+  return data;
 };
 
 /** Column */
