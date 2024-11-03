@@ -44,7 +44,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
     setIsDelete(true);
 
     try {
-      const { status, error, message } = await deleteWorkspaceApi(workspace.id);
+      const { status } = await deleteWorkspaceApi(workspace.id);
       if (200 <= status && status <= 299) {
         const users = workspace.users.filter(
           (item) => +item.id !== +user.id && item.isOnline
@@ -64,11 +64,9 @@ const FormDeleteWorkspace = ({ workspace }) => {
           "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
         );
         document.location.href = "/";
-      } else {
-        setMessage(error);
       }
     } catch (error) {
-      console.log(error || message);
+      console.log(error);
     } finally {
       setIsDelete(false);
     }
@@ -152,7 +150,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
                     onClick={() => HandleDeleteWorkspace()}
                     isDisabled={isDelete}
                     type="submit"
-                    className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
+                    className="rounded-lg text-md font-medium text-white  interceptor-loading flex items-center justify-center py-2"
                     color="danger"
                   >
                     {isDelete ? <CircularProgress size={16} /> : " Xóa bỏ"}

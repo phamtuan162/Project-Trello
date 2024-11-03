@@ -41,18 +41,18 @@ export default function FormPopoverBoard({
     const title = formData.get("title");
 
     try {
-      const data = await createBoard({
+      const { data, status } = await createBoard({
         background: image,
         title: title,
         workspace_id: workspace_id,
       });
 
-      if (data.status === 200) {
-        const board = data.data;
-        // Sử dụng mặc định là mảng rỗng nếu workspace.boards hoặc workspace.activities không tồn tại
-        const updatedBoards = [...(workspace.boards || []), board];
+      if (200 <= status && status <= 299) {
+        const board = data;
+        const updatedBoards = [...workspace.boards, board];
+
         const updatedActivities = [
-          ...(workspace.activities || []),
+          ...workspace.activities,
           ...board.activities,
         ];
 
@@ -67,12 +67,9 @@ export default function FormPopoverBoard({
         if (+workspace.id === +workspace_id) {
           router.push(`/b/${board.id}`);
         }
-      } else {
-        const error = data.error;
-        toast.error(error);
       }
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi thêm bảng.");
+      console.log(error);
     } finally {
       setIsCreate(false);
     }
@@ -150,7 +147,7 @@ export default function FormPopoverBoard({
               </p>
               <div className="mt-2 flex flex-col gap-2 w-full">
                 <Select
-                  defaultSelectedKeys={workspace ? [String(workspace.id)] : []}
+                  defaultSelectedKeys={[workspace?.id?.toString() || ""]}
                   size="xs"
                   variant="bordered"
                   aria-label="input-label"
@@ -159,11 +156,11 @@ export default function FormPopoverBoard({
                 >
                   {user?.workspaces?.map((workspace) => (
                     <SelectItem
-                      key={workspace.id}
-                      value={workspace.id}
+                      key={workspace?.id}
+                      value={workspace?.id}
                       id={`workspace_${workspace.id}`}
                     >
-                      {workspace.name}
+                      {workspace?.name}
                     </SelectItem>
                   ))}
                 </Select>
@@ -177,13 +174,9 @@ export default function FormPopoverBoard({
               }
               color="primary"
               type="submit"
-              className="w-full"
+              className="w-full interceptor-loading"
             >
-              {isCreate ? (
-                <CircularProgress aria-label="Loading..." size={22} />
-              ) : (
-                "Tạo mới"
-              )}
+              {isCreate ? <CircularProgress size="sm" /> : "Tạo mới"}
             </Button>
           </form>
         )}

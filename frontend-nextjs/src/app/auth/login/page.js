@@ -1,6 +1,12 @@
 "use client";
 import { Button } from "@nextui-org/button";
-import { Input, Card, CardBody, Link } from "@nextui-org/react";
+import {
+  Input,
+  Card,
+  CardBody,
+  Link,
+  CircularProgress,
+} from "@nextui-org/react";
 import "../_component/LoginRegister/loginregister.scss";
 import { GithubIcon } from "@/components/Icon/GithubIcon";
 import { GoogleIcon } from "@/components/Icon/GoogleIcon";
@@ -25,7 +31,7 @@ const PageLogin = () => {
     password: "",
   });
   const [errorMessage, setErrorMessage] = useState(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const toggleVisibility = () => setIsVisible(!isVisible);
 
@@ -35,10 +41,10 @@ const PageLogin = () => {
 
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const { device_id_current, access_token, refresh_token, status } =
         await loginLocalApi(form);
-      console.log(error);
 
       if (200 <= status && status <= 299) {
         toast.success("Đăng nhập thành công");
@@ -49,16 +55,18 @@ const PageLogin = () => {
         router.push("/");
       }
     } catch (error) {
-      // setErrorMessage(error.response.data.error);
+      // if (error.response?.data?.error) {
+      //   setErrorMessage(error.response.data.error);
+      // }
 
       console.log(error);
+      setIsLoading(false);
     }
   };
 
   const loginSocialGoogle = async () => {
     try {
-      const { status, data, error } = await loginGoogleApi();
-      console.log(status, data, error);
+      const { status, data } = await loginGoogleApi();
 
       if (status >= 200 && status < 300) {
         const url_redirect = data?.urlRedirect;
@@ -67,17 +75,15 @@ const PageLogin = () => {
         } else {
           toast.error("Không tìm thấy URL chuyển hướng.");
         }
-      } else {
-        toast.error(error || `Mã trạng thái không mong đợi: ${status}`);
       }
     } catch (error) {
-      console.log("Error login google:", error);
+      console.log(error);
     }
   };
 
   const loginSocialGithub = async () => {
     try {
-      const { status, data, error } = await loginGithubApi();
+      const { status, data } = await loginGithubApi();
 
       if (status >= 200 && status < 300) {
         const url_redirect = data?.urlRedirect;
@@ -86,12 +92,9 @@ const PageLogin = () => {
         } else {
           toast.error("Không tìm thấy URL chuyển hướng.");
         }
-      } else {
-        toast.error(error || `Mã trạng thái không mong đợi: ${status}`);
       }
     } catch (error) {
-      console.error("Error login github:", error);
-      // toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+      console.log(error);
     }
   };
 
@@ -168,7 +171,7 @@ const PageLogin = () => {
             color="primary"
             className="w-full text-md interceptor-loading"
           >
-            Đăng nhập
+            {isLoading ? <CircularProgress size="sm" /> : "Đăng nhập"}
           </Button>
           <div className="modal__line">
             <span className="text-sm">hoặc</span>

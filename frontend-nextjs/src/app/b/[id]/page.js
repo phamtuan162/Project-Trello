@@ -63,23 +63,28 @@ export default function BoardIdPage() {
     dndOrderedCardIds,
     columnId
   ) => {
-    const updatedColumns = board.columns.map((column) => {
-      if (column.id === columnId) {
-        return {
-          ...column,
-          cards: dndOrderedCards,
-          cardOrderIds: dndOrderedCardIds,
-        };
-      }
-      return column;
-    });
+    try {
+      const updatedColumns = board.columns.map((column) => {
+        if (column.id === columnId) {
+          return {
+            ...column,
+            cards: dndOrderedCards,
+            cardOrderIds: dndOrderedCardIds,
+          };
+        }
+        return column;
+      });
 
-    const newBoard = { ...board, columns: updatedColumns };
-    dispatch(boardSlice.actions.updateBoard(newBoard));
+      dispatch(
+        boardSlice.actions.updateBoard({ ...board, columns: updatedColumns })
+      );
 
-    await updateColumnDetail(columnId, {
-      cardOrderIds: dndOrderedCardIds,
-    });
+      await updateColumnDetail(columnId, {
+        cardOrderIds: dndOrderedCardIds,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const moveCardToDifferentColumn = async (
@@ -88,26 +93,26 @@ export default function BoardIdPage() {
     nextColumnId,
     dndOrderedColumns
   ) => {
-    const newBoard = {
-      ...board,
-      columns: [...dndOrderedColumns],
-      columnOrderIds: dndOrderedColumns.map((c) => c.id),
-    };
-
-    dispatch(boardSlice.actions.updateBoard(newBoard));
-
-    const updatedColumns = newBoard.columns.map((column) => {
-      const isPlaceholderExist =
-        column.cardOrderIds.includes("placeholder-card");
-      if (isPlaceholderExist) {
-        return { ...column, cardOrderIds: [], cards: [] };
-      }
-      return column;
-    });
-
-    const updatedBoard = { ...newBoard, columns: updatedColumns };
-
     try {
+      const newBoard = {
+        ...board,
+        columns: [...dndOrderedColumns],
+        columnOrderIds: dndOrderedColumns.map((c) => c.id),
+      };
+
+      dispatch(boardSlice.actions.updateBoard(newBoard));
+
+      const updatedColumns = newBoard.columns.map((column) => {
+        const isPlaceholderExist =
+          column.cardOrderIds.includes("placeholder-card");
+        if (isPlaceholderExist) {
+          return { ...column, cardOrderIds: [], cards: [] };
+        }
+        return column;
+      });
+
+      const updatedBoard = { ...newBoard, columns: updatedColumns };
+
       const { data, status } = await moveCardToDifferentColumnAPI({
         updateBoard: updatedBoard,
         card_id: currentCardId,

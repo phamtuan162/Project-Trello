@@ -6,7 +6,6 @@ import {
   PopoverTrigger,
   Button,
 } from "@nextui-org/react";
-import { ActivityIcon } from "lucide-react";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
@@ -35,21 +34,17 @@ export function BoardOptions({ setIsActivity }) {
       "Xin vui lòng nhấn vào đây nếu bạn chắc chắn muốn xóa bảng này! ",
       {
         onClick: async () => {
-          deleteBoard(board.id).then((data) => {
-            if (data.status === 200) {
+          try {
+            const { status } = await deleteBoard(board.id);
+            if (200 <= status && status <= 299) {
               const users = workspace.users.filter(
                 (item) => +item.id !== +user.id
               );
-              const title = board.title;
               const boardsUpdate =
-                workspace.boards.length > 0
-                  ? workspace.boards.filter((item) => +item.id !== +board.id)
-                  : [];
-              const workspaceUpdate = {
-                ...workspace,
-                boards: boardsUpdate,
-              };
-              dispatch(updateWorkspace(workspaceUpdate));
+                workspace?.boards?.filter((item) => +item.id !== +board.id) ||
+                [];
+
+              dispatch(updateWorkspace({ ...workspace, boards: boardsUpdate }));
 
               router.push(`/w/${board.workspace_id}/boards`);
 
@@ -60,14 +55,13 @@ export function BoardOptions({ setIsActivity }) {
                     userName: user.name,
                     userAvatar: user.avatar,
                     type: "delete_board",
-                    content: `đã xóa Bảng ${title} ra khỏi Không gian làm việc ${workspace.name} `,
+                    content: `đã xóa Bảng ${board.title} ra khỏi Không gian làm việc ${workspace.name} `,
                   });
                 }
-            } else {
-              const error = data.error;
-              toast.error(error);
             }
-          });
+          } catch (error) {
+            console.log(error);
+          }
         },
       }
     );
@@ -75,14 +69,19 @@ export function BoardOptions({ setIsActivity }) {
   const HandleBackground = async (formData) => {
     setIsLoading(true);
     const image = formData.get("image");
-    if (image) {
-      updateBoardDetail(board.id, { background: image }).then((data) => {
-        if (data.status === 200) {
-          dispatch(updateBoard({ ...board, background: image }));
-          setIsLoading(false);
-          setIsOpen(false);
-        }
+    if (!image) return;
+    try {
+      const { status } = await updateBoardDetail(board.id, {
+        background: image,
       });
+      if (200 <= status && status <= 299) {
+        dispatch(updateBoard({ ...board, background: image }));
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+      setIsOpen(false);
     }
   };
   return (
@@ -110,7 +109,7 @@ export function BoardOptions({ setIsActivity }) {
         {user?.role?.toLowerCase() === "owner" && (
           <Button
             style={{ color: "#172b4d" }}
-            className="text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
+            className="text-xs interceptor-loading font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
             onClick={() => DeleteBoard()}
           >
             <Trash size={16} /> Xoá Bảng
@@ -123,7 +122,7 @@ export function BoardOptions({ setIsActivity }) {
         >
           <Button
             style={{ color: "#172b4d" }}
-            className="mt-2 text-xs font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
+            className="mt-2 text-xs interceptor-loading font-medium rounded-none w-full h-auto p-2 px-5 justify-start font-normal  flex items-center gap-2 bg-white hover:bg-default-200"
           >
             <Image size={16} /> Thay đổi hình nền
           </Button>

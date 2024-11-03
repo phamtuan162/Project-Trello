@@ -2,7 +2,6 @@ const { Board } = require("../../models/index");
 
 const checkBoardInWorkspace = async (req, res, next) => {
   const { id } = req.params;
-  console.log(req.user);
 
   const user = req.user.dataValues;
 

@@ -53,11 +53,13 @@ const MoveCard = ({ children }) => {
   }, [valueColumn, columns]);
 
   useEffect(() => {
+    if (!valueBoard) return;
+
     const fetchData = async () => {
-      if (valueBoard) {
-        const data = await getBoardDetail(+valueBoard);
-        if (data.status === 200) {
-          let boardData = data.data;
+      try {
+        const { data, status } = await getBoardDetail(+valueBoard);
+        if (200 <= status && status <= 299) {
+          let boardData = data;
 
           boardData.columns = mapOrder(
             boardData.columns,
@@ -76,6 +78,8 @@ const MoveCard = ({ children }) => {
           dispatch(updateColumn(boardData.columns));
           setBoardMove(boardData);
         }
+      } catch (error) {
+        console.log(error);
       }
     };
 
@@ -89,28 +93,29 @@ const MoveCard = ({ children }) => {
     oldCardIndex,
     newCardIndex
   ) => {
-    const updatedColumn = { ...newColumns[columnIndex] };
-    const dndOrderedCards = arrayMove(
-      updatedColumn.cards,
-      oldCardIndex,
-      newCardIndex
-    );
-    const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
-    updatedColumn.cards = dndOrderedCards;
-    updatedColumn.cardOrderIds = dndOrderedCardIds;
-    newColumns[columnIndex] = updatedColumn;
-    newBoard.columns = newColumns;
+    try {
+      const updatedColumn = { ...newColumns[columnIndex] };
+      const dndOrderedCards = arrayMove(
+        updatedColumn.cards,
+        oldCardIndex,
+        newCardIndex
+      );
+      const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
+      updatedColumn.cards = dndOrderedCards;
+      updatedColumn.cardOrderIds = dndOrderedCardIds;
+      newColumns[columnIndex] = updatedColumn;
+      newBoard.columns = newColumns;
 
-    const response = await updateColumnDetail(valueColumn, {
-      cardOrderIds: dndOrderedCardIds,
-    });
-    if (response.status === 200) {
-      dispatch(updateBoard(newBoard));
-      dispatch(updateColumn(newColumns));
-      setValueCardIndex(card.id);
-    } else {
-      const error = response.error;
-      toast.error(error);
+      const { status } = await updateColumnDetail(valueColumn, {
+        cardOrderIds: dndOrderedCardIds,
+      });
+      if (200 <= status && status <= 299) {
+        dispatch(updateBoard(newBoard));
+        dispatch(updateColumn(newColumns));
+        setValueCardIndex(card.id);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -121,78 +126,78 @@ const MoveCard = ({ children }) => {
     nextOverColumn,
     newCardIndex
   ) => {
-    if (nextActiveColumn) {
-      nextActiveColumn.cards = nextActiveColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-      if (isEmpty(nextActiveColumn.cards)) {
-        nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
+    try {
+      if (nextActiveColumn) {
+        nextActiveColumn.cards = nextActiveColumn.cards.filter(
+          (item) => item.id !== card.id
+        );
+        if (isEmpty(nextActiveColumn.cards)) {
+          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
+        }
+        nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
+          (item) => item.id
+        );
       }
-      nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
-        (item) => item.id
-      );
-    }
 
-    if (nextOverColumn) {
-      nextOverColumn.cards = nextOverColumn.cards.filter(
-        (item) => item.id !== card.id
-      );
-      const rebuild_activeDraggingCardData = {
-        ...card,
-        column_id: nextOverColumn.id,
-      };
-      nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-        newCardIndex,
-        0,
-        rebuild_activeDraggingCardData
-      );
-      nextOverColumn.cards = nextOverColumn.cards.filter(
-        (card) => !card.FE_PlaceholderCard
-      );
-      nextOverColumn.cardOrderIds = nextOverColumn.cards.map((card) => card.id);
-    }
-
-    const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
-    newBoard.columns = [...nextColumns];
-    newBoard.columnOrderIds = dndOrderedColumnsIds;
-    dispatch(updateBoard(newBoard));
-
-    const updatedColumns = newBoard.columns.map((column) => {
-      if (
-        typeof column.cardOrderIds[0] === "string" &&
-        column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-      ) {
-        return { ...column, cardOrderIds: [], cards: [] };
+      if (nextOverColumn) {
+        nextOverColumn.cards = nextOverColumn.cards.filter(
+          (item) => item.id !== card.id
+        );
+        const rebuild_activeDraggingCardData = {
+          ...card,
+          column_id: nextOverColumn.id,
+        };
+        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+          newCardIndex,
+          0,
+          rebuild_activeDraggingCardData
+        );
+        nextOverColumn.cards = nextOverColumn.cards.filter(
+          (card) => !card.FE_PlaceholderCard
+        );
+        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
+          (card) => card.id
+        );
       }
-      return column;
-    });
 
-    const updatedBoard = { ...newBoard, columns: updatedColumns };
-    moveCardToDifferentColumnAPI({
-      updateBoard: updatedBoard,
-      card_id: card.id,
-      prevColumnId: nextActiveColumn.id,
-      nextColumnId: nextOverColumn.id,
-    }).then((data) => {
-      if (data.status === 200) {
+      const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
+      newBoard.columns = [...nextColumns];
+      newBoard.columnOrderIds = dndOrderedColumnsIds;
+      dispatch(updateBoard(newBoard));
+
+      const updatedColumns = newBoard.columns.map((column) => {
+        if (
+          typeof column.cardOrderIds[0] === "string" &&
+          column.cardOrderIds[0].indexOf("placeholder-card") !== -1
+        ) {
+          return { ...column, cardOrderIds: [], cards: [] };
+        }
+        return column;
+      });
+
+      const updatedBoard = { ...newBoard, columns: updatedColumns };
+
+      const { status } = await moveCardToDifferentColumnAPI({
+        updateBoard: updatedBoard,
+        card_id: card.id,
+        prevColumnId: nextActiveColumn.id,
+        nextColumnId: nextOverColumn.id,
+      });
+      if (200 <= status && status <= 299) {
         dispatch(
           updateCard({
             ...card,
             column_id: nextOverColumn.id,
-            column: { ...nextOverColumn },
-            activities:
-              card.activities.length > 0
-                ? [data.data, ...card.activities]
-                : [data.data],
+            column: nextOverColumn,
+            activities: [data.data, ...card.activities],
           })
         );
         dispatch(updateColumn(updatedColumns));
         setValueCardIndex(card.id);
-      } else {
-        const error = data.error;
-        toast.error(error);
       }
-    });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const moveCardWithinBoard = async () => {
@@ -233,7 +238,6 @@ const MoveCard = ({ children }) => {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -300,24 +304,19 @@ const MoveCard = ({ children }) => {
         (card) => card.id
       );
 
-      moveCardToDifferentBoardAPI({
+      const { status } = await moveCardToDifferentBoardAPI({
         user_id: user.id,
         card_id: card.id,
         activeColumn: nextActiveColumnCopy,
         overColumn: nextOverColumn,
-      }).then((data) => {
-        if (data.status === 200) {
-          dispatch(updateColumn(boardActive.columns));
-          setValueCardIndex(card.id);
-          cardModal.onClose();
-        } else {
-          const error = response.error;
-          toast.error(error);
-        }
       });
+      if (200 <= status && status <= 299) {
+        dispatch(updateColumn(boardActive.columns));
+        setValueCardIndex(card.id);
+        cardModal.onClose();
+      }
     } catch (error) {
       console.log(error);
-      toast.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -432,7 +431,7 @@ const MoveCard = ({ children }) => {
           <Button
             type="submit"
             color="primary"
-            className="mt-2"
+            className="mt-2 interceptor-loading"
             isDisabled={
               (user?.role?.toLowerCase() !== "admin" &&
                 user?.role?.toLowerCase() !== "owner") ||

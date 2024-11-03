@@ -18,6 +18,28 @@ import { updateColumnDetail } from "@/services/workspaceApi";
 const { updateBoard } = boardSlice.actions;
 const { updateColumn } = columnSlice.actions;
 
+const options = [
+  { order: "createdAtDesc", label: "Ngày tạo (Gần Nhất Trước)" },
+  { order: "createdAtAsc", label: "Ngày tạo (Xa Nhất Trước)" },
+  { order: "name", label: "Tên thẻ (theo thứ tự bảng chữ cái)" },
+  { order: "endDateTime", label: "Ngày hết hạn" },
+];
+
+const sortFunctions = {
+  name: (a, b) => a.title.localeCompare(b.title),
+  endDateTime: (a, b) => {
+    if (a.endDateTime && b.endDateTime)
+      return new Date(a.endDateTime) - new Date(b.endDateTime);
+    return a.endDateTime
+      ? -1
+      : b.endDateTime
+      ? 1
+      : a.title.localeCompare(b.title);
+  },
+  createdAtAsc: (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  createdAtDesc: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+};
+
 const SortCard = ({ children, column }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +55,7 @@ const SortCard = ({ children, column }) => {
     );
 
     try {
-      const { status, error, message } = await updateColumnDetail(column.id, {
+      const { status, data } = await updateColumnDetail(column.id, {
         order,
         cardOrderIds: sortedColumn.cardOrderIds,
       });
@@ -41,8 +63,6 @@ const SortCard = ({ children, column }) => {
       if (200 <= status && status <= 299) {
         dispatch(updateBoard({ ...board, columns: updatedColumns }));
         dispatch(updateColumn(updatedColumns));
-      } else {
-        toast.error(error || message);
       }
     } catch (err) {
       console.log(err);
@@ -59,31 +79,10 @@ const SortCard = ({ children, column }) => {
     handleColumnUpdate(sortedColumn, order);
   };
 
-  const sortFunctions = {
-    name: (a, b) => a.title.localeCompare(b.title),
-    endDateTime: (a, b) => {
-      if (a.endDateTime && b.endDateTime)
-        return new Date(a.endDateTime) - new Date(b.endDateTime);
-      return a.endDateTime
-        ? -1
-        : b.endDateTime
-        ? 1
-        : a.title.localeCompare(b.title);
-    },
-    createdAtAsc: (a, b) => new Date(a.created_at) - new Date(b.created_at),
-    createdAtDesc: (a, b) => new Date(b.created_at) - new Date(a.created_at),
-  };
-
-  const options = [
-    { order: "createdAtDesc", label: "Ngày tạo (Gần Nhất Trước)" },
-    { order: "createdAtAsc", label: "Ngày tạo (Xa Nhất Trước)" },
-    { order: "name", label: "Tên thẻ (theo thứ tự bảng chữ cái)" },
-    { order: "endDateTime", label: "Ngày hết hạn" },
-  ];
-
   const handleSort = useCallback(() => {
     const order = [...selectedKeys][0];
     const compareFn = sortFunctions[order];
+
     sortCards(order, compareFn);
   }, [selectedKeys]);
 

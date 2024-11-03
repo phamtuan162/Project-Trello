@@ -237,7 +237,7 @@ export default function WorkspaceMenu({
                 <div
                   onClick={() => handleSwitchWorkspace(item.id)}
                   key={item.id}
-                  className="flex gap-3  p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
+                  className="flex gap-3 interceptor-loading  p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
                   style={{ cursor: "pointer" }}
                 >
                   <Avatar

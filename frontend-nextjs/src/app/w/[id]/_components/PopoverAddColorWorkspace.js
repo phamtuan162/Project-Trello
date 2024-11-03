@@ -119,7 +119,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
           <Button
             onClick={addColorWorkspace}
             type="button"
-            className="rounded-lg h-[40px] mt-4 w-full flex items-center justify-center border-1 border-solid border-secondary-400 bg-white text-secondary-400 hover:bg-secondary-400 hover:text-white"
+            className="interceptor-loading rounded-lg h-[40px] mt-4 w-full flex items-center justify-center border-1 border-solid border-secondary-400 bg-white text-secondary-400 hover:bg-secondary-400 hover:text-white"
           >
             Thêm màu
           </Button>

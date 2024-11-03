@@ -56,9 +56,9 @@ const CopyCard = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       if (valueBoard) {
-        const data = await getBoardDetail(+valueBoard);
-        if (data.status === 200) {
-          let boardData = data.data;
+        const { data, status } = await getBoardDetail(+valueBoard);
+        if (200 <= status && status <= 299) {
+          let boardData = data;
 
           boardData.columns = mapOrder(
             boardData.columns,

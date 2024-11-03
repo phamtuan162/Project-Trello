@@ -201,7 +201,7 @@ export default function PageWorkspaceUsers() {
       }
 
       try {
-        const { data, status, error, message } = await decentRoleApi(id, {
+        const { data, status } = await decentRoleApi(id, {
           user_id: user.id,
           role: roleNew,
         });
@@ -218,8 +218,6 @@ export default function PageWorkspaceUsers() {
           //   type: "cancel_user",
           //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
           // });
-        } else {
-          toast.error(error || message);
         }
       } catch (error) {
         console.log(error);

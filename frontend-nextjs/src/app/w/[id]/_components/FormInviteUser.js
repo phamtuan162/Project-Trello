@@ -110,7 +110,7 @@ const FormInviteUser = ({ rolesUser }) => {
     const selectedRole = [...role][0];
 
     try {
-      const { data, status, error, message } = await inviteUserApi({
+      const { data, status } = await inviteUserApi({
         user_id: userInvite.id,
         role: selectedRole,
         workspace_id: workspace.id,
@@ -134,8 +134,6 @@ const FormInviteUser = ({ rolesUser }) => {
           userInviteId: user.id,
           userInvitedId: userInvite.id,
         });
-      } else {
-        setMessage(error || message);
       }
     } catch (error) {
       console.log(error);
@@ -300,7 +298,11 @@ const FormInviteUser = ({ rolesUser }) => {
                         </SelectItem>
                       ))}
                     </Select>
-                    <Button type="submit" color="primary" className="text-sm">
+                    <Button
+                      type="submit"
+                      color="primary"
+                      className="text-sm interceptor-loading"
+                    >
                       Thêm
                     </Button>
                   </div>

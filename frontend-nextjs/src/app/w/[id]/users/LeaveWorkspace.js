@@ -25,7 +25,7 @@ const LeaveWorkspace = ({ user }) => {
         ? leaveWorkspaceApi
         : cancelUserWorkspaceApi;
 
-      const { status, data, error } = await apiMethod({
+      const { status, data } = await apiMethod({
         user_id: user.id,
         workspace_id: workspace.id,
       });
@@ -54,8 +54,6 @@ const LeaveWorkspace = ({ user }) => {
             content: `đã loại bạn khỏi Không gian làm việc ${workspace.name}`,
           });
         }
-      } else {
-        toast.error(error);
       }
     } catch (error) {
       console.log(error);
@@ -100,7 +98,7 @@ const LeaveWorkspace = ({ user }) => {
         <div className="py-3 rounded-lg w-[300px]">
           <div className="relative pb-3">
             <p
-              className="w-full text-center font-medium text-xs"
+              className="w-full text-center font-medium text-xs "
               style={{ color: "#44546f" }}
             >
               Loại bỏ thành viên
@@ -115,7 +113,7 @@ const LeaveWorkspace = ({ user }) => {
           </div>
           <div
             onClick={() => handleLeaveOrCancelWorkspace()}
-            className="px-3 hover:bg-default-300 p-1 cursor-pointer"
+            className="px-3 hover:bg-default-300 p-1 cursor-pointer interceptor-loading"
             style={{ color: "#44546f" }}
           >
             <p className="font-normal text-sm">

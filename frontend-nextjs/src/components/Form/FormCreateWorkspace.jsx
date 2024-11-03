@@ -194,16 +194,12 @@ export default function FormCreateWorkspace({ children }) {
                     value={desc}
                   />
                   <Button
-                    isDisabled={isCreate ? true : false}
+                    isDisabled={isCreate}
                     type="submit"
-                    className="rounded-lg h-[52px] text-lg mt-4 w-full text lg font-medium text-white   flex items-center justify-center py-2"
+                    className="rounded-lg interceptor-loading h-[52px] text-lg mt-4 w-full text lg font-medium text-white   flex items-center justify-center py-2"
                     style={{ background: "rgb(84, 196, 250)" }}
                   >
-                    {isCreate ? (
-                      <CircularProgress aria-label="Loading..." size={22} />
-                    ) : (
-                      "Tạo mới"
-                    )}
+                    {isCreate ? <CircularProgress size="sm" /> : "Tạo mới"}
                   </Button>
                 </form>
               </ModalBody>

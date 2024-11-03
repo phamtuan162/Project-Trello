@@ -26,44 +26,47 @@ export function ListHeader({ column }) {
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
-    if (title !== column.title.toString().trim()) {
-      try {
-        const { data, status, error, message } = await updateColumnDetail(
-          column.id,
-          {
-            title: title,
-          }
-        );
-        if (200 <= status && status <= 299) {
-          const updatedColumn = data;
-          const updatedColumns = board.columns.map((column) =>
-            column.id === updatedColumn.id ? updatedColumn : column
-          );
-
-          const updatedBoard = {
-            ...board,
-            columns: updatedColumns.map((c) => {
-              if (c.id === column.id) {
-                return {
-                  ...c,
-                  cards: mapOrder(c.cards, c.cardOrderIds, "id"),
-                };
-              }
-              return c;
-            }),
-          };
-
-          dispatch(updateBoard(updatedBoard));
-          toast.success("Cập nhật thành công");
-          dispatch(updateColumn(updatedColumns));
-        } else {
-          toast.error(error || message);
-        }
-      } catch (error) {
-        console.error("Error updating column:", error);
-      }
+    if (title.length < 3 || title === column.title.toString().trim()) {
+      toast.error(
+        "Title phải nhiều hơn 3 ký tự và không được trùng với title cũ"
+      );
+      return;
     }
-    setIsEditing(false);
+
+    try {
+      const { data, status } = await updateColumnDetail(column.id, {
+        title: title,
+      });
+      if (200 <= status && status <= 299) {
+        const updatedColumn = data;
+        const updatedColumns = board.columns.map((column) =>
+          column.id === updatedColumn.id ? updatedColumn : column
+        );
+
+        const updatedBoard = {
+          ...board,
+          columns: updatedColumns.map((c) => {
+            if (c.id === column.id) {
+              return {
+                ...c,
+                cards: mapOrder(c.cards, c.cardOrderIds, "id"),
+              };
+            }
+            return c;
+          }),
+        };
+
+        dispatch(updateBoard(updatedBoard));
+        toast.success("Cập nhật thành công");
+        dispatch(updateColumn(updatedColumns));
+      } else {
+        toast.error(error || message);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleKeyDown = (event) => {

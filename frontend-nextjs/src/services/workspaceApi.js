@@ -35,7 +35,7 @@ export const getWorkspaceDetail = async (workspaceId) => {
   //   if (data.status === 404) {
   //     window.location.href = "/";
   //   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getWorkspaceDetail(workspaceId);
@@ -71,7 +71,7 @@ export const updateWorkspaceApi = async (workspaceId, body) => {
     body
   );
 
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateWorkspaceApi(workspaceId, body);
@@ -81,69 +81,51 @@ export const updateWorkspaceApi = async (workspaceId, body) => {
 };
 
 export const deleteWorkspaceApi = async (workspaceId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.delete(
-    `/workspace/${workspaceId}`,
-    access_token
+  const { data } = await authorizedAxiosInstance.delete(
+    `/workspace/${workspaceId}`
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteWorkspaceApi(workspaceId);
     }
   }
-  return null;
+  return data;
 };
 
 export const inviteUserApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(
+  const { data } = await authorizedAxiosInstance.post(
     `/workspace/invite`,
-    body,
-    access_token
+    body
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await inviteUserApi(body);
     }
   }
-  return null;
+  return data;
 };
 
 export const decentRoleApi = async (workspaceId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/workspace/decent-role/${workspaceId}`,
-    body,
-    access_token
+    body
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await decentRoleApi(workspaceId, body);
     }
   }
-  return null;
+  return data;
 };
 
 export const leaveWorkspaceApi = async (body) => {
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/workspace/leave-workspace`,
     body
   );
@@ -163,7 +145,7 @@ export const cancelUserWorkspaceApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await cancelUserWorkspaceApi(body);
@@ -174,22 +156,16 @@ export const cancelUserWorkspaceApi = async (body) => {
 /** Board */
 
 export const getBoard = async (workspaceId) => {
-  const { response, data } = await client.get(
+  const { data } = await authorizedAxiosInstance.get(
     `/board?workspace_id=${workspaceId}`
   );
-  if (response.ok) {
-    return data.data;
-  }
+  return data;
 };
 
 export const getBoardDetail = async (boardId) => {
-  const access_token = Cookies.get("access_token");
-  const { response, data } = await client.get(
-    `/board/${boardId}`,
-    access_token
-  );
+  const { data } = await authorizedAxiosInstance.get(`/board/${boardId}`);
 
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await getBoardDetail(boardId);
@@ -199,19 +175,15 @@ export const getBoardDetail = async (boardId) => {
 };
 
 export const createBoard = async (body) => {
-  const access_token = Cookies.get("access_token");
+  const { data } = await authorizedAxiosInstance.post(`/board`, body);
 
-  const { response, data } = await client.post(`/board`, body, access_token);
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createBoard(body);
     }
   }
-  return null;
+  return data;
 };
 
 export const updateBoardDetail = async (boardId, updateData) => {
@@ -220,7 +192,7 @@ export const updateBoardDetail = async (boardId, updateData) => {
     updateData
   );
 
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateBoardDetail(boardId, updateData);
@@ -230,28 +202,21 @@ export const updateBoardDetail = async (boardId, updateData) => {
 };
 
 export const deleteBoard = async (boardId) => {
-  const access_token = Cookies.get("access_token");
+  const { data } = await authorizedAxiosInstance.delete(`/board/${boardId}`);
 
-  const { response, data } = await client.delete(
-    `/board/${boardId}`,
-    access_token
-  );
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteBoard(boardId);
     }
   }
-  return null;
+  return data;
 };
 
 export const moveCardToDifferentColumnAPI = async (body) => {
   const { data } = await authorizedAxiosInstance.put(`/board/move-card`, body);
 
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await moveCardToDifferentColumnAPI(body);
@@ -269,9 +234,12 @@ export const moveCardToDifferentBoardAPI = async (body) => {
 /** Column */
 
 export const createColumn = async (body) => {
-  const { data } = await authorizedAxiosInstance.post(`/column`, body);
+  const { response, data } = await authorizedAxiosInstance.post(
+    `/column`,
+    body
+  );
 
-  if (data.status === 401) {
+  if (response?.data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createColumn(body);
@@ -282,79 +250,63 @@ export const createColumn = async (body) => {
 };
 
 export const updateColumnDetail = async (columnId, updateData) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { data, response } = await authorizedAxiosInstance.put(
     `/column/${columnId}`,
-    updateData,
-    access_token
+    updateData
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+  if (response?.data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateColumnDetail(columnId, updateData);
     }
   }
-  return null;
+
+  return data;
 };
 
 export const deleteColumn = async (columnId) => {
-  const access_token = Cookies.get("access_token");
-  const { response, data } = await client.delete(
-    `/column/${columnId}`,
-    access_token
+  const { response, data } = await authorizedAxiosInstance.delete(
+    `/column/${columnId}`
   );
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+
+  if (response?.data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteColumn(columnId);
     }
   }
-  return null;
+  return data;
 };
 
 export const moveColumnToDifferentBoardAPI = async (columnId, body) => {
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/column/move-column/${columnId}`,
     body
   );
-  if (response.ok) {
-    return data;
-  }
+  return data;
 };
 
 export const copyColumnApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(
+  const { response, data } = await authorizedAxiosInstance.post(
     `/column/copy-column`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
-  if (data.status === 401) {
+
+  if (response?.data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await copyColumnApi(body);
     }
   }
-  return null;
+  return data;
 };
 
 /** Card */
 export const createCard = async (body) => {
   const { data } = await authorizedAxiosInstance.post(`/card`, body);
 
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createCard(body);
@@ -364,7 +316,9 @@ export const createCard = async (body) => {
 };
 
 export const getCardDetail = async (cardId) => {
-  const { response, data } = await client.get(`/card/${cardId}`);
+  const { response, data } = await authorizedAxiosInstance.get(
+    `/card/${cardId}`
+  );
   return data;
 };
 
@@ -379,7 +333,7 @@ export const updateCardApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateCardApi(cardId, body);
@@ -399,7 +353,7 @@ export const DateCardApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await DateCardApi(cardId, body);
@@ -418,7 +372,7 @@ export const assignUserApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await assignUserApi(cardId, body);
@@ -437,7 +391,7 @@ export const unAssignUserApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await unAssignUserApi(cardId, body);
@@ -457,7 +411,7 @@ export const copyCardWithBoardApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await copyCardWithBoardApi(body);
@@ -476,7 +430,7 @@ export const deleteCardApi = async (cardId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteCardApi(cardId);
@@ -492,7 +446,7 @@ export const createWorkApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createWorkApi(body);
@@ -512,7 +466,7 @@ export const updateWorkApi = async (workId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateWorkApi(workId, body);
@@ -531,7 +485,7 @@ export const deleteWorkApi = async (workId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteWorkApi(workId);
@@ -554,7 +508,7 @@ export const createMissionApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await createMissionApi(body);
@@ -574,7 +528,7 @@ export const updateMissionApi = async (missionId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateMissionApi(missionId, body);
@@ -593,7 +547,7 @@ export const deleteMissionApi = async (missionId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteMissionApi(missionId);
@@ -613,7 +567,7 @@ export const transferCardApi = async (missionId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await transferCardApi(missionId, body);
@@ -642,7 +596,7 @@ export const attachmentFileApi = async (cardId, formData) => {
   if (result.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await attachmentFileApi(cardId, formData);
@@ -679,7 +633,7 @@ export const updateFileApi = async (attachmentId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await updateFileApi(attachmentId, body);
@@ -698,7 +652,7 @@ export const deleteFileApi = async (attachmentId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data.status === 401) {
+  if (data?.status === 401) {
     const newAccessToken = await getAccessToken();
     if (newAccessToken) {
       return await deleteFileApi(attachmentId);

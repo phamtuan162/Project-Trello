@@ -33,6 +33,7 @@ authorizedAxiosInstance.interceptors.request.use(
 authorizedAxiosInstance.interceptors.response.use(
   (response) => {
     interceptorLoadingElements(false);
+
     return response;
   },
   (error) => {

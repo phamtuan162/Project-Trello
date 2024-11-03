@@ -29,20 +29,22 @@ const CopyColumn = ({ children, column }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    let filteredCards = column.cards.filter((card) => !card.FE_PlaceholderCard);
-
-    const isPlaceholderExist = filteredCards.length < column.cards.length;
-
-    const columnUpdated = isPlaceholderExist
-      ? {
-          ...column,
-          cards: filteredCards,
-          cardOrderIds: filteredCards.map((card) => card.id),
-        }
-      : column;
-
     try {
-      const { data, status, error, message } = await copyColumnApi({
+      let filteredCards = column.cards.filter(
+        (card) => !card.FE_PlaceholderCard
+      );
+
+      const isPlaceholderExist = filteredCards.length < column.cards.length;
+
+      const columnUpdated = isPlaceholderExist
+        ? {
+            ...column,
+            cards: filteredCards,
+            cardOrderIds: filteredCards.map((card) => card.id),
+          }
+        : column;
+
+      const { data, status } = await copyColumnApi({
         column: columnUpdated,
         board_id: board.id,
         title: title,
@@ -54,18 +56,17 @@ const CopyColumn = ({ children, column }) => {
           columnUpdate.cardOrderIds,
           "id"
         );
-        let newBoard = {
-          ...board,
-          columns: [columnUpdate, ...board.columns],
-        };
 
-        dispatch(updateBoard(newBoard));
+        dispatch(
+          updateBoard({
+            ...board,
+            columns: [columnUpdate, ...board.columns],
+          })
+        );
         toast.success("Sao chép danh sách thành công");
 
         setIsOpen(false);
         dispatch(updateColumn(newBoard.columns));
-      } else {
-        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);

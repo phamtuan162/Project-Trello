@@ -73,18 +73,33 @@ export default function BoardNavbar({ setIsActivity }) {
   const onUpdateTitle = async () => {
     const title = inputRef.current.value.trim();
 
-    if (title && title !== board.title.trim()) {
-      updateBoardDetail(board.id, { title: title }).then((data) => {
-        if (data.status === 200) {
-          const boardUpdated = data.data;
-          const newBoard = { ...board };
-          newBoard.title = boardUpdated.title;
-          dispatch(boardSlice.actions.updateBoard(newBoard));
-          toast.success("Cập nhật thành công");
-        }
-      });
+    if (title.length < 3 || title === board.title.trim()) {
+      toast.error(
+        "Title phải nhiều hơn 3 ký tự và không được trùng với title cũ"
+      );
+      return;
     }
-    setIsEditing(false);
+
+    try {
+      const { data, status } = await updateBoardDetail(board.id, {
+        title: title,
+      });
+      if (200 <= status && status <= 200) {
+        const boardUpdated = data;
+
+        dispatch(
+          boardSlice.actions.updateBoard({
+            ...board,
+            title: boardUpdated.title,
+          })
+        );
+        toast.success("Cập nhật thành công");
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -97,7 +112,7 @@ export default function BoardNavbar({ setIsActivity }) {
     const fetchBoardDetail = async () => {
       // try {
       //   // dispatch(updateCard({}));
-      //   const { data, status, message } = await getBoardDetail(boardId);
+      //   const { data, status } = await getBoardDetail(boardId);
       //   if (status >= 200 && status <= 299) {
       //     let boardData = data;
       //     boardData.columns = mapOrder(
@@ -125,11 +140,10 @@ export default function BoardNavbar({ setIsActivity }) {
       //       dispatch(boardSlice.actions.updateBoard(boardData));
       //     }
       //   } else {
-      //     toast.error(message);
       //     router.push(`/w/${user.workspace_id_active}/home`);
       //   }
       // } catch (error) {
-      //   console.log("Error fetching board detail:", error);
+      //   console.log( error);
       // }
       dispatch(fetchBoard({ boardId, router }));
     };

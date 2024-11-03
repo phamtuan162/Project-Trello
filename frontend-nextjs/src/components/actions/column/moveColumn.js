@@ -50,9 +50,7 @@ const MoveColumn = ({ children, column }) => {
 
     const fetchBoardDetails = async () => {
       try {
-        const { data, status, error, message } = await getBoardDetail(
-          valueBoard
-        );
+        const { data, status } = await getBoardDetail(valueBoard);
         if (200 <= status && status <= 299) {
           const boardData = data;
 
@@ -76,7 +74,7 @@ const MoveColumn = ({ children, column }) => {
           setBoardMove(boardData);
         }
       } catch (error) {
-        console.log(error || message);
+        console.log(error);
       }
     };
     fetchBoardDetails();
@@ -105,19 +103,15 @@ const MoveColumn = ({ children, column }) => {
         );
         boardOver.columnOrderIds = boardOver.columns.map((c) => c.id);
 
-        const { data, status, error, message } =
-          await moveColumnToDifferentBoardAPI(column.id, {
-            user_id: user.id,
-            boardActive,
-            boardOver,
-          });
+        const { status } = await moveColumnToDifferentBoardAPI(column.id, {
+          user_id: user.id,
+          boardActive,
+          boardOver,
+        });
 
         if (200 <= status && status <= 299) {
           dispatch(updateBoard(boardActive));
           dispatch(updateColumn(boardActive.columns));
-          setIsOpen(false);
-        } else {
-          toast.error(error || message);
         }
 
         return;
@@ -136,24 +130,19 @@ const MoveColumn = ({ children, column }) => {
           columnOrderIds: newColumns.map((c) => c.id),
         };
 
-        const { data, status, error, message } = await updateBoardDetail(
-          newBoard.id,
-          {
-            columnOrderIds: newBoard.columnOrderIds,
-          }
-        );
+        const { status } = await updateBoardDetail(newBoard.id, {
+          columnOrderIds: newBoard.columnOrderIds,
+        });
 
         if (200 <= status && status <= 299) {
           dispatch(updateBoard(newBoard));
           dispatch(updateColumn(newColumns));
-          setIsOpen(false);
-        } else {
-          toast.error(error || message);
         }
       }
     } catch (error) {
       console.log(error);
     } finally {
+      setIsOpen(false);
       setIsLoading(false);
     }
   };
