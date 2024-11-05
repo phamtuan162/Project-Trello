@@ -43,14 +43,12 @@ const PageLogin = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { device_id_current, access_token, refresh_token, status } =
-        await loginLocalApi(form);
+      const { device_id_current, status } = await loginLocalApi(form);
 
       if (200 <= status && status <= 299) {
         toast.success("Đăng nhập thành công");
         setLocalStorage("device_id_current", device_id_current);
-        Cookies.set("access_token", access_token, { expires: 7 });
-        Cookies.set("refresh_token", refresh_token, { expires: 7 });
+        Cookies.set("isLogin", true, { expires: 14 });
 
         router.push("/");
       }
@@ -60,6 +58,7 @@ const PageLogin = () => {
       // }
 
       console.log(error);
+    } finally {
       setIsLoading(false);
     }
   };

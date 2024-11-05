@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
-// import Cookies from "js-cookie";
+
 function middleware(request) {
   const { pathname } = request.nextUrl;
-  const access_token = request.cookies.get("access_token");
+  const isLogin = request.cookies.get("isLogin"); // Kiểm tra xem cookie có tồn tại không
+
   const isAuthPath = pathname.startsWith("/auth");
   const isHomePath = pathname.match(/^\/[bw](\/|$)/) || pathname === "/";
-
-  if (access_token && isAuthPath) {
+  if (isLogin && isAuthPath) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  if (!access_token && isHomePath) {
+  if (!isLogin && isHomePath) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
-
   return NextResponse.next();
 }
 

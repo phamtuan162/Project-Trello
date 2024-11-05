@@ -316,7 +316,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Sever error",
-        error: error,
       });
     }
     res.status(response.status).json(response);

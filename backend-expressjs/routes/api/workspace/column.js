@@ -5,20 +5,36 @@ const permission = require("../../../middlewares/api/permission.middleware");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
 router.get("/", columnController.index);
 router.get("/:id", columnController.find);
-router.put(
-  "/move-card",
-
-  columnController.moveCardDiffBoard
-);
+router.put("/move-card", columnController.moveCardDiffBoard);
 router.put(
   "/move-column/:id",
 
   columnController.moveColumnDiffBoard
 );
 router.post("/copy-column", authMiddleware, columnController.copyColumn);
-router.post("/", permission("column.create"), columnController.store);
-router.put("/:id", permission("column.update"), columnController.update);
-router.patch("/:id", permission("column.update"), columnController.update);
-router.delete("/:id", permission("column.delete"), columnController.delete);
+router.post(
+  "/",
+  authMiddleware,
+  permission("column.create"),
+  columnController.store
+);
+router.put(
+  "/:id",
+  authMiddleware,
+  permission("column.update"),
+  columnController.update
+);
+router.patch(
+  "/:id",
+  authMiddleware,
+  permission("column.update"),
+  columnController.update
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  permission("column.delete"),
+  columnController.delete
+);
 
 module.exports = router;

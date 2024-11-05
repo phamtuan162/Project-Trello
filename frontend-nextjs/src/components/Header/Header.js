@@ -47,12 +47,8 @@ const Header = () => {
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
-  const notificationsClick = useMemo(() => {
-    return notifications?.filter((notification) => !notification.onClick);
-  }, [notifications]);
-
+  const missions = useSelector((state) => state.mission.missions);
   const socket = useSelector((state) => state.socket.socket);
-
   const { id } = useParams();
   const access_token = Cookies.get("access_token");
   const router = useRouter();
@@ -62,21 +58,25 @@ const Header = () => {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useSelector((state) => state.board.board);
-
   const [isLoading, setIsLoading] = useState(true);
 
+  const notificationsClick = useMemo(() => {
+    return notifications?.filter((notification) => !notification.onClick);
+  }, [notifications]);
+
   const handleClickNotify = async () => {
-    if (notificationsClick?.length > 0) {
+    try {
+      if (notificationsClick?.length === 0) {
+        return null;
+      }
+
       const notificationsUpdate = notifications.map((notification) => {
         return { ...notification, onClick: true };
       });
       dispatch(updateNotification(notificationsUpdate));
-      clickNotification({ user_id: user.id }).then((data) => {
-        if (data.status === 200) {
-        } else {
-          toast.error(data.error);
-        }
-      });
+      await clickNotification({ user_id: user.id });
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -144,51 +144,65 @@ const Header = () => {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!user.id && !pathname.startsWith("/auth/")) {
-        try {
-          // Get user information
-          const { data, status } = await getProfile(access_token);
+      try {
+        // Get user information
+        const { data, status } = await getProfile(access_token);
 
-          if (status >= 200 && status <= 299) {
-            // Filter out workspaces that haven't been marked as deleted
-            const workspacesUpdate = data.workspaces.filter(
-              (item) => !item.deleted_at
+        if (status >= 200 && status <= 299) {
+          // Filter out workspaces that haven't been marked as deleted
+          const workspacesUpdate = data.workspaces.filter(
+            (item) => !item.deleted_at
+          );
+
+          // Update information, myWorkspaces, provider, notification of user
+          dispatch(updateUser({ ...data, workspaces: workspacesUpdate }));
+          dispatch(updateMyWorkspaces(data.workspaces));
+          dispatch(updateProvider(data.providers));
+          dispatch(updateNotification(data.notifications));
+
+          dispatch(fetchWorkspace(data.workspace_id_active));
+          dispatch(
+            fetchMission({
+              user_id: user.id,
+              workspace_id: user.workspace_id_active,
+            })
+          );
+
+          // Redirect to active workspace if current path does not matches
+          if (
+            pathname.startsWith(`/w/${id}`) &&
+            id !== data.workspace_id_active
+          ) {
+            const currentURL = window.location.href.replace(
+              id.toString(),
+              data.workspace_id_active.toString()
             );
-
-            // Update information, myWorkspaces, provider, notification of user
-            dispatch(updateUser({ ...data, workspaces: workspacesUpdate }));
-            dispatch(updateMyWorkspaces(data.workspaces));
-            dispatch(updateProvider(data.providers));
-            dispatch(updateNotification(data.notifications));
-
-            // Fetch workspace and mission
-            dispatch(fetchWorkspace(data.workspace_id_active));
-            dispatch(
-              fetchMission({
-                user_id: data.id,
-                workspace_id: data.workspace_id_active,
-              })
-            );
-
-            // Redirect to active workspace if current path does not matches
-            if (
-              pathname.startsWith(`/w/${id}`) &&
-              id !== data.workspace_id_active
-            ) {
-              const currentURL = window.location.href.replace(
-                id.toString(),
-                data.workspace_id_active.toString()
-              );
-              router.push(currentURL);
-            }
+            router.push(currentURL);
           }
-        } catch (error) {
-          console.log(error);
         }
+      } catch (error) {
+        console.log(error);
       }
     };
 
-    fetchUserProfile();
+    if (!user.id && !pathname.startsWith("/auth/")) {
+      fetchUserProfile();
+    }
+
+    if (user?.workspace_id_active) {
+      if (!workspace?.id) {
+        dispatch(fetchWorkspace(user.workspace_id_active));
+      }
+
+      if (missions?.length === 0) {
+        dispatch(
+          fetchMission({
+            user_id: user.id,
+            workspace_id: user.workspace_id_active,
+          })
+        );
+      }
+    }
   }, [pathname]);
 
   useEffect(() => {

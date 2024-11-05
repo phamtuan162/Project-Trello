@@ -11,7 +11,6 @@ import { notificationSlice } from "@/stores/slices/notificationSlice";
 import NotificationItem from "./notification-item";
 import { CheckIcon, X } from "lucide-react";
 import { markAsReadNotification } from "@/services/workspaceApi";
-import { toast } from "react-toastify";
 const { updateNotification } = notificationSlice.actions;
 const Notification = ({ children, handleClickNotify }) => {
   const dispatch = useDispatch();
@@ -25,12 +24,16 @@ const Notification = ({ children, handleClickNotify }) => {
     (state) => state.notification.notifications
   );
 
-  const notificationsFilter = useMemo(() => {
-    return notifications?.filter(
-      ({ status }) =>
-        status.toLowerCase().trim() === (isSelected ? "unread" : "read")
-    );
-  }, [isSelected, notifications]);
+  const filteredNotifications = useMemo(() => {
+    if (!notifications) return [];
+
+    return [...notifications]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .filter(
+        ({ status }) =>
+          status.toLowerCase().trim() === (isSelected ? "unread" : "read")
+      );
+  }, [notifications, isSelected]);
 
   useEffect(() => {
     const handleGetNotification = (data) => {
@@ -51,7 +54,7 @@ const Notification = ({ children, handleClickNotify }) => {
     if (!notifications.length) return;
 
     try {
-      const { status, error, message } = await markAsReadNotification({
+      const { status } = await markAsReadNotification({
         user_id: user.id,
       });
       if (200 <= status && status <= 299) {
@@ -60,8 +63,6 @@ const Notification = ({ children, handleClickNotify }) => {
           status: "read",
         }));
         dispatch(updateNotification(notificationsUpdate));
-      } else {
-        toast.error(error || message);
       }
     } catch (error) {
       console.log(error);
@@ -130,13 +131,12 @@ const Notification = ({ children, handleClickNotify }) => {
             >
               Không có Thông báo nào
             </p>
-            {notificationsFilter?.length > 0 &&
-              notificationsFilter.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                />
-              ))}
+            {filteredNotifications?.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+              />
+            ))}
           </ol>
         </div>
       </PopoverContent>

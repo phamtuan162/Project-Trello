@@ -234,8 +234,7 @@ module.exports = {
     if (!user) {
       Object.assign(response, {
         status: 400,
-        message: "Bad Request",
-        error: "Hãy đảm bảo nhập đúng email để xóa tài khoản của bạn",
+        message: "Hãy đảm bảo nhập đúng email để xóa tài khoản của bạn",
       });
     } else {
       const workspaces = await Workspace.findAll({ where: { user_id: id } });

@@ -10,10 +10,9 @@ const checkBoardInWorkspace = async (req, res, next) => {
     if (!board) {
       return res.status(404).json({ message: "Bảng không tồn tại." });
     }
-    console.log(board.workspace_id, user.workspace_id_active);
 
     if (board.workspace_id !== user.workspace_id_active) {
-      return res.status(403).json({
+      return res.status(401).json({
         message: "Bảng này không thuộc không gian làm việc hiện tại.",
       });
     }

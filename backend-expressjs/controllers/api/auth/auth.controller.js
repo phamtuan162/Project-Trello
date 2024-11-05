@@ -13,9 +13,9 @@ const {
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 var ip = require("ip");
+const ms = require("ms");
 const UAParser = require("ua-parser-js");
 const sendMail = require("../../../utils/mail");
-
 const generateToken = () => {
   return crypto.randomBytes(16).toString("hex");
 };
@@ -30,118 +30,132 @@ module.exports = {
     //Validate
     const response = {};
     if (!email || !password) {
-      Object.assign(response, {
+      return res.status(400).json({
         status: 400,
-        message: "Bad Request",
-        error: "Vui lòng nhập email và mật khẩu",
+        message: "Vui lòng nhập email và mật khẩu",
       });
-    } else {
+    }
+    try {
       //Kiểm tra email có tồn tại trong Database không?
       const user = await User.findOne({
         where: { email: email },
       });
 
       if (!user) {
-        Object.assign(response, {
+        return res.status(400).json({
           status: 400,
-          message: "Bad Request",
-          error: "Email hoặc mật khẩu không chính xác",
+          message: "Email hoặc mật khẩu không chính xác",
         });
-      } else {
-        //Lấy password hash
-        const { password: hash } = user;
-        if (hash === null) {
-          Object.assign(response, {
-            status: 400,
-            message: "Bad Request",
-            error:
-              "Email này đã được đăng nhập bằng google ấn quên mật khẩu để lấy mật khẩu ",
-          });
-        } else {
-          //Compare plain password với password hash
-          const result = bcrypt.compareSync(password, hash);
-          if (!result) {
-            Object.assign(response, {
-              status: 400,
-              message: "Bad Request",
-              error: "Email hoặc mật khẩu không chính xác",
-            });
-          } else {
-            //Tạo Token (JWT)
-            if (user.status === false) {
-              Object.assign(response, {
-                status: 400,
-                message: "Bad Request",
-                error: "Tài khoản chưa được kích hoạt",
-              });
-            } else {
-              const { JWT_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE } =
-                process.env;
-              const token = jwt.sign(
-                {
-                  data: user.id,
-                },
-                JWT_SECRET,
-                { expiresIn: JWT_EXPIRE }
-              );
-              const refresh = jwt.sign(
-                {
-                  data: new Date().getTime() + Math.random(),
-                },
-                JWT_SECRET,
-                { expiresIn: JWT_REFRESH_EXPIRE }
-              );
-              await User.update(
-                {
-                  refresh_token: refresh,
-                },
-                {
-                  where: { id: user.id },
-                }
-              );
-
-              // Tìm hoặc tạo mới thông tin thiết bị
-              const [device, created] = await Device.findOrCreate({
-                where: {
-                  user_id: user.id,
-                  browser: browser.name,
-                  system: os.name,
-                  ip: ip.address(),
-                },
-                defaults: {
-                  user_id: user.id,
-                  browser: browser.name,
-                  system: os.name,
-                  ip: ip.address(),
-                  login_time: new Date(),
-                  active_time: new Date(),
-                  status: true,
-                },
-              });
-
-              // Nếu thiết bị đã tồn tại, cập nhật lại thông tin
-              if (!created) {
-                await Device.update(
-                  { active_time: new Date(), status: true },
-                  {
-                    where: {
-                      id: device.id,
-                    },
-                  }
-                );
-              }
-
-              Object.assign(response, {
-                status: 200,
-                message: "Success",
-                access_token: token,
-                refresh_token: refresh,
-                device_id_current: device.id,
-              });
-            }
-          }
-        }
       }
+
+      if (user?.status === false) {
+        return res.status(400).json({
+          status: 400,
+          message: "Tài khoản chưa được kích hoạt",
+        });
+      }
+
+      //Lấy password hash
+      const { password: hash } = user;
+      if (hash === null) {
+        return res.status(400).json({
+          status: 400,
+          message:
+            "Email này đã được đăng nhập bằng google ấn quên mật khẩu để lấy mật khẩu",
+        });
+      }
+      const result = bcrypt.compareSync(password, hash);
+
+      if (!result) {
+        return res.status(400).json({
+          status: 400,
+          message: "Email hoặc mật khẩu không chính xác",
+        });
+      }
+
+      const { JWT_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE } = process.env;
+
+      const token = jwt.sign(
+        {
+          data: user.id,
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRE }
+      );
+
+      const refresh = jwt.sign(
+        {
+          data: new Date().getTime() + Math.random(),
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_REFRESH_EXPIRE }
+      );
+
+      res.cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: ms("14 days"),
+        path: "/",
+      });
+
+      res.cookie("refresh_token", refresh, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: ms("14 days"),
+        path: "/",
+      });
+      await User.update(
+        {
+          refresh_token: refresh,
+        },
+        {
+          where: { id: user.id },
+        }
+      );
+
+      // Tìm hoặc tạo mới thông tin thiết bị
+      const [device, created] = await Device.findOrCreate({
+        where: {
+          user_id: user.id,
+          browser: browser.name,
+          system: os.name,
+          ip: ip.address(),
+        },
+        defaults: {
+          user_id: user.id,
+          browser: browser.name,
+          system: os.name,
+          ip: ip.address(),
+          login_time: new Date(),
+          active_time: new Date(),
+          status: true,
+        },
+      });
+
+      // Nếu thiết bị đã tồn tại, cập nhật lại thông tin
+      if (!created) {
+        await Device.update(
+          { active_time: new Date(), status: true },
+          {
+            where: {
+              id: device.id,
+            },
+          }
+        );
+      }
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        device_id_current: device.id,
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
 
     res.status(response.status).json(response);
@@ -153,47 +167,50 @@ module.exports = {
     const response = {};
 
     if (!email || !password || !name) {
-      Object.assign(response, {
+      return res.status(400).json({
         status: 400,
-        message: "Bad Request",
-        error: "Vui lòng nhập đầy đủ thông tin",
+        message: "Vui lòng nhập đầy đủ thông tin",
       });
-    } else {
+    }
+    try {
       //Kiểm tra email có tồn tại trong Database không?
       const user = await User.findOne({
         where: { email },
       });
       if (user) {
-        Object.assign(response, {
+        return res.status(400).json({
           status: 400,
-          message: "Bad Request",
-          error: "Email đã tồn tại",
+          message: "Email đã tồn tại",
         });
-      } else {
-        const salt = bcrypt.genSaltSync(10);
-        const hashPassword = await bcrypt.hash(password, salt);
-        await User.create({
-          name: name,
-          email: email,
-          password: hashPassword,
-          status: false,
-        });
-        const userNew = await User.findOne({
-          where: { email },
-        });
-        const { JWT_SECRET } = process.env;
+      }
 
-        const token = jwt.sign(
-          {
-            data: userNew.id,
-          },
-          JWT_SECRET,
-          {
-            expiresIn: "15m",
-          }
-        );
-        const link = `http://localhost:3000/auth/register/verify?token=${token}`;
-        const html = `
+      const salt = bcrypt.genSaltSync(10);
+      const hashPassword = await bcrypt.hash(password, salt);
+
+      await User.create({
+        name: name,
+        email: email,
+        password: hashPassword,
+        status: false,
+      });
+
+      const userNew = await User.findOne({
+        where: { email },
+      });
+
+      const { JWT_SECRET } = process.env;
+      const token = jwt.sign(
+        {
+          data: userNew.id,
+        },
+        JWT_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      );
+
+      const link = `http://localhost:3000/auth/register/verify?token=${token}`;
+      const html = `
         <p>Xin chào,</p>
         <p>Liên kết dưới đây sẽ có tác dụng trong <strong>15 phút</strong>. Vui lòng nhấn vào liên kết để xác thực tài khoản của bạn trong khoảng thời gian đó!</p>
         <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Xác thực tài khoản</a>
@@ -202,172 +219,211 @@ module.exports = {
         <p>Đội ngũ hỗ trợ</p>
     `;
 
-        await sendMail(email, "Xác thực tài khoản", html);
+      await sendMail(email, "Xác thực tài khoản", html);
 
-        Object.assign(response, {
-          status: 200,
-          message:
-            "Bạn đã đăng ký thành công. Vui lòng vào email để xác thực tài khoản!",
-        });
-      }
+      Object.assign(response, {
+        status: 200,
+        message:
+          "Bạn đã đăng ký thành công. Vui lòng vào email để xác thực tài khoản!",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
+
     res.status(response.status).json(response);
   },
   checkEmail: async (req, res) => {
     const { email } = req.body;
     const response = {};
-
-    const user = await User.findOne({
-      where: { email },
-    });
-    if (user) {
-      Object.assign(response, {
-        status: 400,
-        message: "Bad Request",
-        error: "Email đã tồn tại",
+    try {
+      const user = await User.findOne({
+        where: { email },
       });
-    } else {
+      if (user) {
+        return res.status(400).json({
+          status: 400,
+          message: "Email đã tồn tại",
+        });
+      }
       Object.assign(response, {
         status: 200,
         message: "Success",
         data: { email: email },
       });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
+
     res.status(response.status).json(response);
   },
 
   profile: async (req, res) => {
     const { id } = req.user.dataValues;
-    const user = await User.findByPk(id, {
-      include: [
-        {
-          model: Device,
-          as: "devices",
-        },
-        {
-          model: Workspace,
-          as: "workspaces",
-          paranoid: false,
-          include: {
-            model: Board,
-            as: "boards",
+    const response = {};
+    try {
+      const user = await User.findByPk(id, {
+        include: [
+          {
+            model: Device,
+            as: "devices",
           },
-        },
-        {
-          model: Provider,
-          as: "providers",
-        },
-        {
-          model: Notification,
-          as: "notifications",
-        },
-      ],
-      order: [
-        [{ model: Device, as: "devices" }, "active_time", "desc"], // Sắp xếp Device trong mối quan hệ devices theo active_time
-        [{ model: Notification, as: "notifications" }, "created_at", "desc"], // Sắp xếp Notification theo createdAt
-      ],
-      attributes: { exclude: ["password"] },
-    });
+          {
+            model: Workspace,
+            as: "workspaces",
+            paranoid: false,
+            include: {
+              model: Board,
+              as: "boards",
+            },
+          },
+          {
+            model: Provider,
+            as: "providers",
+          },
+          {
+            model: Notification,
+            as: "notifications",
+          },
+        ],
 
-    await user.update({ isOnline: true });
-
-    const user_workspace_role = await UserWorkspaceRole.findOne({
-      where: { user_id: id, workspace_id: user.workspace_id_active },
-    });
-
-    if (user_workspace_role?.role_id) {
-      const role = await Role.findByPk(user_workspace_role.role_id);
-      if (role) {
-        user.dataValues.role = role.name;
-      }
-    }
-
-    if (user.workspaces.length > 0) {
-      for (const workspace of user.workspaces) {
-        const user_workspace_role_item = await UserWorkspaceRole.findOne({
-          where: { user_id: id, workspace_id: workspace.id },
+        attributes: { exclude: ["password"] },
+      });
+      if (!user) {
+        return res.status(404).json({
+          status: 404,
+          message: "Not found refresh_token",
         });
-        if (user_workspace_role_item) {
-          const role = await Role.findByPk(user_workspace_role_item.role_id);
-          if (role) {
-            workspace.dataValues.role = role.name;
+      }
+
+      await user.update({ isOnline: true });
+
+      const user_workspace_role = await UserWorkspaceRole.findOne({
+        where: { user_id: id, workspace_id: user.workspace_id_active },
+      });
+
+      if (user_workspace_role?.role_id) {
+        const role = await Role.findByPk(user_workspace_role.role_id);
+        if (role) {
+          user.dataValues.role = role.name;
+        }
+      }
+
+      if (user.workspaces.length > 0) {
+        for (const workspace of user.workspaces) {
+          const user_workspace_role_item = await UserWorkspaceRole.findOne({
+            where: { user_id: id, workspace_id: workspace.id },
+          });
+          if (user_workspace_role_item) {
+            const role = await Role.findByPk(user_workspace_role_item.role_id);
+            if (role) {
+              workspace.dataValues.role = role.name;
+            }
           }
         }
       }
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: user,
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
 
-    res.json({
-      status: 200,
-      message: "Success",
-      data: user,
-    });
+    res.status(response.status).json(response);
   },
 
   logout: async (req, res) => {
     const { accessToken } = req.user;
-    await BlacklistToken.findOrCreate({
-      where: {
-        token: accessToken,
-      },
-      defaults: { token: accessToken },
-    });
-    await User.update(
-      { isOnline: false },
-      {
-        where: { id: req.user.dataValues.id },
-      }
-    );
-    res.json({
-      status: 200,
-      message: "Success",
-    });
+    const response = {};
+    try {
+      await BlacklistToken.findOrCreate({
+        where: {
+          token: accessToken,
+        },
+        defaults: { token: accessToken },
+      });
+
+      res.clearCookie("access_token");
+      res.clearCookie("refresh_token");
+
+      await User.update(
+        { isOnline: false, refresh_token: null },
+        {
+          where: { id: req.user.dataValues.id },
+        }
+      );
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
+    }
+
+    res.status(response.status).json(response);
   },
 
   refresh: async (req, res) => {
-    const { refresh_token: refreshToken } = req.body;
+    const refreshToken = req.cookies?.refresh_token;
     const response = {};
-    //Kiểm tra refresh có hợp lệ hay không?
     if (!refreshToken) {
-      Object.assign(response, {
-        status: 401,
-        message: "Unauthorized",
-      });
-    } else {
-      const { JWT_SECRET, JWT_EXPIRE } = process.env;
-      try {
-        jwt.verify(refreshToken, JWT_SECRET);
-        const user = await User.findOne({
-          where: {
-            refresh_token: refreshToken,
-          },
-        });
-        if (!user) {
-          Object.assign(response, {
-            status: 401,
-            message: "Unauthorized",
-          });
-        }
-        const accessToken = jwt.sign(
-          {
-            data: user.id,
-          },
-          JWT_SECRET,
-          { expiresIn: JWT_EXPIRE }
-        );
-
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-      } catch (e) {
-        Object.assign(response, {
-          status: 401,
-          message: "Unauthorized",
-        });
-      }
+      throw new Error("refresh Not Found");
     }
+
+    const { JWT_SECRET, JWT_EXPIRE } = process.env;
+    try {
+      jwt.verify(refreshToken, JWT_SECRET);
+      const user = await User.findOne({
+        where: {
+          refresh_token: refreshToken,
+        },
+      });
+      if (!user) {
+        throw new Error("User Not Found");
+      }
+      const accessToken = jwt.sign(
+        {
+          data: user.id,
+        },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRE }
+      );
+
+      res.cookie("access_token", accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: ms("14 days"),
+        path: "/",
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: { access_token: accessToken },
+      });
+    } catch (e) {
+      Object.assign(response, {
+        status: 403,
+        message: "Please sign in! Error from to refresh_token",
+      });
+    }
+
     res.status(response.status).json(response);
   },
 
@@ -375,46 +431,49 @@ module.exports = {
     const { id } = req.params;
     const { password_old, password_new } = req.body;
     const response = {};
-
-    const user = await User.findByPk(id);
-    if (!user) {
-      Object.assign(response, {
-        status: 404,
-        message: "Not found",
-      });
-    } else {
+    try {
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          status: 404,
+          message: "Not found user",
+        });
+      }
       const { password: hash } = user;
       if (hash === null) {
-        Object.assign(response, {
+        return res.status(400).json({
           status: 400,
-          message: "Bad Request",
-          error: "Tài khoản này đăng nhập bằng mxh chưa được kích hoạt",
+          message: "Tài khoản này đăng nhập bằng mxh chưa được kích hoạt",
         });
-      } else {
-        const result = bcrypt.compareSync(password_old, hash);
-        if (!result) {
-          Object.assign(response, {
-            status: 400,
-            message: "Bad Request",
-            error: "Mật khẩu hiện tại không chính xác",
-          });
-        } else {
-          const salt = bcrypt.genSaltSync(10);
-          const hashPassword = await bcrypt.hash(password_new, salt);
-          await User.update(
-            {
-              password: hashPassword,
-            },
-            {
-              where: { id: id },
-            }
-          );
-          Object.assign(response, {
-            status: 200,
-            message: "Success",
-          });
-        }
       }
+
+      const result = bcrypt.compareSync(password_old, hash);
+      if (!result) {
+        return res.status(400).json({
+          status: 400,
+          message: "Mật khẩu hiện tại không chính xác",
+        });
+      }
+
+      const salt = bcrypt.genSaltSync(10);
+      const hashPassword = await bcrypt.hash(password_new, salt);
+      await User.update(
+        {
+          password: hashPassword,
+        },
+        {
+          where: { id: id },
+        }
+      );
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
 
     res.status(response.status).json(response);
@@ -424,32 +483,32 @@ module.exports = {
     const { email } = req.body;
     const response = {};
     if (!email) {
-      Object.assign(response, {
+      return res.status(400).json({
         status: 400,
-        message: "Bad Request",
-        error: "Vui lòng nhập email",
+        message: "Vui lòng nhập email",
       });
-    } else {
+    }
+    try {
       const user = await User.findOne({ where: { email } });
+
       if (!user) {
-        Object.assign(response, {
+        return res.status(400).json({
           status: 400,
-          message: "Bad Request",
-          error: "Email không tồn tại",
+          message: "Not found user",
         });
-      } else {
-        const { JWT_SECRET } = process.env;
-        const token = jwt.sign(
-          {
-            data: user.id,
-          },
-          JWT_SECRET,
-          {
-            expiresIn: "15m",
-          }
-        );
-        const link = `http://localhost:3000/auth/reset-password?token=${token}`;
-        const html = `
+      }
+      const { JWT_SECRET } = process.env;
+      const token = jwt.sign(
+        {
+          data: user.id,
+        },
+        JWT_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      );
+      const link = `http://localhost:3000/auth/reset-password?token=${token}`;
+      const html = `
         <p>Xin chào,</p>
         <p>Bạn vừa yêu cầu làm mới mật khẩu. Vui lòng nhấn vào liên kết bên dưới trong vòng <strong>15 phút</strong> để thực hiện yêu cầu này.</p>
         <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Làm mới mật khẩu</a>
@@ -458,14 +517,19 @@ module.exports = {
         <p>Đội ngũ hỗ trợ</p>
     `;
 
-        await sendMail(email, "Làm mới mật khẩu", html);
+      await sendMail(email, "Làm mới mật khẩu", html);
 
-        Object.assign(response, {
-          status: 200,
-          message: "Thành công. Vui lòng vào email kiểm tra!",
-        });
-      }
+      Object.assign(response, {
+        status: 200,
+        message: "Thành công. Vui lòng vào email kiểm tra!",
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
+
     res.status(response.status).json(response);
   },
 
@@ -474,12 +538,12 @@ module.exports = {
     const response = {};
 
     if (!password_new) {
-      Object.assign(response, {
+      return res.status(400).json({
         status: 400,
-        message: "Bad Request",
-        error: "Vui lòng nhập password mới",
+        message: "Vui lòng nhập password mới",
       });
-    } else {
+    }
+    try {
       const salt = bcrypt.genSaltSync(10);
       const hashPassword = await bcrypt.hash(password_new, salt);
       await User.update(
@@ -495,7 +559,13 @@ module.exports = {
         status: 200,
         message: "Làm mới mật khẩu thành công",
       });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
+
     res.status(response.status).json(response);
   },
 
@@ -504,7 +574,7 @@ module.exports = {
 
     const user = await User.findByPk(req.user.id);
     if (!user) {
-      return res.status(404).json({ status: 404, message: "Not found" });
+      return res.status(404).json({ status: 404, message: "Not found user" });
     }
 
     try {
@@ -523,6 +593,7 @@ module.exports = {
         const role = await Role.findOne({
           where: { name: { [Op.iLike]: "%Owner%" } },
         });
+
         if (role) {
           await user_workspace_role.update({
             role_id: role.id,
@@ -538,7 +609,6 @@ module.exports = {
         message: "Xác thực tài khoản thành công",
       });
     } catch (error) {
-      console.log(error);
       Object.assign(response, {
         status: 500,
         message: "Sever error",

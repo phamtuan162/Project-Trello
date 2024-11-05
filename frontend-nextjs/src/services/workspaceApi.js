@@ -1,7 +1,4 @@
-// import axios from "axios";
-// import { API_ROOT } from "@/utils/constants";
 import { client } from "@/services/clientUtils";
-import { getAccessToken } from "./authApi";
 import Cookies from "js-cookie";
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** Workspace */
@@ -32,15 +29,7 @@ export const getWorkspaceDetail = async (workspaceId) => {
   const { data } = await authorizedAxiosInstance.get(
     `/workspace/${workspaceId}`
   );
-  //   if (data.status === 404) {
-  //     window.location.href = "/";
-  //   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await getWorkspaceDetail(workspaceId);
-    }
-  }
+
   return data;
 };
 export const searchWorkspace = async (userId) => {
@@ -71,12 +60,6 @@ export const updateWorkspaceApi = async (workspaceId, body) => {
     body
   );
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateWorkspaceApi(workspaceId, body);
-    }
-  }
   return data;
 };
 
@@ -85,12 +68,6 @@ export const deleteWorkspaceApi = async (workspaceId) => {
     `/workspace/${workspaceId}`
   );
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteWorkspaceApi(workspaceId);
-    }
-  }
   return data;
 };
 
@@ -100,12 +77,6 @@ export const inviteUserApi = async (body) => {
     body
   );
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await inviteUserApi(body);
-    }
-  }
   return data;
 };
 
@@ -115,12 +86,6 @@ export const decentRoleApi = async (workspaceId, body) => {
     body
   );
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await decentRoleApi(workspaceId, body);
-    }
-  }
   return data;
 };
 
@@ -145,13 +110,6 @@ export const cancelUserWorkspaceApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await cancelUserWorkspaceApi(body);
-    }
-  }
-  return null;
 };
 /** Board */
 
@@ -165,24 +123,12 @@ export const getBoard = async (workspaceId) => {
 export const getBoardDetail = async (boardId) => {
   const { data } = await authorizedAxiosInstance.get(`/board/${boardId}`);
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await getBoardDetail(boardId);
-    }
-  }
   return data;
 };
 
 export const createBoard = async (body) => {
   const { data } = await authorizedAxiosInstance.post(`/board`, body);
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await createBoard(body);
-    }
-  }
   return data;
 };
 
@@ -192,36 +138,18 @@ export const updateBoardDetail = async (boardId, updateData) => {
     updateData
   );
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateBoardDetail(boardId, updateData);
-    }
-  }
   return data;
 };
 
 export const deleteBoard = async (boardId) => {
   const { data } = await authorizedAxiosInstance.delete(`/board/${boardId}`);
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteBoard(boardId);
-    }
-  }
   return data;
 };
 
 export const moveCardToDifferentColumnAPI = async (body) => {
   const { data } = await authorizedAxiosInstance.put(`/board/move-card`, body);
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await moveCardToDifferentColumnAPI(body);
-    }
-  }
   return data;
 };
 
@@ -239,13 +167,6 @@ export const createColumn = async (body) => {
     body
   );
 
-  if (response?.data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await createColumn(body);
-    }
-  }
-
   return data;
 };
 
@@ -255,13 +176,6 @@ export const updateColumnDetail = async (columnId, updateData) => {
     updateData
   );
 
-  if (response?.data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateColumnDetail(columnId, updateData);
-    }
-  }
-
   return data;
 };
 
@@ -270,12 +184,6 @@ export const deleteColumn = async (columnId) => {
     `/column/${columnId}`
   );
 
-  if (response?.data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteColumn(columnId);
-    }
-  }
   return data;
 };
 
@@ -293,12 +201,6 @@ export const copyColumnApi = async (body) => {
     body
   );
 
-  if (response?.data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await copyColumnApi(body);
-    }
-  }
   return data;
 };
 
@@ -306,12 +208,6 @@ export const copyColumnApi = async (body) => {
 export const createCard = async (body) => {
   const { data } = await authorizedAxiosInstance.post(`/card`, body);
 
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await createCard(body);
-    }
-  }
   return data;
 };
 
@@ -333,13 +229,6 @@ export const updateCardApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateCardApi(cardId, body);
-    }
-  }
-  return null;
 };
 
 export const DateCardApi = async (cardId, body) => {
@@ -353,13 +242,6 @@ export const DateCardApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await DateCardApi(cardId, body);
-    }
-  }
-  return null;
 };
 
 export const assignUserApi = async (cardId, body) => {
@@ -372,13 +254,6 @@ export const assignUserApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await assignUserApi(cardId, body);
-    }
-  }
-  return null;
 };
 
 export const unAssignUserApi = async (cardId, body) => {
@@ -391,13 +266,6 @@ export const unAssignUserApi = async (cardId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await unAssignUserApi(cardId, body);
-    }
-  }
-  return null;
 };
 
 export const copyCardWithBoardApi = async (body) => {
@@ -411,13 +279,6 @@ export const copyCardWithBoardApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await copyCardWithBoardApi(body);
-    }
-  }
-  return null;
 };
 
 export const deleteCardApi = async (cardId) => {
@@ -430,13 +291,6 @@ export const deleteCardApi = async (cardId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteCardApi(cardId);
-    }
-  }
-  return null;
 };
 /** Work */
 export const createWorkApi = async (body) => {
@@ -446,13 +300,6 @@ export const createWorkApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await createWorkApi(body);
-    }
-  }
-  return null;
 };
 
 export const updateWorkApi = async (workId, body) => {
@@ -466,13 +313,6 @@ export const updateWorkApi = async (workId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateWorkApi(workId, body);
-    }
-  }
-  return null;
 };
 
 export const deleteWorkApi = async (workId) => {
@@ -485,13 +325,6 @@ export const deleteWorkApi = async (workId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteWorkApi(workId);
-    }
-  }
-  return null;
 };
 
 /** Mission */
@@ -501,6 +334,7 @@ export const getMissionsApi = async (query = {}) => {
   const { response, data } = await client.get(`/mission?${queryString}`);
   return data;
 };
+
 export const createMissionApi = async (body) => {
   const access_token = Cookies.get("access_token");
 
@@ -508,13 +342,6 @@ export const createMissionApi = async (body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await createMissionApi(body);
-    }
-  }
-  return null;
 };
 
 export const updateMissionApi = async (missionId, body) => {
@@ -528,13 +355,6 @@ export const updateMissionApi = async (missionId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateMissionApi(missionId, body);
-    }
-  }
-  return null;
 };
 
 export const deleteMissionApi = async (missionId) => {
@@ -547,13 +367,6 @@ export const deleteMissionApi = async (missionId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteMissionApi(missionId);
-    }
-  }
-  return null;
 };
 
 export const transferCardApi = async (missionId, body) => {
@@ -567,13 +380,6 @@ export const transferCardApi = async (missionId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await transferCardApi(missionId, body);
-    }
-  }
-  return null;
 };
 /** Attachment */
 
@@ -596,13 +402,6 @@ export const attachmentFileApi = async (cardId, formData) => {
   if (result.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await attachmentFileApi(cardId, formData);
-    }
-  }
-  return null;
 };
 export const downloadFileApi = async (attachmentId) => {
   try {
@@ -633,13 +432,6 @@ export const updateFileApi = async (attachmentId, body) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await updateFileApi(attachmentId, body);
-    }
-  }
-  return null;
 };
 
 export const deleteFileApi = async (attachmentId) => {
@@ -652,13 +444,6 @@ export const deleteFileApi = async (attachmentId) => {
   if (response.ok || data.error) {
     return data;
   }
-  if (data?.status === 401) {
-    const newAccessToken = await getAccessToken();
-    if (newAccessToken) {
-      return await deleteFileApi(attachmentId);
-    }
-  }
-  return null;
 };
 /* Notification */
 export const markAsReadNotification = async (body) => {

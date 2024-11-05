@@ -26,8 +26,7 @@ module.exports = async (req, res, next) => {
   } catch (error) {
     Object.assign(response, {
       status: 401,
-      message: "Unauthorized",
-      error: `Link xác thực đã hết hạn hoặc không tồn tại,  <a href='/auth/forgot-password'>Nhấn vào đây để lấy lại link</a>`,
+      message: "Link xác thực đã hết hạn hoặc không tồn tại!",
     });
   }
 

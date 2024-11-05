@@ -1,10 +1,11 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-import Cookies from "js-cookie";
 import { interceptorLoadingElements } from "./formatters";
+import { refreshTokenApi } from "@/services/authApi";
+import { handleRefreshTokenExpired } from "@/services/handleRefreshTokenExpried";
 const API_ROOT = process.env.NEXT_PUBLIC_API_ROOT;
 
-const authorizedAxiosInstance = axios.create({
+let authorizedAxiosInstance = axios.create({
   baseURL: API_ROOT,
   headers: {
     "Content-Type": "application/json",
@@ -18,17 +19,15 @@ authorizedAxiosInstance.defaults.withCredentials = true;
 authorizedAxiosInstance.interceptors.request.use(
   (config) => {
     interceptorLoadingElements(true);
-    const access_token = Cookies.get("access_token");
 
-    if (access_token) {
-      config.headers["Authorization"] = `Bearer ${access_token}`;
-    }
     return config;
   },
   (error) => {
     return Promise.reject(error);
   }
 );
+
+let refreshTokenPromise = null;
 
 authorizedAxiosInstance.interceptors.response.use(
   (response) => {
@@ -38,6 +37,34 @@ authorizedAxiosInstance.interceptors.response.use(
   },
   (error) => {
     interceptorLoadingElements(false);
+
+    if (error.response?.status === 403) {
+      handleRefreshTokenExpired();
+    }
+
+    const originalRequests = error.config;
+
+    if (error.response?.status === 410 && !originalRequests._retry) {
+      originalRequests._retry = true;
+
+      if (!refreshTokenPromise) {
+        refreshTokenPromise = refreshTokenApi()
+          .then((data) => {
+            return data?.access_token;
+          })
+          .catch((_error) => {
+            handleRefreshTokenExpired();
+            return Promise.reject(_error);
+          })
+          .finally(() => {
+            refreshTokenPromise = null;
+          });
+      }
+
+      return refreshTokenPromise.then((access_token) => {
+        return authorizedAxiosInstance(originalRequests);
+      });
+    }
 
     let errorMessage = error?.message;
 

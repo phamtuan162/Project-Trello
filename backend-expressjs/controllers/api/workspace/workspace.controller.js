@@ -351,7 +351,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Server error",
-        error: error,
       });
     }
 
@@ -432,7 +431,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Server error",
-        error: error,
       });
     }
     res.status(response.status).json(response);
@@ -513,7 +511,6 @@ module.exports = {
       Object.assign(response, {
         status: 500,
         message: "Server error",
-        error: error,
       });
     }
     res.status(response.status).json(response);

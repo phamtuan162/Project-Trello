@@ -28,7 +28,7 @@ export default function MissionsWorkspace() {
 
   const filteredItems = useMemo(() => {
     let filteredMissions =
-      missionsSort.filter(
+      missionsSort?.filter(
         (mission) => mission !== null && mission !== undefined
       ) || [];
     if (hasSearchFilter) {

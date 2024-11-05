@@ -18,16 +18,19 @@ export function UserMenu({ user }) {
   const socket = useSelector((state) => state.socket.socket);
   const router = useRouter();
   const handleLogOut = async () => {
-    toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
+    toast.warning("Vui lòng click vào đây nếu bạn muốn đăng xuất? ", {
       onClick: async () => {
-        logoutApi().then((data) => {
-          if (data) {
+        try {
+          const { status } = await logoutApi();
+          if (200 <= status && status <= 299) {
             // socket.emit("logout", user.id);
-            Cookies.remove("access_token");
-            Cookies.remove("refresh_token");
+            Cookies.set("isLogin", false);
+            toast.success("Đăng xuất thành công");
             window.location.href = "/auth/login";
           }
-        });
+        } catch (error) {
+          console.log(error);
+        }
       },
     });
   };

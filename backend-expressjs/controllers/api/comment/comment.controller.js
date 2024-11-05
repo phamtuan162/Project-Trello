@@ -132,6 +132,7 @@ module.exports = {
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
+        errors,
       });
     }
     res.status(response.status).json(response);
