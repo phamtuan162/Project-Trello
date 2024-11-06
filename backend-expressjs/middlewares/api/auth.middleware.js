@@ -3,25 +3,31 @@ const { User, BlacklistToken } = require("../../models/index");
 
 module.exports = async (req, res, next) => {
   const token = req.cookies?.access_token;
+
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       message: "Token not found",
     });
   }
+
   const response = {};
 
   const { JWT_SECRET } = process.env;
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+
     const blacklist = await BlacklistToken.findOne({
       where: {
         token,
       },
     });
+
     if (blacklist) {
       throw new Error("Token blacklist");
     }
+
     const { data: userId } = decoded;
+
     const user = await User.findOne({
       where: {
         id: userId,

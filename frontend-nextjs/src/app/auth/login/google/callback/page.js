@@ -14,19 +14,16 @@ export default function pageCallback() {
     const handleLogin = async () => {
       const query = window.location.search;
       try {
-        const data = await loginGoogleCallbackApi(query);
-        if (data.status === 200) {
+        const { status } = await loginGoogleCallbackApi(query);
+        if (200 <= status && status <= 200) {
           setLocalStorage("device_id_current", data.device_id_current);
           toast.success("Đăng nhập thành công");
-          Cookies.set("access_token", data.access_token, { expires: 7 });
-          Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
+          Cookies.set("isLogin", true, { expires: 14 });
           router.push("/");
           setIsLogin(true);
-        } else {
-          console.log(error);
         }
       } catch (error) {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+        console.log(error);
       }
     };
 

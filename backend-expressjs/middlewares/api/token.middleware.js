@@ -4,6 +4,10 @@ module.exports = async (req, res, next) => {
   const { token } = req.query;
   const { JWT_SECRET } = process.env;
 
+  if (!token) {
+    return res.status(401).json({ status: 401, message: "Not found token" });
+  }
+
   const response = {};
   try {
     var decoded = jwt.verify(token, JWT_SECRET);
@@ -27,6 +31,7 @@ module.exports = async (req, res, next) => {
     Object.assign(response, {
       status: 401,
       message: "Link xác thực đã hết hạn hoặc không tồn tại!",
+      isMessage: true,
     });
   }
 

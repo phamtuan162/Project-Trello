@@ -24,24 +24,28 @@ const PageResetPassword = () => {
   const HandleResetPassword = async (e) => {
     e.preventDefault();
     setMessage(null);
-
-    if (password_new === password_verify) {
-      resetPasswordApi(query, {
-        password_new: password_new,
-      }).then((data) => {
-        if (!data.error) {
-          const message = data.message;
-          setTypeMessage("success");
-          setMessage(message);
-        } else {
-          const error = data.error;
-          setTypeMessage("warning");
-          setMessage(error);
-        }
-        setForm({ password_new: "", password_verify: "" });
-      });
-    } else {
+    if (password_new !== password_verify) {
       setMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
+      return;
+    }
+
+    try {
+      const { status, message } = await resetPasswordApi(query, {
+        password_new: password_new,
+      });
+
+      if (200 <= status && status <= 299) {
+        setTypeMessage("success");
+        setMessage(message);
+      }
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setTypeMessage("warning");
+        setMessage(error.response.data.message);
+      }
+      console.log(error);
+    } finally {
+      setForm({ password_new: "", password_verify: "" });
     }
   };
   const HandleChange = (e) => {
@@ -138,7 +142,11 @@ const PageResetPassword = () => {
           >
             Quay lại đăng nhập?
           </a>
-          <Button type="submit" color="primary" className="w-full text-md ">
+          <Button
+            type="submit"
+            color="primary"
+            className="w-full text-md interceptor-loading"
+          >
             Làm mới mật khẩu
           </Button>
           <Link href="/auth/register">

@@ -136,8 +136,11 @@ const FormInviteUser = ({ rolesUser }) => {
         });
       }
     } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setMessage("Có lỗi xảy ra khi mời người dùng.");
+      }
+
       console.log(error);
-      setMessage("Có lỗi xảy ra khi mời người dùng.");
     }
   };
 

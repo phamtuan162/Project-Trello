@@ -23,18 +23,22 @@ const PageRegister = () => {
 
   const HandleRegister = async (e) => {
     e.preventDefault();
-    registerApi(form).then((data) => {
-      if (!data.error) {
-        const message = data.message;
+    try {
+      const { status, message } = await registerApi(form);
+      if (200 <= status && status <= 299) {
         setTypeMessage("success");
         setMessage(message);
-      } else {
-        const error = data.error;
-        setTypeMessage("warning");
-        setMessage(error);
       }
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setTypeMessage("warning");
+        setMessage(error.response.data.message);
+      }
+
+      console.log(error);
+    } finally {
       setForm({ name: "", email: "", password: "" });
-    });
+    }
   };
   const HandleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -118,7 +122,11 @@ const PageRegister = () => {
             }
             type={isVisible ? "text" : "password"}
           />
-          <Button type="submit" color="primary" className="w-full text-md ">
+          <Button
+            type="submit"
+            color="primary"
+            className="w-full text-md interceptor-loading"
+          >
             Đăng ký
           </Button>
           <Link href="/auth/login">Bạn đã có tài khoản? Đăng nhập</Link>

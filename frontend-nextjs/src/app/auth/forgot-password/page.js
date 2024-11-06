@@ -13,24 +13,23 @@ const PageForgotPassword = () => {
   const [message, setMessage] = useState(null);
   const [typeMessage, setTypeMessage] = useState(null);
   const [isSend, setIsSend] = useState(false);
-  // const [isVisible, setIsVisible] = useState(false);
-  // const toggleVisibility = () => setIsVisible(!isVisible);
 
   const HandleForgotPassword = async (e) => {
     e.preventDefault();
     setMessage(null);
-    forgotPasswordApi({ email: email }).then((data) => {
-      if (!data.error) {
-        const message = data.message;
-        setTypeMessage("success");
-        setMessage(message);
-        setIsSend(true);
-      } else {
-        const error = data.error;
+    const { status, message } = await forgotPasswordApi({ email: email });
+    if (200 <= status && status <= 299) {
+      setTypeMessage("success");
+      setMessage(message);
+      setIsSend(true);
+    }
+    try {
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
         setTypeMessage("warning");
-        setMessage(error);
+        setMessage(error.response?.data?.message);
       }
-    });
+    }
   };
 
   const HandleReSend = async () => {
@@ -74,14 +73,16 @@ const PageForgotPassword = () => {
           <Button
             type="submit"
             color="primary"
-            className={`w-full text-md ${isSend && "hidden"}`}
+            className={`w-full text-md interceptor-loading ${
+              isSend && "hidden"
+            }`}
           >
             Gửi link
           </Button>
           <Button
             type="button"
             color="primary"
-            className={`w-full text-md ${!isSend && "hidden"}`}
+            className={`w-full  text-md ${!isSend && "hidden"}`}
             onClick={HandleReSend}
           >
             Gửi lại

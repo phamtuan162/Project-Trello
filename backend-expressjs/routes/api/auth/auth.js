@@ -4,6 +4,7 @@ var router = express.Router();
 var ip = require("ip");
 const UAParser = require("ua-parser-js");
 const jwt = require("jsonwebtoken");
+const ms = require("ms");
 const { User, Device } = require("../../../models/index");
 const authController = require("../../../controllers/api/auth/auth.controller");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
@@ -60,7 +61,16 @@ router.get(
     const user = await User.findOne({
       where: { email: req.user.email },
     });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "Not found user",
+      });
+    }
+
     const { JWT_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE } = process.env;
+
     const token = jwt.sign(
       {
         data: user.id,
@@ -68,6 +78,7 @@ router.get(
       JWT_SECRET,
       { expiresIn: JWT_EXPIRE }
     );
+
     const refresh = jwt.sign(
       {
         data: new Date().getTime() + Math.random(),
@@ -75,6 +86,23 @@ router.get(
       JWT_SECRET,
       { expiresIn: JWT_REFRESH_EXPIRE }
     );
+
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: ms("14 days"),
+      path: "/",
+    });
+
+    res.cookie("refresh_token", refresh, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: ms("14 days"),
+      path: "/",
+    });
+
     // Tìm hoặc tạo mới thông tin thiết bị
     const [device, created] = await Device.findOrCreate({
       where: {
@@ -108,8 +136,6 @@ router.get(
     return res.json({
       status: 200,
       message: "Success",
-      access_token: token,
-      refresh_token: refresh,
       device_id_current: device.id,
     });
   }
@@ -147,6 +173,14 @@ router.get(
     const user = await User.findOne({
       where: { github_id: req.user.github_id },
     });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "Not found user",
+      });
+    }
+
     const { JWT_SECRET, JWT_EXPIRE, JWT_REFRESH_EXPIRE } = process.env;
     const token = jwt.sign(
       {
@@ -162,6 +196,23 @@ router.get(
       JWT_SECRET,
       { expiresIn: JWT_REFRESH_EXPIRE }
     );
+
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: ms("14 days"),
+      path: "/",
+    });
+
+    res.cookie("refresh_token", refresh, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: ms("14 days"),
+      path: "/",
+    });
+
     // Tìm hoặc tạo mới thông tin thiết bị
     const [device, created] = await Device.findOrCreate({
       where: {
@@ -195,14 +246,12 @@ router.get(
     return res.json({
       status: 200,
       message: "Success",
-      access_token: token,
-      refresh_token: refresh,
       device_id_current: device.id,
     });
   }
 );
 
 router.get("/profile", authMiddleware, authController.profile);
-router.post("/logout", authMiddleware, authController.logout);
+router.post("/logout/:id", authController.logout);
 router.post("/refresh", authController.refresh);
 module.exports = router;

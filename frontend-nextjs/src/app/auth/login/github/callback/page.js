@@ -13,16 +13,14 @@ export default function pageCallback() {
     const handleLogin = async () => {
       const query = window.location.search;
       try {
-        const data = await loginGithubCallbackApi(query);
-        if (data.status === 200) {
+        const { status } = await loginGithubCallbackApi(query);
+        if (200 <= status && status <= 299) {
           setLocalStorage("device_id_current", data.device_id_current);
           toast.success("Đăng nhập thành công");
-          Cookies.set("access_token", data.access_token, { expires: 7 });
-          Cookies.set("refresh_token", data.refresh_token, { expires: 7 });
+          Cookies.set("isLogin", true, { expires: 14 });
+
           router.push("/");
           setIsLogin(true);
-        } else {
-          toast.error(data.error);
         }
       } catch (error) {
         console.log(error);

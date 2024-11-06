@@ -8,17 +8,19 @@ export default function pageVerify() {
   const query = window.location.search;
   const router = useRouter();
   useEffect(async () => {
-    verifyAccountApi(query).then((data) => {
-      if (data.status === 200) {
-        const message = data.message;
+    try {
+      const { status, message } = await verifyAccountApi(query);
+      if (200 <= status && status <= 299) {
         toast.success(message);
         router.push("/auth/login");
-      } else {
-        const message = data.error;
-        toast.danger(message);
+      }
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
+        toast.danger(error.response.data.message);
         router.push("/auth/forgot-password");
       }
-    });
+      console.log(error);
+    }
   }, []);
 
   return <Loading backgroundColor={"white"} zIndex={"100"} />;

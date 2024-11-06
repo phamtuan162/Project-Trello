@@ -159,19 +159,17 @@ const SetDate = ({ children, mission }) => {
         endDateTime: endDateTimeUpdate,
       });
 
-      const { status, error, data: updatedData } = data;
+      const { status, data: updatedData } = data;
       if (status === 200) {
         dispatch(updateCard(updatedCard));
         setIsLoading(false);
 
         setIsOpen(false);
         setMessage("");
-      } else {
-        toast.error(error);
       }
       setIsLoading(false);
     } catch (error) {
-      toast.error("An error occurred while updating the date.");
+      console.log(error);
     }
   };
 
@@ -199,18 +197,16 @@ const SetDate = ({ children, mission }) => {
         endDateTime: null,
       });
 
-      const { status, error, data: updatedData } = data;
+      const { status, data: updatedData } = data;
       if (status === 200) {
         dispatch(updateCard(updatedCard));
         setIsLoading(false);
 
         setIsOpen(false);
-      } else {
-        toast.error(error);
       }
       setIsLoading(false);
     } catch (error) {
-      toast.error("An error occurred while updating the date.");
+      console.log(error);
     }
   };
 

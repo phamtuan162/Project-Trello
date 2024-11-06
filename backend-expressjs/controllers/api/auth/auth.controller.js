@@ -45,6 +45,7 @@ module.exports = {
         return res.status(400).json({
           status: 400,
           message: "Email hoặc mật khẩu không chính xác",
+          isMessage: true,
         });
       }
 
@@ -52,6 +53,7 @@ module.exports = {
         return res.status(400).json({
           status: 400,
           message: "Tài khoản chưa được kích hoạt",
+          isMessage: true,
         });
       }
 
@@ -62,6 +64,7 @@ module.exports = {
           status: 400,
           message:
             "Email này đã được đăng nhập bằng google ấn quên mật khẩu để lấy mật khẩu",
+          isMessage: true,
         });
       }
       const result = bcrypt.compareSync(password, hash);
@@ -70,6 +73,7 @@ module.exports = {
         return res.status(400).json({
           status: 400,
           message: "Email hoặc mật khẩu không chính xác",
+          isMessage: true,
         });
       }
 
@@ -106,6 +110,7 @@ module.exports = {
         maxAge: ms("14 days"),
         path: "/",
       });
+
       await User.update(
         {
           refresh_token: refresh,
@@ -170,6 +175,7 @@ module.exports = {
       return res.status(400).json({
         status: 400,
         message: "Vui lòng nhập đầy đủ thông tin",
+        isMessage: true,
       });
     }
     try {
@@ -180,28 +186,28 @@ module.exports = {
       if (user) {
         return res.status(400).json({
           status: 400,
-          message: "Email đã tồn tại",
+          message: email.status
+            ? "Email đã tồn tại"
+            : "Email đã tồn tại, chưa xác thực! Vui lòng Quên mật khẩu",
+
+          isMessage: true,
         });
       }
 
       const salt = bcrypt.genSaltSync(10);
       const hashPassword = await bcrypt.hash(password, salt);
 
-      await User.create({
+      const userNew = await User.create({
         name: name,
         email: email,
         password: hashPassword,
         status: false,
       });
 
-      const userNew = await User.findOne({
-        where: { email },
-      });
-
       const { JWT_SECRET } = process.env;
       const token = jwt.sign(
         {
-          data: userNew.id,
+          data: { id: userNew.id, email: userNew.email },
         },
         JWT_SECRET,
         {
@@ -225,6 +231,7 @@ module.exports = {
         status: 200,
         message:
           "Bạn đã đăng ký thành công. Vui lòng vào email để xác thực tài khoản!",
+        isMessage: true,
       });
     } catch (error) {
       Object.assign(response, {
@@ -344,25 +351,30 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    const { accessToken } = req.user;
+    const { id } = req.params;
+    const { accessToken } = req.cookies?.access_token;
     const response = {};
     try {
-      await BlacklistToken.findOrCreate({
-        where: {
-          token: accessToken,
-        },
-        defaults: { token: accessToken },
-      });
+      if (accessToken) {
+        await BlacklistToken.findOrCreate({
+          where: {
+            token: accessToken,
+          },
+          defaults: { token: accessToken },
+        });
+      }
 
       res.clearCookie("access_token");
       res.clearCookie("refresh_token");
 
-      await User.update(
-        { isOnline: false, refresh_token: null },
-        {
-          where: { id: req.user.dataValues.id },
-        }
-      );
+      if (id) {
+        await User.update(
+          { isOnline: false, refresh_token: null },
+          {
+            where: { id },
+          }
+        );
+      }
 
       Object.assign(response, {
         status: 200,
@@ -381,21 +393,26 @@ module.exports = {
   refresh: async (req, res) => {
     const refreshToken = req.cookies?.refresh_token;
     const response = {};
-    if (!refreshToken) {
-      throw new Error("refresh Not Found");
-    }
 
-    const { JWT_SECRET, JWT_EXPIRE } = process.env;
     try {
+      if (!refreshToken) {
+        throw new Error("refresh_token not found");
+      }
+
+      const { JWT_SECRET, JWT_EXPIRE } = process.env;
+
       jwt.verify(refreshToken, JWT_SECRET);
+
       const user = await User.findOne({
         where: {
           refresh_token: refreshToken,
         },
       });
+
       if (!user) {
         throw new Error("User Not Found");
       }
+
       const accessToken = jwt.sign(
         {
           data: user.id,
@@ -415,7 +432,7 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: { access_token: accessToken },
+        access_token: accessToken,
       });
     } catch (e) {
       Object.assign(response, {
@@ -444,6 +461,7 @@ module.exports = {
         return res.status(400).json({
           status: 400,
           message: "Tài khoản này đăng nhập bằng mxh chưa được kích hoạt",
+          isMessage: true,
         });
       }
 
@@ -452,6 +470,7 @@ module.exports = {
         return res.status(400).json({
           status: 400,
           message: "Mật khẩu hiện tại không chính xác",
+          isMessage: true,
         });
       }
 
@@ -486,6 +505,7 @@ module.exports = {
       return res.status(400).json({
         status: 400,
         message: "Vui lòng nhập email",
+        isMessage: true,
       });
     }
     try {
@@ -541,8 +561,10 @@ module.exports = {
       return res.status(400).json({
         status: 400,
         message: "Vui lòng nhập password mới",
+        isMessage: true,
       });
     }
+
     try {
       const salt = bcrypt.genSaltSync(10);
       const hashPassword = await bcrypt.hash(password_new, salt);

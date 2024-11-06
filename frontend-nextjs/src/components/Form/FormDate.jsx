@@ -166,7 +166,7 @@ const FormDate = ({ children }) => {
         status: "pending",
       });
 
-      const { status, error, data: updatedData } = data;
+      const { status, data: updatedData } = data;
       if (status === 200) {
         const cardUpdate = {
           ...card,
@@ -178,11 +178,9 @@ const FormDate = ({ children }) => {
         dispatch(updateCard(cardUpdate));
         setIsOpen(false);
         setMessage("");
-      } else {
-        toast.error(error);
       }
     } catch (error) {
-      toast.error("An error occurred while updating the date.");
+      console.log(error);
     }
   };
 
@@ -194,7 +192,7 @@ const FormDate = ({ children }) => {
         status: null,
       });
 
-      const { status, error, data: updatedData } = data;
+      const { status, data: updatedData } = data;
       if (status === 200) {
         const cardUpdate = {
           ...card,
@@ -205,11 +203,9 @@ const FormDate = ({ children }) => {
         };
         dispatch(updateCard(cardUpdate));
         setIsOpen(false);
-      } else {
-        toast.error(error);
       }
     } catch (error) {
-      toast.error("An error occurred while updating the date.");
+      console.log(error);
     }
   };
 

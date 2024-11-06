@@ -39,13 +39,14 @@ const FormDeleteUser = (user) => {
   };
 
   const HandleDeleteAccount = async () => {
-    deleteUser({ email: email, id: user.id }).then((data) => {
-      if (!data.error) {
-        setMessage(data.message);
-      } else {
-        setMessage(data.error);
+    try {
+      await deleteUser({ email: email, id: user.id });
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setMessage(error.response.data.message);
       }
-    });
+      console.log(error);
+    }
   };
   return (
     <div className="mt-6" style={{ borderTop: "1px solid rgb(230, 230, 230)" }}>

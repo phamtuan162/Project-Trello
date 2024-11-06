@@ -66,6 +66,9 @@ const FormDeleteWorkspace = ({ workspace }) => {
         document.location.href = "/";
       }
     } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setMessage(error.response.data.message);
+      }
       console.log(error);
     } finally {
       setIsDelete(false);

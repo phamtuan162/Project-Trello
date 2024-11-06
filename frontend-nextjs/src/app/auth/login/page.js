@@ -53,9 +53,9 @@ const PageLogin = () => {
         router.push("/");
       }
     } catch (error) {
-      // if (error.response?.data?.error) {
-      //   setErrorMessage(error.response.data.error);
-      // }
+      if (error.response?.data?.isMessage) {
+        setErrorMessage(error.response.data.message);
+      }
 
       console.log(error);
     } finally {
@@ -179,7 +179,7 @@ const PageLogin = () => {
             <Button
               type="button"
               variant="ghost"
-              className="flex-1 text-md "
+              className="flex-1 text-md interceptor-loading"
               onClick={loginSocialGithub}
             >
               <GithubIcon size={24} /> Github
@@ -187,7 +187,7 @@ const PageLogin = () => {
             <Button
               type="button"
               variant="ghost"
-              className="flex-1 text-md"
+              className="flex-1 text-md interceptor-loading"
               onClick={loginSocialGoogle}
             >
               <GoogleIcon size={24} /> Google

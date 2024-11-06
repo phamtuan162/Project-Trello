@@ -19,22 +19,26 @@ const PagePassword = () => {
   };
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (password_new === password_verify) {
-      changePasswordApi(user.id, {
+    if (password_new !== password_verify) {
+      setErrorMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
+      return;
+    }
+    try {
+      const { status } = await changePasswordApi(user.id, {
         password_old: password_old,
         password_new: password_new,
-      }).then((data) => {
-        if (!data.error) {
-          toast.success("Thay đổi mật khẩu thành công");
-          setErrorMessage("");
-          setForm({ password_old: "", password_new: "", password_verify: "" });
-        } else {
-          const error = data.error;
-          setErrorMessage(error);
-        }
       });
-    } else {
-      setErrorMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
+      if (200 <= status && status <= 299) {
+        toast.success("Thay đổi mật khẩu thành công");
+        setErrorMessage("");
+      }
+    } catch (error) {
+      if (error.response?.data?.isMessage) {
+        setErrorMessage(error.response.data.message);
+      }
+      console.log(error);
+    } finally {
+      setForm({ password_old: "", password_new: "", password_verify: "" });
     }
   };
   const { password_old, password_new, password_verify } = form;
@@ -124,7 +128,7 @@ const PagePassword = () => {
         <Button
           type="submit"
           color="danger"
-          className="font-medium w-24 h-9 rounded-lg px-3 text-sm mt-2"
+          className="font-medium w-24 h-9 rounded-lg px-3 text-sm mt-2 interceptor-loading"
         >
           Cập nhật
         </Button>

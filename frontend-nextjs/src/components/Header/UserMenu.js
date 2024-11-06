@@ -13,7 +13,6 @@ import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import Cookies from "js-cookie";
 export function UserMenu({ user }) {
   const socket = useSelector((state) => state.socket.socket);
   const router = useRouter();
@@ -21,13 +20,8 @@ export function UserMenu({ user }) {
     toast.warning("Vui lòng click vào đây nếu bạn muốn đăng xuất? ", {
       onClick: async () => {
         try {
-          const { status } = await logoutApi();
-          if (200 <= status && status <= 299) {
-            // socket.emit("logout", user.id);
-            Cookies.set("isLogin", false);
-            toast.success("Đăng xuất thành công");
-            window.location.href = "/auth/login";
-          }
+          await logoutApi();
+          // socket.emit("logout", user.id);
         } catch (error) {
           console.log(error);
         }

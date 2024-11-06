@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** Access-token */
 export const refreshTokenApi = async () => {
@@ -65,12 +67,21 @@ export const verifyAccountApi = async (query, body) => {
   return data;
 };
 /** Logout */
-export const logoutApi = async () => {
-  const { response, data } = await authorizedAxiosInstance.post(
-    `/auth/logout`,
-    null
-  );
-  return data;
+export const logoutApi = async (userId) => {
+  try {
+    const { data } = await authorizedAxiosInstance.post(
+      `/auth/logout/${userId}`,
+      null
+    );
+    const { status } = data;
+    if (200 <= status && status <= 299) {
+      Cookies.set("isLogin", false);
+      toast.success("Đăng xuất thành công");
+      window.location.href = "/auth/login";
+    }
+  } catch (error) {
+    console.log(error);
+  }
 };
 /** Profile */
 
