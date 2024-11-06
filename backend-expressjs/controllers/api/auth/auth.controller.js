@@ -499,6 +499,7 @@ module.exports = {
   },
 
   forgotPassword: async (req, res) => {
+    const tokenOld = req.cookies?.token;
     const { email } = req.body;
     const response = {};
     if (!email) {
@@ -509,6 +510,14 @@ module.exports = {
       });
     }
     try {
+      if (tokenOld) {
+        await BlacklistToken.findOrCreate({
+          where: {
+            token: tokenOld,
+          },
+          defaults: { token: tokenOld },
+        });
+      }
       const user = await User.findOne({ where: { email } });
 
       if (!user) {
@@ -520,13 +529,22 @@ module.exports = {
       const { JWT_SECRET } = process.env;
       const token = jwt.sign(
         {
-          data: user.id,
+          data: { id: user.id, email: user.email },
         },
         JWT_SECRET,
         {
           expiresIn: "15m",
         }
       );
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: ms("15m"),
+        path: "/",
+      });
+
       const link = `http://localhost:3000/auth/reset-password?token=${token}`;
       const html = `
         <p>Xin chào,</p>
@@ -554,6 +572,7 @@ module.exports = {
   },
 
   resetPassword: async (req, res) => {
+    const { id } = req.user.dataValues;
     const { password_new } = req.body;
     const response = {};
 
@@ -574,7 +593,7 @@ module.exports = {
           status: true,
         },
         {
-          where: { id: req.user.id },
+          where: { id },
         }
       );
       Object.assign(response, {
@@ -592,14 +611,16 @@ module.exports = {
   },
 
   verifyAccount: async (req, res) => {
+    const { id } = req.user.dataValues;
+
     const response = {};
-
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ status: 404, message: "Not found user" });
-    }
-
     try {
+      const user = await User.findByPk(id);
+
+      if (!user) {
+        return res.status(404).json({ status: 404, message: "Not found user" });
+      }
+
       const workspace = await Workspace.create({
         name: "Workspace 1",
         total_user: 1,

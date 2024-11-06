@@ -42,6 +42,7 @@ module.exports = async (req, res, next) => {
     if (!user) {
       throw new Error("User Not Found");
     }
+
     req.user = {
       ...user,
       accessToken: token,
