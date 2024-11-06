@@ -10,7 +10,7 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { updateCommentApi } from "@/services/commentApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
-const { updateCard } = cardSlice.actions;
+const { updateComment } = cardSlice.actions;
 const CommentItem = ({ comment }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -25,10 +25,26 @@ const CommentItem = ({ comment }) => {
 
   const userComment = useMemo(() => {
     return workspace?.users?.find((u) => +u.id === +comment.user_id) || null;
-  }, [workspace]);
+  }, [workspace.users]);
 
   const check = useMemo(() => {
     return user.id && userComment?.id && +user.id === +userComment.id;
+  }, [userComment]);
+
+  const canDeleteComment = useMemo(() => {
+    if (+user.id === +comment.user_id) return true; // Người dùng tự xóa comment của mình
+
+    if (user.id && userComment.id && +user.id !== +userComment.id) {
+      const userRole = user.role.toLowerCase();
+      const userCommentRole = userComment.role.toLowerCase();
+      const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
+      const isAdminEditingOwner =
+        userRole === "admin" && userCommentRole === "owner";
+
+      if (!isOwnerOrAdmin || isAdminEditingOwner) return false;
+    }
+
+    return true;
   }, [userComment]);
 
   const validateContent = (value) => /^.{0,200}$/.test(value);
@@ -69,28 +85,19 @@ const CommentItem = ({ comment }) => {
     try {
       if (!isInvalid) {
         setIsLoading(true);
-        const data = await updateCommentApi(comment.id, {
+        const { status } = await updateCommentApi(comment.id, {
           content: content,
         });
 
-        if (data.status === 200) {
-          const commentsUpdate = card.comments.map((item) => {
-            if (+item.id === +comment.id) {
-              return { ...item, content: content, isEdit: true };
-            }
-            return item;
-          });
-          const cardUpdate = { ...card, comments: commentsUpdate };
-          dispatch(updateCard(cardUpdate));
-        } else {
-          toast.error(data.error);
+        if (200 <= status && status <= 299) {
+          dispatch(updateComment({ id: comment.id, content: content }));
+          toast.success("Chỉnh sửa comment thành công");
         }
-        setIsLoading(false);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Đã xảy ra lỗi khi chỉnh sửa bình luận.");
     } finally {
+      setIsLoading(false);
       setIsEdit(false);
     }
   };
@@ -138,6 +145,7 @@ const CommentItem = ({ comment }) => {
                 size="sm"
                 radius="lg"
                 color="primary"
+                className="interceptor-loading"
                 ref={btnRef}
               >
                 {isLoading ? <CircularProgress /> : "Lưu"}
@@ -178,11 +186,13 @@ const CommentItem = ({ comment }) => {
               )}
 
               <span className="mx-1">•</span>
-              <DeleteComment comment={comment}>
-                <span className=" cursor-pointer ">
-                  <a className="underline">Xóa</a>
-                </span>
-              </DeleteComment>
+              {canDeleteComment && (
+                <DeleteComment comment={comment}>
+                  <span className=" cursor-pointer ">
+                    <a className="underline">Xóa</a>
+                  </span>
+                </DeleteComment>
+              )}
             </div>
           </>
         )}

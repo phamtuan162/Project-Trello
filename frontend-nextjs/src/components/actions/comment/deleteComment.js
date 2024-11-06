@@ -12,7 +12,7 @@ import { useMemo, useState } from "react";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { deleteCommentApi } from "@/services/commentApi";
 import { toast } from "react-toastify";
-const { updateCard } = cardSlice.actions;
+const { deleteComment } = cardSlice.actions;
 const DeleteComment = ({ comment, children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -24,43 +24,25 @@ const DeleteComment = ({ comment, children }) => {
     return (
       workspace?.users?.find((user) => +user.id === +comment.user_id) || null
     );
-  }, [workspace]);
+  }, [workspace.users]);
 
   const HandleDeleteComment = async () => {
     setIsLoading(true);
 
-    if (+user.id === +comment.user_id) {
-      deleteCommentApi(comment.id).then((data) => {
-        if (data.status === 200) {
-          const commentsUpdate = card.comments.filter(
-            (item) => +item.id !== +comment.id
-          );
-          const cardUpdate = {
-            ...card,
-            comments: commentsUpdate,
-          };
-          dispatch(updateCard(cardUpdate));
-        } else {
-          const error = data.error;
-          toast.error(error);
-        }
-        setIsLoading(false);
-      });
+    try {
+      // Gọi API để xóa comment
+      const { status } = await deleteCommentApi(comment.id);
+
+      if (status >= 200 && status <= 299) {
+        dispatch(deleteComment({ id: comment.id }));
+        toast.success("Xóa comment thành công");
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  if (user.id && userComment.id && +user.id !== +userComment.id) {
-    const userRole = user.role.toLowerCase();
-    const userCommentRole = userComment.role.toLowerCase();
-
-    const isOwnerOrAdmin = userRole === "owner" || userRole === "admin";
-    const isAdminEditingOwner =
-      userRole === "admin" && userCommentRole === "owner";
-
-    if (!isOwnerOrAdmin || isAdminEditingOwner) {
-      return;
-    }
-  }
 
   return (
     <Popover
@@ -99,7 +81,7 @@ const DeleteComment = ({ comment, children }) => {
             </p>
             <Button
               type="button"
-              className="w-full h-[40px] mt-2"
+              className="w-full h-[40px] mt-2 interceptor-loading"
               color="danger"
               isDisabled={isLoading}
               onClick={() => HandleDeleteComment()}

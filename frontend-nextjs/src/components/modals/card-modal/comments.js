@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import CommentItem from "./comment";
 
-const { updateCard } = cardSlice.actions;
+const { createComment } = cardSlice.actions;
 
 const CommentCard = () => {
   const dispatch = useDispatch();
@@ -30,7 +30,7 @@ const CommentCard = () => {
     return [...card.comments].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
-  }, [card]);
+  }, [card.comments]);
 
   const validateContent = (value) => /^.{0,200}$/.test(value);
 
@@ -67,27 +67,23 @@ const CommentCard = () => {
       if (!isLoading) {
         setIsLoading(true);
 
-        const data = await createComment({
+        const { status, data } = await createComment({
           content: content,
           card_id: card.id,
           user_id: user.id,
         });
 
-        if (data.status === 200) {
-          const commentNew = data.data;
-          const commentsUpdate = [...card.comments, commentNew];
-          const cardUpdate = { ...card, comments: commentsUpdate };
-          dispatch(updateCard(cardUpdate));
-          setContent("");
-        } else {
-          toast.error(data.error);
+        if (200 <= status && status <= 299) {
+          dispatch(createComment(data));
+          toast.success("Comment thành công");
         }
-        setIsLoading(false);
       }
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi tạo bình luận.");
+      console.log(error);
     } finally {
+      setIsLoading(false);
       setIsComment(false);
+      setContent("");
     }
   };
 
@@ -147,6 +143,7 @@ const CommentCard = () => {
                     size="sm"
                     radius="lg"
                     color="primary"
+                    className="interceptor-loading"
                     ref={btnRef}
                   >
                     {isLoading ? <CircularProgress /> : "Lưu"}

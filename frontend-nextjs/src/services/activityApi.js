@@ -1,7 +1,8 @@
-import { client } from "@/services/clientUtils";
+import authorizedAxiosInstance from "@/utils/authorizedAxios";
 export const createActivity = async (body) => {
-  const { response, data } = await client.post(`/activity`, body);
-  if (response.ok) {
-    return data;
-  }
+  const { response, data } = await authorizedAxiosInstance.post(
+    `/activity`,
+    body
+  );
+  return data;
 };
