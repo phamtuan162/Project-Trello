@@ -39,12 +39,22 @@ module.exports = {
       //Kiểm tra email có tồn tại trong Database không?
       const user = await User.findOne({
         where: { email: email },
+        paranoid: false,
       });
 
       if (!user) {
         return res.status(400).json({
           status: 400,
           message: "Email hoặc mật khẩu không chính xác",
+          isMessage: true,
+        });
+      }
+
+      if (user.deleted_at) {
+        return res.status(400).json({
+          status: 400,
+          message:
+            "Tài khoản này đã bị xóa tạm thời. Để khôi phục, vui lòng chọn 'Quên mật khẩu'.",
           isMessage: true,
         });
       }
@@ -547,12 +557,13 @@ module.exports = {
 
       const link = `http://localhost:3000/auth/reset-password?token=${token}`;
       const html = `
-        <p>Xin chào,</p>
-        <p>Bạn vừa yêu cầu làm mới mật khẩu. Vui lòng nhấn vào liên kết bên dưới trong vòng <strong>15 phút</strong> để thực hiện yêu cầu này.</p>
-        <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Làm mới mật khẩu</a>
-        <p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
-        <p>Trân trọng,</p>
-        <p>Đội ngũ hỗ trợ</p>
+      <p>Xin chào,</p>
+      <p>Bạn vừa yêu cầu làm mới mật khẩu. Vui lòng nhấn vào liên kết bên dưới trong vòng <strong>15 phút</strong> để thực hiện yêu cầu này.</p>
+      <a href="${link}" style="background-color: #007BFF; color: #ffffff !important; display: inline-block; text-align:center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; line-height: 36px; margin: 0 !important; max-width: 160px; padding: 10px; text-decoration: none; width: 160px !important; border-radius: 3px; border-spacing: 0;">Làm mới mật khẩu</a>
+      <p>Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email này.</p>
+      <p>Trường hợp tài khoản của bạn bị xóa tạm thời và bạn muốn khôi phục tài khoản, vui lòng chọn 'Quên mật khẩu' để tiến hành khôi phục.</p>
+      <p>Trân trọng,</p>
+      <p>Đội ngũ hỗ trợ</p>
     `;
 
       await sendMail(email, "Làm mới mật khẩu", html);
@@ -585,17 +596,29 @@ module.exports = {
     }
 
     try {
+      const user = await User.findByPk(id, { paranoid: false });
+
+      if (!user) {
+        return res.status(404).json({
+          status: 404,
+          message: "Not found User",
+        });
+      }
+
+      if (user.deleted_at) {
+        await user.restore();
+      }
+
       const salt = bcrypt.genSaltSync(10);
       const hashPassword = await bcrypt.hash(password_new, salt);
-      await User.update(
-        {
-          password: hashPassword,
-          status: true,
-        },
-        {
-          where: { id },
-        }
-      );
+
+      await user.update({
+        password: hashPassword,
+        status: true,
+      });
+
+      res.clearCookie("token");
+
       Object.assign(response, {
         status: 200,
         message: "Làm mới mật khẩu thành công",

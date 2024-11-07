@@ -3,7 +3,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { LogOut, ArrowLeft } from "lucide-react";
 import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
-import Cookies from "js-cookie";
 import { useSelector } from "react-redux";
 
 const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
@@ -12,17 +11,17 @@ const SidebarSettings = ({ SettingOptions, ProfileOptions }) => {
     return ProfileOption.href.includes(pathname);
   });
   const workspace = useSelector((state) => state.workspace.workspace);
+  const user = useSelector((state) => state.user.user);
+
   const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Bạn có chắc chắn muốn đăng xuất không? ", {
       onClick: async () => {
-        logoutApi().then((data) => {
-          if (data) {
-            Cookies.remove("access_token");
-            Cookies.remove("refresh_token");
-            window.location.href = "/auth/login";
-          }
-        });
+        try {
+          await logoutApi(user.id);
+        } catch (error) {
+          console.log(error);
+        }
       },
     });
   };

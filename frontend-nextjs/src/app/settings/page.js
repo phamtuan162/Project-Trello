@@ -7,14 +7,18 @@ import FormLinkPhoneNumber from "./_components/FormLinkPhoneNumber";
 const PageSettings = () => {
   const user = useSelector((state) => state.user.user);
 
-  return user.id ? (
+  if (!user?.id) {
+    return <Loading />;
+  }
+
+  return (
     <div className="mt-6">
       <FormUpdateProfile user={user} />
       <FormLinkPhoneNumber user={user} />
-      <FormDeleteUser user={user} />
+      {user?.provider?.toLowerCase() !== "github" && (
+        <FormDeleteUser user={user} />
+      )}
     </div>
-  ) : (
-    <Loading />
   );
 };
 export default PageSettings;

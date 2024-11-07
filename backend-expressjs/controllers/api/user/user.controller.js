@@ -230,50 +230,58 @@ module.exports = {
   delete: async (req, res) => {
     const { email, id } = req.body;
     const response = {};
-    const user = await User.findOne({ where: { email: email, id: id } });
-    if (!user) {
-      Object.assign(response, {
-        status: 400,
-        message: "Hãy đảm bảo nhập đúng email để xóa tài khoản của bạn",
-      });
-    } else {
-      const workspaces = await Workspace.findAll({ where: { user_id: id } });
+    try {
+      const user = await User.findOne({ where: { email: email, id: id } });
 
-      await Promise.all(
-        workspaces.map(async (workspace) => {
-          const boards = await Board.findAll({
-            where: { workspace_id: workspace.id },
-          });
+      if (!user) {
+        return res.status(400).json({
+          status: 400,
+          message: "Hãy đảm bảo nhập đúng email để xóa tài khoản của bạn",
+          isMessage: true,
+        });
+      }
 
-          await Promise.all(
-            boards.map(async (board) => {
-              const columns = await Column.findAll({
-                where: { board_id: board.id },
-              });
+      // const workspaces = await Workspace.findAll({ where: { user_id: id } });
 
-              await Promise.all(
-                columns.map(async (column) => {
-                  await Card.destroy({ where: { column_id: column.id } });
-                })
-              );
+      // await Promise.all(
+      //   workspaces.map(async (workspace) => {
+      //     const boards = await Board.findAll({
+      //       where: { workspace_id: workspace.id },
+      //     });
 
-              await Column.destroy({ where: { board_id: board.id } });
-            })
-          );
+      //     await Promise.all(
+      //       boards.map(async (board) => {
+      //         const columns = await Column.findAll({
+      //           where: { board_id: board.id },
+      //         });
 
-          await Board.destroy({ where: { workspace_id: workspace.id } });
-          await Workspace.destroy({ where: { user_id: id } });
-        })
-      );
+      //         await Promise.all(
+      //           columns.map(async (column) => {
+      //             await Card.destroy({ where: { column_id: column.id } });
+      //           })
+      //         );
 
-      await Device.destroy({ where: { user_id: id } });
+      //         await Column.destroy({ where: { board_id: board.id } });
+      //       })
+      //     );
+
+      //     await Board.destroy({ where: { workspace_id: workspace.id } });
+      //     await Workspace.destroy({ where: { user_id: id } });
+      //   })
+      // );
+
+      // await Device.destroy({ where: { user_id: id } });
       await User.destroy({ where: { id } });
       Object.assign(response, {
         status: 200,
         message: "Success",
       });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
-
     res.status(response.status).json(response);
   },
 };

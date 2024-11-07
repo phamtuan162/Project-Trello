@@ -37,12 +37,9 @@ export const updateAvatar = async (userId, formData) => {
 };
 
 export const deleteUser = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(
+  const { response, data } = await authorizedAxiosInstance.post(
     `/user/delete`,
-    body,
-    access_token
+    body
   );
   return data;
 };

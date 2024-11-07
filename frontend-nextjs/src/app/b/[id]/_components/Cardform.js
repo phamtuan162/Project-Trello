@@ -18,6 +18,7 @@ export function CardForm({ column }) {
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isEditing, setIsEditing] = useState(false);
+  const isHandlingClick = useRef(false);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -25,18 +26,34 @@ export function CardForm({ column }) {
     }
 
     const handleClickOutside = async (event) => {
+      // Nếu đang xử lý click trước đó thì bỏ qua sự kiện này
+      if (isHandlingClick.current) return;
+
+      // Đánh dấu là đang xử lý click
+      isHandlingClick.current = true;
+
       if (formRef.current && !formRef.current.contains(event.target)) {
         const title = textareaRef.current.value.trim();
         if (title === "") {
           setIsEditing(false);
-          return;
+        } else {
+          btnAddRef.current.click();
         }
-        await createNewCard();
       }
+
+      // Sau khi xử lý xong, reset flag
+      setTimeout(() => {
+        isHandlingClick.current = false;
+      }, 300); // Tạm dừng 300ms trước khi chấp nhận click tiếp theo
     };
 
+    // Đăng ký event listener
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      // Hủy bỏ event listener khi component unmount hoặc isEditing thay đổi
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [isEditing]);
 
   const createNewCard = async () => {
@@ -86,7 +103,7 @@ export function CardForm({ column }) {
   const handleKeyDown = async (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      await createNewCard();
+      btnAddRef.current.click();
     }
   };
 

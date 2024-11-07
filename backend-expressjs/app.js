@@ -28,34 +28,42 @@ const whitelist = require("./utils/cors");
 //Cors
 const cors = require("cors");
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: (origin, callback) => {
+    // Kiểm tra nếu origin có trong whitelist, cho phép hoặc từ chối
+    if (whitelist.includes(origin) || !origin) {
+      // Nếu origin hợp lệ hoặc không có origin (ví dụ, đối với các yêu cầu từ localhost)
+      callback(null, true);
+    } else {
+      // Nếu origin không hợp lệ
+      callback(new Error("Not allowed by CORS"), false);
+    }
+  },
   credentials: true, // Cho phép cookie và xác thực
   optionsSuccessStatus: 200, // Trả về 200 cho các yêu cầu preflight
 };
 
 var app = express();
 
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Headers", "X-Requested-With");
-//   next();
-// });
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Cung cấp nguồn gốc được phép
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  ); // Các header được phép
-  res.header("Access-Control-Allow-Credentials", "true"); // Cho phép cookie
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  ); // Các phương thức được phép
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header(
+//     "Access-Control-Allow-Origin",
+//     "https://backend-expressjs-swart.vercel.app"
+//   ); // Cung cấp nguồn gốc được phép
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+//   ); // Các header được phép
+//   res.header("Access-Control-Allow-Credentials", "true"); // Cho phép cookie
+//   res.header(
+//     "Access-Control-Allow-Methods",
+//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+//   ); // Các phương thức được phép
+//   next();
+// });
 
 app.use(
   session({

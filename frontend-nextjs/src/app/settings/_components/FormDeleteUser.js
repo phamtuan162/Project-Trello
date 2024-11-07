@@ -9,6 +9,7 @@ import {
 import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteUser } from "@/services/userApi";
+import { logoutApi } from "@/services/authApi";
 const FormDeleteUser = (user) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(
@@ -40,7 +41,12 @@ const FormDeleteUser = (user) => {
 
   const HandleDeleteAccount = async () => {
     try {
-      await deleteUser({ email: email, id: user.id });
+      const { status } = await deleteUser({ email: email, id: user.id });
+      if (200 <= status && status <= 299) {
+        toast.success("Tài khoản đã bị xóa thành công.");
+
+        await logoutApi(user.id);
+      }
     } catch (error) {
       if (error.response?.data?.isMessage) {
         setMessage(error.response.data.message);
@@ -52,8 +58,9 @@ const FormDeleteUser = (user) => {
     <div className="mt-6" style={{ borderTop: "1px solid rgb(230, 230, 230)" }}>
       <h2 className="text-2xl font-medium mt-4">Xóa tài khoản</h2>
       <p className="mt-1 ">
-        Khi bạn xóa tài khoản và dữ liệu tài khoản của mình, bạn sẽ không thể
-        quay lại.
+        Tài khoản của bạn sẽ bị xóa tạm thời. Nếu không khôi phục trong 30 ngày,
+        dữ liệu sẽ bị xóa vĩnh viễn. Để khôi phục, vui lòng chọn phần "Quên mật
+        khẩu".
       </p>
       <form action="" className="pt-6">
         <Input
@@ -136,7 +143,7 @@ const FormDeleteUser = (user) => {
                 <Button
                   onClick={() => HandleDeleteAccount()}
                   type="button"
-                  className="rounded-lg text-xl font-medium text-white mt-4 w-full flex items-center justify-center py-2"
+                  className="interceptor-loading rounded-lg text-xl font-medium text-white mt-4 w-full flex items-center justify-center py-2"
                   color="danger"
                 >
                   Xóa tài khoản

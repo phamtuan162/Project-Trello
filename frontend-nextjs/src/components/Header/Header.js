@@ -163,8 +163,8 @@ const Header = () => {
           dispatch(fetchWorkspace(data.workspace_id_active));
           dispatch(
             fetchMission({
-              user_id: user.id,
-              workspace_id: user.workspace_id_active,
+              user_id: data.id,
+              workspace_id: data.workspace_id_active,
             })
           );
 
@@ -185,7 +185,9 @@ const Header = () => {
       }
     };
 
-    if (!user.id && !pathname.startsWith("/auth/")) {
+    if (!user?.id && !pathname.startsWith("/auth/")) {
+      console.log(1);
+
       fetchUserProfile();
     }
 

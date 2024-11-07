@@ -17,9 +17,9 @@ const PageBilling = () => {
       <p className="mt-1">
         Quản lý tất cả không gian làm việc của bạn trong một gói đăng ký. Khám
         phá những lợi ích của
-        <a className="text-red-500 ml-1">
+        <span className="text-red-500 ml-1 font-semibold">
           Gói cao cấp tất cả trong một của chúng tôi
-        </a>
+        </span>
         .
       </p>
       <Table

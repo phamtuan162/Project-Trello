@@ -135,13 +135,14 @@ const PageResetPassword = () => {
             value={password_verify}
             onChange={HandleChange}
           />
-          <a
-            href="/auth/login"
-            style={{ marginLeft: "auto", fontStyle: "italic" }}
-            className="text-xs"
-          >
-            Quay lại đăng nhập?
-          </a>
+          <Link href="/auth/login">
+            <a
+              style={{ marginLeft: "auto", fontStyle: "italic" }}
+              className="text-xs"
+            >
+              Quay lại đăng nhập?
+            </a>
+          </Link>
           <Button
             type="submit"
             color="primary"

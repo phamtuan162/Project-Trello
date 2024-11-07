@@ -66,7 +66,7 @@ export function ListForm() {
   const handleKeyDown = async (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
-      await createNewColumn();
+      btnAddRef.current.click();
     }
   };
 

@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const workspaceController = require("../../../controllers/api/workspace/workspace.controller");
 const permission = require("../../../middlewares/api/permission.middleware");
+const authMiddleware = require("../../../middlewares/api/auth.middleware");
 
 router.get("/", workspaceController.index);
 router.get(

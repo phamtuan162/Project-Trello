@@ -10,8 +10,6 @@ import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import CommentItem from "./comment";
 
-const { createComment } = cardSlice.actions;
-
 const CommentCard = () => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
@@ -74,7 +72,7 @@ const CommentCard = () => {
         });
 
         if (200 <= status && status <= 299) {
-          dispatch(createComment(data));
+          dispatch(cardSlice.actions.createComment(data));
           toast.success("Comment thành công");
         }
       }

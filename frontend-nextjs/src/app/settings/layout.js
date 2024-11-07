@@ -67,7 +67,7 @@ export default function SettingsLayout({ children }) {
         ProfileOptions={ProfileOptions}
       />
       <div className="grow px-6 py-4 h-full" style={{ overflow: "auto" }}>
-        <BreadcrumbSettings options={SettingOptions} origin={"Cài đặt"} />
+        <v options={SettingOptions} origin={"Cài đặt"} />
         <BreadcrumbProfile options={ProfileOptions} />
 
         <div>{children}</div>

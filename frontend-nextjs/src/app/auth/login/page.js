@@ -159,12 +159,13 @@ const PageLogin = () => {
             type={isVisible ? "text" : "password"}
             tabIndex={1}
           />
-          <a
-            href="/auth/forgot-password"
-            style={{ marginLeft: "auto", fontStyle: "italic" }}
-          >
-            Quên mật khẩu?
-          </a>
+
+          <Link href="/auth/forgot-password">
+            <a style={{ marginLeft: "auto", fontStyle: "italic" }}>
+              Quên mật khẩu?
+            </a>
+          </Link>
+
           <Button
             type="submit"
             color="primary"

@@ -15,12 +15,13 @@ import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 export function UserMenu({ user }) {
   const socket = useSelector((state) => state.socket.socket);
+
   const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Vui lòng click vào đây nếu bạn muốn đăng xuất? ", {
       onClick: async () => {
         try {
-          await logoutApi();
+          await logoutApi(user.id);
           // socket.emit("logout", user.id);
         } catch (error) {
           console.log(error);

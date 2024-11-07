@@ -46,7 +46,6 @@ const statusOptions = [
 ];
 const PageMyWorkspace = () => {
   const dispatch = useDispatch();
-
   const my_workspaces = useSelector(
     (state) => state.my_workspaces.my_workspaces
   );
@@ -61,7 +60,6 @@ const PageMyWorkspace = () => {
     column: "name",
     direction: "ascending",
   });
-  console.log(statusFilter);
 
   const [page, setPage] = useState(1);
   const hasSearchFilter = Boolean(filterValue);
