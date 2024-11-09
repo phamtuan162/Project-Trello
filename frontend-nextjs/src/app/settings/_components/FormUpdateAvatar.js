@@ -5,79 +5,102 @@ import ReactCrop, {
   convertToPixelCrop,
   makeAspectCrop,
 } from "react-image-crop";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Avatar, Button, CircularProgress } from "@nextui-org/react";
 import { CameraIcon, Check, Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+
 import setCanvasPreview from "@/utils/setCanvansPreview";
 import { userSlice } from "@/stores/slices/userSlice";
 import { updateAvatar } from "@/services/userApi";
-import { toast } from "react-toastify";
-import { useDispatch } from "react-redux";
-const { updateUser } = userSlice.actions;
+import { singleFileValidator } from "@/utils/validators";
+
+const { updateAvatar } = userSlice.actions;
 const ASPECT_RATIO = 1;
 const MIN_DIMENSION = 200;
 const FormUpdateAvatar = ({ user }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const imgRef = useRef(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
   const [imgSrc, setImgSrc] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUpload, setIsUpload] = useState(false);
 
   const [crop, setCrop] = useState("");
+
   const handleUpload = async () => {
+    if (error) return;
+
     setIsUpload(true);
-    const { width: imgWidth, height: imgHeight } = imgRef.current;
-    const canvas = document.createElement("canvas");
+    try {
+      const { width: imgWidth, height: imgHeight } = imgRef.current;
+      const canvas = document.createElement("canvas");
 
-    setCanvasPreview(
-      imgRef.current,
-      canvas,
-      convertToPixelCrop(crop, imgWidth, imgHeight)
-    );
+      setCanvasPreview(
+        imgRef.current,
+        canvas,
+        convertToPixelCrop(crop, imgWidth, imgHeight)
+      );
 
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-    const blob = await fetch(dataUrl).then((res) => res.blob());
-    const file = new File([blob], selectedFile.name, { type: "image/jpeg" });
-    const formData = new FormData();
-    formData.append("file", file);
+      // const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
+      const dataUrl = canvas.toDataURL(selectedFile.type);
+      const blob = await fetch(dataUrl).then((res) => res.blob());
+      const file = new File([blob], selectedFile.name, { type: "image/jpeg" });
 
-    updateAvatar(user.id, formData).then((data) => {
-      if (data.status === 200) {
-        const user = data.user;
-        dispatch(updateUser(user));
+      const validationError = singleFileValidator(file);
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { status, data } = updateAvatar(user.id, formData);
+      if (200 <= status && status <= 200) {
+        dispatch(updateAvatar(data));
         setIsUpload(false);
         toast.success("Thay đổi avatar thành công");
         setImgSrc(null);
       }
-    });
+    } catch (error) {
+      console.log(error);
+    }
   };
-  const onSelectFile = (e) => {
-    const file = e.target.files?.[0];
 
+  const onSelectFile = useCallback((e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      const imageElement = new Image();
-      const imageUrl = reader.result?.toString() || "";
-      imageElement.src = imageUrl;
-      imageElement.addEventListener("load", (e) => {
-        if (error) setError("");
-        const { naturalWidth, naturalHeight } = e.currentTarget;
-        if (naturalWidth < MIN_DIMENSION || naturalHeight < MIN_DIMENSION) {
-          setError("Image must be at least 200 x 200 pixels.");
-          return setImgSrc("");
-        }
-      });
-      setImgSrc(imageUrl);
-      setSelectedFile(file);
-    });
-    reader.readAsDataURL(file);
-  };
+    const validationError = singleFileValidator(file);
+    if (validationError) {
+      setError(true);
+      toast.error(validationError);
+      return;
+    }
 
-  const onImageLoad = (e) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.src = reader.result;
+      image.onload = () => {
+        if (image.width < MIN_DIMENSION || image.height < MIN_DIMENSION) {
+          setError(true);
+          toast.error("Image must be at least 200 x 200 pixels.");
+          setImgSrc("");
+        } else {
+          setError(false);
+          setImgSrc(reader.result);
+          setSelectedFile(file);
+        }
+      };
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const onImageLoad = useCallback((e) => {
     const { width, height } = e.currentTarget;
     const cropWidthInPercent = (MIN_DIMENSION / width) * 100;
 
@@ -92,8 +115,7 @@ const FormUpdateAvatar = ({ user }) => {
     );
     const centeredCrop = centerCrop(crop, width, height);
     setCrop(centeredCrop);
-  };
-
+  }, []);
   return (
     <div>
       <div
@@ -181,7 +203,7 @@ const FormUpdateAvatar = ({ user }) => {
 
             <div className="flex items-center gap-3 mt-4 justify-center">
               <Button
-                isDisabled={imgSrc && !isUpload ? false : true}
+                isDisabled={!imgSrc || isUpload}
                 type="button"
                 className=" text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full flex items-center justify-center px-0"
                 color="danger"
@@ -197,8 +219,8 @@ const FormUpdateAvatar = ({ user }) => {
                 )}
               </Button>
               <Button
-                isDisabled={imgSrc && !isUpload ? false : true}
-                className=" text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full  flex items-center justify-center px-0"
+                isDisabled={!imgSrc || isUpload}
+                className="interceptor-loading text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full  flex items-center justify-center px-0"
                 color="success"
                 onClick={() => handleUpload()}
               >

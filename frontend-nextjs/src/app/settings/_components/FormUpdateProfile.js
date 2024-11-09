@@ -17,22 +17,26 @@ const FormUpdateProfile = ({ user }) => {
   });
 
   const handleUpdateProfile = async (formData) => {
-    const name = formData.get("name");
-    const background = formData.get("background");
-    const phone = formData.get("phone");
-    if (name === "") {
-      nameRef.current.focus();
-    } else {
-      updateProfile(user.id, {
-        name: name,
-        background: background,
-        phone: phone,
-      }).then((data) => {
-        if (data.status === 200) {
-          dispatch(updateUser(data.data));
-          toast.success("Cập nhật thành công");
-        }
-      });
+    const updates = Object.keys(form).reduce((acc, field) => {
+      const value = formData.get(field);
+      if (user[field] !== value) acc[field] = value;
+      return acc;
+    }, {});
+
+    if (Object.keys(updates).length === 0) {
+      toast.info("Không có thay đổi nào để cập nhật");
+      return;
+    }
+
+    try {
+      const { status, data } = await updateProfile(user.id, updates);
+
+      if (200 <= status && status <= 299) {
+        dispatch(updateUser(data));
+        toast.success("Cập nhật thành công");
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -54,6 +58,7 @@ const FormUpdateProfile = ({ user }) => {
         <div className="w-full flex flex-col gap-2">
           <div className="flex w-full flex-wrap md:flex-nowrap mb-6 md:mb-0 gap-8 mt-4">
             <Input
+              isRequired
               ref={nameRef}
               id="name"
               name="name"
@@ -177,7 +182,7 @@ const FormUpdateProfile = ({ user }) => {
           <Button
             type="submit"
             color="danger"
-            className="font-medium w-24 h-9 rounded-lg px-3 text-sm mt-2"
+            className="font-medium w-24 h-9 rounded-lg px-3 text-sm mt-2 interceptor-loading"
           >
             Cập nhật
           </Button>

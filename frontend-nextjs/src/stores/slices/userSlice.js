@@ -11,6 +11,9 @@ export const userSlice = createSlice({
     updateUser: (state, action) => {
       state.user = action.payload;
     },
+    updateAvatar: (state, action) => {
+      state.user.avatar = action.payload.avatar;
+    },
     restoreMyWorkspaces: (state, action) => {
       const oldWorkspaces = state.user.workspaces;
       state.user.workspaces = [

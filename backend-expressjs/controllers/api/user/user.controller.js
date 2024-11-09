@@ -215,7 +215,7 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
-        user: new UserTransformer(user),
+        data: new UserTransformer(user),
       });
     } catch (error) {
       Object.assign(response, {
