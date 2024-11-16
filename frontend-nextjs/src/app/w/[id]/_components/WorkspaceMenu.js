@@ -22,14 +22,12 @@ import { AddIcon } from "@/components/Icon/AddIcon";
 import { useSelector, useDispatch } from "react-redux";
 import { switchWorkspace } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
-import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
-import { missionSlice } from "@/stores/slices/missionSlice";
+import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
+import { toast } from "react-toastify";
 
-const { updateMission } = missionSlice.actions;
-const { updateWorkspace } = workspaceSlice.actions;
 const { updateUser } = userSlice.actions;
 
 const options = [
@@ -94,33 +92,32 @@ export default function WorkspaceMenu({
       const { data, status } = await switchWorkspace(workspace_id_witched, {
         user_id: user.id,
       });
-
       if (status >= 200 && status <= 299) {
-        const workspaceActive = data;
-        if (workspaceActive.users) {
-          const userNeedToFind = workspaceActive.users.find(
-            (item) => +item.id === +user.id
-          );
-          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
-        }
+        // Cập nhật role user
 
-        dispatch(updateWorkspace(workspaceActive));
+        dispatch(updateUser({ ...user, role: data.role }));
 
-        dispatch(fetchMission());
+        // Chờ fetchWorkspace và fetchMission hoàn thành trước khi chuyển trang
+        await Promise.all([
+          dispatch(fetchWorkspace(data.workspace_id_active)),
+          dispatch(
+            fetchMission({
+              user_id: data.id,
+              workspace_id: data.workspace_id_active,
+            })
+          ),
+        ]);
 
-        router.push(`/w/${workspaceActive.id}/home`);
-        // if (pathname.startsWith(`/w/${workspaceId}`)) {
-        //   let currentURL = window.location.href;
-        //   currentURL = currentURL.replace(
-        //     workspaceId.toString(),
-        //     workspaceActive.id.toString()
-        //   );
-        // }
+        // Chuyển hướng sau khi các dữ liệu đã được tải về
+        toast.success("Chuyển không gian làm việc thành công");
+        router.push(`/w/${data.workspace_id_active}/home`);
       }
     } catch (error) {
-      console.error("Không thể chuyển đổi không gian làm việc", error);
+      console.log(error);
     } finally {
-      setIsChange(false);
+      setTimeout(() => {
+        setIsChange(false);
+      }, 2000);
     }
   };
 
@@ -256,10 +253,12 @@ export default function WorkspaceMenu({
                       {item?.name}
                     </h4>
                     <div className="flex items-center text-xs text-muted-foreground ">
-                      <PrivateIcon size={16} /> {"\u2022"}{" "}
-                      {item.id === workspace.id
-                        ? workspace?.total_user
-                        : item?.total_user}{" "}
+                      <PrivateIcon size={16} /> {"\u2022"}
+                      <span className="mx-1">
+                        {item.id === workspace.id
+                          ? workspace?.total_user
+                          : item?.total_user}
+                      </span>
                       thành viên
                     </div>
                   </div>

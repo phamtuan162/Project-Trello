@@ -29,12 +29,14 @@ const FormUpdateProfile = ({ user }) => {
     }
 
     try {
-      const { status, data } = await updateProfile(user.id, updates);
-
-      if (200 <= status && status <= 299) {
-        dispatch(updateUser(data));
-        toast.success("Cập nhật thành công");
-      }
+      toast
+        .promise(async () => updateProfile(user.id, updates), {
+          pending: "Đang cập nhật...",
+        })
+        .then((res) => {
+          dispatch(updateUser(updates));
+          toast.success("Cập nhật thành công");
+        });
     } catch (error) {
       console.log(error);
     }

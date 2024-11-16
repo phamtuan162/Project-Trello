@@ -7,9 +7,6 @@ const API_ROOT = process.env.NEXT_PUBLIC_API_ROOT;
 
 let authorizedAxiosInstance = axios.create({
   baseURL: API_ROOT,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 authorizedAxiosInstance.defaults.timeout = 1000 * 60 * 10;
@@ -40,13 +37,13 @@ authorizedAxiosInstance.interceptors.response.use(
 
     return response;
   },
-  (error) => {
+  async (error) => {
     const user = axiosReduceStore?.getState()?.user?.user;
 
     interceptorLoadingElements(false);
 
     if (error.response?.status === 403) {
-      logoutApi(user.id);
+      await logoutApi(user.id);
     }
 
     const originalRequests = error.config;
@@ -59,8 +56,8 @@ authorizedAxiosInstance.interceptors.response.use(
           .then((data) => {
             return data?.access_token;
           })
-          .catch((_error) => {
-            logoutApi(user.id);
+          .catch(async (_error) => {
+            await logoutApi(user.id);
             return Promise.reject(_error);
           })
           .finally(() => {

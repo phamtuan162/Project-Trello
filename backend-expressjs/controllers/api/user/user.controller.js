@@ -1,17 +1,9 @@
-const {
-  User,
-  Workspace,
-  Board,
-  Column,
-  Card,
-  Device,
-} = require("../../../models/index");
+const { User, Device } = require("../../../models/index");
 const { Op } = require("sequelize");
 const { object, string } = require("yup");
 const bcrypt = require("bcrypt");
 const UserTransformer = require("../../../transformers/user/user.transformer");
-const fs = require("fs");
-const path = require("path");
+const { streamUpload } = require("../../../utils/cloudinary");
 
 module.exports = {
   index: async (req, res) => {
@@ -195,27 +187,29 @@ module.exports = {
   },
   updateAvatar: async (req, res) => {
     const { id } = req.params;
-    const file = req.file;
-    const path = `http://localhost:3001/uploads/${file.filename}`;
     const response = {};
+    const file = req.file;
+
+    if (!file) {
+      return res
+        .status(40)
+        .json({ status: 400, message: "Bad request (File not found)" });
+    }
 
     const user = await User.findByPk(id);
     if (!user) {
-      return res.status(404).json({ status: 404, message: "Not found" });
-    }
-    const filePathOld =
-      "public" + user.avatar.slice(user.avatar.indexOf("/uploads"));
-    if (fs.existsSync(filePathOld)) {
-      fs.unlinkSync(filePathOld);
+      return res.status(404).json({ status: 404, message: "Not found user" });
     }
 
     try {
-      await user.update({ avatar: path });
+      const resultUpload = await streamUpload(file.buffer, "avatars");
+
+      await user.update({ avatar: resultUpload.secure_url });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new UserTransformer(user),
+        data: resultUpload.secure_url,
       });
     } catch (error) {
       Object.assign(response, {

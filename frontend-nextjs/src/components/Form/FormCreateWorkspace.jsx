@@ -40,7 +40,6 @@ export default function FormCreateWorkspace({ children }) {
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-  const [isCreate, setIsCreate] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -57,29 +56,31 @@ export default function FormCreateWorkspace({ children }) {
 
   const handleCreateWorkspace = async (e) => {
     e.preventDefault();
-    setIsCreate(true);
+    if (!name || !desc) {
+      return;
+    }
+
     try {
-      const { data, status } = await createWorkspaceApi(user.id, form);
+      await toast
+        .promise(async () => await createWorkspaceApi(user.id, form), {
+          pending: "Đang tạo...",
+          error: "Tạo mới thất bại!",
+        })
+        .then((res) => {
+          const { data } = res;
 
-      if (200 <= status && status <= 299) {
-        const workspace = data;
-        const roleUser = workspace.users.find(
-          (item) => item.id === user.id
-        )?.role;
-
-        dispatch(updateUser({ ...user, role: roleUser }));
-
-        toast.success("Tạo không gian mới thành công");
-        dispatch(updateWorkspace(workspace));
-        dispatch(updateMission([]));
-        router.push(`/w/${workspace.id}/home`);
-        onClose();
-      }
-    } catch (error) {
-      console.log(error);
+          dispatch(updateUser({ role: "owner" }));
+          dispatch(updateWorkspace(data));
+          dispatch(updateMission([]));
+          toast.success("Tạo không gian mới thành công");
+          router.push(`/w/${data.id}/home`);
+          onClose();
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } finally {
       setForm({ name: "", desc: "", color: colors[1] });
-      setIsCreate(false);
     }
   };
 
@@ -97,6 +98,7 @@ export default function FormCreateWorkspace({ children }) {
         onOpenChange={(open) => {
           onOpenChange(open);
         }}
+        isDismissable={false}
         onClose={() => resetForm()}
         backdrop="opaque"
       >
@@ -194,12 +196,11 @@ export default function FormCreateWorkspace({ children }) {
                     value={desc}
                   />
                   <Button
-                    isDisabled={isCreate}
                     type="submit"
                     className="rounded-lg interceptor-loading h-[52px] text-lg mt-4 w-full text lg font-medium text-white   flex items-center justify-center py-2"
                     style={{ background: "rgb(84, 196, 250)" }}
                   >
-                    {isCreate ? <CircularProgress size="sm" /> : "Tạo mới"}
+                    Tạo mới
                   </Button>
                 </form>
               </ModalBody>

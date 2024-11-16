@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@nextui-org/button";
 import {
   Input,
@@ -12,7 +13,7 @@ import { GithubIcon } from "@/components/Icon/GithubIcon";
 import { GoogleIcon } from "@/components/Icon/GoogleIcon";
 import { EyeFilledIcon } from "../_component/LoginRegister/EyeFilledIcon";
 import { EyeSlashFilledIcon } from "../_component/LoginRegister/EyeSlashFilledIcon ";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   loginGoogleApi,
@@ -24,15 +25,19 @@ import Cookies from "js-cookie";
 import { Message } from "../../../components/Message/Message";
 import { setLocalStorage } from "@/utils/localStorage";
 import { Mail, LockKeyhole } from "lucide-react";
+
 const PageLogin = () => {
   const router = useRouter();
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  // Trì hoãn việc hiển thị các phần có thể ảnh hưởng đến SSR
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const HandleChange = (e) => {
@@ -41,25 +46,26 @@ const PageLogin = () => {
 
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     try {
-      const { device_id_current, status } = await loginLocalApi(form);
-
-      if (200 <= status && status <= 299) {
-        toast.success("Đăng nhập thành công");
-        setLocalStorage("device_id_current", device_id_current);
-        Cookies.set("isLogin", true, { expires: 14 });
-
-        router.push("/");
-      }
+      toast
+        .promise(async () => await loginLocalApi(form), {
+          pending: "Đang đăng nhập...",
+          error: "Đăng nhập không thành công",
+        })
+        .then((res) => {
+          const { device_id_current } = res;
+          setLocalStorage("device_id_current", device_id_current);
+          Cookies.set("isLogin", true, { expires: 14 });
+          router.push("/");
+          toast.success("Đăng nhập thành công");
+        })
+        .catch((error) => {
+          if (error.response?.data?.isMessage) {
+            setErrorMessage(error.response.data.message);
+          }
+        });
     } catch (error) {
-      if (error.response?.data?.isMessage) {
-        setErrorMessage(error.response.data.message);
-      }
-
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -99,13 +105,15 @@ const PageLogin = () => {
 
   const { email, password } = form;
 
+  if (!isClient) return null; // Đảm bảo rằng component chỉ render trên client
+
   return (
-    <Card className="login max-w-full w-[400px] h-auto pb-4 ">
-      <CardBody className="container   ">
+    <Card className="login max-w-full w-[400px] h-auto pb-4">
+      <CardBody className="container">
         <h1 className="title text-md">Đăng nhập</h1>
 
         <form
-          className="form flex flex-col justify-center items-center gap-2 w-full  px-10 mt-10"
+          className="form flex flex-col justify-center items-center gap-2 w-full px-10 mt-10"
           onSubmit={HandleLoginLocal}
         >
           <Message message={errorMessage} />
@@ -145,7 +153,7 @@ const PageLogin = () => {
             isRequired
             endContent={
               <button
-                className="focus:outline-none "
+                className="focus:outline-none"
                 type="button"
                 onClick={toggleVisibility}
               >
@@ -160,10 +168,11 @@ const PageLogin = () => {
             tabIndex={1}
           />
 
-          <Link href="/auth/forgot-password">
-            <a style={{ marginLeft: "auto", fontStyle: "italic" }}>
-              Quên mật khẩu?
-            </a>
+          <Link
+            href="/auth/forgot-password"
+            style={{ marginLeft: "auto", fontStyle: "italic" }}
+          >
+            Quên mật khẩu?
           </Link>
 
           <Button
@@ -171,12 +180,12 @@ const PageLogin = () => {
             color="primary"
             className="w-full text-md interceptor-loading"
           >
-            {isLoading ? <CircularProgress size="sm" /> : "Đăng nhập"}
+            Đăng nhập
           </Button>
           <div className="modal__line">
             <span className="text-sm">hoặc</span>
           </div>
-          <div className="flex gap-3 w-full ">
+          <div className="flex gap-3 w-full">
             <Button
               type="button"
               variant="ghost"

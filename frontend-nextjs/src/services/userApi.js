@@ -1,5 +1,3 @@
-import { client } from "@/services/clientUtils";
-import Cookies from "js-cookie";
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** User */
 export const getUser = async (userId) => {
@@ -22,17 +20,15 @@ export const updateProfile = async (userId, body) => {
 };
 
 export const updateAvatar = async (userId, formData) => {
-  const access_token = Cookies.get("access_token");
+  const headers = {
+    "Content-Type": "multipart/form-data",
+  };
 
-  const result = await fetch(
-    `http://localhost:3001/api/v1/user/update_avatar/${userId}`,
-    {
-      access_token: access_token,
-      method: "POST",
-      body: formData,
-    }
+  const { data } = await authorizedAxiosInstance.post(
+    `/user/update_avatar/${userId}`,
+    formData,
+    { headers }
   );
-  const data = await result.json();
   return data;
 };
 

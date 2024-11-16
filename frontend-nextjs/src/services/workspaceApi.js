@@ -99,17 +99,12 @@ export const leaveWorkspaceApi = async (body) => {
 };
 
 export const cancelUserWorkspaceApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/workspace/cancel-user`,
-    body,
-    access_token
+    body
   );
 
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 /** Board */
 

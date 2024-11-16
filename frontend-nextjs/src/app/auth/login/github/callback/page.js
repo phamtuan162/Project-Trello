@@ -1,36 +1,36 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect } from "react";
 import { loginGithubCallbackApi } from "@/services/authApi";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { setLocalStorage } from "@/utils/localStorage";
 import Loading from "@/components/Loading/Loading";
 import { toast } from "react-toastify";
-export default function pageCallback() {
+
+export default function PageCallback() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(false);
-  useEffect(() => {
-    const handleLogin = async () => {
-      const query = window.location.search;
-      try {
-        const { status } = await loginGithubCallbackApi(query);
-        if (200 <= status && status <= 299) {
-          setLocalStorage("device_id_current", data.device_id_current);
-          toast.success("Đăng nhập thành công");
-          Cookies.set("isLogin", true, { expires: 14 });
 
-          router.push("/");
-          setIsLogin(true);
-        }
-      } catch (error) {
-        console.log(error);
+  const handleLogin = async (query) => {
+    try {
+      const { status, data } = await loginGithubCallbackApi(query);
+      if (status >= 200 && status <= 299) {
+        setLocalStorage("device_id_current", data.device_id_current);
+        Cookies.set("isLogin", true, { expires: 14 });
+        toast.success("Đăng nhập thành công");
+        router.push("/");
       }
-    };
-
-    if (!isLogin && typeof window !== "undefined") {
-      handleLogin();
+    } catch (error) {
+      console.log(error);
+      toast.error("Xảy ra lỗi trong quá trình đăng nhập");
+      router.push("/auth/login");
     }
-  }, [isLogin, router]);
+  };
 
-  return <Loading backgroundColor={"white"} zIndex={"100"} />;
+  useEffect(() => {
+    const query = window.location.search;
+    handleLogin(query);
+  }, []);
+
+  return <Loading backgroundColor="white" zIndex="100" />;
 }

@@ -67,11 +67,12 @@ export const verifyAccountApi = async (query, body) => {
   return data;
 };
 /** Logout */
-export const logoutApi = async (userId) => {
+export const logoutApi = async (userId = null) => {
   try {
+    const payload = userId ? { id: userId } : {};
     const { data } = await authorizedAxiosInstance.post(
-      `/auth/logout/${userId}`,
-      null
+      `/auth/logout`,
+      payload
     );
     const { status } = data;
     if (200 <= status && status <= 299) {

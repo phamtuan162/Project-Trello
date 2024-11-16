@@ -1,5 +1,10 @@
 "use client";
-import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/react";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Checkbox,
+} from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { useState } from "react";
@@ -10,7 +15,7 @@ import {
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
-const { cancelUser, updateActivities } = workspaceSlice.actions;
+const { cancelUser, updateActivitiesInWorkspace } = workspaceSlice.actions;
 
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
@@ -18,56 +23,58 @@ const LeaveWorkspace = ({ user }) => {
   const userActive = useSelector((state) => state.user.user);
   const socket = useSelector((state) => state.socket.socket);
   const [isOpen, setIsOpen] = useState(false);
+  const [removeLinks, setRemoveLinks] = useState(false);
+
+  const isSelfAction = +user.id === +userActive.id;
+
   const handleLeaveOrCancelWorkspace = async () => {
     try {
-      const isSelfAction = +user.id === +userActive.id;
       const apiMethod = isSelfAction
         ? leaveWorkspaceApi
         : cancelUserWorkspaceApi;
 
-      const { status, data } = await apiMethod({
-        user_id: user.id,
-        workspace_id: workspace.id,
-      });
+      await toast
+        .promise(
+          async () =>
+            await apiMethod({
+              user_id: user.id,
+              workspace_id: workspace.id,
+              removeLinks: isSelfAction ? true : removeLinks,
+            }),
+          {
+            pending: "Đang thực hiện...",
+          }
+        )
+        .then((res) => {
+          const { activity } = res;
+          if (isSelfAction) {
+            toast.success(
+              "Rời đi thành công. Bạn sẽ chuyển đến Không gian làm việc khác."
+            );
 
-      if (200 <= status && status <= 299) {
-        if (isSelfAction) {
-          toast.success("Rời đi thành công");
-          window.location.href = "/";
-        } else {
-          dispatch(cancelUser(user));
-          dispatch(updateActivities(data));
-          toast.success("Loại bỏ thành viên thành công");
-        }
-
-        socket.emit("removeUser", {
-          userActionId: userActive.id,
-          userRemoveId: isSelfAction ? userActive.id : user.id,
+            window.location.href = "/";
+          } else {
+            dispatch(cancelUser(user));
+            dispatch(updateActivitiesInWorkspace(activity));
+            toast.success("Loại bỏ thành viên thành công");
+          }
+        })
+        .catch((error) => {
+          console.log(error);
         });
-
-        if (!isSelfAction) {
-          socket.emit("sendNotification", {
-            user_id: user.id,
-            userName: userActive.name,
-            userAvatar: userActive.avatar,
-            type: "cancel_user",
-            content: `đã loại bạn khỏi Không gian làm việc ${workspace.name}`,
-          });
-        }
-      }
     } catch (error) {
       console.log(error);
     }
   };
 
-  if (user?.role?.toLowerCase() === "owner" && +userActive?.id !== +user.id) {
+  if (user?.role?.toLowerCase() === "owner") {
     return null;
   }
 
   if (
     userActive?.role?.toLowerCase() !== "admin" &&
     userActive?.role?.toLowerCase() !== "owner" &&
-    +userActive?.id !== +user.id
+    !isSelfAction
   ) {
     return null;
   }
@@ -111,25 +118,39 @@ const LeaveWorkspace = ({ user }) => {
               <X size={14} color={"#626f86"} />
             </button>
           </div>
-          <div
-            onClick={() => handleLeaveOrCancelWorkspace()}
-            className="px-3 hover:bg-default-300 p-1 cursor-pointer interceptor-loading"
-            style={{ color: "#44546f" }}
-          >
+          <div className="px-3  p-1 cursor-pointer ">
             <p className="font-normal text-sm">
-              {+userActive.id === +user.id
+              {isSelfAction
                 ? "Rời Không gian làm việc"
-                : " Đã gỡ khỏi Không gian làm việc"}
+                : "Gỡ khỏi Không gian làm việc"}
             </p>
             <p className="text-xs mt-1">
-              Loại bỏ toàn bộ truy cập tới Không gian làm việc. Thành viên sẽ
-              giữ lại tất cả các bảng của họ trong Không gian làm việc này. Họ
-              sẽ nhận được thông báo.
+              Loại bỏ toàn bộ quyền truy cập vào Không gian làm việc này. Thành
+              viên sẽ không còn liên kết với các thẻ và nhiệm vụ trong Không
+              gian làm việc và sẽ không thể truy cập vào chúng.
             </p>
+            {!isSelfAction && (
+              <Checkbox
+                size="sm"
+                className="mt-1"
+                isSelected={removeLinks}
+                onValueChange={setRemoveLinks}
+              >
+                Xóa liên kết (thẻ, nhiệm vụ, v.v...)
+              </Checkbox>
+            )}
+
+            <button
+              onClick={() => handleLeaveOrCancelWorkspace()}
+              className="w-full px-4 py-2 bg-red-500 text-white rounded-lg interceptor-loading mt-3"
+            >
+              Xác nhận
+            </button>
           </div>
         </div>
       </PopoverContent>
     </Popover>
   );
 };
+
 export default LeaveWorkspace;

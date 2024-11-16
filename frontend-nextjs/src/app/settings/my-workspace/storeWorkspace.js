@@ -21,31 +21,26 @@ const RestoreWorkspace = ({ workspace, children }) => {
     (state) => state.my_workspaces.my_workspaces
   );
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
   const handleRestoreWorkspace = async () => {
-    setIsLoading(true);
     try {
-      const { status } = await restoreWorkspaceApi(workspace.id);
-      if (200 <= status && status <= 299) {
-        const workspacesUpdated = my_workspaces.map((w) => {
-          if (+w.id === +workspace.id) {
-            return { ...w, deleted_at: null };
-          }
-          return w;
+      toast
+        .promise(async () => await restoreWorkspaceApi(workspace.id), {
+          pending: "Đang khôi phục...",
+        })
+        .then(() => {
+          const workspacesUpdated = my_workspaces.map((w) => {
+            if (+w.id === +workspace.id) {
+              return { ...w, deleted_at: null };
+            }
+            return w;
+          });
+          dispatch(updateMyWorkspaces(workspacesUpdated));
+          dispatch(restoreMyWorkspaces(workspace));
+          toast.success("Khôi phục Không gian làm việc thành công");
         });
-        dispatch(updateMyWorkspaces(workspacesUpdated));
-        dispatch(
-          restoreMyWorkspaces({
-            workspace,
-          })
-        );
-        toast.success("Khôi phục Không gian làm việc thành công");
-        setIsOpen(false);
-      }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
   return (
@@ -91,9 +86,8 @@ const RestoreWorkspace = ({ workspace, children }) => {
               type="button"
               className="w-full h-[40px] mt-3 interceptor-loading"
               color="danger"
-              isDisabled={isLoading}
             >
-              {isLoading ? <CircularProgress /> : "Khôi phục"}
+              Khôi phục
             </Button>
           </div>
         </div>

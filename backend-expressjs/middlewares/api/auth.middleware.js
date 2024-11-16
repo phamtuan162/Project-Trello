@@ -5,7 +5,7 @@ module.exports = async (req, res, next) => {
   const token = req.cookies?.access_token;
 
   if (!token) {
-    return res.status(401).json({
+    return res.status(403).json({
       message: "Token not found",
     });
   }
@@ -25,6 +25,8 @@ module.exports = async (req, res, next) => {
     if (blacklist) {
       throw new Error("Token blacklist");
     }
+
+    req.jwtDecoded = decoded;
 
     const { data: userId } = decoded;
 

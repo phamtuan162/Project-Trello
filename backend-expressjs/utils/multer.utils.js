@@ -11,6 +11,8 @@ const storage = multer.diskStorage({
 });
 
 function fileFilter(req, file, cb) {
+  console.log(file);
+
   const allowedTypes = uploadConfig.allowedTypes;
   const allowedExtensions = [".mdj"];
   const fileExtension = file.originalname
@@ -39,7 +41,7 @@ const upload = multer({
 
 module.exports = {
   multerMiddleware: (req, res, next) => {
-    upload.single("file")(req, res, function (err) {
+    upload.single("avatar")(req, res, function (err) {
       if (err) {
         if (err instanceof multer.MulterError) {
           if (err.message === "File too large") {

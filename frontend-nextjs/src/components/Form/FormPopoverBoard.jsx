@@ -17,7 +17,7 @@ import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
 import { createBoard } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-const { updateWorkspace } = workspaceSlice.actions;
+const { createBoardInWorkspace } = workspaceSlice.actions;
 export default function FormPopoverBoard({
   children,
   workspaces,
@@ -41,33 +41,30 @@ export default function FormPopoverBoard({
     const title = formData.get("title");
 
     try {
-      const { data, status } = await createBoard({
-        background: image,
-        title: title,
-        workspace_id: workspace_id,
-      });
+      await toast
+        .promise(
+          async () =>
+            await createBoard({
+              background: image,
+              title: title,
+              workspace_id: workspace_id,
+            }),
+          { pending: "Đang tạo...", error: "Tạo bảng thất bại!" }
+        )
+        .then((res) => {
+          const { data, activity } = res;
 
-      if (200 <= status && status <= 299) {
-        const board = data;
-        const updatedBoards = [...workspace.boards, board];
-
-        const updatedActivities = [
-          ...workspace.activities,
-          ...board.activities,
-        ];
-
-        const updatedWorkspace = {
-          ...workspace,
-          boards: updatedBoards,
-          activities: updatedActivities,
-        };
-
-        dispatch(updateWorkspace(updatedWorkspace));
-        toast.success("Thêm bảng thành công");
-        if (+workspace.id === +workspace_id) {
-          router.push(`/b/${board.id}`);
-        }
-      }
+          dispatch(createBoardInWorkspace({ board: data, activity: activity }));
+          toast.success("Tạo bảng thành công");
+          if (+workspace.id === +workspace_id) {
+            router.push(`/b/${data.id}`);
+          } else {
+            setIsOpen(false);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {

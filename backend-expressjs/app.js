@@ -48,22 +48,19 @@ app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));
 
-// app.use((req, res, next) => {
-//   res.header(
-//     "Access-Control-Allow-Origin",
-//     "https://backend-expressjs-swart.vercel.app"
-//   ); // Cung cấp nguồn gốc được phép
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-//   ); // Các header được phép
-//   res.header("Access-Control-Allow-Credentials", "true"); // Cho phép cookie
-//   res.header(
-//     "Access-Control-Allow-Methods",
-//     "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-//   ); // Các phương thức được phép
-//   next();
-// });
+// const session = require("express-session");
+// const RedisStore = require("connect-redis")(session);
+// const redisClient = require("redis").createClient();
+
+// app.use(
+//   session({
+//     store: new RedisStore({ client: redisClient }),
+//     secret: "your-secret-key",
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: { secure: false }, // true nếu sử dụng HTTPS
+//   })
+// );
 
 app.use(
   session({

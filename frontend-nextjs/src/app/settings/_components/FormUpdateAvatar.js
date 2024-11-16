@@ -12,11 +12,10 @@ import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 
 import setCanvasPreview from "@/utils/setCanvansPreview";
-import { userSlice } from "@/stores/slices/userSlice";
 import { updateAvatar } from "@/services/userApi";
 import { singleFileValidator } from "@/utils/validators";
+import { userSlice } from "@/stores/slices/userSlice";
 
-const { updateAvatar } = userSlice.actions;
 const ASPECT_RATIO = 1;
 const MIN_DIMENSION = 200;
 const FormUpdateAvatar = ({ user }) => {
@@ -44,8 +43,7 @@ const FormUpdateAvatar = ({ user }) => {
         convertToPixelCrop(crop, imgWidth, imgHeight)
       );
 
-      // const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
-      const dataUrl = canvas.toDataURL(selectedFile.type);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
       const blob = await fetch(dataUrl).then((res) => res.blob());
       const file = new File([blob], selectedFile.name, { type: "image/jpeg" });
 
@@ -56,17 +54,26 @@ const FormUpdateAvatar = ({ user }) => {
       }
 
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("avatar", file);
 
-      const { status, data } = updateAvatar(user.id, formData);
-      if (200 <= status && status <= 200) {
-        dispatch(updateAvatar(data));
-        setIsUpload(false);
-        toast.success("Thay đổi avatar thành công");
-        setImgSrc(null);
-      }
+      toast
+        .promise(async () => await updateAvatar(user.id, formData), {
+          pending: "Đang upload ảnh...",
+        })
+        .then((res) => {
+          const { data } = res;
+          dispatch(userSlice.actions.updateUser({ avatar: data }));
+          toast.success("Thay đổi avatar thành công");
+          setImgSrc(null);
+          setIsOpen(false);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsUpload(false);
     }
   };
 
@@ -116,6 +123,7 @@ const FormUpdateAvatar = ({ user }) => {
     const centeredCrop = centerCrop(crop, width, height);
     setCrop(centeredCrop);
   }, []);
+
   return (
     <div>
       <div
@@ -123,7 +131,7 @@ const FormUpdateAvatar = ({ user }) => {
         className=" mt-1 flex relative h-[100px] w-[100px] rounded-full overflow-hidden cursor-pointer"
       >
         <div
-          className=" flex flex-col w-full h-full items-center justify-center absolute text-white  bg-overlay/70 text-xs z-50 opacity-0 hover:opacity-100"
+          className=" flex flex-col w-full h-full items-center justify-center absolute text-white  bg-overlay/70 text-xs z-50 opacity-0 hover:opacity-100 "
           style={{
             transition: "opacity 200ms ease-in 0s",
           }}
@@ -205,7 +213,7 @@ const FormUpdateAvatar = ({ user }) => {
               <Button
                 isDisabled={!imgSrc || isUpload}
                 type="button"
-                className=" text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full flex items-center justify-center px-0"
+                className="interceptor-loading text-xl font-medium text-white min-w-[50px] w-[50px] h-[50px]  min-h-[50px] rounded-full flex items-center justify-center px-0"
                 color="danger"
                 onClick={() => {
                   setImgSrc(null);

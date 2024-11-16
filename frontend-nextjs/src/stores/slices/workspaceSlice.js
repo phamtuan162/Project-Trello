@@ -9,13 +9,19 @@ export const workspaceSlice = createSlice({
   initialState,
   reducers: {
     updateWorkspace: (state, action) => {
-      state.workspace = action.payload;
+      if (action.payload) {
+        Object.keys(action.payload).forEach((key) => {
+          state.workspace[key] = action.payload[key];
+        });
+      }
     },
-    inviteUser: (state, action) => {
-      const { userUpdate, role } = action.payload;
 
-      state.workspace.users.push({ ...userUpdate, role });
+    inviteUser: (state, action) => {
+      const { user, role } = action.payload;
+
+      state.workspace.users.push({ ...user, role });
     },
+
     cancelUser: (state, action) => {
       const usersUpdate = state.workspace.users.filter(
         (user) => +user.id !== +action.payload.id
@@ -23,23 +29,18 @@ export const workspaceSlice = createSlice({
 
       state.workspace.users = usersUpdate;
     },
+
     decentRoleUser: (state, action) => {
-      const usersUpdate = state.workspace.users.map((user) => {
-        if (+user.id === +action.payload.id) {
-          return { ...user, role: action.payload.role };
-        }
-        return user;
-      });
-      state.workspace.users = usersUpdate;
+      const updatedUsers = state.workspace.users.map((item) =>
+        item.id === action.payload.id
+          ? { ...item, role: action.payload.role }
+          : item
+      );
+      state.workspace.users = updatedUsers;
     },
-    updateActivities: (state, action) => {
-      const activitiesUpdate = state.workspace.activities.map((activity) => {
-        if (+activity.id === +action.payload.id) {
-          return action.payload;
-        }
-        return activity;
-      });
-      state.workspace.activities = activitiesUpdate;
+
+    updateActivitiesInWorkspace: (state, action) => {
+      state.workspace.activities.push(action.payload);
     },
 
     updateStatusUser: (state, action) => {
@@ -54,6 +55,11 @@ export const workspaceSlice = createSlice({
     createNewColumn: (state, action) => {
       state.workspace.columns = action.payload.columns;
       state.workspace.c;
+    },
+
+    createBoardInWorkspace: (state, action) => {
+      state.workspace.boards.push(action.payload.board);
+      state.workspace.activities.push(action.payload.activity);
     },
   },
   extraReducers: (builder) => {

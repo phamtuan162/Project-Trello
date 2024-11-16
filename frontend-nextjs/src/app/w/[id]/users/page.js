@@ -65,7 +65,7 @@ const roles = [
     desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
   },
 ];
-const { updateActivities, updateStatusUser, decentRoleUser } =
+const { updateActivitiesInWorkspace, updateStatusUser, decentRoleUser } =
   workspaceSlice.actions;
 
 export default function PageWorkspaceUsers() {
@@ -73,6 +73,7 @@ export default function PageWorkspaceUsers() {
   const workspace = useSelector((state) => state.workspace.workspace);
 
   const userActive = useSelector((state) => state.user.user);
+
   const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
   const [filterValue, setFilterValue] = useState("");
@@ -195,30 +196,40 @@ export default function PageWorkspaceUsers() {
     async (role, user) => {
       const roleNew = [...role][0];
 
-      if (!roleNew && !user.id) {
-        console.log((roleNew, user.id));
+      if (!roleNew && !user.id) return;
+
+      if (roleNew === user.role) {
+        toast.info("Người này đang có role này ");
         return;
       }
 
       try {
-        const { data, status } = await decentRoleApi(id, {
-          user_id: user.id,
-          role: roleNew,
-        });
+        toast
+          .promise(
+            async () =>
+              await await decentRoleApi(id, {
+                user_id: user.id,
+                role: roleNew,
+              }),
+            { pending: "Đang cập nhật..." }
+          )
+          .then((res) => {
+            const { activity } = res;
+            dispatch(decentRoleUser({ id: user.id, role: roleNew }));
+            dispatch(updateActivitiesInWorkspace(activity));
+            toast.success("Cập nhật role thành công");
 
-        if (200 <= status && status <= 299) {
-          dispatch(decentRoleUser({ id: user.id, role: roleNew }));
-          dispatch(updateActivities(data));
-          toast.success("Cập nhật role cho thành viên thành công");
-
-          // socket.emit("sendNotification", {
-          //   user_id: user.id,
-          //   userName: userActive.name,
-          //   userAvatar: userActive.avatar,
-          //   type: "cancel_user",
-          //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
-          // });
-        }
+            // socket.emit("sendNotification", {
+            //   user_id: user.id,
+            //   userName: userActive.name,
+            //   userAvatar: userActive.avatar,
+            //   type: "cancel_user",
+            //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
+            // });
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       } catch (error) {
         console.log(error);
       }

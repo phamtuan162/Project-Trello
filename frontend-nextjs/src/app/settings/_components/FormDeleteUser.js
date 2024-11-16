@@ -10,6 +10,7 @@ import { useState, useRef } from "react";
 import { Message } from "@/components/Message/Message";
 import { deleteUser } from "@/services/userApi";
 import { logoutApi } from "@/services/authApi";
+import { toast } from "react-toastify";
 const FormDeleteUser = (user) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(
@@ -41,16 +42,20 @@ const FormDeleteUser = (user) => {
 
   const HandleDeleteAccount = async () => {
     try {
-      const { status } = await deleteUser({ email: email, id: user.id });
-      if (200 <= status && status <= 299) {
-        toast.success("Tài khoản đã bị xóa thành công.");
-
-        await logoutApi(user.id);
-      }
+      toast
+        .promise(async () => await deleteUser({ email: email, id: user.id }), {
+          pending: "Đang xóa...",
+        })
+        .then(async (res) => {
+          toast.success("Tài khoản đã bị xóa thành công.");
+          await logoutApi(user.id);
+        })
+        .catch((error) => {
+          if (error.response?.data?.isMessage) {
+            setMessage(error.response.data.message);
+          }
+        });
     } catch (error) {
-      if (error.response?.data?.isMessage) {
-        setMessage(error.response.data.message);
-      }
       console.log(error);
     }
   };

@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname, useParams, useRouter } from "next/navigation";
@@ -47,10 +48,10 @@ const Header = () => {
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
+
   const missions = useSelector((state) => state.mission.missions);
   const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
-  const access_token = Cookies.get("access_token");
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -143,10 +144,12 @@ const Header = () => {
   // }, []);
 
   useEffect(() => {
+    const isLogin = Cookies.get("isLogin");
+
     const fetchUserProfile = async () => {
       try {
         // Get user information
-        const { data, status } = await getProfile(access_token);
+        const { data, status } = await getProfile();
 
         if (status >= 200 && status <= 299) {
           // Filter out workspaces that haven't been marked as deleted
@@ -160,13 +163,15 @@ const Header = () => {
           dispatch(updateProvider(data.providers));
           dispatch(updateNotification(data.notifications));
 
-          dispatch(fetchWorkspace(data.workspace_id_active));
-          dispatch(
-            fetchMission({
-              user_id: data.id,
-              workspace_id: data.workspace_id_active,
-            })
-          );
+          await Promise.all([
+            dispatch(fetchWorkspace(data.workspace_id_active)),
+            dispatch(
+              fetchMission({
+                user_id: data.id,
+                workspace_id: data.workspace_id_active,
+              })
+            ),
+          ]);
 
           // Redirect to active workspace if current path does not matches
           if (
@@ -185,27 +190,27 @@ const Header = () => {
       }
     };
 
-    if (!user?.id && !pathname.startsWith("/auth/")) {
-      console.log(1);
-
+    if (isLogin === "true" && !workspace?.id && !user?.id) {
       fetchUserProfile();
     }
 
-    if (user?.workspace_id_active) {
-      if (!workspace?.id) {
-        dispatch(fetchWorkspace(user.workspace_id_active));
-      }
+    // if (user?.workspace_id_active) {
+    //   console.log(1);
 
-      if (missions?.length === 0) {
-        dispatch(
-          fetchMission({
-            user_id: user.id,
-            workspace_id: user.workspace_id_active,
-          })
-        );
-      }
-    }
-  }, [pathname]);
+    //   if (!workspace?.id) {
+    //     dispatch(fetchWorkspace(user.workspace_id_active));
+    //   }
+
+    //   if (missions?.length === 0) {
+    //     dispatch(
+    //       fetchMission({
+    //         user_id: user.id,
+    //         workspace_id: user.workspace_id_active,
+    //       })
+    //     );
+    //   }
+    // }
+  }, []);
 
   useEffect(() => {
     if (user.id && workspace.id) {

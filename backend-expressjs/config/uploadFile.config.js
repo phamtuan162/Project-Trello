@@ -17,9 +17,9 @@ module.exports = {
     // Hàm tạo tên file cho avatar
     name: generateUniqueFileName,
     // Các loại tệp cho phép
-    allowedTypes: ["image/jpeg", "image/png"],
-    // Kích thước tệp tối đa (2MB)
-    fileSize: 1024 * 1024 * 2,
+    allowedTypes: ["image/jpg", "image/jpeg", "image/png"],
+    // Kích thước tệp tối đa (10MB)
+    fileSize: 1024 * 1024 * 10,
   },
   uploadFile: {
     // Đường dẫn đích cho tệp tải lên

@@ -9,7 +9,10 @@ module.exports = (sequelize, DataTypes) => {
       });
       Workspace.belongsToMany(models.User, {
         foreignKey: "workspace_id",
-        through: "users_workspaces_roles",
+        through: {
+          model: models.UserWorkspaceRole, // Bảng trung gian
+          paranoid: true, // Chỉ lấy các bản ghi chưa bị xóa mềm
+        },
         as: "users",
       });
       Workspace.hasMany(models.Activity, {

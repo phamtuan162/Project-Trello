@@ -26,49 +26,57 @@ const FormDeleteWorkspace = ({ workspace }) => {
   const nameRef = useRef(null);
 
   const HandleDeleteWorkspace = async () => {
-    const workspaces = user.workspaces.filter(
-      (ws) => ws.role.toLowerCase() === "owner"
-    );
-
-    if (name !== workspace.name && name === "") {
-      setMessage("Tên không gian làm việc không hợp lệ, Vui lòng nhập lại!");
-      nameRef.current.focus();
-      return;
-    }
-
-    if (workspaces.length === 1) {
-      toast.warning("Bạn chỉ có duy nhất workspace này nên không thể xóa!");
-      return;
-    }
-
-    setIsDelete(true);
-
     try {
-      const { status } = await deleteWorkspaceApi(workspace.id);
-      if (200 <= status && status <= 299) {
-        const users = workspace.users.filter(
-          (item) => +item.id !== +user.id && item.isOnline
-        );
+      if (name !== workspace.name || name === "") {
+        setMessage("Tên không gian làm việc không hợp lệ, vui lòng nhập lại!");
+        nameRef.current.focus();
+        return;
+      }
 
-        users.forEach((userItem) => {
-          socket.emit("sendNotification", {
-            user_id: userItem.id,
-            userName: user.name,
-            userAvatar: user.avatar,
-            type: "delete_workspace",
-            content: `đã xóa Không gian làm việc ${workspace.name}`,
-          });
+      const workspaces = user.workspaces.filter(
+        (ws) => ws.role.toLowerCase() === "owner"
+      );
+
+      if (workspaces.length === 1) {
+        toast.warning("Bạn chỉ có duy nhất workspace này nên không thể xóa!");
+        return;
+      }
+
+      console.log(1);
+
+      setIsDelete(true);
+
+      toast
+        .promise(async () => await deleteWorkspaceApi(workspace.id), {
+          pending: "Đang xóa...",
+        })
+        .then((res) => {
+          // const users = workspace.users.filter(
+          //   (item) => +item.id !== +user.id && item.isOnline
+          // );
+
+          // users.forEach((userItem) => {
+          //   socket.emit("sendNotification", {
+          //     user_id: userItem.id,
+          //     userName: user.name,
+          //     userAvatar: user.avatar,
+          //     type: "delete_workspace",
+          //     content: `đã xóa Không gian làm việc ${workspace.name}`,
+          //   });
+          // });
+
+          toast.success(
+            "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
+          );
+          document.location.href = "/";
+        })
+        .catch((error) => {
+          console.log(error);
+          if (error.response?.data?.isMessage) {
+            setMessage(error.response.data.message);
+          }
         });
-
-        toast.success(
-          "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
-        );
-        document.location.href = "/";
-      }
     } catch (error) {
-      if (error.response?.data?.isMessage) {
-        setMessage(error.response.data.message);
-      }
       console.log(error);
     } finally {
       setIsDelete(false);
@@ -144,7 +152,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
                     isDisabled={isDelete}
                     onPress={onClose}
                     type="button"
-                    className="rounded-lg text-md font-medium text-white   flex items-center justify-center py-2"
+                    className="rounded-lg text-md font-medium text-white interceptor-loading   flex items-center justify-center py-2"
                     color="primary"
                   >
                     {isDelete ? <CircularProgress size={16} /> : " Hủy bỏ"}

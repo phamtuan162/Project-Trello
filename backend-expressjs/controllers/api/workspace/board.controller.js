@@ -123,7 +123,7 @@ module.exports = {
         abortEarly: false,
       });
       const board = await Board.create({ ...body, status: "public" });
-      await Activity.create({
+      const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
@@ -133,16 +133,12 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã thêm bảng ${board.title} vào Không gian làm việc này`,
       });
-      const boardNew = await Board.findByPk(board.id, {
-        include: {
-          model: Activity,
-          as: "activities",
-        },
-      });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new BoardTransformer(boardNew),
+        data: new BoardTransformer(board),
+        activity: activity,
       });
     } catch (e) {
       const errors = Object.fromEntries(

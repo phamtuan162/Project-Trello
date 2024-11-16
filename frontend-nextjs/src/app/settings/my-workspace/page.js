@@ -170,7 +170,7 @@ const PageMyWorkspace = () => {
                   className=" bg-red-600 text-white flex items-center justify-center gap-1 px-2 h-[30px] font-medium text-xs  w-[90px]  rounded-md focus-visible:outline-0"
                   color="danger"
                 >
-                  "Khôi phục"
+                  Khôi phục
                 </button>
               </RestoreWorkspace>
             )

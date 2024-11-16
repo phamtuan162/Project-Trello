@@ -252,6 +252,6 @@ router.get(
 );
 
 router.get("/profile", authMiddleware, authController.profile);
-router.post("/logout/:id", authController.logout);
+router.post("/logout", authController.logout);
 router.post("/refresh", authController.refresh);
 module.exports = router;

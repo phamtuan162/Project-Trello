@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-
-import Loading from "@/components/Loading/Loading";
 import { useSelector } from "react-redux";
+import Cookies from "js-cookie";
+import Loading from "@/components/Loading/Loading";
 
 export default function Home() {
   const user = useSelector((state) => state.user.user);
@@ -12,10 +12,17 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user.workspace_id_active && workspace.id) {
+    // Kiểm tra trạng thái đăng nhập ngay lập tức
+    const isLogin = Cookies.get("isLogin");
+
+    // if (isLogin === "false") {
+    //   router.push(`/auth/login`);
+    //   return;
+    // }
+
+    if (user?.workspace_id_active && workspace?.id) {
       router.push(`/w/${user.workspace_id_active}/home`);
     }
-  }, [user, workspace]);
-
-  return <Loading backgroundColor={"white"} zIndex={"100"} />;
+  }, [user, workspace, router]);
+  return <Loading backgroundColor="white" zIndex="100" />;
 }

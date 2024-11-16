@@ -9,11 +9,14 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     updateUser: (state, action) => {
-      state.user = action.payload;
+      // state.user = { ...state.user, ...action.payload };
+      if (action.payload) {
+        Object.keys(action.payload).forEach((key) => {
+          state.user[key] = action.payload[key];
+        });
+      }
     },
-    updateAvatar: (state, action) => {
-      state.user.avatar = action.payload.avatar;
-    },
+
     restoreMyWorkspaces: (state, action) => {
       const oldWorkspaces = state.user.workspaces;
       state.user.workspaces = [

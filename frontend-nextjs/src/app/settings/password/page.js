@@ -2,40 +2,48 @@
 import { Input, Button } from "@nextui-org/react";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { Message } from "@/components/Message/Message";
 import { changePasswordApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import { LockKeyhole } from "lucide-react";
 const PagePassword = () => {
   const user = useSelector((state) => state.user.user);
-  const [errorMessage, setErrorMessage] = useState("");
   const [form, setForm] = useState({
     password_old: "",
     password_new: "",
     password_verify: "",
   });
+
   const HandleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (password_new !== password_verify) {
-      setErrorMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
+      toast.error("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
       return;
     }
     try {
-      const { status } = await changePasswordApi(user.id, {
-        password_old: password_old,
-        password_new: password_new,
-      });
-      if (200 <= status && status <= 299) {
-        toast.success("Thay đổi mật khẩu thành công");
-        setErrorMessage("");
-      }
+      toast
+        .promise(
+          async () =>
+            await changePasswordApi(user.id, {
+              password_old: password_old,
+              password_new: password_new,
+            }),
+          {
+            pending: "Đang thay đổi...",
+            success: "Thay đổi mật khẩu thành công",
+          }
+        )
+        .catch((error) => {
+          console.log(error);
+
+          if (error.response?.data?.isMessage) {
+            toast.error(error.response.data.message);
+          }
+        });
     } catch (error) {
-      if (error.response?.data?.isMessage) {
-        setErrorMessage(error.response.data.message);
-      }
       console.log(error);
     } finally {
       setForm({ password_old: "", password_new: "", password_verify: "" });
@@ -45,9 +53,6 @@ const PagePassword = () => {
   return (
     <div className="mt-6">
       <form action="" onSubmit={(e) => handleChangePassword(e)}>
-        <div>
-          <Message message={errorMessage} />
-        </div>
         <h1 className="text-2xl font-medium mt-2">Đổi mật khẩu</h1>
         <p className="mt-1">Đảm bảo rằng nó có ít nhất 6 ký tự</p>
         <div className="pb-4 pt-5 w-1/3">

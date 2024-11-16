@@ -10,10 +10,13 @@ const {
   Work,
   Mission,
   Comment,
+  UserCard,
+  Sequelize,
 } = require("../../../models/index");
-const { object, string } = require("yup");
+const { object, string, date } = require("yup");
 const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
+const moment = require("moment");
 
 module.exports = {
   index: async (req, res) => {
@@ -73,6 +76,7 @@ module.exports = {
           {
             model: User,
             as: "users",
+            through: { attributes: [] },
           },
           {
             model: Activity,
@@ -83,31 +87,35 @@ module.exports = {
       });
 
       if (!workspace) {
-        Object.assign(response, {
-          status: 404,
-          message: "Not Found",
-        });
-      } else {
-        if (workspace.users) {
-          for (const user of workspace.users) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      if (workspace?.users?.length > 0) {
+        // Dùng Promise.all để thực hiện các truy vấn đồng thời cho tất cả người dùng
+        await Promise.all(
+          workspace.users.map(async (user) => {
             const user_workspace_role = await UserWorkspaceRole.findOne({
               where: { workspace_id: workspace.id, user_id: user.id },
             });
-            const role = await Role.findByPk(user_workspace_role.role_id);
 
-            user.dataValues.role = role.name;
-          }
-        }
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-          data: new WorkspaceTransformer(workspace),
-        });
+            if (user_workspace_role) {
+              const role = await Role.findByPk(user_workspace_role.role_id);
+              user.dataValues.role = role ? role.name : null; // Đảm bảo có role.name nếu role tồn tại
+            }
+          })
+        );
       }
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: new WorkspaceTransformer(workspace),
+      });
     } catch (e) {
-      console.log(e);
-      response.status = 50;
-      response.message = "Server Error";
+      Object.assign(response, {
+        status: 500,
+        message: "Sever Error",
+      });
     }
     res.status(response.status).json(response);
   },
@@ -224,16 +232,16 @@ module.exports = {
       await Workspace.update(body, {
         where: { id },
       });
-      const workspace = await Workspace.findByPk(id, {
-        include: {
-          model: Board,
-          as: "boards",
-        },
-      });
+      // const workspace = await Workspace.findByPk(id, {
+      //   include: {
+      //     model: Board,
+      //     as: "boards",
+      //   },
+      // });
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new WorkspaceTransformer(workspace),
+        // data: new WorkspaceTransformer(workspace),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -251,13 +259,15 @@ module.exports = {
   delete: async (req, res) => {
     const { id } = req.params;
     const response = {};
-    const workspace = await Workspace.findByPk(id, {
-      include: { model: User, as: "users" },
-    });
-    if (!workspace) {
-      return res.status(404).json({ status: 404, message: "Not found" });
-    }
     try {
+      const workspace = await Workspace.findByPk(id);
+
+      if (!workspace) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found workspace" });
+      }
+
       await workspace.destroy();
 
       const users = await User.findAll({
@@ -267,15 +277,18 @@ module.exports = {
       });
 
       if (users.length > 0) {
-        for (const user of users) {
+        const userUpdates = users.map((user) => {
           if (user.workspaces.length > 0) {
             const latestWorkspace = user.workspaces[0];
-            await User.update(
+            return User.update(
               { workspace_id_active: latestWorkspace.id },
               { where: { id: user.id } }
             );
           }
-        }
+        });
+
+        // Chạy tất cả các update song song
+        await Promise.all(userUpdates);
       }
 
       Object.assign(response, {
@@ -297,39 +310,54 @@ module.exports = {
     const { user_id, workspace_id, role } = req.body;
     const response = {};
 
-    try {
-      if (!user_id || !workspace_id || !role) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
+    if (!user_id || !workspace_id || !role) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
 
-      const user = await User.findByPk(user_id);
-      if (!user) {
-        return res.status(404).json({ status: 404, message: "User not found" });
-      }
-      const workspace = await Workspace.findByPk(workspace_id);
-      if (!workspace) {
+    try {
+      const [user, workspace] = await Promise.all([
+        User.findByPk(user_id),
+        Workspace.findByPk(workspace_id),
+      ]);
+
+      if (!user || !workspace) {
         return res
           .status(404)
-          .json({ status: 404, message: "Workspace not found" });
+          .json({ status: 404, message: "User or Workspace not found" });
       }
-      const roleInstance = await Role.findOne({
+
+      const [roleInstance] = await Role.findOrCreate({
         where: { name: { [Op.iLike]: `%${role}%` } },
+        defaults: { name: role },
       });
 
-      if (!roleInstance) {
-        return res.status(404).json({ status: 404, message: "Role not found" });
+      const [user_workspace_role, created] =
+        await UserWorkspaceRole.findOrCreate({
+          where: { user_id, workspace_id },
+          defaults: {
+            user_id,
+            workspace_id,
+            role_id: roleInstance.id,
+          },
+          paranoid: false,
+        });
+
+      if (!created) {
+        const deletedAt = moment(user_workspace_role.deleted_at);
+        const now = moment();
+
+        const duration = now.diff(deletedAt, "minutes");
+
+        if (duration <= 30) {
+          return res.status(400).json({
+            status: 400,
+            message: `Cần chờ thêm ${
+              30 - duration
+            } phút nữa mới mời lại được người dùng này vào không gian làm việc.`,
+          });
+        }
+        await user_workspace_role.restore();
       }
-
-      await UserWorkspaceRole.create({
-        user_id: user_id,
-        workspace_id: workspace_id,
-        role_id: roleInstance.id,
-      });
-      const totalUser = workspace.total_user + 1;
-      await Workspace.update(
-        { total_user: totalUser },
-        { where: { id: workspace_id } }
-      );
 
       const activity = await Activity.create({
         user_id: userMain.id,
@@ -340,14 +368,15 @@ module.exports = {
         workspace_id: workspace_id,
         desc: `đã thêm ${user.name} vào Không gian làm việc này`,
       });
-      console.log(activity);
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        activity,
       });
     } catch (error) {
       console.log(error);
+
       Object.assign(response, {
         status: 500,
         message: "Server error",
@@ -358,61 +387,88 @@ module.exports = {
   },
 
   leaveWorkspace: async (req, res) => {
-    const { user_id, workspace_id } = req.body;
+    const { user_id, workspace_id, removeLinks } = req.body;
     const response = {};
+
+    if (!user_id || !workspace_id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
     try {
-      if (!user_id || !workspace_id) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
+      const [user, workspace] = Promise.all([
+        User.findByPk(user_id, {
+          include: {
+            model: Workspace,
+            as: "workspaces",
+            where: {
+              id: { [Sequelize.Op.ne]: workspace_id },
+            },
+            order: [["updated_at", "desc"]],
+            limit: 1,
+          },
+        }),
+        Workspace.findByPk(workspace_id),
+      ]);
+
+      if (!workspace || !user) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found workspace or user" });
       }
+
       const user_workspace_role = await UserWorkspaceRole.findOne({
-        where: { user_id: user_id, workspace_id: workspace_id },
+        where: { user_id, workspace_id },
       });
+
       if (!user_workspace_role) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
+
       await user_workspace_role.destroy();
-      const workspace = await Workspace.findByPk(workspace_id, {
-        include: { model: User, include: "users" },
-      });
-      await Workspace.update(
-        { total_user: workspace.users.length }, // giá trị cần cập nhật
-        { where: { id: workspace.id } } // điều kiện
-      );
-      const user = await User.findOne({
-        where: { workspace_id_active: workspace_id },
-        include: {
-          model: Workspace,
-          as: "workspaces",
-        },
-        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
-      });
-      if (user.workspaces.length > 0) {
-        user.update({ workspace_id_active: user.workspaces[0].id });
+
+      if (
+        user?.workspace_id_active === workspace_id &&
+        user?.workspaces?.length > 0
+      ) {
+        await user.update({ workspace_id_active: user.workspaces[0].id });
       }
 
-      const userLeave = await User.findByPk(user_id);
+      if (removeLinks) {
+        const cards = await Card.findAll({
+          where: { workspace_id },
+          include: {
+            model: User,
+            as: "users",
+            where: { id: user_id },
+            through: { attributes: [] },
+          },
+        });
 
-      const cards = await Card.findAll({
-        where: { workspace_id: workspace_id },
-      });
+        if (cards?.length > 0) {
+          const cardIds = cards.map((c) => c.id);
 
-      if (cards.length > 0) {
-        for (const card of cards) {
-          await card.removeUser(userLeave);
-          await Comment.destroy({
-            where: { user_id: user_id, card_id: card.id },
-          });
+          await Promise.all([
+            UserCard.destroy({
+              where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              force: true,
+            }),
+            // Comment.destroy({
+            //   where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+            //   force: true,
+            // }),
+          ]);
         }
+
+        await Mission.update(
+          { user_id: null },
+          { where: { workspace_id, user_id } }
+        );
       }
       await Mission.update(
         { user_id: null },
-        {
-          where: {
-            workspace_id: workspace_id,
-            user_id: user_id,
-          },
-        }
+        { where: { workspace_id, user_id } }
       );
+
       const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -425,7 +481,7 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        activity,
       });
     } catch (error) {
       Object.assign(response, {
@@ -438,82 +494,103 @@ module.exports = {
 
   cancelUser: async (req, res) => {
     const userMain = req.user.dataValues;
-    const { user_id, workspace_id } = req.body;
-    const response = {};
+    const { user_id, workspace_id, removeLinks } = req.body;
+
+    if (!user_id || !workspace_id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
     try {
-      if (!user_id || !workspace_id) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
+      const workspace = await Workspace.findByPk(workspace_id);
+
+      if (!workspace) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found workspace " });
       }
-      const user_workspace_role = await UserWorkspaceRole.findOne({
-        where: { user_id: user_id, workspace_id: workspace_id },
-      });
-      if (!user_workspace_role) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
-      await user_workspace_role.destroy({ force: true });
-      const workspace = await Workspace.findByPk(workspace_id, {
-        include: { model: User, as: "users" },
-      });
-      await Workspace.update(
-        { total_user: workspace.users.length }, // giá trị cần cập nhật
-        { where: { id: workspace.id } } // điều kiện
-      );
-      const user = await User.findOne({
-        where: { workspace_id_active: workspace_id },
+
+      const user = await User.findByPk(user_id, {
         include: {
           model: Workspace,
           as: "workspaces",
+          where: { id: { [Sequelize.Op.ne]: workspace_id } }, // loại trừ workspace_id
+          order: [["updated_at", "desc"]],
         },
-        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
-      });
-      if (user.workspaces.length > 0) {
-        user.update({ workspace_id_active: user.workspaces[0].id });
-      }
-
-      const userCancel = await User.findByPk(user_id);
-
-      const cards = await Card.findAll({
-        where: { workspace_id: workspace_id },
       });
 
-      if (cards.length > 0) {
-        for (const card of cards) {
-          await card.removeUser(userCancel);
-          await Comment.destroy({
-            where: { user_id: user_id, card_id: card.id },
-          });
-        }
+      if (!user) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found user " });
       }
-      await Mission.update(
-        { user_id: null },
-        {
-          where: {
-            workspace_id: workspace_id,
-            user_id: user_id,
+
+      const user_workspace_role = await UserWorkspaceRole.findOne({
+        where: { user_id, workspace_id },
+      });
+
+      if (!user_workspace_role) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
+      await user_workspace_role.destroy();
+
+      if (
+        user?.workspace_id_active === workspace_id &&
+        user?.workspaces?.length > 0
+      ) {
+        await user.update({ workspace_id_active: user.workspaces[0].id });
+      }
+
+      if (removeLinks) {
+        const cards = await Card.findAll({
+          where: { workspace_id },
+          include: {
+            model: User,
+            as: "users",
+            where: { id: user_id },
+            through: { attributes: [] },
           },
+        });
+
+        if (cards?.length > 0) {
+          const cardIds = cards.map((c) => c.id);
+
+          await Promise.all([
+            UserCard.destroy({
+              where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              force: true,
+              // Comment.destroy({
+              //   where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              //   force: true,
+              // }),
+            }),
+          ]);
         }
-      );
+
+        await Mission.update(
+          { user_id: null },
+          { where: { workspace_id, user_id } }
+        );
+      }
+
       const activity = await Activity.create({
         user_id: userMain.id,
         userName: userMain.name,
         userAvatar: userMain.avatar,
         title: workspace.name,
         action: "cancel_user",
-        workspace_id: workspace_id,
+        workspace_id,
         desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
       });
-      Object.assign(response, {
-        status: 200,
-        message: "Success",
-        data: activity,
-      });
+
+      return res
+        .status(200)
+        .json({ status: 200, message: "Success", activity });
     } catch (error) {
-      Object.assign(response, {
-        status: 500,
-        message: "Server error",
-      });
+      console.log(error);
+
+      return res.status(500).json({ status: 500, message: "Server error" });
     }
-    res.status(response.status).json(response);
   },
 
   changeWorkspace: async (req, res) => {
@@ -522,52 +599,46 @@ module.exports = {
 
     const response = {};
 
-    if (!user_id) {
+    if (!user_id || !id) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
-    const workspace = await Workspace.findByPk(id, {
-      include: [
-        {
-          model: Board,
-          as: "boards",
-        },
-        {
-          model: User,
-          as: "users",
-        },
-        {
-          model: Activity,
-          as: "activities",
-        },
-      ],
-      order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
-    });
+    try {
+      const [workspace, user, user_workspace_role] = await Promise.all([
+        Workspace.findByPk(id),
+        User.findByPk(user_id),
+        UserWorkspaceRole.findOne({
+          where: { user_id, workspace_id: id },
+        }),
+      ]);
 
-    if (!workspace) {
-      return res.status(404).json({ status: 404, message: "Not found" });
-    }
-
-    if (workspace.users) {
-      for (const user of workspace.users) {
-        const user_workspace_role = await UserWorkspaceRole.findOne({
-          where: { workspace_id: workspace.id, user_id: user.id },
-        });
-        const role = await Role.findByPk(user_workspace_role.role_id);
-
-        user.dataValues.role = role.name;
+      if (!workspace || !user || !user_workspace_role) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found workspace or user" });
       }
+
+      const role = await Role.findByPk(user_workspace_role.role_id);
+
+      // Cập nhật workspace_id_active cho người dùng
+      user.workspace_id_active = workspace.id;
+      // Lưu thay đổi vào cơ sở dữ liệu
+      await user.save();
+
+      user.dataValues.role = role.name;
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: user,
+      });
+    } catch (error) {
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
 
-    await User.update(
-      { workspace_id_active: workspace.id },
-      { where: { id: user_id } }
-    );
-    Object.assign(response, {
-      status: 200,
-      message: "Success",
-      data: new WorkspaceTransformer(workspace),
-    });
     res.status(response.status).json(response);
   },
 
@@ -628,7 +699,9 @@ module.exports = {
       paranoid: false,
     });
     if (!workspace) {
-      return res.status(404).json({ status: 404, message: " Not found" });
+      return res
+        .status(404)
+        .json({ status: 404, message: "Not found workspace" });
     }
     try {
       await workspace.restore();

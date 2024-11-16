@@ -18,49 +18,56 @@ const { updateWorkspace } = workspaceSlice.actions;
 
 const { updateUser } = userSlice.actions;
 
+const colors = [
+  "#338EF7",
+  "#9353D3",
+  "#45D483",
+  "#F54180",
+  "#FF71D7",
+  "#F7B750",
+  "#A5EEFD",
+  "#0E793C",
+  "#004493",
+  "#C20E4D",
+  "#936316",
+  "#fbdba7",
+];
+
 const PopoverAddColorWorkspace = ({ workspace }) => {
   const user = useSelector((state) => state.user.user);
   const dispatch = useDispatch();
-  const colors = [
-    "#338EF7",
-    "#9353D3",
-    "#45D483",
-    "#F54180",
-    "#FF71D7",
-    "#F7B750",
-    "#A5EEFD",
-    "#0E793C",
-    "#004493",
-    "#C20E4D",
-    "#936316",
-    "#fbdba7",
-  ];
-
   const [colorWorkspace, setColorWorkspace] = useState("");
 
   useEffect(() => {
-    if (workspace.color) {
+    if (workspace?.color) {
       setColorWorkspace(workspace.color);
     }
-  }, [workspace]);
+  }, [workspace.color]);
 
   const addColorWorkspace = async () => {
     try {
-      const { status } = await updateWorkspaceApi(workspace.id, {
-        color: colorWorkspace,
-      });
+      toast
+        .promise(
+          async () =>
+            await updateWorkspaceApi(workspace.id, {
+              color: colorWorkspace,
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          dispatch(updateWorkspace({ color: colorWorkspace }));
 
-      if (status >= 200 && status <= 299) {
-        dispatch(updateWorkspace({ ...workspace, color: colorWorkspace }));
+          const updatedWorkspaces = user.workspaces.map((ws) =>
+            ws.id === workspace.id ? { ...ws, color: colorWorkspace } : ws
+          );
 
-        const updatedWorkspaces = user.workspaces.map((ws) =>
-          ws.id === workspace.id ? { ...ws, color: colorWorkspace } : ws
-        );
+          dispatch(updateUser({ workspaces: updatedWorkspaces }));
 
-        dispatch(updateUser({ ...user, workspaces: updatedWorkspaces }));
-
-        toast.success("Thêm màu không gian làm việc thành công");
-      }
+          toast.success("Thay đổi màu không gian làm việc thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     }
@@ -117,6 +124,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
           </div>
 
           <Button
+            isDisabled={colorWorkspace === ""}
             onClick={addColorWorkspace}
             type="button"
             className="interceptor-loading rounded-lg h-[40px] mt-4 w-full flex items-center justify-center border-1 border-solid border-secondary-400 bg-white text-secondary-400 hover:bg-secondary-400 hover:text-white"

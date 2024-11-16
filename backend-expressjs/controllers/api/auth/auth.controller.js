@@ -314,7 +314,7 @@ module.exports = {
       if (!user) {
         return res.status(404).json({
           status: 404,
-          message: "Not found refresh_token",
+          message: "Not found user",
         });
       }
 
@@ -361,28 +361,28 @@ module.exports = {
   },
 
   logout: async (req, res) => {
-    const { id } = req.params;
-    const { accessToken } = req.cookies?.access_token;
+    const { id } = req.body;
+    const accessToken = req.cookies?.access_token;
     const response = {};
+
     try {
+      // Kiểm tra và thêm access token vào blacklist nếu tồn tại
       if (accessToken) {
         await BlacklistToken.findOrCreate({
-          where: {
-            token: accessToken,
-          },
+          where: { token: accessToken },
           defaults: { token: accessToken },
         });
       }
 
+      // Xóa cookies
       res.clearCookie("access_token");
       res.clearCookie("refresh_token");
 
+      // Nếu có `id`, cập nhật trạng thái người dùng
       if (id) {
         await User.update(
           { isOnline: false, refresh_token: null },
-          {
-            where: { id },
-          }
+          { where: { id } }
         );
       }
 
@@ -393,10 +393,11 @@ module.exports = {
     } catch (error) {
       Object.assign(response, {
         status: 500,
-        message: "Sever error",
+        message: "Server error",
       });
     }
 
+    // Trả về phản hồi
     res.status(response.status).json(response);
   },
 
@@ -446,7 +447,7 @@ module.exports = {
       });
     } catch (e) {
       Object.assign(response, {
-        status: 403,
+        status: 401,
         message: "Please sign in! Error from to refresh_token",
       });
     }
