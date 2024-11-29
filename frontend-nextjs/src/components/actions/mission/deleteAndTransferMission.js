@@ -8,100 +8,97 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { cloneDeep } from "lodash";
+
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { deleteMissionApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
 import { transferCardApi } from "@/services/workspaceApi";
-import { cloneDeep } from "lodash";
 
 const { updateCard } = cardSlice.actions;
-const { updateBoard } = boardSlice.actions;
-const { updateColumn } = columnSlice.actions;
+const { updateCardInBoard, createCardInBoard } = boardSlice.actions;
+const { deleteMissionInMissions } = missionSlice.actions;
+
 const DeleteAndTransferMission = ({ children, mission }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
+  const user = useSelector((state) => state.user.user);
   const card = useSelector((state) => state.card.card);
-  const board = useSelector((state) => state.board.board);
-  const columns = useSelector((state) => state.column.columns);
 
   const HandleDeleteMission = async () => {
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.filter(
-          (item) => +item.id !== +mission.id
+    await toast
+      .promise(async () => await deleteMissionApi(mission.id), {
+        pending: "Đang xóa...",
+      })
+      .then((res) => {
+        const works = cloneDeep(card.works);
+
+        const work = works.find((w) => w.id === mission.work_id);
+
+        if (work) {
+          work.missions = work.missions.filter((m) => m.id !== mission.id);
+        }
+
+        dispatch(updateCard({ id: card.id, works }));
+
+        dispatch(
+          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
         );
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
-    deleteMissionApi(mission.id).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateCard(updatedCard));
+
+        if (mission.user_id === user.id) {
+          dispatch(deleteMissionInMissions(mission));
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
         setIsOpen(false);
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
+      });
   };
 
   const HandleTransferCard = async () => {
-    const newBoard = { ...board };
-    const nextColumns = cloneDeep(columns);
-    const columnActiveIndex = newBoard.columns.findIndex(
-      (column) => +column.id === +card.column_id
-    );
-
-    if (columnActiveIndex === -1) {
-      toast.error("Column not found.");
-      return;
-    }
-
-    const columnActive = newBoard.columns[columnActiveIndex];
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.filter(
-          (item) => +item.id !== +mission.id
-        );
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-
-    const updatedCard = { ...card, works: updatedWorks };
-
     try {
-      const data = await transferCardApi(mission.id, {
-        column_id: card.column_id,
-      });
+      await toast
+        .promise(
+          async () =>
+            await transferCardApi(mission.id, {
+              column_id: card.column_id,
+            }),
+          { pending: "Đang chuyển..." }
+        )
+        .then((res) => {
+          const { data: cardCreated } = res;
+          const works = cloneDeep(card.works);
 
-      if (data.status === 200) {
-        const cardNew = data.data;
-        const newCards = [...columnActive.cards, cardNew];
-        const newColumnActive = {
-          ...columnActive,
-          cards: newCards,
-          cardOrderIds: newCards.map((card) => card.id),
-        };
-        const newColumns = [
-          ...newBoard.columns.slice(0, columnActiveIndex),
-          newColumnActive,
-          ...newBoard.columns.slice(columnActiveIndex + 1),
-        ];
+          const work = works.find((w) => w.id === mission.work_id);
 
-        dispatch(updateBoard({ ...newBoard, columns: newColumns }));
-        dispatch(updateColumn(newColumns));
-        dispatch(updateCard(updatedCard));
-        setIsOpen(false);
-      } else {
-        toast.error(data.error);
-      }
+          if (work) {
+            work.missions = work.missions.filter((m) => m.id !== mission.id);
+          }
+
+          dispatch(updateCard({ id: card.id, works }));
+
+          dispatch(
+            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
+          );
+
+          dispatch(createCardInBoard(cardCreated));
+
+          if (mission.user_id === user.id) {
+            dispatch(deleteMissionInMissions(mission));
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
-      console.error(error);
-      toast.error("An error occurred while transferring the card.");
+      console.log(error);
     }
   };
 
@@ -122,7 +119,7 @@ const DeleteAndTransferMission = ({ children, mission }) => {
           <div className="flex justify-between items-center relative  ">
             <h1 className="grow text-center ">Thao tác Mục</h1>
             <Button
-              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-2 h-auto"
+              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-2 h-auto interceptor-loading"
               onClick={() => setIsOpen(false)}
               variant="ghost"
             >
@@ -131,13 +128,13 @@ const DeleteAndTransferMission = ({ children, mission }) => {
           </div>
           <div className="mt-3">
             <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
+              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer interceptor-loading"
               onClick={() => HandleTransferCard()}
             >
               Chuyển sang thẻ
             </div>
             <div
-              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer"
+              className=" p-2 hover:bg-default-200 px-3 rounded-sm cursor-pointer interceptor-loading"
               onClick={() => HandleDeleteMission()}
             >
               Xóa

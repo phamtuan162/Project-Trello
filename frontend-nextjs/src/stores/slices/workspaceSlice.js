@@ -8,21 +8,41 @@ export const workspaceSlice = createSlice({
   name: "workspace",
   initialState,
   reducers: {
+    selectWorkspace: (state, action) => {
+      state.workspace = action.payload;
+    },
     updateWorkspace: (state, action) => {
       if (action.payload) {
-        Object.keys(action.payload).forEach((key) => {
-          state.workspace[key] = action.payload[key];
+        Object.entries(action.payload).forEach(([key, value]) => {
+          if (value !== undefined && key !== "id") state.workspace[key] = value;
+        });
+      }
+    },
+    updateBoardInWorkspace: (state, action) => {
+      const incomingBoard = action.payload;
+
+      const board = state.workspace.boards.find(
+        (b) => b.id === incomingBoard.id
+      );
+
+      if (board) {
+        Object.entries(incomingBoard).forEach(([key, value]) => {
+          if (value !== undefined && key !== "id") board[key] = value;
         });
       }
     },
 
-    inviteUser: (state, action) => {
+    inviteUserInWorkspace: (state, action) => {
       const { user, role } = action.payload;
 
-      state.workspace.users.push({ ...user, role });
+      if (Array.isArray(state.workspace.user)) {
+        state.workspace.users.push({ ...user, role });
+      } else {
+        state.workspace.users = [...user, role];
+      }
     },
 
-    cancelUser: (state, action) => {
+    cancelUserInWorkspace: (state, action) => {
       const usersUpdate = state.workspace.users.filter(
         (user) => +user.id !== +action.payload.id
       );
@@ -30,36 +50,54 @@ export const workspaceSlice = createSlice({
       state.workspace.users = usersUpdate;
     },
 
-    decentRoleUser: (state, action) => {
-      const updatedUsers = state.workspace.users.map((item) =>
-        item.id === action.payload.id
-          ? { ...item, role: action.payload.role }
-          : item
+    decentRoleUserInWorkspace: (state, action) => {
+      const incomingUser = action.payload;
+
+      const user = state.workspace.users.find(
+        (user) => user.id === incomingUser.id
       );
-      state.workspace.users = updatedUsers;
+
+      if (user) {
+        user.role = incomingUser.role;
+      }
     },
 
     updateActivitiesInWorkspace: (state, action) => {
-      state.workspace.activities.push(action.payload);
+      const activity = action.payload;
+
+      if (Array.isArray(state.workspace.activities)) {
+        state.workspace.activities.push(activity);
+      } else {
+        state.workspace.activities = [activity];
+      }
     },
 
-    updateStatusUser: (state, action) => {
-      const usersUpdate = state.workspace.users.map((user) => {
-        if (user.id === action.payload.id) {
-          return { ...user, isOnline: action.payload.isOnline };
-        }
-        return user;
-      });
-      state.workspace.users = usersUpdate;
-    },
-    createNewColumn: (state, action) => {
-      state.workspace.columns = action.payload.columns;
-      state.workspace.c;
+    updateStatusUserInWorkspace: (state, action) => {
+      const incomingUser = action.payload;
+
+      const user = state.workspace.users.find(
+        (user) => user.id === incomingUser.id
+      );
+
+      if (user) {
+        user.isOnline = incomingUser.isOnline;
+      }
     },
 
     createBoardInWorkspace: (state, action) => {
-      state.workspace.boards.push(action.payload.board);
-      state.workspace.activities.push(action.payload.activity);
+      const { board, activity } = action.payload;
+
+      if (Array.isArray(state.workspace.boards)) {
+        state.workspace.boards.push(board);
+      } else {
+        state.workspace.boards = [board];
+      }
+
+      if (Array.isArray(state.workspace.activities)) {
+        state.workspace.activities.push(activity);
+      } else {
+        state.workspace.activities = [activity];
+      }
     },
   },
   extraReducers: (builder) => {

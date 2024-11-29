@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Popover,
@@ -8,62 +8,74 @@ import {
   Button,
   Select,
   SelectItem,
-  SelectSection,
-  CircularProgress,
 } from "@nextui-org/react";
+import { arrayMove } from "@dnd-kit/sortable";
+import { cloneDeep, isEmpty } from "lodash";
+import { toast } from "react-toastify";
+
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { getBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
-import { arrayMove } from "@dnd-kit/sortable";
 import {
   updateColumnDetail,
   moveCardToDifferentColumnAPI,
   moveCardToDifferentBoardAPI,
 } from "@/services/workspaceApi";
-import { cloneDeep, isEmpty } from "lodash";
 import { generatePlaceholderCard } from "@/utils/formatters";
-import useCardModal from "@/hooks/use-card-modal";
 import { mapOrder } from "@/utils/sorts";
-import { toast } from "react-toastify";
+
 const { updateBoard } = boardSlice.actions;
 const { updateCard } = cardSlice.actions;
-const { updateColumn } = columnSlice.actions;
+
 const MoveCard = ({ children }) => {
   const dispatch = useDispatch();
-  const cardModal = useCardModal();
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
-  const columns = useSelector((state) => state.column.columns);
-  const [isLoading, setIsLoading] = useState(false);
+  const workspace = useSelector((state) => state.workspace.workspace);
   const [boardMove, setBoardMove] = useState(board);
-  const [valueBoard, setValueBoard] = useState(board.id);
-  const [valueColumn, setValueColumn] = useState(card.column_id);
-  const [valueCardIndex, setValueCardIndex] = useState(card.id);
-  const workspaces = useMemo(() => {
-    return user?.workspaces?.filter((workspace) => workspace.boards.length > 0);
-  }, [user]);
+  const [valueColumn, setValueColumn] = useState(card?.column_id);
+  const [valueCardIndex, setValueCardIndex] = useState(card?.id);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
 
   const cardsCurrent = useMemo(() => {
-    const currentColumn = columns.find((column) => +column.id === +valueColumn);
-    return currentColumn?.cardOrderIds;
-  }, [valueColumn, columns]);
+    const currentColumn = boardMove?.columns.find(
+      (column) => +column.id === +valueColumn
+    );
+    return currentColumn?.cardOrderIds || [];
+  }, [valueColumn, boardMove?.columns]);
 
-  useEffect(() => {
-    if (!valueBoard) return;
+  const onSelectBoard = async (boardIdSelect) => {
+    if (+boardIdSelect === +board.id) {
+      if (+boardIdSelect !== +boardMove.id) {
+        HandleReset();
+      }
+      return;
+    }
 
-    const fetchData = async () => {
-      try {
-        const { data, status } = await getBoardDetail(+valueBoard);
-        if (200 <= status && status <= 299) {
-          let boardData = data;
+    try {
+      await toast
+        .promise(getBoardDetail(boardIdSelect, { isCard: false }), {
+          pending: "Đang lấy column trong board này...",
+        })
+        .then((res) => {
+          const { data: BoardNew } = res;
 
-          boardData.columns = mapOrder(
-            boardData.columns,
-            boardData.columnOrderIds,
+          if (!BoardNew?.columns?.length) {
+            toast.error("Không thể di chuyển thẻ do bảng thiếu column.");
+            HandleReset();
+            return;
+          }
+
+          BoardNew.columns = mapOrder(
+            BoardNew.columns,
+            BoardNew.columnOrderIds,
             "id"
           );
 
@@ -75,16 +87,16 @@ const MoveCard = ({ children }) => {
               column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
             }
           });
-          dispatch(updateColumn(boardData.columns));
-          setBoardMove(boardData);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
 
-    fetchData();
-  }, [valueBoard]);
+          setBoardMove(BoardNew);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const moveCardWithinColumn = async (
     newBoard,
@@ -111,7 +123,7 @@ const MoveCard = ({ children }) => {
       });
       if (200 <= status && status <= 299) {
         dispatch(updateBoard(newBoard));
-        dispatch(updateColumn(newColumns));
+        dispatch(updateColumns(newColumns));
         setValueCardIndex(card.id);
       }
     } catch (error) {
@@ -192,7 +204,7 @@ const MoveCard = ({ children }) => {
             activities: [data.data, ...card.activities],
           })
         );
-        dispatch(updateColumn(updatedColumns));
+        dispatch(updateColumns(updatedColumns));
         setValueCardIndex(card.id);
       }
     } catch (error) {
@@ -238,8 +250,6 @@ const MoveCard = ({ children }) => {
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -311,21 +321,17 @@ const MoveCard = ({ children }) => {
         overColumn: nextOverColumn,
       });
       if (200 <= status && status <= 299) {
-        dispatch(updateColumn(boardActive.columns));
+        dispatch(updateColumns(boardActive.columns));
         setValueCardIndex(card.id);
-        cardModal.onClose();
       }
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    if (+valueBoard === +board.id) {
+    if (+boardMove.id === +board.id) {
       await moveCardWithinBoard();
     } else {
       await moveCardToDifferentBoard();
@@ -333,17 +339,22 @@ const MoveCard = ({ children }) => {
   };
 
   const HandleReset = async () => {
-    setIsOpen(false);
-    setValueBoard(board.id);
+    setBoardMove(board);
     setValueColumn(card.column_id);
+    setValueCardIndex(card.id);
   };
+
   return (
     <Popover
       placement="right"
       isOpen={isOpen}
       onClose={HandleReset}
       onOpenChange={(open) => {
-        setIsOpen(open);
+        if (checkRole) {
+          setIsOpen(open);
+        } else {
+          toast.error("Bạn không đủ quyền thực hiện thao tác này!");
+        }
       }}
     >
       <PopoverTrigger>{children}</PopoverTrigger>
@@ -353,7 +364,10 @@ const MoveCard = ({ children }) => {
             <h1 className="grow text-center ">Di chuyển thẻ</h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto"
-              onClick={() => HandleReset()}
+              onClick={() => {
+                setIsOpen(false);
+                HandleReset();
+              }}
               variant="ghost"
             >
               <CloseIcon />
@@ -362,7 +376,7 @@ const MoveCard = ({ children }) => {
           <div className="w-full mt-3">
             <p className="text-xs font-medium">Chọn đích đến</p>
             <Select
-              selectedKeys={[valueBoard?.toString()]}
+              selectedKeys={[boardMove?.id?.toString()]}
               label="Bảng"
               className="mt-2 text-xs"
               classNames={{
@@ -370,20 +384,14 @@ const MoveCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
-                if (+[...newValue][0] === +board.id) {
-                  setValueColumn(card.column_id);
-                }
-                setValueBoard([...newValue][0] || valueBoard);
+                const boardIdSelect = [...newValue][0];
+                onSelectBoard(boardIdSelect);
               }}
             >
-              {workspaces?.map((workspace) => (
-                <SelectSection key={workspace.id} title={workspace.name}>
-                  {workspace.boards.map((board) => (
-                    <SelectItem key={board.id} value={board.id}>
-                      {board.title}
-                    </SelectItem>
-                  ))}
-                </SelectSection>
+              {workspace?.boards?.map((board) => (
+                <SelectItem key={board.id} value={board.id}>
+                  {board.title}
+                </SelectItem>
               ))}
             </Select>
           </div>
@@ -397,13 +405,10 @@ const MoveCard = ({ children }) => {
                 value: ["text-xs font-medium "],
               }}
               onSelectionChange={(newValue) => {
-                if (+[...newValue][0] === card.column_id) {
-                  setValueCardIndex(card.id);
-                }
                 setValueColumn([...newValue][0]);
               }}
             >
-              {columns.map((column) => (
+              {boardMove?.columns?.map((column) => (
                 <SelectItem key={column.id} value={column.id}>
                   {column.title}
                 </SelectItem>
@@ -421,11 +426,17 @@ const MoveCard = ({ children }) => {
                 setValueCardIndex([...newValue][0]);
               }}
             >
-              {cardsCurrent?.map((card, index) => (
-                <SelectItem key={card} textValue={index + 1}>
-                  {index + 1}
+              {cardsCurrent?.length > 0 ? (
+                cardsCurrent?.map((card, index) => (
+                  <SelectItem key={card} textValue={index + 1}>
+                    {index + 1}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem key={9999} textValue={1}>
+                  {1}
                 </SelectItem>
-              ))}
+              )}
             </Select>
           </div>
           <Button
@@ -433,12 +444,11 @@ const MoveCard = ({ children }) => {
             color="primary"
             className="mt-2 interceptor-loading"
             isDisabled={
-              (user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner") ||
-              isLoading
+              user?.role?.toLowerCase() !== "admin" &&
+              user?.role?.toLowerCase() !== "owner"
             }
           >
-            {isLoading ? <CircularProgress size={16} /> : " Di chuyển"}
+            Di chuyển
           </Button>
         </form>
       </PopoverContent>

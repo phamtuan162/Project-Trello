@@ -1,30 +1,36 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Input, Avatar, CircularProgress } from "@nextui-org/react";
+import { Input, Avatar } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+
+import Loading from "../Loading/Loading";
 import { PrivateIcon } from "@/components/Icon/PrivateIcon";
 import { SearchIcon } from "../Icon/SearchIcon";
-import { switchWorkspace } from "@/services/workspaceApi";
-import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { switchWorkspaceApi } from "@/services/workspaceApi";
 import { userSlice } from "@/stores/slices/userSlice";
 import { fetchMission } from "@/stores/middleware/fetchMission";
-import { toast } from "react-toastify";
-const { updateWorkspace } = workspaceSlice.actions;
+import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
+
 const { updateUser } = userSlice.actions;
-const SearchWorkspace = () => {
+
+const SearchWorkspace = ({ isLoading, setIsLoading }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
-
-  const [isLoading, setIsLoading] = useState(false);
   const [filterValue, setFilterValue] = useState("");
   const hasSearchFilter = Boolean(filterValue);
+
+  const workspaces = useMemo(() => {
+    return user?.workspaces?.filter((w) => !w.deleted_at) || [];
+  }, [user?.workspaces]);
+
   const filteredItems = useMemo(() => {
-    let filteredWorkspaces =
-      user?.workspaces?.filter((item) => item !== null && item !== undefined) ||
-      [];
+    let filteredWorkspaces = workspaces.filter(
+      (item) => item?.id && +item.id !== +workspace.id
+    );
 
     if (hasSearchFilter) {
       filteredWorkspaces = filteredWorkspaces.filter((item) =>
@@ -33,42 +39,60 @@ const SearchWorkspace = () => {
     }
 
     return filteredWorkspaces;
-  }, [user, filterValue]);
+  }, [workspaces, filterValue]);
 
-  const handleSwitchWorkspace = async (workspace_id_witched) => {
-    if (+workspace_id_witched === +workspace.id) {
-      toast.info("Đang ở Không gian làm việc này");
-      return;
-    }
+  const handleSwitchWorkspace = async (workspaceSwitch) => {
+    const { id, role } = workspaceSwitch;
+
     setIsLoading(true);
     try {
-      const { data, status } = await switchWorkspace(workspace_id_witched, {
-        user_id: user.id,
-      });
-      if (200 <= status && status <= 299) {
-        const workspaceActive = data;
-        if (workspaceActive.users) {
-          const userNeedToFind = workspaceActive.users.find(
-            (item) => +item.id === +user.id
-          );
-          dispatch(updateUser({ ...user, role: userNeedToFind.role }));
-        }
-        dispatch(
-          fetchMission({
-            user_id: user.id,
-            workspace_id: workspace_id_witched,
-          })
-        );
-        dispatch(updateWorkspace(workspaceActive));
-        router.push(`/w/${workspaceActive.id}/home`);
-      }
+      await toast
+        .promise(
+          async () =>
+            await switchWorkspaceApi(id, {
+              user_id: user.id,
+            }),
+          { pending: "Đang di chuyển..." }
+        )
+        .then(async (res) => {
+          await Promise.all([
+            // Cập nhật role và workspace_id_active user
+            dispatch(
+              updateUser({
+                role: role,
+                workspace_id_active: id,
+              })
+            ),
+            // Chờ fetchWorkspace và fetchMission hoàn thành trước khi chuyển trang
+            dispatch(fetchWorkspace(id)),
+            dispatch(
+              fetchMission({
+                user_id: user.id,
+                workspace_id: id,
+              })
+            ),
+          ]);
+
+          // Chuyển hướng sau khi các dữ liệu đã được tải về
+          router.push(`/w/${id}/home`);
+          toast.success("Chuyển không gian làm việc thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
       setFilterValue("");
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
+
+  if (isLoading) {
+    return <Loading backgroundColor={"white"} zIndex={"1000"} />;
+  }
 
   return (
     <div className=" sm:w-[300px] w-[240px] hidden sm:inline-block  relative">
@@ -98,45 +122,36 @@ const SearchWorkspace = () => {
             boxShadow: "0px 8px 12px #091E4226, 0px 0px 1px #091E424F",
           }}
         >
-          {isLoading ? (
-            <CircularProgress />
-          ) : (
-            <>
-              {filteredItems.length > 0 ? (
-                filteredItems.map((item) => (
-                  <div
-                    onClick={() => handleSwitchWorkspace(item.id)}
-                    key={item.id}
-                    className="flex gap-3 interceptor-loading p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
-                    style={{ cursor: "pointer" }}
-                  >
-                    <Avatar
-                      radius="md"
-                      size="sm"
-                      style={{
-                        background: `${
-                          item && item.color ? item.color : "#9353D3"
-                        }`,
-                      }}
-                      className="h-9 w-9 text-white "
-                      name={item?.name?.charAt(0)}
-                    />
-                    <div className="grow flex flex-col items-start  gap-1">
-                      <h4 className="w-full max-w-[169px] text-xs leading-4 text-small font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
-                        {item?.name}
-                      </h4>
-                      <div className="flex items-center text-xs text-muted-foreground ">
-                        <PrivateIcon size={16} /> {"\u2022"} {item?.total_user}{" "}
-                        thành viên
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <span className="italic text-md p-2">Không tìm thấy</span>
-              )}
-            </>
-          )}
+          <span className="italic text-md p-2 hidden last:block   text-center text-muted-foreground">
+            Không tìm thấy
+          </span>
+          {filteredItems?.map((item) => (
+            <div
+              onClick={() => handleSwitchWorkspace(item)}
+              key={item.id}
+              className="flex gap-3 interceptor-loading p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
+              style={{ cursor: "pointer" }}
+            >
+              <Avatar
+                radius="md"
+                size="sm"
+                style={{
+                  background: `${item && item.color ? item.color : "#9353D3"}`,
+                }}
+                className="h-9 w-9 text-white "
+                name={item?.name?.charAt(0)}
+              />
+              <div className="grow flex flex-col items-start  gap-1">
+                <h4 className="w-full max-w-[169px] text-xs leading-4 text-small font-semibold leading-none text-default-600 overflow-hidden whitespace-nowrap text-ellipsis rounded-lg">
+                  {item?.name}
+                </h4>
+                <div className="flex items-center text-xs text-muted-foreground ">
+                  <PrivateIcon size={16} /> {"\u2022"} {item?.total_user} thành
+                  viên
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -5,13 +5,24 @@ const permission = require("../../../middlewares/api/permission.middleware");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
 router.get("/", columnController.index);
 router.get("/:id", columnController.find);
-router.put("/move-card", columnController.moveCardDiffBoard);
+router.put(
+  "/move-card",
+  authMiddleware,
+  permission("column.move_card"),
+  columnController.moveCardDiffBoard
+);
 router.put(
   "/move-column/:id",
-
+  authMiddleware,
+  permission("column.move_column"),
   columnController.moveColumnDiffBoard
 );
-router.post("/copy-column", authMiddleware, columnController.copyColumn);
+router.post(
+  "/copy-column",
+  authMiddleware,
+  permission("column.copy"),
+  columnController.copyColumn
+);
 router.post(
   "/",
   authMiddleware,

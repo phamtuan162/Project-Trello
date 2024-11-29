@@ -24,7 +24,10 @@ module.exports = (sequelize, DataTypes) => {
 
       User.belongsToMany(models.Card, {
         foreignKey: "user_id",
-        through: "users_cards",
+        through: {
+          model: models.UserCard, // Bảng trung gian
+          paranoid: true, // Chỉ lấy các bản ghi chưa bị xóa mềm
+        },
         as: "cards",
       });
 

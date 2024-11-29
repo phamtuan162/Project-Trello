@@ -1,5 +1,5 @@
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
-export const createComment = async (body) => {
+export const createCommentApi = async (body) => {
   const { data } = await authorizedAxiosInstance.post(`/comment`, body);
 
   return data;

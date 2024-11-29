@@ -2,7 +2,9 @@
 import { formatDistanceToNow } from "date-fns";
 import vi from "date-fns/locale/vi";
 import { Avatar } from "@nextui-org/react";
+
 import { generateActivityMessage } from "@/utils/formatters";
+
 const ActivityItem = ({ activity }) => {
   return (
     <li className="flex items-center gap-1.5 w-full">

@@ -5,15 +5,13 @@ import { toast } from "react-toastify";
 
 import { ListOptions } from "./ListOptions";
 import { boardSlice } from "@/stores/slices/boardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
 
-const { updateBoard } = boardSlice.actions;
-const { updateColumn } = columnSlice.actions;
+const { updateColumnInBoard } = boardSlice.actions;
+
 export function ListHeader({ column }) {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
-  const board = useSelector((state) => state.board.board);
   const inputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -24,44 +22,26 @@ export function ListHeader({ column }) {
   }, [isEditing]);
 
   const onUpdateTitle = async () => {
-    const title = inputRef.current.value.trim();
-
-    if (title.length < 3 || title === column.title.toString().trim()) {
-      toast.error(
-        "Title phải nhiều hơn 3 ký tự và không được trùng với title cũ"
-      );
-      return;
-    }
-
     try {
-      const { data, status } = await updateColumnDetail(column.id, {
+      const title = inputRef.current.value.trim();
+
+      if (title.length < 6) {
+        toast.info("Tiêu đề phải dài hơn 6 ký tự!");
+        return;
+      }
+
+      if (title === column.title.trim()) {
+        setIsEditing(false);
+        return;
+      }
+
+      dispatch(updateColumnInBoard({ id: column.id, title: title }));
+
+      setIsEditing(false);
+
+      await updateColumnDetail(column.id, {
         title: title,
       });
-      if (200 <= status && status <= 299) {
-        const updatedColumn = data;
-        const updatedColumns = board.columns.map((column) =>
-          column.id === updatedColumn.id ? updatedColumn : column
-        );
-
-        const updatedBoard = {
-          ...board,
-          columns: updatedColumns.map((c) => {
-            if (c.id === column.id) {
-              return {
-                ...c,
-                cards: mapOrder(c.cards, c.cardOrderIds, "id"),
-              };
-            }
-            return c;
-          }),
-        };
-
-        dispatch(updateBoard(updatedBoard));
-        toast.success("Cập nhật thành công");
-        dispatch(updateColumn(updatedColumns));
-      } else {
-        toast.error(error || message);
-      }
     } catch (error) {
       console.log(error);
     } finally {

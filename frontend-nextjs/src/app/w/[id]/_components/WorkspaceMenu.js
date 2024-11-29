@@ -12,21 +12,22 @@ import {
   Avatar,
   Input,
 } from "@nextui-org/react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useParams } from "next/navigation";
+import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+
 import { SettingIcon } from "@/components/Icon/SettingIcon";
 import { SearchIcon } from "@/components/Icon/SearchIcon";
 import { PrivateIcon } from "@/components/Icon/PrivateIcon";
 import { UserIcon } from "@/components/Icon/UserIcon";
 import { UpgradeIcon } from "@/components/Icon/UpgradeIcon";
 import { AddIcon } from "@/components/Icon/AddIcon";
-import { useSelector, useDispatch } from "react-redux";
-import { switchWorkspace } from "@/services/workspaceApi";
+import { switchWorkspaceApi } from "@/services/workspaceApi";
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
-import { toast } from "react-toastify";
 
 const { updateUser } = userSlice.actions;
 
@@ -54,70 +55,81 @@ export default function WorkspaceMenu({
   workspace,
 }) {
   const dispatch = useDispatch();
-  // const { id: workspaceId } = useParams();
+  const { id: workspaceId } = useParams();
   const pathname = usePathname();
   const router = useRouter();
   const user = useSelector((state) => state.user.user);
-
   const [isOpen, setIsOpen] = useState(false);
   const [isSearch, setIsSearch] = useState(false);
   const [isChange, setIsChange] = useState(false);
-
-  const workspacesSwitched = useMemo(() => {
-    return user?.workspaces?.filter((item) => +item.id !== +workspace.id) || [];
-  }, [user, workspace]);
-
   const [filterValue, setFilterValue] = useState("");
 
   const hasSearchFilter = Boolean(filterValue);
 
+  const workspaces = useMemo(() => {
+    return user?.workspaces?.filter((w) => !w.deleted_at) || [];
+  }, [user?.workspaces]);
+
   const filteredItems = useMemo(() => {
-    let filteredWorkspaces =
-      workspacesSwitched.filter(
-        (item) => item !== null && item !== undefined
-      ) || [];
+    if (!workspaceId || !workspaces) return [];
 
-    if (hasSearchFilter) {
-      filteredWorkspaces = filteredWorkspaces.filter((item) =>
-        item.name.toLowerCase().includes(filterValue.toLowerCase())
-      );
-    }
+    const filteredWorkspaces = workspaces.filter(
+      (item) => item?.id && +item.id !== +workspaceId
+    );
 
-    return filteredWorkspaces;
-  }, [filterValue, workspacesSwitched]);
+    if (!hasSearchFilter) return filteredWorkspaces;
 
-  const handleSwitchWorkspace = async (workspace_id_witched) => {
+    const searchQuery = filterValue.toLowerCase();
+
+    return filteredWorkspaces.filter((item) =>
+      item.name.toLowerCase().includes(searchQuery)
+    );
+  }, [workspaces, filterValue, hasSearchFilter]);
+
+  const handleSwitchWorkspace = async (workspaceSwitch) => {
+    const { id, role } = workspaceSwitch;
     setIsChange(true);
     try {
-      const { data, status } = await switchWorkspace(workspace_id_witched, {
-        user_id: user.id,
-      });
-      if (status >= 200 && status <= 299) {
-        // Cập nhật role user
+      await toast
+        .promise(
+          async () =>
+            await switchWorkspaceApi(id, {
+              user_id: user.id,
+            }),
+          { pending: "Đang di chuyển..." }
+        )
+        .then(async (res) => {
+          await Promise.all([
+            // Cập nhật role và workspace_id_active user
+            dispatch(
+              updateUser({
+                role: role,
+                workspace_id_active: id,
+              })
+            ),
+            // Chờ fetchWorkspace và fetchMission hoàn thành trước khi chuyển trang
+            dispatch(fetchWorkspace(id)),
+            dispatch(
+              fetchMission({
+                user_id: user.id,
+                workspace_id: id,
+              })
+            ),
+          ]);
 
-        dispatch(updateUser({ ...user, role: data.role }));
-
-        // Chờ fetchWorkspace và fetchMission hoàn thành trước khi chuyển trang
-        await Promise.all([
-          dispatch(fetchWorkspace(data.workspace_id_active)),
-          dispatch(
-            fetchMission({
-              user_id: data.id,
-              workspace_id: data.workspace_id_active,
-            })
-          ),
-        ]);
-
-        // Chuyển hướng sau khi các dữ liệu đã được tải về
-        toast.success("Chuyển không gian làm việc thành công");
-        router.push(`/w/${data.workspace_id_active}/home`);
-      }
+          // Chuyển hướng sau khi các dữ liệu đã được tải về
+          router.push(`/w/${id}/home`);
+          toast.success("Chuyển không gian làm việc thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
       setTimeout(() => {
         setIsChange(false);
-      }, 2000);
+      }, 1000);
     }
   };
 
@@ -230,9 +242,9 @@ export default function WorkspaceMenu({
               <span className="italic text-md p-2 hidden last:block   text-center text-muted-foreground">
                 Không tìm thấy
               </span>
-              {filteredItems.map((item) => (
+              {filteredItems?.map((item) => (
                 <div
-                  onClick={() => handleSwitchWorkspace(item.id)}
+                  onClick={() => handleSwitchWorkspace(item)}
                   key={item.id}
                   className="flex gap-3 interceptor-loading  p-1.5 hover:bg-default-100 rounded-lg pointer select-none list-none items-center "
                   style={{ cursor: "pointer" }}

@@ -107,9 +107,11 @@ module.exports = {
       });
 
       const work = await Work.findByPk(req.body.work_id);
+
       if (!work) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res.status(404).json({ status: 404, message: "Not found work" });
       }
+
       const mission = await Mission.create({
         ...body,
         workspace_id: user.workspace_id_active,
@@ -122,7 +124,7 @@ module.exports = {
       });
     } catch (e) {
       const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
+        e?.inner.map(({ path, message }) => [path, message])
       );
       Object.assign(response, {
         status: 400,
@@ -197,16 +199,19 @@ module.exports = {
     const response = {};
     try {
       const mission = await Mission.findByPk(id);
+
       if (!mission) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found mission" });
       }
-      const work = await Work.findByPk(mission.work_id);
+      // const work = await Work.findByPk(mission.work_id);
 
-      if (!work) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
+      // if (!work) {
+      //   return res.status(404).json({ status: 404, message: "Not found work" });
+      // }
 
-      await work.removeMission(mission);
+      // await work.removeMission(mission);
       await mission.destroy();
 
       Object.assign(response, {
@@ -226,18 +231,21 @@ module.exports = {
     const { id } = req.params;
     const { column_id } = req.body;
     const response = {};
-    try {
-      if (!column_id) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
-      const mission = await Mission.findByPk(id);
-      if (!mission) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
 
-      const column = await Column.findByPk(column_id);
-      if (!column) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+    if (!column_id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
+    try {
+      const [mission, column] = await Promise.all([
+        Mission.findByPk(id),
+        Column.findByPk(column_id),
+      ]);
+
+      if (!column || !mission) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found column or mission" });
       }
 
       const card = await Card.create({
@@ -249,15 +257,20 @@ module.exports = {
 
       if (mission.user_id) {
         const user = await User.findByPk(mission.user_id);
-        await card.addUser(user);
+        if (user) await card.addUser(user);
       }
 
       await column.update({ cardOrderIds: [...column.cardOrderIds, card.id] });
       await mission.destroy();
 
       const CardNew = await Card.findByPk(card.id, {
-        include: { model: User, as: "users" },
+        include: {
+          model: User,
+          as: "users",
+          attributes: { exclude: ["password"] }, // Loại trừ trường password
+        },
       });
+
       Object.assign(response, {
         status: 200,
         message: "Success",

@@ -56,7 +56,7 @@ const FormUpdateAvatar = ({ user }) => {
       const formData = new FormData();
       formData.append("avatar", file);
 
-      toast
+      await toast
         .promise(async () => await updateAvatar(user.id, formData), {
           pending: "Đang upload ảnh...",
         })
@@ -64,7 +64,6 @@ const FormUpdateAvatar = ({ user }) => {
           const { data } = res;
           dispatch(userSlice.actions.updateUser({ avatar: data }));
           toast.success("Thay đổi avatar thành công");
-          setImgSrc(null);
           setIsOpen(false);
         })
         .catch((error) => {
@@ -73,6 +72,7 @@ const FormUpdateAvatar = ({ user }) => {
     } catch (error) {
       console.log(error);
     } finally {
+      setImgSrc(null);
       setIsUpload(false);
     }
   };

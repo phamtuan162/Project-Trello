@@ -2,40 +2,54 @@
 import { useSelector, useDispatch } from "react-redux";
 import { Checkbox, Button } from "@nextui-org/react";
 import { format } from "date-fns";
-import FormDate from "@/components/Form/FormDate";
-import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { updateCardApi } from "@/services/workspaceApi";
-import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
 
+import FormDate from "@/components/Form/FormDate";
+import { cn } from "@/lib/utils";
+import { updateCardApi } from "@/services/workspaceApi";
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+
 const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const DateCard = ({ checkRole }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
 
-  const [isSelected, setIsSelected] = useState(
-    card.status === "success" && true
-  );
+  const [isSelected, setIsSelected] = useState(card?.status === "success");
 
   const HandleChangeStatusDate = async (selected) => {
     setIsSelected(selected);
+
     const statusCard = selected ? "success" : card.status;
-    updateCardApi(card.id, { status: statusCard }).then((data) => {
-      if (data.status === 200) {
-        const cardUpdate = {
-          ...card,
-          status: statusCard,
-          activities: data.data.activities,
-        };
-        dispatch(updateCard(cardUpdate));
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
+
+    await toast
+      .promise(
+        async () => await updateCardApi(card.id, { status: statusCard }),
+        {
+          pending: "Đang cập nhật...",
+        }
+      )
+      .then((res) => {
+        dispatch(updateCard({ status: statusCard }));
+        dispatch(
+          updateCardInBoard({
+            id: card.id,
+            column_id: card.column_id,
+            status: statusCard,
+          })
+        );
+        toast.success("Cập nhật thành công");
+      })
+      .catch((error) => {
+        setIsSelected(false);
+        console.log(error);
+      });
   };
+
   return (
     <div className="flex flex-col">
       <p

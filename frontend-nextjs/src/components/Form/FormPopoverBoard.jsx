@@ -13,11 +13,16 @@ import {
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
+
 import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
 import { createBoard } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+
 const { createBoardInWorkspace } = workspaceSlice.actions;
+const { setBoardCurrent } = boardSlice.actions;
+
 export default function FormPopoverBoard({
   children,
   workspaces,
@@ -55,7 +60,10 @@ export default function FormPopoverBoard({
           const { data, activity } = res;
 
           dispatch(createBoardInWorkspace({ board: data, activity: activity }));
+          dispatch(setBoardCurrent(data));
+
           toast.success("Tạo bảng thành công");
+
           if (+workspace.id === +workspace_id) {
             router.push(`/b/${data.id}`);
           } else {

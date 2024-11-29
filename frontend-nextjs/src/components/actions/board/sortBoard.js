@@ -13,6 +13,7 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 const SortBoard = ({ children, setBoards, boards }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState("updated_at");
+
   useEffect(() => {
     const sortFunction = (a, b) => {
       if (selected.toLowerCase() === "name") {

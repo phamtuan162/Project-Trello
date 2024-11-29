@@ -14,23 +14,21 @@ import { SearchIcon, ChevronDownIcon, User2 } from "lucide-react";
 import { BoardList } from "../_components/BoardList";
 import capitalize from "@/utils/capitalize";
 
+const statusOptions = [
+  { name: "Gần Nhất Trước ↓", uid: "desc" },
+  { name: "Xa Nhất Trước ↑", uid: "asc" },
+  { name: "Theo bảng chữ cái A-Z", uid: "nameAZ" },
+  { name: "Theo bảng chữ cái Z-A", uid: "nameZA" },
+];
+
 export default function PageBoards({ params }) {
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("desc");
 
-  const statusOptions = useMemo(
-    () => [
-      { name: "Gần Nhất Trước ↓", uid: "desc" },
-      { name: "Xa Nhất Trước ↑", uid: "asc" },
-      { name: "Theo bảng chữ cái A-Z", uid: "nameAZ" },
-      { name: "Theo bảng chữ cái Z-A", uid: "nameZA" },
-    ],
-    []
-  );
-
   const boards = useMemo(() => {
     if (!workspace?.boards?.length) return [];
+
     return workspace.boards
       .filter((b) => b.workspace_id)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -64,11 +62,6 @@ export default function PageBoards({ params }) {
 
     return filteredBoards;
   }, [boards, filterValue, statusFilter]);
-
-  const onSearchChange = useCallback(
-    (value) => setFilterValue(value || ""),
-    []
-  );
 
   return (
     <div className="w-full mb-20">
@@ -126,7 +119,7 @@ export default function PageBoards({ params }) {
                   value={filterValue}
                   variant="bordered"
                   onClear={() => setFilterValue("")}
-                  onValueChange={onSearchChange}
+                  onValueChange={(value) => setFilterValue(value)}
                 />
               </div>
             </div>

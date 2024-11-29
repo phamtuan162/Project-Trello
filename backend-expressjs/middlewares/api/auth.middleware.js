@@ -52,6 +52,8 @@ module.exports = async (req, res, next) => {
 
     return next();
   } catch (e) {
+    console.log(e.message);
+
     if (e?.message?.includes("jwt expired")) {
       return res.status(410).json({
         status: 410,

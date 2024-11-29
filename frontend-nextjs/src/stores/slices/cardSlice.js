@@ -1,38 +1,103 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetchCard } from "../middleware/fetchCard";
 const initialState = {
-  card: {},
+  card: null,
   status: "idle",
+  isShowModalActiveCard: false,
 };
 
 export const cardSlice = createSlice({
   name: "card",
   initialState,
   reducers: {
+    selectCard: (state, action) => {
+      if (action.payload) {
+        state.card = action.payload;
+      }
+    },
+
+    showModalActiveCard: (state, action) => {
+      state.isShowModalActiveCard = true;
+    },
+
+    clearAndHideCard: (state, action) => {
+      state.isShowModalActiveCard = false;
+      state.card = null;
+    },
+
+    updateActivityInCard: (state, action) => {
+      if (state.card?.activities?.length > 0) {
+        state.card.activities.push(action.payload);
+      } else {
+        state.card.activities = [action.payload];
+      }
+    },
     updateCard: (state, action) => {
-      state.card = action.payload;
+      if (action.payload) {
+        Object.entries(action.payload).forEach(([key, value]) => {
+          if (value !== undefined && key !== "id") state.card[key] = value;
+        });
+      }
     },
-    createComment: (state, action) => {
-      state.card.comments = [action.payload, ...state.card.comments];
-    },
-    updateComment: (state, action) => {
-      const { content, id } = action.payload;
 
-      const commentsUpdate = state.card.comments.map((comment) => {
-        if (+comment.id === +id) {
-          return { ...comment, content: content, isEdit: true };
-        }
-        return comment;
-      });
-
-      state.card.comments = commentsUpdate;
+    createCommentInCard: (state, action) => {
+      if (state.card?.comments?.length > 0) {
+        state.card.comments.push(action.payload);
+      } else {
+        state.card.comments = [action.payload];
+      }
     },
-    deleteComment: (state, action) => {
-      const commentsUpdate = state.card.comments.filter(
-        (comment) => +comment.id !== +action.payload.id
+
+    createWorkInCard: (state, action) => {
+      if (state.card?.works?.length > 0) {
+        state.card.works.push(action.payload);
+      } else {
+        state.card.works = [action.payload];
+      }
+    },
+    updateWorkInCard: (state, action) => {
+      const incomingWork = action.payload;
+
+      const work = state.card.works.find((w) => w.id === incomingMission.id);
+
+      if (work) {
+        Object.entries(incomingWork).forEach(([key, value]) => {
+          if (value !== undefined && key !== "id") work[key] = value;
+        });
+      }
+    },
+
+    createMissionInCard: (state, action) => {
+      const incomingMission = action.payload;
+
+      const work = state.card.works.find(
+        (w) => w.id === incomingMission.work_id
       );
 
-      state.card.comments = commentsUpdate;
+      if (work) {
+        if (Array.isArray(work.missions)) {
+          work.missions.push(incomingMission);
+        } else {
+          work.missions = [incomingMission];
+        }
+      }
+    },
+    updateMissionInCard: (state, action) => {
+      const incomingMission = action.payload;
+
+      const work = state.card.works.find(
+        (w) => w.id === incomingMission.work_id
+      );
+
+      if (work) {
+        const mission = work.missions.find((m) => m.id === incomingMission.id);
+
+        if (mission) {
+          Object.entries(incomingMission).forEach(([key, value]) => {
+            if (value !== undefined && key !== "id") mission[key] = value;
+          });
+        }
+      }
     },
   },
   extraReducers: (builder) => {

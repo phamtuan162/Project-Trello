@@ -9,44 +9,54 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { useState } from "react";
-import { cardSlice } from "@/stores/slices/cardSlice";
-import { deleteWorkApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { deleteWorkApi } from "@/services/workspaceApi";
+
 const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const DeleteWork = ({ work }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
 
   const HandleDeleteWork = async () => {
-    setIsLoading(true);
-    deleteWorkApi(work.id).then((data) => {
-      if (data.status === 200) {
-        const activities =
-          card.activities && card.activities.length > 0
-            ? [data.data, ...card.activities]
-            : [data.data];
-        const worksUpdate = card.works.filter((item) => +item.id !== +work.id);
-        const cardUpdate = {
-          ...card,
-          works: worksUpdate,
-          activities: activities,
-        };
-        dispatch(updateCard(cardUpdate));
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-      setIsLoading(false);
-    });
+    await toast
+      .promise(async () => await deleteWorkApi(work.id), {
+        pending: "Đang xóa...",
+      })
+      .then((res) => {
+        const worksUpdate = card.works.filter((w) => w.id !== work.id);
+
+        dispatch(updateCard({ works: worksUpdate }));
+
+        dispatch(
+          updateCardInBoard({
+            id: card.id,
+            column_id: card.column_id,
+            works: worksUpdate,
+          })
+        );
+
+        toast.success("Xóa thành công");
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsOpen(false);
+      });
   };
+
   if (
     user?.role?.toLowerCase() !== "admin" &&
     user?.role?.toLowerCase() !== "owner"
   ) {
-    return;
+    return null;
   }
 
   return (
@@ -60,7 +70,7 @@ const DeleteWork = ({ work }) => {
       }}
     >
       <PopoverTrigger>
-        <button className="text-xs p-1 px-2  rounded-sm bg-gray-200">
+        <button className="text-xs p-1 px-2  rounded-sm bg-gray-100 hover:bg-gray-200">
           Xóa
         </button>
       </PopoverTrigger>
@@ -91,12 +101,11 @@ const DeleteWork = ({ work }) => {
             </p>
             <Button
               type="button"
-              className="w-full h-[40px] mt-2"
+              className="w-full h-[40px] mt-2 interceptor-loading"
               color="danger"
-              isDisabled={isLoading}
               onClick={() => HandleDeleteWork()}
             >
-              {isLoading ? <CircularProgress /> : "Xóa danh sách công việc"}
+              Xóa
             </Button>
           </div>
         </div>

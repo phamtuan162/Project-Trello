@@ -4,14 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { usePathname, useParams, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { getProfile } from "@/services/authApi";
-import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
-import { fetchMission } from "@/stores/middleware/fetchMission";
-import { userSlice } from "@/stores/slices/userSlice";
-import { providerSlice } from "@/stores/slices/providerSlice";
-import Loading from "../Loading/Loading";
-import Sidebar from "../Sidebar/Sidebar";
-import { UserMenu } from "./UserMenu";
 import {
   Navbar,
   NavbarBrand,
@@ -24,31 +16,34 @@ import {
   Tooltip,
   Badge,
 } from "@nextui-org/react";
+import { toast } from "react-toastify";
+import { io } from "socket.io-client";
+
+import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
+import { fetchMission } from "@/stores/middleware/fetchMission";
+import Loading from "../Loading/Loading";
+import Sidebar from "../Sidebar/Sidebar";
+import { UserMenu } from "./UserMenu";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import FormCreateWorkspace from "../Form/FormCreateWorkspace";
 import { socketSlice } from "@/stores/slices/socket";
-import { io } from "socket.io-client";
 import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
-import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { clickNotification } from "@/services/workspaceApi";
-import { myWorkspacesSlice } from "@/stores/slices/myWorkspacesSlice";
+import { clickNotification } from "@/services/notifyApi";
 import SearchWorkspace from "./SearchWorkspace";
-import { toast } from "react-toastify";
-const { updateUser } = userSlice.actions;
-const { updateProvider } = providerSlice.actions;
+import { fetchNotification } from "@/stores/middleware/fetchNotification";
+import { fetchProfileUser } from "@/stores/middleware/fetchProfileUser";
+
 const { updateSocket } = socketSlice.actions;
 const { updateNotification } = notificationSlice.actions;
-const { updateWorkspace } = workspaceSlice.actions;
-const { updateMyWorkspaces } = myWorkspacesSlice.actions;
+
 const Header = () => {
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
-
   const missions = useSelector((state) => state.mission.missions);
   const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
@@ -59,7 +54,7 @@ const Header = () => {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useSelector((state) => state.board.board);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const notificationsClick = useMemo(() => {
     return notifications?.filter((notification) => !notification.onClick);
@@ -67,14 +62,13 @@ const Header = () => {
 
   const handleClickNotify = async () => {
     try {
-      if (notificationsClick?.length === 0) {
-        return null;
-      }
+      if (notificationsClick?.length === 0) return null;
 
       const notificationsUpdate = notifications.map((notification) => {
         return { ...notification, onClick: true };
       });
       dispatch(updateNotification(notificationsUpdate));
+
       await clickNotification({ user_id: user.id });
     } catch (error) {
       console.log(error);
@@ -148,22 +142,14 @@ const Header = () => {
 
     const fetchUserProfile = async () => {
       try {
-        // Get user information
-        const { data, status } = await getProfile();
+        // Fetch profile user
+        setIsLoading(true);
+        const data = await dispatch(fetchProfileUser()).unwrap();
 
-        if (status >= 200 && status <= 299) {
-          // Filter out workspaces that haven't been marked as deleted
-          const workspacesUpdate = data.workspaces.filter(
-            (item) => !item.deleted_at
-          );
-
-          // Update information, myWorkspaces, provider, notification of user
-          dispatch(updateUser({ ...data, workspaces: workspacesUpdate }));
-          dispatch(updateMyWorkspaces(data.workspaces));
-          dispatch(updateProvider(data.providers));
-          dispatch(updateNotification(data.notifications));
-
+        if (data) {
+          // Fetch workspace, missions , workspace of user
           await Promise.all([
+            dispatch(fetchNotification({ user_id: data.id })),
             dispatch(fetchWorkspace(data.workspace_id_active)),
             dispatch(
               fetchMission({
@@ -185,6 +171,7 @@ const Header = () => {
             router.push(currentURL);
           }
         }
+        setIsLoading(false);
       } catch (error) {
         console.log(error);
       }
@@ -193,31 +180,7 @@ const Header = () => {
     if (isLogin === "true" && !workspace?.id && !user?.id) {
       fetchUserProfile();
     }
-
-    // if (user?.workspace_id_active) {
-    //   console.log(1);
-
-    //   if (!workspace?.id) {
-    //     dispatch(fetchWorkspace(user.workspace_id_active));
-    //   }
-
-    //   if (missions?.length === 0) {
-    //     dispatch(
-    //       fetchMission({
-    //         user_id: user.id,
-    //         workspace_id: user.workspace_id_active,
-    //       })
-    //     );
-    //   }
-    // }
-  }, []);
-
-  useEffect(() => {
-    if (user.id && workspace.id) {
-      const timer = setTimeout(() => setIsLoading(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [user.id, workspace.id]);
+  }, [pathname]);
 
   // useEffect(() => {
   //   const getUsersWorkspace = (data) => {
@@ -320,7 +283,7 @@ const Header = () => {
       </NavbarContent>
 
       <NavbarContent as="div" className="items-center gap-2" justify="end">
-        <SearchWorkspace />
+        <SearchWorkspace isLoading={isLoading} setIsLoading={setIsLoading} />
         {options?.map((option, index) => (
           <Tooltip
             showArrow

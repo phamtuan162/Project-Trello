@@ -16,16 +16,16 @@ const getGreeting = () => {
 export default function HomeWorkspace() {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
+
   const activitiesRecent = useMemo(() => {
-    if (workspace?.activities?.length > 0) {
-      const activities = workspace.activities
-        .filter((activity) => +activity.user_id === +user.id)
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 7);
-      return activities;
-    }
-    return [];
-  }, [workspace, user.id]);
+    if (!workspace?.activities?.length) return [];
+
+    return workspace.activities
+      .filter(({ user_id }) => +user_id === +user.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 7);
+  }, [workspace?.activities, user.id]);
+
   return (
     <div className="mt-2 pb-5">
       <h1 className="text-xl font-bold ">

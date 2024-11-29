@@ -3,28 +3,44 @@ import { Checkbox, Button, Avatar } from "@nextui-org/react";
 import { useEventListener, useOnClickOutside } from "usehooks-ts";
 import { useState, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { Clock, UserPlus, MoreHorizontal } from "lucide-react";
+import { format } from "date-fns";
+
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { updateMissionApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { toast } from "react-toastify";
-import { Clock, UserPlus, MoreHorizontal } from "lucide-react";
+import { missionSlice } from "@/stores/slices/missionSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+
 import AssignUserMission from "@/components/actions/mission/AssignUserMission";
 import SetDate from "@/components/actions/mission/setDate";
 import DeleteAndTransferMission from "@/components/actions/mission/deleteAndTransferMission";
-import { format } from "date-fns";
-const { updateCard } = cardSlice.actions;
+import { cloneDeep } from "lodash";
+
+const { updateMissionInCard } = cardSlice.actions;
+const { updateMissionInMissions } = missionSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const MissionWork = ({ mission, setMissionSelected }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
+
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
   const formRef = useRef(null);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   const enableEditing = () => {
     setIsEditing(true);
     setTimeout(() => {
       inputRef.current?.focus();
-    });
+    }, 1000);
   };
 
   const disableEditing = () => {
@@ -41,37 +57,58 @@ const MissionWork = ({ mission, setMissionSelected }) => {
 
   useOnClickOutside(formRef, disableEditing);
 
-  const onSubmit = (formData) => {
+  const onSubmit = async (formData) => {
     const name = formData.get("name");
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.map((item) => {
-          if (+item.id === +mission.id) {
-            return { ...mission, name: name };
-          }
-          return mission;
-        });
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
-    if (name) {
-      updateMissionApi(mission.id, { name: name }).then((data) => {
-        if (data.status === 200) {
-          dispatch(updateCard(updatedCard));
-        } else {
-          const error = data.error;
-          toast.error(error);
-        }
-        setIsEditing(false);
-      });
+
+    if (!name) {
+      toast.info("Chưa nhập name!");
+      return;
     }
+
+    await toast
+      .promise(async () => await updateMissionApi(mission.id, { name: name }), {
+        pending: "Đang cập nhật...",
+      })
+      .then((res) => {
+        const works = cloneDeep(card.works);
+
+        const workUpdate = works.find((w) => w.id === mission.work_id);
+
+        const missionUpdate = workUpdate.missions.find(
+          (m) => m.id === mission.id
+        );
+
+        missionUpdate.name = name;
+
+        dispatch(
+          updateMissionInCard({
+            id: mission.id,
+            work_id: mission.work_id,
+            name: name,
+          })
+        );
+
+        dispatch(
+          updateCardInBoard({
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          })
+        );
+
+        if (mission.user_id === user.id) {
+          dispatch(updateMissionInMissions({ id: mission.id, name: name }));
+        }
+
+        setIsEditing(false);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
   return (
     <div className="flex gap-1 items-start ">
-      {user?.role?.toLowerCase() === "admin" ||
-      user?.role?.toLowerCase() === "owner" ? (
+      {checkRole ? (
         <Checkbox
           value={mission.id}
           key={mission.id}
@@ -98,7 +135,7 @@ const MissionWork = ({ mission, setMissionSelected }) => {
               name="name"
               className=" rounded-md focus-visible:outline-none border-sky-600 w-full text-xs p-2 pt-0  w-full h-[40px] border-2"
               ref={inputRef}
-              defaultValue={mission?.name || undefined}
+              defaultValue={mission?.name}
               size="xs"
             />
             <div className="flex items-center justify-between">
@@ -108,11 +145,14 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                   size="sm"
                   radius="lg"
                   color="primary"
-                  className="font-medium"
+                  className="font-medium interceptor-loading"
                 >
                   Lưu
                 </Button>
-                <span onClick={() => disableEditing()}>
+                <span
+                  className="interceptor-loading"
+                  onClick={() => disableEditing()}
+                >
                   <CloseIcon size={20} />
                 </span>
               </div>
@@ -153,20 +193,15 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                 mission.status === "success" && "line-through"
               }`}
               onClick={() => {
-                if (
-                  user?.role?.toLowerCase() === "admin" ||
-                  user?.role?.toLowerCase() === "owner"
-                ) {
-                  enableEditing();
-                }
+                checkRole && enableEditing();
               }}
             >
-              {mission.name}
+              {mission?.name}
             </span>
 
             <div className="flex gap-2 ">
               <SetDate mission={mission}>
-                {mission.endDateTime ? (
+                {mission?.endDateTime ? (
                   <span
                     className={`${
                       mission.status === "success" && "bg-green-700 text-white"
@@ -192,7 +227,7 @@ const MissionWork = ({ mission, setMissionSelected }) => {
               </SetDate>
 
               <AssignUserMission mission={mission}>
-                {mission.user ? (
+                {mission?.user ? (
                   <div className="group-avatar-1">
                     <Avatar
                       src={mission.user.avatar}
@@ -207,8 +242,7 @@ const MissionWork = ({ mission, setMissionSelected }) => {
                   </button>
                 )}
               </AssignUserMission>
-              {(user?.role?.toLowerCase() === "admin" ||
-                user?.role?.toLowerCase() === "owner") && (
+              {checkRole && (
                 <DeleteAndTransferMission mission={mission}>
                   <button className="focus-visible:outline-0 h-[24px] w-[24px] flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
                     <MoreHorizontal size={14} />

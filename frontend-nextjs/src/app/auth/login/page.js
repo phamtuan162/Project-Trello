@@ -47,7 +47,7 @@ const PageLogin = () => {
   const HandleLoginLocal = async (e) => {
     e.preventDefault();
     try {
-      toast
+      await toast
         .promise(async () => await loginLocalApi(form), {
           pending: "Đang đăng nhập...",
           error: "Đăng nhập không thành công",

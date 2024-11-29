@@ -2,20 +2,21 @@ import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRef, useState, useEffect } from "react";
+import { toast } from "react-toastify";
+
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createCard } from "@/services/workspaceApi";
-import { toast } from "react-toastify";
 import { boardSlice } from "@/stores/slices/boardSlice";
 
-const { updateBoard } = boardSlice.actions;
+const { createCardInBoard } = boardSlice.actions;
+
 export function CardForm({ column }) {
   const dispatch = useDispatch();
   const textareaRef = useRef(null);
   const btnAddRef = useRef(null);
   const formRef = useRef(null);
   const user = useSelector((state) => state.user.user);
-  const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isEditing, setIsEditing] = useState(false);
   const isHandlingClick = useRef(false);
@@ -57,42 +58,32 @@ export function CardForm({ column }) {
   }, [isEditing]);
 
   const createNewCard = async () => {
-    const trimmedValue = textareaRef.current.value.trim();
-
-    if (trimmedValue.length < 3) {
-      toast.error("Title thẻ phải ít nhất 3 ký tự");
-      return;
-    }
-
     try {
-      const { status, data } = await createCard({
-        title: trimmedValue,
-        workspace_id: workspace.id,
-        column_id: column.id,
-      });
+      const trimmedValue = textareaRef.current.value.trim();
 
-      if (status >= 200 && status < 300) {
-        const createdCard = data;
-        const updatedColumns = board.columns.map((item) => {
-          if (+item.id !== +column.id) return item;
-
-          const isPlaceholderExist = item.cards.some(
-            (card) => card.FE_PlaceholderCard
-          );
-          return {
-            ...item,
-            cards: isPlaceholderExist
-              ? [createdCard]
-              : [...item.cards, createdCard],
-            cardOrderIds: isPlaceholderExist
-              ? [createdCard.id]
-              : [...item.cardOrderIds, createdCard.id],
-          };
-        });
-
-        dispatch(updateBoard({ ...board, columns: updatedColumns }));
-        toast.success("Tạo thẻ thành công");
+      if (trimmedValue.length < 3) {
+        toast.info("Tiêu đề thẻ phải ít nhất 3 ký tự");
+        return;
       }
+
+      await toast
+        .promise(
+          async () =>
+            await createCard({
+              title: trimmedValue,
+              workspace_id: workspace.id,
+              column_id: column.id,
+            }),
+          { pending: "Đang tạo..." }
+        )
+        .then((res) => {
+          const { data } = res;
+          dispatch(createCardInBoard(data));
+          toast.success("Tạo thẻ thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.error(error);
     } finally {

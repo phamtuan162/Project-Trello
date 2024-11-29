@@ -2,74 +2,97 @@
 import { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { CheckboxGroup } from "@nextui-org/react";
-import { cardSlice } from "@/stores/slices/cardSlice";
-import { isPast } from "date-fns";
-import { updateMissionApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+import { isPast } from "date-fns";
+
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
+import { updateMissionApi } from "@/services/workspaceApi";
 import MissionWork from "./mission";
-const { updateCard } = cardSlice.actions;
+import { cloneDeep } from "lodash";
+
+const { updateMissionInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+const { updateMissionInMissions } = missionSlice.actions;
+
 const MissionsWork = ({ missions }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
-  const missionsSelected = useMemo(() => {
-    const missionsSuccess = missions.filter(
-      (mission) => mission.status === "success"
-    );
+  const user = useSelector((state) => state.user.user);
+  const [missionSelected, setMissionSelected] = useState(null);
+
+  const missionsIdSelected = useMemo(() => {
+    const missionsSuccess =
+      missions?.filter(
+        (mission) => mission.status.toLowerCase() === "success"
+      ) || [];
 
     return missionsSuccess.map((mission) => mission.id);
   }, [missions]);
 
-  const [missionSelected, setMissionSelected] = useState(null);
   const HandleSelectMission = async (select) => {
-    const checkMission = select.some((item) => +item === +missionSelected.id);
-    let statusMission = checkMission && "success";
+    const isMissionSelected = select.includes(missionSelected.id);
+    let statusMission = "pending";
 
-    if (!statusMission) {
-      const endDateTime = missionSelected.endDateTime
-        ? new Date(missionSelected.endDateTime)
-        : null;
-
-      if (endDateTime && isPast(endDateTime)) {
-        statusMission = "expired";
-      } else {
-        statusMission = "pending";
-      }
+    if (isMissionSelected) {
+      statusMission = "success";
+    } else if (
+      missionSelected.endDateTime &&
+      isPast(new Date(missionSelected.endDateTime))
+    ) {
+      statusMission = "expired";
     }
 
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +missionSelected.work_id) {
-        const updatedMissions = work.missions.map((mission) => {
-          if (+mission.id === +missionSelected.id) {
-            return {
-              ...mission,
-              status: statusMission,
-            };
-          }
-          return mission;
-        });
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
+    await toast
+      .promise(
+        async () =>
+          await updateMissionApi(missionSelected.id, { status: statusMission }),
+        { pending: "Đang cập nhật..." }
+      )
+      .then((res) => {
+        const works = cloneDeep(card.works);
+        const work = works.find((w) => w.id === missionSelected.work_id);
+        const mission = work?.missions.find((m) => m.id === missionSelected.id);
 
-    updateMissionApi(missionSelected.id, { status: statusMission }).then(
-      (data) => {
-        if (data.status === 200) {
+        if (mission) mission.status = statusMission;
+
+        dispatch(
+          updateMissionInCard({
+            id: missionSelected.id,
+            work_id: missionSelected.work_id,
+            status: statusMission,
+          })
+        );
+
+        dispatch(
+          updateCardInBoard({
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          })
+        );
+
+        if (missionSelected.user_id === user.id) {
           dispatch(
-            updateCard({ ...updatedCard, activities: data.data.activities })
+            updateMissionInMissions({
+              id: missionSelected.id,
+              status: statusMission,
+            })
           );
-        } else {
-          const error = data.error;
-          toast.error(error);
         }
-      }
-    );
+
+        toast.success("Cập nhật trạng thái thành công");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
+
   return (
     <div className="flex flex-col gap-3">
       <CheckboxGroup
-        value={missionsSelected}
+        value={missionsIdSelected}
         onValueChange={(select) => {
           HandleSelectMission(select);
         }}

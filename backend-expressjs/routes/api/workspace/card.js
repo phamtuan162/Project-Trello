@@ -4,6 +4,7 @@ const cardController = require("../../../controllers/api/workspace/card.controll
 const permission = require("../../../middlewares/api/permission.middleware");
 const authMiddleware = require("../../../middlewares/api/auth.middleware");
 const { multerMiddleware } = require("../../../utils/multer.utils");
+const multerUploadMiddleware = require("../../../middlewares/api/multerUpload.middleware");
 
 router.get("/", cardController.index);
 router.get("/:id", cardController.find);
@@ -42,6 +43,8 @@ router.put(
 router.put(
   "/:id",
   authMiddleware,
+  multerUploadMiddleware.upload.single("cardCover"),
+
   permission("card.update"),
   cardController.update
 );

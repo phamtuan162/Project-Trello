@@ -14,7 +14,7 @@ const {
   Sequelize,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
 const moment = require("moment");
 
@@ -66,6 +66,7 @@ module.exports = {
   find: async (req, res) => {
     const { id } = req.params;
     const response = {};
+
     try {
       const workspace = await Workspace.findByPk(id, {
         include: [
@@ -76,14 +77,15 @@ module.exports = {
           {
             model: User,
             as: "users",
-            through: { attributes: [] },
+            attributes: { exclude: ["password"] }, // Loại trừ trường password
           },
           {
             model: Activity,
             as: "activities",
+            required: false, // Thực hiện LEFT JOIN thay vì INNER JOIN
+            where: { card_id: { [Op.is]: null } }, // Điều kiện card_id là null
           },
         ],
-        order: [[{ model: Board, as: "boards" }, "updated_at", "desc"]],
       });
 
       if (!workspace) {
@@ -257,6 +259,7 @@ module.exports = {
   },
 
   delete: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
     try {
@@ -274,15 +277,19 @@ module.exports = {
         where: { workspace_id_active: id },
         include: [{ model: Workspace, as: "workspaces" }],
         order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
+        limit: 1,
       });
 
-      if (users.length > 0) {
-        const userUpdates = users.map((user) => {
-          if (user.workspaces.length > 0) {
-            const latestWorkspace = user.workspaces[0];
-            return User.update(
+      let activeWorkspaceId;
+
+      if (users?.length > 0) {
+        const userUpdates = users.map((u) => {
+          if (u.workspaces.length > 0) {
+            const latestWorkspace = u.workspaces[0];
+            if (u.id === user.id) activeWorkspaceId = latestWorkspace.id;
+            return u.update(
               { workspace_id_active: latestWorkspace.id },
-              { where: { id: user.id } }
+              { where: { id: u.id } }
             );
           }
         });
@@ -290,10 +297,30 @@ module.exports = {
         // Chạy tất cả các update song song
         await Promise.all(userUpdates);
       }
+      if (!activeWorkspaceId) {
+        return res.status(400).json({
+          status: 400,
+          message: "This is not the active workspace of the user",
+        });
+      }
+
+      const user_workspace_role = await UserWorkspaceRole.findOne({
+        where: {
+          workspace_id: activeWorkspaceId,
+          user_id: user.id,
+        },
+      });
+
+      const role = await Role.findByPk(user_workspace_role.role_id);
 
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: {
+          workspace_id_active: activeWorkspaceId,
+          role: role.name,
+          id: user.id,
+        },
       });
     } catch (error) {
       console.log(error);
@@ -400,8 +427,9 @@ module.exports = {
           include: {
             model: Workspace,
             as: "workspaces",
+            required: false, // Thực hiện LEFT JOIN thay vì INNER JOIN
             where: {
-              id: { [Sequelize.Op.ne]: workspace_id },
+              id: { [Op.ne]: workspace_id },
             },
             order: [["updated_at", "desc"]],
             limit: 1,
@@ -449,11 +477,11 @@ module.exports = {
 
           await Promise.all([
             UserCard.destroy({
-              where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              where: { user_id, card_id: { [Op.in]: cardIds } },
               force: true,
             }),
             // Comment.destroy({
-            //   where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+            //   where: { user_id, card_id: { [Op.in]: cardIds } },
             //   force: true,
             // }),
           ]);
@@ -513,7 +541,8 @@ module.exports = {
         include: {
           model: Workspace,
           as: "workspaces",
-          where: { id: { [Sequelize.Op.ne]: workspace_id } }, // loại trừ workspace_id
+          require: false,
+          where: { id: { [Op.ne]: workspace_id } }, // loại trừ workspace_id
           order: [["updated_at", "desc"]],
         },
       });
@@ -557,10 +586,10 @@ module.exports = {
 
           await Promise.all([
             UserCard.destroy({
-              where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              where: { user_id, card_id: { [Op.in]: cardIds } },
               force: true,
               // Comment.destroy({
-              //   where: { user_id, card_id: { [Sequelize.Op.in]: cardIds } },
+              //   where: { user_id, card_id: { [Op.in]: cardIds } },
               //   force: true,
               // }),
             }),
@@ -618,19 +647,11 @@ module.exports = {
           .json({ status: 404, message: "Not found workspace or user" });
       }
 
-      const role = await Role.findByPk(user_workspace_role.role_id);
-
-      // Cập nhật workspace_id_active cho người dùng
-      user.workspace_id_active = workspace.id;
-      // Lưu thay đổi vào cơ sở dữ liệu
-      await user.save();
-
-      user.dataValues.role = role.name;
+      await user.update({ workspace_id_active: id });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: user,
       });
     } catch (error) {
       Object.assign(response, {

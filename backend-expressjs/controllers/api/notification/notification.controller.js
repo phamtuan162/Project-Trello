@@ -1,7 +1,49 @@
 const { Notification, User } = require("../../../models/index");
 
 module.exports = {
-  index: async (req, res) => {},
+  index: async (req, res) => {
+    const {
+      order = "desc",
+      sort = "created_at",
+      user_id,
+      limit,
+      offset = 0,
+      status,
+    } = req.query;
+    const filters = {};
+
+    if (user_id) {
+      filters.user_id = user_id;
+    }
+
+    if (status) {
+      filters.status = status;
+    }
+
+    const options = {
+      order: [[sort, order]],
+      where: filters,
+      offset: offset,
+    };
+
+    if (limit) {
+      options.limit = limit;
+    }
+
+    const response = {};
+    try {
+      const notifications = await Notification.findAll(options);
+
+      response.status = 200;
+      response.message = "Success";
+      response.data = notifications;
+    } catch (e) {
+      response.status = 500;
+      response.message = "Server error";
+    }
+
+    res.status(response.status).json(response);
+  },
   find: async (req, res) => {},
   store: async (req, res) => {},
   update: async (req, res) => {},
@@ -50,6 +92,7 @@ module.exports = {
           where: { user_id: user_id },
         }
       );
+
       Object.assign(response, {
         status: 200,
         message: "Success",

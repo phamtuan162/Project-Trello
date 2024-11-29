@@ -69,11 +69,14 @@ module.exports = {
       });
 
       const card = await Card.findByPk(req.body.card_id);
+
       if (!card) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res.status(404).json({ status: 404, message: "Not found card" });
       }
+
       const work = await Work.create(body);
-      await Activity.create({
+
+      const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
@@ -83,21 +86,12 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã thêm danh sách công việc ${work.title} vào thẻ này`,
       });
-      const cardUpdate = await Card.findByPk(card.id, {
-        include: [
-          { model: Activity, as: "activities" },
-          {
-            model: Work,
-            as: "works",
-            include: { model: Mission, as: "missions" },
-          },
-        ],
-      });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: cardUpdate,
+        work,
+        activity,
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -128,15 +122,17 @@ module.exports = {
         abortEarly: false,
       });
       const work = await Work.findByPk(id);
+
       if (!work) {
-        return res.status(404).json({ status: 404, message: "Not found " });
+        return res.status(404).json({ status: 404, message: "Not found work" });
       }
-      await work.update(body);
+
+      const workUpdate = await work.update(body);
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: work,
+        data: workUpdate,
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -155,23 +151,22 @@ module.exports = {
     const { id } = req.params;
     const response = {};
     try {
-      const work = await Work.findByPk(id, {
-        include: { model: Mission, as: "missions" },
-      });
+      const work = await Work.findByPk(id);
 
       if (!work) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
+
       const card = await Card.findByPk(work.card_id);
+
       if (!card) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-      if (work.missions.length > 0) {
-        await Mission.destroy({ where: { work_id: work.id } });
-      }
 
-      await card.removeWork(work);
+      await Mission.destroy({ where: { work_id: work.id } });
+      // await card.removeWork(work);
       await work.destroy();
+
       const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,

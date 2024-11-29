@@ -30,7 +30,11 @@ router.put(
   workspaceController.changeWorkspace
 );
 
-router.put("/leave-workspace", workspaceController.leaveWorkspace);
+router.put(
+  "/leave-workspace",
+  authMiddleware,
+  workspaceController.leaveWorkspace
+);
 router.put(
   "/cancel-user",
   authMiddleware,
@@ -43,7 +47,7 @@ router.put(
   permission("workspace.update"),
   workspaceController.update
 );
-router.put("/restore/:id", workspaceController.restore);
+router.put("/restore/:id", authMiddleware, workspaceController.restore);
 
 router.patch(
   "/:id",

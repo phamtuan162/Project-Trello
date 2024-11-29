@@ -10,40 +10,54 @@ import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
-import { boardSlice } from "@/stores/slices/boardSlice";
-import { deleteColumn } from "@/services/workspaceApi";
+import { deleteBoard } from "@/services/workspaceApi";
+import { useRouter } from "next/navigation";
 
-const { updateBoard } = boardSlice.actions;
+const { updateWorkspace } = workspaceSlice.actions;
 
-const DeleteColumn = ({ children, column }) => {
+const DeleteBoard = ({ children }) => {
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
+  const workspace = useSelector((state) => state.workspace.workspace);
 
   const handleDeleteColumn = async () => {
     setIsLoading(true);
 
     try {
-      const updatedCols = board.columns.filter((c) => c.id !== column.id);
-      const updatedColOrderIds = updatedCols.map((c) => c.id);
-
       await toast
-        .promise(async () => await deleteColumn(column.id), {
+        .promise(async () => await deleteBoard(board.id), {
           pending: "Đang xóa...",
         })
         .then(() => {
-          dispatch(
-            updateBoard({
-              columns: updatedCols,
-              columnOrderIds: updatedColOrderIds,
-            })
-          );
-          toast.success("Bạn đã xóa danh sách này thành công");
+          const boardsUpdate =
+            workspace?.boards?.filter((item) => +item.id !== +board.id) || [];
+
+          dispatch(updateWorkspace({ boards: boardsUpdate }));
+
+          router.push(`/w/${board.workspace_id}/boards`);
+          toast.success("Xóa thành công");
+          //   const users = workspace.users.filter(
+          //     (item) => +item.id !== +user.id
+          //   );
+
+          //   if (users.length > 0)
+          //     for (const userItem of users) {
+          //       socket.emit("sendNotification", {
+          //         user_id: userItem.id,
+          //         userName: user.name,
+          //         userAvatar: user.avatar,
+          //         type: "delete_board",
+          //         content: `đã xóa Bảng ${board.title} ra khỏi Không gian làm việc ${workspace.name} `,
+          //       });
+          //     }
         })
         .catch((error) => {
           console.log(error);
@@ -87,9 +101,9 @@ const DeleteColumn = ({ children, column }) => {
             style={{ color: "#44546f" }}
           >
             <p className="text-xs mt-1">
-              Khi bạn xóa danh sách thẻ, tất cả các thông tin và hoạt động liên
-              quan đến danh sách sẽ bị xóa hoặc ngưng lại. Khi danh sách thẻ đã
-              bị loại bỏ, bạn sẽ không còn thấy nó xuất hiện trên bảng làm việc.
+              Khi bạn xóa bảng, tất cả các thông tin và hoạt động liên quan đến
+              bảng sẽ bị xóa hoặc ngưng lại. Khi bảng đã bị loại bỏ, bạn sẽ
+              không còn thấy nó xuất hiện trên Không gian làm việc.
             </p>
             <Button
               type="button"
@@ -102,7 +116,7 @@ const DeleteColumn = ({ children, column }) => {
               }
               onClick={() => handleDeleteColumn()}
             >
-              {isLoading ? <CircularProgress /> : "Xóa danh sách thẻ"}
+              {isLoading ? <CircularProgress /> : "Xóa bảng"}
             </Button>
           </div>
         </div>
@@ -110,4 +124,4 @@ const DeleteColumn = ({ children, column }) => {
     </Popover>
   );
 };
-export default DeleteColumn;
+export default DeleteBoard;

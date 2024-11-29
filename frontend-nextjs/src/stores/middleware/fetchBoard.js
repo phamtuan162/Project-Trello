@@ -8,9 +8,6 @@ export const fetchBoard = createAsyncThunk(
       if (200 <= status && status <= 299) {
         return data;
       }
-      // const user = getState().user.user;
-
-      // router.push(`/w/${user.workspace_id_active}/home`);
     } catch (error) {
       const user = getState().user.user;
       router.push(`/w/${user.workspace_id_active}/home`);

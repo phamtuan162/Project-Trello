@@ -14,6 +14,7 @@ export default function FormPicker({ id, errors }) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageId, setSelectedImageId] = useState(null);
   const inputRef = useRef(null);
+
   useEffect(() => {
     const fetchImages = async () => {
       try {

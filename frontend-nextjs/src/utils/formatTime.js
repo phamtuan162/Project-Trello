@@ -66,3 +66,18 @@ export const checkCardCreationDate = (selected, cardCreatedDate) => {
     return isWithinLastMonth(cardCreatedDate);
   }
 };
+
+export const validateHourMinute = (hour, minute) => {
+  return (
+    !isNaN(hour) &&
+    !isNaN(minute) &&
+    parseInt(hour) >= 0 &&
+    parseInt(hour) <= 23 &&
+    parseInt(minute) >= 0 &&
+    parseInt(minute) <= 59
+  );
+};
+
+export function truncateTimeFromDate(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}

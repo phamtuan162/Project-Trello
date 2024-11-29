@@ -4,7 +4,9 @@ import vi from "date-fns/locale/vi";
 import { Avatar } from "@nextui-org/react";
 const NotificationItem = ({ notification }) => {
   return (
-    <li className="flex items-center gap-4 hover:bg-default-100 rounded-md p-2">
+    <li
+      className={`flex items-center gap-4 hover:bg-default-100 rounded-md p-2 `}
+    >
       <Avatar
         src={notification?.userAvatar}
         name={notification?.userName?.charAt(0).toUpperCase()}

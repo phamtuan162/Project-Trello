@@ -65,12 +65,17 @@ module.exports = {
         abortEarly: false,
       });
 
-      const user = await User.findByPk(body.user_id);
-      const card = await Card.findByPk(body.card_id);
+      const [user, card] = await Promise.all([
+        User.findByPk(body.user_id),
+        Card.findByPk(body.card_id),
+      ]);
 
       if (!user || !card) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found card or user" });
       }
+
       const comment = await Comment.create({
         content: body.content,
         user_id: user.id,
@@ -86,9 +91,13 @@ module.exports = {
         data: comment,
       });
     } catch (e) {
-      const errors = Object.fromEntries(
-        e.inner.map(({ path, message }) => [path, message])
-      );
+      console.log(e);
+      const errors = e.inner
+        ? Object.fromEntries(
+            e.inner.map(({ path, message }) => [path, message])
+          )
+        : {};
+
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
@@ -121,6 +130,7 @@ module.exports = {
       }
 
       await comment.update({ ...body, isEdit: true });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
@@ -142,8 +152,11 @@ module.exports = {
     const response = {};
     try {
       const comment = await Comment.findByPk(id);
+
       if (!comment) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found comment" });
       }
       await comment.destroy();
 

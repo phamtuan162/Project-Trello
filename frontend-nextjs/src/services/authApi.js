@@ -86,7 +86,7 @@ export const logoutApi = async (userId = null) => {
 };
 /** Profile */
 
-export const getProfile = async () => {
+export const getProfileApi = async () => {
   const { data, response } = await authorizedAxiosInstance.get(`/auth/profile`);
 
   return data;

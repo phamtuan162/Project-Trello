@@ -9,12 +9,17 @@ import {
   CircularProgress,
 } from "@nextui-org/react";
 import { CloseIcon } from "../Icon/CloseIcon";
-const FormBackground = ({ children, HandleBackground, isLoading }) => {
+const FormBackground = ({
+  children,
+  HandleBackground,
+  placement = "right",
+  isCardActive = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Popover
-      placement="right"
+      placement={placement}
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
     >
@@ -42,14 +47,9 @@ const FormBackground = ({ children, HandleBackground, isLoading }) => {
           <Button
             type="submit"
             color="primary"
-            className="w-full"
-            isDisabled={isLoading}
+            className="w-full interceptor-loading"
           >
-            {isLoading ? (
-              <CircularProgress aria-label="Loading..." size={22} />
-            ) : (
-              "Thay đổi"
-            )}
+            Thay đổi
           </Button>
 
           <div className=" text-xs mt-2">
@@ -70,6 +70,26 @@ const FormBackground = ({ children, HandleBackground, isLoading }) => {
               Điều khoản dịch vụ
             </a>
           </div>
+
+          {isCardActive && (
+            <div className="w-full ">
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                alt="Upload"
+                name="upl_avatar"
+                id="upl_avatar"
+                onChange={HandleBackground}
+              />
+              <label
+                htmlFor="upl_avatar"
+                className="interceptor-loading  rounded-lg text-xs w-full bg-gray-100 hover:bg-gray-300 cursor-pointer mx-auto font-medium text-slate-600 mt-4  flex items-center justify-center  p-1"
+              >
+                Tải ảnh từ máy lên
+              </label>
+            </div>
+          )}
         </form>
       </PopoverContent>
     </Popover>

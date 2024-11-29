@@ -13,14 +13,17 @@ import {
   ModalContent,
 } from "@nextui-org/react";
 import { useState } from "react";
+
 import { createWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { toast } from "react-toastify";
 import { userSlice } from "@/stores/slices/userSlice";
 import { missionSlice } from "@/stores/slices/missionSlice";
-const { updateUser } = userSlice.actions;
-const { updateWorkspace } = workspaceSlice.actions;
+
+const { createWorkspaceInUser } = userSlice.actions;
+const { selectWorkspace } = workspaceSlice.actions;
 const { updateMission } = missionSlice.actions;
+
 const colors = [
   "#338EF7",
   "#9353D3",
@@ -57,6 +60,7 @@ export default function FormCreateWorkspace({ children }) {
   const handleCreateWorkspace = async (e) => {
     e.preventDefault();
     if (!name || !desc) {
+      toast.info("Nhập đầy đủ thông tin");
       return;
     }
 
@@ -69,9 +73,10 @@ export default function FormCreateWorkspace({ children }) {
         .then((res) => {
           const { data } = res;
 
-          dispatch(updateUser({ role: "owner" }));
-          dispatch(updateWorkspace(data));
+          dispatch(createWorkspaceInUser(data));
+          dispatch(selectWorkspace(data));
           dispatch(updateMission([]));
+
           toast.success("Tạo không gian mới thành công");
           router.push(`/w/${data.id}/home`);
           onClose();

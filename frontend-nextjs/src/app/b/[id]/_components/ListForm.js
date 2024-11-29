@@ -2,15 +2,14 @@
 import { Input, Button } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useState, useRef, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 
 import { AddIcon } from "@/components/Icon/AddIcon";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { useSelector, useDispatch } from "react-redux";
-import { createColumn } from "@/services/workspaceApi";
-import { generatePlaceholderCard } from "@/utils/formatters";
+import { createColumnApi } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 
-const { updateBoard } = boardSlice.actions;
+const { createColumnInBoard } = boardSlice.actions;
 
 export function ListForm() {
   const dispatch = useDispatch();
@@ -28,34 +27,32 @@ export function ListForm() {
   }, [isCreate]);
 
   const createNewColumn = async () => {
-    const trimmedValue = inputRef.current.value.trim();
-
-    if (trimmedValue.length < 3) {
-      toast.error("Title cột phải ít nhất 3 ký tự");
-      return;
-    }
-
     try {
-      const { data, status } = await createColumn({
-        title: trimmedValue,
-        board_id: board.id,
-      });
+      const trimmedValue = inputRef.current.value.trim();
 
-      if (200 <= status && status <= 299) {
-        const createdColumn = data;
-        const placeholderCard = generatePlaceholderCard(createdColumn);
-        createdColumn.cards = [placeholderCard];
-        createdColumn.cardOrderIds = [placeholderCard.id];
-
-        const newBoard = { ...board };
-        newBoard.columns = newBoard.columns.concat(createdColumn);
-        newBoard.columnOrderIds = newBoard.columnOrderIds.concat(
-          createdColumn.id
-        );
-
-        dispatch(updateBoard(newBoard));
-        toast.success("Tạo danh sách thành công");
+      if (trimmedValue.length < 3) {
+        toast.info("Tiêu đề danh sách phải ít nhất 3 ký tự");
+        return;
       }
+
+      await toast
+        .promise(
+          async () =>
+            await createColumnApi({
+              title: trimmedValue,
+              board_id: board.id,
+            }),
+          { pending: "Đang tạo..." }
+        )
+        .then((res) => {
+          const { data: ColumnNew } = res;
+
+          dispatch(createColumnInBoard(ColumnNew));
+          toast.success("Tạo danh sách thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {

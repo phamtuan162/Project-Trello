@@ -9,19 +9,18 @@ import {
   BreadcrumbItem,
 } from "@nextui-org/react";
 import { useDispatch, useSelector } from "react-redux";
+import { usePathname, useRouter, useParams } from "next/navigation";
+
 import { BoardOptions } from "./BoardOptions";
-import { usePathname, useRouter } from "next/navigation";
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { toast } from "react-toastify";
-import { useParams } from "next/navigation";
-import { generatePlaceholderCard } from "@/utils/formatters";
-import { mapOrder } from "@/utils/sorts";
-import { isEmpty } from "lodash";
-import { getBoardDetail } from "@/services/workspaceApi";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { DashBoardIcon } from "@/components/Icon/DashBoardIcon";
-import { fetchBoard } from "@/stores/middleware/fetchBoard";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+
+const { updateBoard } = boardSlice.actions;
+const { updateBoardInWorkspace } = workspaceSlice.actions;
 
 const options = [
   {
@@ -62,7 +61,7 @@ export default function BoardNavbar({ setIsActivity }) {
           user.isOnline && userVisit.find((item) => +item.id === +user.id)
       );
     }
-  }, [userVisit, workspace]);
+  }, [userVisit, workspace?.users]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -71,30 +70,41 @@ export default function BoardNavbar({ setIsActivity }) {
   }, [isEditing]);
 
   const onUpdateTitle = async () => {
-    const title = inputRef.current.value.trim();
-
-    if (title.length < 3 || title === board.title.trim()) {
-      toast.error(
-        "Title phải nhiều hơn 3 ký tự và không được trùng với title cũ"
-      );
-      return;
-    }
-
     try {
-      const { data, status } = await updateBoardDetail(board.id, {
-        title: title,
-      });
-      if (200 <= status && status <= 200) {
-        const boardUpdated = data;
+      const title = inputRef.current.value.trim();
 
-        dispatch(
-          boardSlice.actions.updateBoard({
-            ...board,
-            title: boardUpdated.title,
-          })
-        );
-        toast.success("Cập nhật thành công");
+      if (title.length < 6) {
+        toast.error("Tiêu đề phải dài hơn 6 ký tự!");
+        return;
       }
+
+      if (title === board.title.trim()) {
+        setIsEditing(false);
+        return;
+      }
+
+      await toast
+        .promise(
+          async () =>
+            await updateBoardDetail(board.id, {
+              title: title,
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          dispatch(
+            updateBoard({
+              title: title,
+            })
+          );
+
+          dispatch(updateBoardInWorkspace({ id: board.id, title: title }));
+
+          toast.success("Cập nhật thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
@@ -108,69 +118,26 @@ export default function BoardNavbar({ setIsActivity }) {
     }
   };
 
-  useEffect(() => {
-    const fetchBoardDetail = async () => {
-      // try {
-      //   // dispatch(updateCard({}));
-      //   const { data, status } = await getBoardDetail(boardId);
-      //   if (status >= 200 && status <= 299) {
-      //     let boardData = data;
-      //     boardData.columns = mapOrder(
-      //       boardData.columns,
-      //       boardData.columnOrderIds,
-      //       "id"
-      //     );
+  // useEffect(() => {
+  //   const handleUserVisitBoard = (data) => {
+  //     if (data.length > 0) {
+  //       setUserVisit(data);
+  //     }
+  //   };
 
-      //     boardData.columns.forEach((column) => {
-      //       if (isEmpty(column.cards)) {
-      //         column.cards = [generatePlaceholderCard(column)];
-      //         column.cardOrderIds = [generatePlaceholderCard(column).id];
-      //       } else {
-      //         column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
-      //       }
-      //     });
+  //   if (socket) {
+  //     socket.on("getUserVisitBoard", handleUserVisitBoard);
 
-      //     // if (user.id) {
-      //     //   socket.emit("visitBoard", {
-      //     //     board_id: boardData.id,
-      //     //     user_id: user.id,
-      //     //   });
-      //     // }
-      //     if (!board.id || +board.id !== +boardId) {
-      //       dispatch(boardSlice.actions.updateBoard(boardData));
-      //     }
-      //   } else {
-      //     router.push(`/w/${user.workspace_id_active}/home`);
-      //   }
-      // } catch (error) {
-      //   console.log( error);
-      // }
-      dispatch(fetchBoard({ boardId, router }));
-    };
-    if ((!board || +boardId !== +board.id) && user.id && workspace.id) {
-      fetchBoardDetail();
-    }
-  }, [user, workspace]);
-
-  useEffect(() => {
-    const handleUserVisitBoard = (data) => {
-      if (data.length > 0) {
-        setUserVisit(data);
-      }
-    };
-
-    if (socket) {
-      socket.on("getUserVisitBoard", handleUserVisitBoard);
-
-      return () => {
-        socket.off("getUserVisitBoard", handleUserVisitBoard);
-      };
-    }
-  }, [socket]);
+  //     return () => {
+  //       socket.off("getUserVisitBoard", handleUserVisitBoard);
+  //     };
+  //   }
+  // }, [socket]);
 
   if (!board.id || +board.id !== +boardId) {
-    return;
+    return null;
   }
+
   return (
     <div
       className="w-full h-12 z-[40] absolute  flex items-center px-6 gap-x-4 "

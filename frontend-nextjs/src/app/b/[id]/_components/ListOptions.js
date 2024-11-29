@@ -26,7 +26,7 @@ export function ListOptions({ column }) {
     const role = user.role.toLowerCase();
 
     return role === "admin" || role === "owner";
-  }, [user]);
+  }, [user.role]);
 
   const options = useMemo(
     () =>

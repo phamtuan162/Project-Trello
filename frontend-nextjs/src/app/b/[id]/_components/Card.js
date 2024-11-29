@@ -1,22 +1,22 @@
 "use client";
 import { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import AssignUser from "./AssignUser";
 import { Paperclip, MessageCircle } from "lucide-react";
 import { Avatar, AvatarGroup } from "@nextui-org/react";
-import useCardModal from "@/hooks/use-card-modal";
 import { Clock } from "lucide-react";
 import { format } from "date-fns";
-import { SquareCheck } from "@/components/Icon/SquareCheck";
-export function Card({ card }) {
-  const cardData = useSelector((state) => state.card.card);
-  const user = useSelector((state) => state.user.user);
 
-  const cardUpdate = useMemo(() => {
-    return +card.id === +cardData.id ? cardData : card;
-  }, [cardData, card]);
+import AssignUser from "./AssignUser";
+import { SquareCheck } from "@/components/Icon/SquareCheck";
+import { cardSlice } from "@/stores/slices/cardSlice";
+
+const { selectCard, showModalActiveCard } = cardSlice.actions;
+
+export function Card({ card }) {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
 
   const missions = useMemo(() => {
     const extractMissions = (works) => {
@@ -32,12 +32,12 @@ export function Card({ card }) {
       return allMissions;
     };
 
-    if (!cardUpdate || !cardUpdate.works) {
+    if (!card || !card.works) {
       return [];
     }
 
-    return extractMissions(cardUpdate.works);
-  }, [cardUpdate]);
+    return extractMissions(card.works);
+  }, [card?.works]);
 
   const missionSuccess = useMemo(() => {
     return missions.filter((mission) => mission.status === "success");
@@ -55,7 +55,6 @@ export function Card({ card }) {
     data: { ...card },
   });
 
-  const cardModal = useCardModal();
   const dndKitCardStyles = {
     transform: CSS.Translate.toString(transform),
     transition,
@@ -71,55 +70,54 @@ export function Card({ card }) {
       user?.role?.toLowerCase() === "admin" ||
       user?.role?.toLowerCase() === "owner"
     );
-  }, [user]);
+  }, [user?.role]);
 
   const backgroundCard = useMemo(() => {
-    if (cardUpdate?.background) {
+    if (card?.background) {
       return (
         <div
           className={`rounded-t-md relative w-full bg-no-repeat bg-cover bg-center h-[160px] h-max-[200px]`}
           style={{
-            backgroundImage: `url(${cardUpdate.background})`,
+            backgroundImage: `url(${card.background})`,
           }}
         ></div>
       );
     }
     return null;
-  }, [cardUpdate]);
+  }, [card?.background]);
 
   const dateCard = useMemo(() => {
-    if (cardUpdate.startDateTime || cardUpdate.endDateTime) {
+    if (card.startDateTime || card.endDateTime) {
       return (
         <div>
           <div
             className={`text-xs mt-1  inline-flex items-center gap-1  ${
-              cardUpdate.status === "success" && "bg-green-700 text-white"
-            } ${cardUpdate.status === "expired" && "bg-red-700 text-white"} ${
-              cardUpdate.status === "up_expired" && "bg-yellow-400 text-white"
+              card.status === "success" && "bg-green-700 text-white"
+            } ${card.status === "expired" && "bg-red-700 text-white"} ${
+              card.status === "up_expired" && "bg-yellow-400 text-white"
             } rounded-sm px-1 py-0.5 `}
           >
-            {(cardUpdate?.startDateTime || cardUpdate?.endDateTime) &&
-              (cardUpdate.status === "success" ? (
+            {(card?.startDateTime || card?.endDateTime) &&
+              (card.status === "success" ? (
                 <SquareCheck size={14} />
               ) : (
                 <Clock size={12} />
               ))}
 
-            {cardUpdate?.startDateTime && (
+            {card?.startDateTime && (
               <>
-                {format(cardUpdate?.startDateTime, "d 'tháng' M")}
-                {cardUpdate?.endDateTime && " - "}
+                {format(card?.startDateTime, "d 'tháng' M")}
+                {card?.endDateTime && " - "}
               </>
             )}
 
-            {cardUpdate?.endDateTime &&
-              format(cardUpdate?.endDateTime, "d 'tháng' M")}
+            {card?.endDateTime && format(card?.endDateTime, "d 'tháng' M")}
           </div>
         </div>
       );
     }
     return null;
-  }, [cardUpdate]);
+  }, [card?.startDateTime, card?.endDateTime]);
 
   const missionsCard = useMemo(() => {
     if (missions?.length > 0) {
@@ -138,32 +136,32 @@ export function Card({ card }) {
   }, [missions, missionSuccess]);
 
   const attachmentsCard = useMemo(() => {
-    if (cardUpdate?.attachments?.length > 0) {
+    if (card?.attachments?.length > 0) {
       return (
         <div className="flex gap-1 items-center">
-          <Paperclip size={12} /> {cardUpdate.attachments.length}
+          <Paperclip size={12} /> {card.attachments.length}
         </div>
       );
     }
     return null;
-  }, [cardUpdate]);
+  }, [card.attachments]);
 
   const commentsCard = useMemo(() => {
-    if (cardUpdate?.comments?.length > 0) {
+    if (card?.comments?.length > 0) {
       return (
         <div className="flex gap-1 items-center">
-          <MessageCircle size={12} /> {cardUpdate.comments.length}
+          <MessageCircle size={12} /> {card.comments.length}
         </div>
       );
     }
     return null;
-  }, [cardUpdate]);
+  }, [card?.comments]);
 
   const usersCard = useMemo(() => {
-    if (cardUpdate?.users?.length > 0) {
+    if (card?.users?.length > 0) {
       return (
         <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">
-          {cardUpdate.users.map((user) => (
+          {card.users.map((user) => (
             <Avatar
               key={user.id}
               src={user.avatar}
@@ -176,11 +174,12 @@ export function Card({ card }) {
       );
     }
     return null;
-  }, [cardUpdate]);
+  }, [card?.users]);
 
-  const handleCardClick = () => {
+  const SetCardActive = () => {
     if (!isAssign && !isDragging) {
-      cardModal.onOpen(cardUpdate.id);
+      dispatch(showModalActiveCard());
+      dispatch(selectCard(card));
     }
   };
 
@@ -190,7 +189,7 @@ export function Card({ card }) {
       style={dndKitCardStyles}
       {...attributes}
       {...(checkRoleBoard ? listeners : {})}
-      onClick={handleCardClick}
+      onClick={SetCardActive}
       role="button"
       onMouseEnter={() => setIsEdit(true)}
       onMouseLeave={() => setIsEdit(false)}
@@ -199,7 +198,7 @@ export function Card({ card }) {
       <div>
         <div className="pb-3">{backgroundCard}</div>
         <div className={`p-3 pt-0 relative `}>
-          {cardUpdate?.title}
+          {card?.title}
           <div
             className={`${
               !isEdit || !checkRoleBoard ? "hidden" : ""
@@ -208,7 +207,7 @@ export function Card({ card }) {
             <AssignUser
               isAssign={isAssign}
               setIsAssign={setIsAssign}
-              cardUpdate={cardUpdate}
+              card={card}
             />
           </div>
           <div className=" mt-1 flex flex-wrap gap-2 w-full">

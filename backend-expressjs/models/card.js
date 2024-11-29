@@ -9,7 +9,10 @@ module.exports = (sequelize, DataTypes) => {
       });
       Card.belongsToMany(models.User, {
         foreignKey: "card_id",
-        through: "users_cards",
+        through: {
+          model: models.UserCard, // Bảng trung gian
+          paranoid: true, // Chỉ lấy các bản ghi chưa bị xóa mềm
+        },
         as: "users",
       });
       Card.hasMany(models.Work, {

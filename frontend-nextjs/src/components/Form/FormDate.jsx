@@ -1,6 +1,5 @@
 "use client";
 import { useSelector, useDispatch } from "react-redux";
-
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
 import {
   add,
@@ -21,7 +20,7 @@ import {
   compareAsc,
   addWeeks,
 } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -30,30 +29,34 @@ import {
   Checkbox,
   Input,
 } from "@nextui-org/react";
+
 import { CloseIcon } from "../Icon/CloseIcon";
 import { DateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { validateHourMinute, truncateTimeFromDate } from "@/utils/formatTime";
 import { toast } from "react-toastify";
-import { Message } from "../Message/Message";
-function truncateTimeFromDate(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-const { updateCard } = cardSlice.actions;
+
+let colStartClasses = [
+  "",
+  "col-start-2",
+  "col-start-3",
+  "col-start-4",
+  "col-start-5",
+  "col-start-6",
+  "col-start-7",
+];
+
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
-const validateHourMinute = (hour, minute) => {
-  return (
-    parseInt(hour) >= 0 &&
-    parseInt(hour) <= 23 &&
-    parseInt(minute) >= 0 &&
-    parseInt(minute) <= 59
-  );
-};
+
+const { updateCard, updateActivityInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const FormDate = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [message, setMessage] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   let today = startOfToday();
@@ -64,27 +67,33 @@ const FormDate = ({ children }) => {
   let firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
 
   const [startDateTime, setStartDateTime] = useState(
-    card.startDateTime ? new Date(card.startDateTime) : null
+    card?.startDateTime ? new Date(card.startDateTime) : addDays(today, 1)
   );
 
   const [endDateTime, setEndDateTime] = useState(
-    card.endDateTime
+    card?.endDateTime
       ? new Date(card.endDateTime)
       : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
   );
 
   const [isSelectEndTime, setIsSelectEndTime] = useState(true);
   const [isSelectStartTime, setIsSelectStartTime] = useState(
-    card?.startDateTime
+    card?.startDateTime && true
   );
   const inputRefStart = useRef(null);
   const inputRefEnd = useRef(null);
   const inputRefEndHour = useRef(null);
 
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   let days = eachDayOfInterval({
     start: firstDayCurrentMonth,
     end: endOfMonth(firstDayCurrentMonth),
   });
+
   function previousMonth() {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: -1 });
     setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"));
@@ -94,6 +103,7 @@ const FormDate = ({ children }) => {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: 1 });
     setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"));
   }
+
   useEffect(() => {
     if (checkFocus === "start") {
       if (endDateTime && compareAsc(selectedDay, endDateTime) === 1) {
@@ -110,75 +120,94 @@ const FormDate = ({ children }) => {
   }, [selectedDay]);
 
   const UpdateDate = async (formData) => {
-    const startDate = formData.get("startTime");
-    const endDate = formData.get("endTime");
-    const endDateHour = formData.get("endTimeHour");
+    try {
+      const startDate = formData.get("startTime");
+      const endDate = formData.get("endTime");
+      const endDateHour = formData.get("endTimeHour");
 
-    // Kiểm tra ngày/tháng/năm không hợp lệ
-    const startDateTimeUpdate = startDateTime
-      ? parse(startDate, "dd/MM/yyyy", new Date())
-      : startDateTime;
-    let endDateTimeUpdate = endDateTime
-      ? parse(endDate, "dd/MM/yyyy", new Date())
-      : endDateTime;
-    if (
-      (startDateTimeUpdate && !isValid(startDateTimeUpdate)) ||
-      (endDateTimeUpdate && !isValid(endDateTimeUpdate))
-    ) {
-      setMessage("Ngày tháng năm không hợp lệ!");
-      return;
-    }
+      // Kiểm tra ngày/tháng/năm không hợp lệ
+      const startDateTimeUpdate = startDateTime
+        ? parse(startDate, "dd/MM/yyyy", new Date())
+        : startDateTime;
+      let endDateTimeUpdate = endDateTime
+        ? parse(endDate, "dd/MM/yyyy", new Date())
+        : endDateTime;
 
-    // Kiểm tra giờ/phút không hợp lệ
-    if (endDateTimeUpdate && endDateHour) {
-      const [hour, minute] = endDateHour.split(":");
-      if (!validateHourMinute(hour, minute)) {
-        setMessage("Giờ phút không hợp lệ!");
-        inputRefEndHour.current.focus();
+      if (
+        (startDateTimeUpdate && !isValid(startDateTimeUpdate)) ||
+        (endDateTimeUpdate && !isValid(endDateTimeUpdate))
+      ) {
+        toast.error("Ngày tháng năm không hợp lệ!");
         return;
       }
-      endDateTimeUpdate.setHours(hour);
-      endDateTimeUpdate.setMinutes(minute);
-    }
 
-    // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
-    if (
-      startDateTimeUpdate &&
-      compareAsc(startDateTimeUpdate, new Date()) === -1
-    ) {
-      setMessage("Ngày bắt đầu phải lớn hơn thời gian hiện tại!");
-      return;
-    }
-
-    // Kiểm tra ngày cuối phải lớn hơn ngày đầu
-    if (
-      endDateTimeUpdate &&
-      compareAsc(startDateTimeUpdate, endDateTimeUpdate) === 1
-    ) {
-      setMessage("Ngày kết thúc phải lớn hơn ngày đầu!");
-      return;
-    }
-
-    try {
-      const data = await DateCardApi(card.id, {
-        startDateTime: startDateTimeUpdate,
-        endDateTime: endDateTimeUpdate,
-        status: "pending",
-      });
-
-      const { status, data: updatedData } = data;
-      if (status === 200) {
-        const cardUpdate = {
-          ...card,
-          startDateTime: updatedData.startDateTime,
-          endDateTime: updatedData.endDateTime,
-          activities: updatedData.activities,
-          status: "pending",
-        };
-        dispatch(updateCard(cardUpdate));
-        setIsOpen(false);
-        setMessage("");
+      // Kiểm tra giờ/phút không hợp lệ
+      if (endDateTimeUpdate && endDateHour) {
+        const [hour, minute] = endDateHour.split(":");
+        if (!validateHourMinute(hour, minute)) {
+          toast.error("Giờ phút không hợp lệ!");
+          inputRefEndHour.current.focus();
+          return;
+        }
+        endDateTimeUpdate.setHours(hour);
+        endDateTimeUpdate.setMinutes(minute);
       }
+
+      // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
+      if (
+        startDateTimeUpdate &&
+        compareAsc(startDateTimeUpdate, new Date()) === -1
+      ) {
+        toast.error("Ngày bắt đầu phải lớn hơn thời gian hiện tại!");
+        return;
+      }
+
+      // Kiểm tra ngày cuối phải lớn hơn ngày đầu
+      if (
+        endDateTimeUpdate &&
+        compareAsc(startDateTimeUpdate, endDateTimeUpdate) === 1
+      ) {
+        toast.error("Ngày kết thúc phải lớn hơn ngày đầu!");
+        return;
+      }
+
+      await toast
+        .promise(
+          async () =>
+            await DateCardApi(card.id, {
+              startDateTime: startDateTimeUpdate,
+              endDateTime: endDateTimeUpdate,
+              status: "pending",
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          const { activity } = res;
+
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            startDateTime: startDateTimeUpdate,
+            endDateTime: endDateTimeUpdate,
+            status: "pending",
+          };
+
+          dispatch(updateCard(cardUpdate));
+
+          if (activity) {
+            updateActivityInCard(activity);
+          }
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          toast.success("Cập nhật thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
       console.log(error);
     }
@@ -186,33 +215,50 @@ const FormDate = ({ children }) => {
 
   const CancelDate = async () => {
     try {
-      const data = await DateCardApi(card.id, {
-        startDateTime: null,
-        endDateTime: null,
-        status: null,
-      });
+      await toast
+        .promise(
+          async () =>
+            await DateCardApi(card.id, {
+              startDateTime: null,
+              endDateTime: null,
+              status: null,
+            }),
+          { pending: "Đang hủy bỏ..." }
+        )
+        .then((res) => {
+          const { activity } = res;
 
-      const { status, data: updatedData } = data;
-      if (status === 200) {
-        const cardUpdate = {
-          ...card,
-          startDateTime: null,
-          endDateTime: null,
-          activities: data.data.activities,
-          status: null,
-        };
-        dispatch(updateCard(cardUpdate));
-        setIsOpen(false);
-      }
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            startDateTime: null,
+            endDateTime: null,
+            status: null,
+          };
+
+          dispatch(updateCard(cardUpdate));
+
+          if (activity) {
+            updateActivityInCard(activity);
+          }
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          toast.success("Hủy bỏ thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
       console.log(error);
     }
   };
 
   const HandleReset = async () => {
-    setIsOpen(false);
     setCheckFocus("");
-    setMessage("");
     setSelectedDay(card.startDateTime || card.endDateTime || today);
     setStartDateTime(card.startDateTime ? new Date(card.startDateTime) : null);
     setEndDateTime(
@@ -343,7 +389,6 @@ const FormDate = ({ children }) => {
           </div>
 
           <form action={UpdateDate}>
-            <Message message={message} />
             <div className="w-full mt-3">
               <p className="text-xs font-medium">Ngày bắt đầu</p>
               <div className=" flex gap-2 ">
@@ -369,7 +414,7 @@ const FormDate = ({ children }) => {
                   size="xs"
                   name="startTime"
                   variant={isSelectStartTime ? "bordered" : ""}
-                  readOnly={isSelectStartTime ? false : true}
+                  readOnly={!isSelectStartTime}
                   value={
                     isSelectStartTime && startDateTime
                       ? isValid(startDateTime)
@@ -428,7 +473,7 @@ const FormDate = ({ children }) => {
                   size="xs"
                   name="endTimeHour"
                   variant={isSelectEndTime ? "bordered" : ""}
-                  readOnly={isSelectEndTime ? false : true}
+                  readOnly={!isSelectEndTime}
                   defaultValue={
                     isSelectEndTime && endDateTime
                       ? isValid(endDateTime)
@@ -454,10 +499,7 @@ const FormDate = ({ children }) => {
               type="submit"
               color="primary"
               className="w-full mt-3"
-              isDisabled={
-                user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner"
-              }
+              isDisabled={!checkRole}
             >
               Lưu
             </Button>
@@ -465,10 +507,7 @@ const FormDate = ({ children }) => {
               onClick={() => CancelDate()}
               type="button"
               className="w-full mt-1 bg-gray-200"
-              isDisabled={
-                user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner"
-              }
+              isDisabled={!checkRole}
             >
               Gỡ bỏ
             </Button>
@@ -478,15 +517,5 @@ const FormDate = ({ children }) => {
     </Popover>
   );
 };
-
-let colStartClasses = [
-  "",
-  "col-start-2",
-  "col-start-3",
-  "col-start-4",
-  "col-start-5",
-  "col-start-6",
-  "col-start-7",
-];
 
 export default FormDate;

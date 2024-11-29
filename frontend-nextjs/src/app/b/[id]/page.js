@@ -1,7 +1,8 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";
+
 import {
   updateBoardDetail,
   updateColumnDetail,
@@ -11,47 +12,40 @@ import { ListContainer } from "./_components/ListContainer";
 import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { CardModal } from "@/components/modals/card-modal";
+import { fetchBoard } from "@/stores/middleware/fetchBoard";
 
-const { updateCard } = cardSlice.actions;
+const { updateActivityInCard } = cardSlice.actions;
 const { updateBoard } = boardSlice.actions;
+
 export default function BoardIdPage() {
   const dispatch = useDispatch();
+  const router = useRouter();
   const board = useSelector((state) => state.board.board);
-  const card = useSelector((state) => state.card.card);
+  const user = useSelector((state) => state.user.user);
+  const workspace = useSelector((state) => state.workspace.workspace);
+
   const { id: boardId } = useParams();
 
   useEffect(() => {
-    if (!board?.id || !card?.id) return;
-
-    let isSearchSuccess = false;
-    const updatedColumns = board.columns.map((column) => {
-      if (!isSearchSuccess) {
-        const cardFound = column.cards.some((c) => +c.id === +card.id);
-        if (cardFound) {
-          isSearchSuccess = true; //
-          return {
-            ...column,
-            cards: column.cards.map((c) => (c.id === card.id ? card : c)),
-          };
-        }
-      }
-      return column;
-    });
-
-    dispatch(updateBoard({ ...board, columns: updatedColumns }));
-  }, [card]);
+    if ((!board || +boardId !== +board?.id) && user?.id && workspace?.id) {
+      dispatch(fetchBoard({ boardId, router }));
+    }
+  }, [user, workspace]);
 
   const moveColumns = async (dndOrderedColumns) => {
     try {
-      const newBoard = {
-        ...board,
-        columns: [...dndOrderedColumns],
-        columnOrderIds: dndOrderedColumns.map((c) => c.id),
-      };
-      dispatch(boardSlice.actions.updateBoard(newBoard));
+      const columnOrderIdsUpdate = dndOrderedColumns.map((c) => c.id);
 
-      await updateBoardDetail(newBoard.id, {
-        columnOrderIds: newBoard.columnOrderIds,
+      dispatch(
+        updateBoard({
+          columns: dndOrderedColumns,
+          columnOrderIds: columnOrderIdsUpdate,
+        })
+      );
+
+      await updateBoardDetail(board.id, {
+        columnOrderIds: columnOrderIdsUpdate,
       });
     } catch (error) {
       console.log(error);
@@ -75,9 +69,7 @@ export default function BoardIdPage() {
         return column;
       });
 
-      dispatch(
-        boardSlice.actions.updateBoard({ ...board, columns: updatedColumns })
-      );
+      dispatch(updateBoard({ columns: updatedColumns }));
 
       await updateColumnDetail(columnId, {
         cardOrderIds: dndOrderedCardIds,
@@ -94,38 +86,25 @@ export default function BoardIdPage() {
     dndOrderedColumns
   ) => {
     try {
-      const newBoard = {
-        ...board,
-        columns: [...dndOrderedColumns],
-        columnOrderIds: dndOrderedColumns.map((c) => c.id),
-      };
+      const columnOrderIdsUpdate = dndOrderedColumns.map((c) => c.id);
 
-      dispatch(boardSlice.actions.updateBoard(newBoard));
+      dispatch(
+        updateBoard({
+          columns: dndOrderedColumns,
+          columnOrderIds: columnOrderIdsUpdate,
+        })
+      );
 
-      const updatedColumns = newBoard.columns.map((column) => {
-        const isPlaceholderExist =
-          column.cardOrderIds.includes("placeholder-card");
-        if (isPlaceholderExist) {
-          return { ...column, cardOrderIds: [], cards: [] };
-        }
-        return column;
-      });
+      const nextColumn = dndOrderedColumns.find((c) => c.id === nextColumnId);
 
-      const updatedBoard = { ...newBoard, columns: updatedColumns };
-
-      const { data, status } = await moveCardToDifferentColumnAPI({
-        updateBoard: updatedBoard,
+      const { activity, status } = await moveCardToDifferentColumnAPI({
+        nextColumn: nextColumn,
         card_id: currentCardId,
         prevColumnId: prevColumnId,
-        nextColumnId: nextColumnId,
       });
+
       if (200 <= status && status <= 299) {
-        const updatedCard = {
-          ...card,
-          activities:
-            card.activities.length > 0 ? [data, ...card.activities] : [data],
-        };
-        dispatch(updateCard(updatedCard));
+        dispatch(updateActivityInCard(activity));
       }
     } catch (error) {
       console.log(error);
@@ -145,6 +124,7 @@ export default function BoardIdPage() {
     >
       <div className="relative pt-10 h-full ">
         <div className="p-4 h-full overflow-y-hidden ">
+          <CardModal />
           <ListContainer
             board={board}
             boardId={boardId}

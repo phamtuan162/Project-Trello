@@ -8,15 +8,15 @@ import {
   PopoverContent,
 } from "@nextui-org/react";
 import { useEffect, useState } from "react";
-import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
+
+import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 
 const { updateWorkspace } = workspaceSlice.actions;
-
-const { updateUser } = userSlice.actions;
+const { updateWorkspaceInUser } = userSlice.actions;
 
 const colors = [
   "#338EF7",
@@ -46,7 +46,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
 
   const addColorWorkspace = async () => {
     try {
-      toast
+      await toast
         .promise(
           async () =>
             await updateWorkspaceApi(workspace.id, {
@@ -56,12 +56,9 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
         )
         .then((res) => {
           dispatch(updateWorkspace({ color: colorWorkspace }));
-
-          const updatedWorkspaces = user.workspaces.map((ws) =>
-            ws.id === workspace.id ? { ...ws, color: colorWorkspace } : ws
+          dispatch(
+            updateWorkspaceInUser({ id: workspace.id, color: colorWorkspace })
           );
-
-          dispatch(updateUser({ workspaces: updatedWorkspaces }));
 
           toast.success("Thay đổi màu không gian làm việc thành công");
         })

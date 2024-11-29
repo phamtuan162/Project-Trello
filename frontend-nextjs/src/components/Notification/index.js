@@ -4,51 +4,92 @@ import {
   PopoverTrigger,
   PopoverContent,
   Switch,
+  Skeleton,
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import NotificationItem from "./notification-item";
 import { CheckIcon, X } from "lucide-react";
-import { markAsReadNotification } from "@/services/workspaceApi";
+import { markAsReadNotification } from "@/services/notifyApi";
+import { fetchNotification } from "@/stores/middleware/fetchNotification";
 const { updateNotification } = notificationSlice.actions;
+
 const Notification = ({ children, handleClickNotify }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [offset, setOffset] = useState(0);
 
   const socket = useSelector((state) => state.socket.socket);
   const user = useSelector((state) => state.user.user);
+
+  // Thêm ref cho phần tử cuối cùng để theo dõi khi cuộn đến cuối
+  const loadMoreRef = useRef(null);
 
   const notifications = useSelector(
     (state) => state.notification.notifications
   );
 
   const filteredNotifications = useMemo(() => {
-    if (!notifications) return [];
+    if (!notifications || notifications.length === 0) return [];
 
-    return [...notifications]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .filter(
-        ({ status }) =>
-          status.toLowerCase().trim() === (isSelected ? "unread" : "read")
-      );
+    return notifications
+      .filter(({ status }) => {
+        if (!status) return false; // Bỏ qua nếu `status` không tồn tại
+        const normalizedStatus = status.toLowerCase().trim();
+        return normalizedStatus === (isSelected ? "unread" : "read");
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }, [notifications, isSelected]);
 
-  useEffect(() => {
-    const handleGetNotification = (data) => {
-      const notificationsUpdate = [data, ...notifications];
-      dispatch(updateNotification(notificationsUpdate));
-    };
+  // Sử dụng Intersection Observer để theo dõi khi cuộn đến cuối
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       const entry = entries[0];
+  //       // Kiểm tra nếu phần tử cuối cùng đã vào viewport và không đang tải
+  //       if (entry.isIntersecting && !loading && filteredNotifications.length) {
+  //         // setLoading(true);
+  //         // Giả lập việc tải thêm thông báo
 
-    if (socket) {
-      socket.on("getNotification", handleGetNotification);
+  //         dispatch(fetchNotification({ user: user.id, limit: 5, offset }));
+  //         setTimeout(() => {
+  //           // setLoading(false); // Sau khi tải xong
+  //         }, 1500);
+  //         setOffset((prevOffset) => prevOffset + 5); // Assuming a limit of 5 per request
+  //       }
+  //     },
+  //     {
+  //       threshold: 1.0, // Đảm bảo phần tử loadMoreRef hoàn toàn xuất hiện
+  //     }
+  //   );
 
-      return () => {
-        socket.off("getNotification", handleGetNotification);
-      };
-    }
-  }, [socket]);
+  //   if (loadMoreRef.current) {
+  //     observer.observe(loadMoreRef.current);
+  //   }
+
+  //   return () => {
+  //     if (loadMoreRef.current) {
+  //       observer.unobserve(loadMoreRef.current);
+  //     }
+  //   };
+  // }, [filteredNotifications, loading]);
+  // useEffect(() => {
+  //   const handleGetNotification = (data) => {
+  //     const notificationsUpdate = [data, ...notifications];
+  //     dispatch(updateNotification(notificationsUpdate));
+  //   };
+
+  //   if (socket) {
+  //     socket.on("getNotification", handleGetNotification);
+
+  //     return () => {
+  //       socket.off("getNotification", handleGetNotification);
+  //     };
+  //   }
+  // }, [socket]);
 
   const handleMarkAsReadNotification = async () => {
     if (!notifications.length) return;
@@ -102,16 +143,19 @@ const Notification = ({ children, handleClickNotify }) => {
               <X size={14} color={"#626f86"} />
             </button>
           </div>
-
           <ol className="space-y-2 mt-4 pb-2 px-2 cursor-pointer max-h-[400px] overflow-x-auto">
-            <div className="flex justify-end gap-2 mb-4">
-              {isSelected && (
+            <div className="flex justify-end gap-2 mb-2">
+              {isSelected ? (
                 <button
                   onClick={() => handleMarkAsReadNotification()}
                   className="text-xs hover:underline"
                 >
                   Đánh dấu tất cả đã đọc
                 </button>
+              ) : (
+                <span className="flex items-center justify-center text-xs">
+                  Chưa đọc
+                </span>
               )}
 
               <Switch
@@ -124,7 +168,6 @@ const Notification = ({ children, handleClickNotify }) => {
                 endContent={<X size={16} />}
               ></Switch>
             </div>
-
             <p
               className="hidden last:block text-md  text-center "
               style={{ color: "#172b4d" }}
@@ -144,3 +187,16 @@ const Notification = ({ children, handleClickNotify }) => {
   );
 };
 export default Notification;
+// {isloading && (
+//   <div className=" w-full flex items-center gap-4 p-2">
+//     <div>
+//       <Skeleton className="flex rounded-full w-[40px] h-[40px]" />
+//     </div>
+//     <div className="w-full flex flex-col space-y-0.5">
+//       <Skeleton className="h-3 w-full rounded-lg" />
+//       <Skeleton className="h-3 w-3/5 rounded-lg" />
+//     </div>
+//   </div>
+// )}
+// {/* Phần tử ref dùng để theo dõi khi cuộn đến cuối */}
+// <div ref={loadMoreRef}></div>

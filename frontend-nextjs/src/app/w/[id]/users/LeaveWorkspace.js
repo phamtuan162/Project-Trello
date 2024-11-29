@@ -15,7 +15,8 @@ import {
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
-const { cancelUser, updateActivitiesInWorkspace } = workspaceSlice.actions;
+const { cancelUserInWorkspace, updateActivitiesInWorkspace } =
+  workspaceSlice.actions;
 
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
@@ -54,7 +55,7 @@ const LeaveWorkspace = ({ user }) => {
 
             window.location.href = "/";
           } else {
-            dispatch(cancelUser(user));
+            dispatch(cancelUserInWorkspace(user));
             dispatch(updateActivitiesInWorkspace(activity));
             toast.success("Loại bỏ thành viên thành công");
           }

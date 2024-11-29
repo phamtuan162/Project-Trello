@@ -56,51 +56,70 @@ module.exports = {
 
     res.status(response.status).json(response);
   },
+
   find: async (req, res) => {
+    const { isDetailCard = "true", isCard = "true" } = req.query;
     const { id } = req.params;
-    const response = {};
+
     try {
+      const includeColumn = isCard === "true";
+      const includeCard =
+        isDetailCard === "true"
+          ? [
+              { model: Comment, as: "comments" },
+              { model: Attachment, as: "attachments" },
+              { model: Activity, as: "activities" },
+              {
+                model: User,
+                as: "users",
+                attributes: { exclude: ["password"] },
+              },
+              { model: Column, as: "column" },
+              {
+                model: Work,
+                as: "works",
+                include: {
+                  model: Mission,
+                  as: "missions",
+                  include: {
+                    model: User,
+                    as: "user",
+                    attributes: { exclude: ["password"] },
+                  },
+                },
+              },
+            ]
+          : [];
+
       const board = await Board.findByPk(id, {
         include: {
           model: Column,
           as: "columns",
-          include: {
-            model: Card,
-            as: "cards",
-            include: [
-              { model: Comment, as: "comments" },
-              { model: Attachment, as: "attachments" },
-              {
-                model: User,
-                as: "users",
-              },
-              {
-                model: Work,
-                as: "works",
-                include: { model: Mission, as: "missions" },
-              },
-            ],
-          },
+          include: includeColumn
+            ? {
+                model: Card,
+                as: "cards",
+                include: includeCard,
+              }
+            : [],
         },
-        paranoid: true,
       });
+
       if (!board) {
-        Object.assign(response, {
-          status: 404,
-          message: "Not Found",
-        });
-      } else {
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-          data: new BoardTransformer(board),
-        });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not Found Board" });
       }
+
+      res.status(200).json({
+        status: 200,
+        message: "Success",
+        data: new BoardTransformer(board),
+      });
     } catch (e) {
-      response.status = 500;
-      response.message = "Server Error";
+      console.error(e);
+      res.status(500).json({ status: 500, message: "Server Error" });
     }
-    res.status(response.status).json(response);
   },
 
   store: async (req, res) => {
@@ -183,20 +202,10 @@ module.exports = {
       await Board.update(body, {
         where: { id },
       });
-      const board = await Board.findByPk(id, {
-        include: {
-          model: Column,
-          as: "columns",
-          include: {
-            model: Card,
-            as: "cards",
-          },
-        },
-      });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new BoardTransformer(board),
       });
     } catch (e) {
       const errors = Object.fromEntries(
@@ -213,49 +222,72 @@ module.exports = {
 
   moveCard: async (req, res) => {
     const user = req.user.dataValues;
-    const { id } = req.params;
-    const { updateBoard, card_id, prevColumnId, nextColumnId } = req.body;
+    const { nextColumn: nextColumnNew, card_id, prevColumnId } = req.body;
     const response = {};
-    try {
-      const columns = updateBoard.columns;
-      if (!columns.length > 0 || !card_id || !prevColumnId || !nextColumnId) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
-      const cardCurrent = await Card.findByPk(card_id);
-      const nextColumn = await Column.findByPk(nextColumnId);
-      const prevColumn = await Column.findByPk(prevColumnId);
 
+    // Kiểm tra các dữ liệu nhận được
+    if (!nextColumnNew || !card_id || !prevColumnId) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
+    try {
+      const [cardCurrent, nextColumn, prevColumn] = await Promise.all([
+        Card.findByPk(card_id),
+        Column.findByPk(nextColumnNew.id),
+        Column.findByPk(prevColumnId),
+      ]);
+
+      // Kiểm tra các dữ liệu nhận được
       if (!cardCurrent || !nextColumn || !prevColumn) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
-      if (nextColumn.cardOrderIds.find((item) => +item === +card_id)) {
-        return res.status(404).json({ status: 404, message: "Not found" });
-      }
-      for (const column of columns) {
-        const cards = column.cards;
-        if (+column.id === prevColumnId || +column.id === +nextColumnId) {
-          await Column.update(
-            {
-              cardOrderIds: column.cardOrderIds,
-            },
-            { where: { id: column.id } }
-          );
-        }
 
-        for (const card of cards) {
-          if (+card.id === card_id) {
-            await Card.update(
-              { column_id: card.column_id },
-              {
-                where: {
-                  id: card.id,
-                },
-              }
-            );
-          }
-        }
+      // Chuyển cardOrderIds thành Set để cải thiện tốc độ kiểm tra
+      const nextColumnCardOrderIdsSet = new Set(nextColumn.cardOrderIds);
+      const prevColumnCardOrderIdsSet = new Set(prevColumn.cardOrderIds);
+
+      // Kiểm tra xem card đã tồn tại trong cột tiếp theo hay không
+      if (nextColumnCardOrderIdsSet.has(+card_id)) {
+        return res.status(400).json({
+          status: 400,
+          message: "Card already exists in the next column",
+        });
       }
 
+      // Kiểm tra xem card có tồn tại trong cột trước hay không
+      if (!prevColumnCardOrderIdsSet.has(+card_id)) {
+        return res.status(400).json({
+          status: 400,
+          message: "Card does not exist in the previous column",
+        });
+      }
+
+      // Loại card_id di chuyển ra khỏi cardOrderIds của cột trước
+      const prevCardOrderIds = prevColumn.cardOrderIds.filter(
+        (c) => +c !== card_id
+      );
+
+      await Promise.all([
+        // Cập nhật cardOrderIds của cột trước (prevColumn)
+        Column.update(
+          {
+            cardOrderIds: prevCardOrderIds,
+          },
+          { where: { id: prevColumnId } }
+        ),
+        // Cập nhật cardOrderIds của cột tiếp theo (nextColumn)
+        Column.update(
+          { cardOrderIds: nextColumnNew.cardOrderIds },
+          { where: { id: nextColumnNew.id } }
+        ),
+        // Cập nhật column_id của thẻ di chuyển
+        Card.update(
+          { column_id: nextColumnNew.id },
+          { where: { id: card_id } }
+        ),
+      ]);
+
+      // Tạo thông báo hành động di chuyên thẻ
       const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -266,10 +298,11 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã di chuyển thẻ này từ danh sách ${prevColumn.title} tới danh sách ${nextColumn.title}`,
       });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        activity,
       });
     } catch (e) {
       Object.assign(response, {
@@ -284,24 +317,38 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
-    const board = await Board.findByPk(id);
-    if (!board) {
-      return res.status(404).json({ status: 404, message: "Not found" });
-    }
-    try {
-      const title = board.title;
 
-      await board.destroy();
+    try {
+      const board = await Board.findByPk(id, {
+        include: { model: Column, as: "columns" },
+      });
+
+      if (!board) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found board" });
+      }
+
+      const { title } = board;
+
+      // Nếu trong board có column thì xóa mềm
+      if (board.columns.length > 0) {
+        await board.destroy();
+      }
+      // Nếu trong board không có column thì xóa hẳn
+      else {
+        await Activity.update({ board_id: null }, { where: { board_id: id } });
+        await board.destroy({ force: true });
+      }
 
       await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
-        board_id: 9999,
         title: title,
-        action: "add_board",
+        action: "delete_board",
         workspace_id: user.workspace_id_active,
-        desc: `đã xóa bảng ${board.title} ra khỏi Không gian làm việc này`,
+        desc: `đã xóa bảng ${title} ra khỏi Không gian làm việc này`,
       });
 
       Object.assign(response, {
@@ -309,6 +356,8 @@ module.exports = {
         message: "Success",
       });
     } catch (error) {
+      console.log(error);
+
       Object.assign(response, {
         status: 500,
         message: "Sever error",

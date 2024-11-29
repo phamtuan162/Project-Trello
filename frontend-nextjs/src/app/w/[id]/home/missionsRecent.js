@@ -10,12 +10,10 @@ const MissionsRecent = () => {
 
   const missionsRecent = useMemo(() => {
     const missionsCopy = missions?.filter((item) => item.card_id) || [];
-    if (missionsCopy.length > 0) {
-      return missionsCopy
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 5);
-    }
-    return [];
+
+    return missionsCopy
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5);
   }, [missions]);
 
   return (
@@ -24,7 +22,7 @@ const MissionsRecent = () => {
 
       <ol className="space-y-2 mt-2 flex flex-col grow">
         <p className="hidden last:block text-xs  text-center text-muted-foreground">
-          Không có hoạt động nào gần đây
+          Không có nhiệm vụ nào gần đây
         </p>
         {missionsRecent?.map((mission) => (
           <MissionRecent key={mission.id} mission={mission} />

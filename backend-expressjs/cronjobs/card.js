@@ -9,33 +9,69 @@ const {
   Work,
   Mission,
   Activity,
+  UserCard,
 } = require("../models/index");
 const { isAfter, subDays, isBefore, subHours } = require("date-fns");
 const sendMail = require("../utils/mail");
 const { Op } = require("sequelize");
+const batchSize = 10;
 
 module.exports = {
   HandleExpired: async () => {
-    const cards = await Card.findAll({
-      include: { model: User, as: "users" },
-      where: {
-        endDateTime: { [Op.not]: null }, // endDateTime không null
-      },
-    });
-    if (cards.length > 0) {
-      for (const card of cards) {
-        if (card?.users?.length > 0 && card?.workspace_id) {
-          const currentTime = new Date();
-          const oneDayBeforeEnd = subDays(card.endDateTime, 1);
-          const oneHourBeforeEnd = subHours(currentTime, 1);
-          const workspace = await Workspace.findByPk(card.workspace_id);
-          const column = card?.column_id
-            ? await Column.findByPk(card.column_id)
-            : null;
-          const board = column?.board_id
-            ? await Board.findByPk(column.board_id)
-            : null;
-          if (workspace?.id && board) {
+    try {
+      let offset = 0;
+      while (true) {
+        const cards = await Card.findAll({
+          include: [
+            {
+              model: User,
+              as: "users",
+              attributes: ["email"], // Chỉ lấy email
+              require: false,
+              where: {
+                email: { [Op.not]: null }, // Chỉ lấy người dùng có email
+              },
+            },
+            {
+              model: Workspace,
+              as: "workspace",
+            },
+            {
+              model: Column,
+              as: "column",
+              require: false,
+              where: {
+                board_id: { [Op.not]: null }, // board_id không null
+              },
+              include: {
+                model: Board,
+                as: "board",
+              },
+            },
+          ],
+          where: {
+            endDateTime: { [Op.not]: null }, // endDateTime không null
+            column_id: { [Op.not]: null }, // column_id không null
+            workspace_id: { [Op.not]: null }, // column_id không null
+          },
+          limit: batchSize,
+          offset: offset,
+        });
+
+        if (cards.length === 0) {
+          break; // Không còn cột nào, dừng vòng lặp
+        }
+
+        if (cards.length > 0) {
+          for (const card of cards) {
+            if (!card?.workspace || !card?.column?.board) {
+              continue;
+            }
+            const currentTime = new Date();
+            const oneDayBeforeEnd = subDays(card.endDateTime, 1);
+            const oneHourBeforeEnd = subHours(currentTime, 1);
+            const workspace = card.workspace;
+            const board = card.column.board;
             const link = `http://localhost:3000/w/${workspace.id}`;
 
             if (
@@ -43,97 +79,101 @@ module.exports = {
               isAfter(currentTime, card.endDateTime)
             ) {
               await card.update({ status: "expired" });
+              // Gửi thông báo  hết hạn
+              if (card?.users?.length > 0) {
+                const html = `<p>Thẻ <b>${card.title}</b> của bạn trong Bảng làm việc <b>${board.title}</b> thuộc Không gian làm việc <a href=${link}>${workspace.name}</a> <span style="color:red">đã hết hạn</span>!</p>`;
 
-              const html = `<p>Thẻ <b>${card.title}</b> của bạn trong Bảng làm việc <b>${board.title}</b> thuộc Không gian làm việc <a href=${link}>${workspace.name}</a> <span style="color:red">đã hết hạn</span>!</p>`;
-
-              await Promise.all(
-                card.users.map((user) => {
-                  if (user.email) {
+                await Promise.all(
+                  card.users.map((user) => {
                     return sendMail(user.email, "Thông báo thẻ hết hạn", html);
-                  }
-                  return Promise.resolve();
-                })
-              );
+                  })
+                );
+              }
             } else if (
               isAfter(currentTime, oneDayBeforeEnd) &&
               isBefore(currentTime, card.endDateTime)
             ) {
               await card.update({ status: "up_expired" });
-              // const html = `<p>Thẻ <b>${
-              //   card.title
-              // }</b> của bạn trong Bảng làm việc <b>${
-              //   board.title
-              // }</b> thuộc Không gian làm việc <a href=${link}>${
-              //   workspace.name
-              // }</a> <span style="color:red">sắp hết hạn  ${formatDistanceToNow(
-              //   new Date(card.endDateTime),
-              //   {
-              //     addSuffix: true,
-              //     locale: vi,
-              //   }
-              // )}}</span>!</p>`;
-
-              // await Promise.all(
-              //   card.users.map((user) => {
-              //     if (user.email) {
-              //       return sendMail(user.email, "Thông báo thẻ sắp hết hạn", html);
-              //     }
-              //     return Promise.resolve();
-              //   })
-              // );
+              // Gửi thông báo sắp hết hạn
+              if (card?.users?.length > 0) {
+                const html = `<p>Thẻ <b>${card.title}</b> của bạn trong Bảng làm việc <b>${board.title}</b> thuộc Không gian làm việc <a href=${link}>${workspace.name}</a> <span style="color:yellow">sắp hết hạn</span>!</p>`;
+                await Promise.all(
+                  card.users.map((user) => {
+                    return sendMail(
+                      user.email,
+                      "Thông báo thẻ sắp hết hạn",
+                      html
+                    );
+                  })
+                );
+              }
             }
           }
         }
+
+        offset += batchSize;
       }
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   },
   delete: async () => {
-    const cards = await Card.findAll({
-      include: [
-        { model: Activity, as: "activities" },
-        { model: Comment, as: "comments" },
-        { model: Attachment, as: "attachments" },
-        { model: User, as: "users" },
-        {
-          model: Work,
-          as: "works",
-          include: { model: Mission, as: "missions" },
-        },
-      ],
-      paranoid: false,
-      where: {
-        deleted_at: {
-          [Op.ne]: null, // chỉ lấy các bản ghi bị xóa mềm
-        },
-      },
-    });
-    if (cards.length > 0) {
-      for (const card of cards) {
-        if (card.users.length > 0) {
-          await card.removeUsers(card.users);
+    let offset = 0;
+    try {
+      while (true) {
+        const cards = await Card.findAll({
+          include: [
+            {
+              model: Work,
+              as: "works",
+              include: { model: Mission, as: "missions" },
+            },
+          ],
+          paranoid: false,
+          where: {
+            [Op.or]: [
+              { deleted_at: { [Op.ne]: null } }, // Bị xóa mềm
+              { column_id: null }, // Hoặc column_id = null
+            ],
+          },
+          order: [["deleted_at", "desc"]], // Sắp xếp giảm dần theo deleted_at
+          limit: batchSize,
+          offset: offset,
+        });
+
+        if (cards?.length === 0) {
+          break; // Không còn cột nào, dừng vòng lặp
         }
-        if (card.comments.length > 0) {
-          await Comment.destroy({ where: { card_id: card.id } });
-        }
-        if (card.attachments.length > 0) {
-          await Attachment.destroy({ where: { card_id: card.id } });
-        }
-        if (card.works.length > 0) {
-          for (const work of card.works) {
-            if (work.missions.length > 0) {
-              await Mission.destroy({ where: { work_id: work.id } });
-            }
-            await work.destroy();
+
+        // Xóa cards vĩnh viễn
+
+        for (const card of cards) {
+          await Promise.all([
+            UserCard.destroy({
+              where: { card_id: card.id },
+              force: true,
+            }),
+
+            Comment.destroy({ where: { card_id: card.id } }),
+
+            Attachment.destroy({ where: { card_id: card.id } }),
+
+            Activity.update({ card_id: null }, { where: { card_id: card.id } }),
+          ]);
+
+          if (card?.works?.length > 0) {
+            const workIds = card.works.map((work) => work.id);
+            await Mission.destroy({ where: { work_id: { [Op.in]: workIds } } });
+            await Work.destroy({ where: { id: { [Op.in]: workIds } } });
           }
+
+          await card.destroy({ force: true });
         }
-        if (card.activities.length > 0) {
-          await Activity.update(
-            { card_id: null },
-            { where: { card_id: card.id } }
-          );
-        }
-        await card.destroy({ force: true });
       }
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   },
 };

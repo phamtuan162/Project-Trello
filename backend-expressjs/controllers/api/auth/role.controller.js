@@ -116,25 +116,23 @@ module.exports = {
   },
   update: async (req, res) => {
     const { id } = req.params;
-    let { name, permissions } = req.body;
-    if (!permissions) {
-      permissions = [];
-    }
-    permissions = Array.isArray(permissions) ? permissions : [permissions];
-    const rules = {};
-
-    if (name) {
-      rules.name = string().required("Chưa nhập tên role");
-    }
-
-    const schema = object(rules);
+    let { name, permissions, addPermission } = req.body;
     const response = {};
-    //Validate
-    try {
-      let body = await schema.validate(req.body, {
-        abortEarly: false,
-      });
 
+    if (!name && !permissions && !addPermission) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
+    // if (!permissions) {
+    //   permissions = [];
+    // }
+
+    permissions = Array.isArray(permissions) ? permissions : [permissions];
+    addPermission = Array.isArray(addPermission)
+      ? addPermission
+      : [addPermission];
+
+    try {
       // if (method === "PUT") {
       //   body = Object.assign(
       //     {
@@ -143,18 +141,37 @@ module.exports = {
       //     body
       //   );
       // }
-      await Role.update(
-        {
-          name,
-        },
-        {
-          where: { id },
-        }
-      );
 
       const role = await Role.findByPk(id);
 
-      if (permissions.length && role) {
+      if (!role) {
+        return res.status(404).json({ status: 404, message: "Not found role" });
+      }
+
+      if (name) {
+        role.name = name;
+        await role.save();
+      }
+
+      if (addPermission.length) {
+        const permissionInstance = await Promise.all(
+          addPermission.map(async (permission) => {
+            const [permissionInstance] = await Permission.findOrCreate({
+              where: { value: permission.trim() },
+              defaults: { value: permission.trim() },
+            });
+            return permissionInstance;
+          })
+        );
+
+        //3. Update table roles_permissions
+        await role.addPermissions(permissionInstance);
+      }
+
+      if (
+        permissions.length &&
+        (!addPermission || addPermission.length === 0)
+      ) {
         //Mong muốn: Trả về 1 mảng chứa các instance của từng permission (Nếu tồn tại permissions lấy permission cũ, ngược lại thêm mới và trả instance vừa thêm)
         const permissionInstance = await Promise.all(
           permissions.map(async (permission) => {
@@ -180,12 +197,9 @@ module.exports = {
         data: roleUpdated,
       });
     } catch (e) {
-      const errors = Object.fromEntries(
-        e?.inner.map(({ path, message }) => [path, message])
-      );
       Object.assign(response, {
-        status: 400,
-        message: "Bad Request",
+        status: 500,
+        message: "Sever error",
         errors,
       });
     }

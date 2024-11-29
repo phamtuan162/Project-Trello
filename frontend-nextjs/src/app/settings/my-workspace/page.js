@@ -43,12 +43,12 @@ const columns = [
 const statusOptions = [
   { name: "Normal", uid: "normal" },
   { name: "Deleted", uid: "deleted" },
+  { name: "All", uid: "all" },
 ];
 const PageMyWorkspace = () => {
   const dispatch = useDispatch();
-  const my_workspaces = useSelector(
-    (state) => state.my_workspaces.my_workspaces
-  );
+  const user = useSelector((state) => state.user.user);
+
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState(new Set([]));
   const [visibleColumns, setVisibleColumns] = useState(
@@ -62,12 +62,15 @@ const PageMyWorkspace = () => {
   });
 
   const [page, setPage] = useState(1);
+
   const hasSearchFilter = Boolean(filterValue);
-  const my_workspaces_sort = useMemo(() => {
+
+  const myWorkspaces = useMemo(() => {
+    // Lọc workspaces với role "owner"
     return (
-      my_workspaces?.filter((item) => item.role.toLowerCase() === "owner") || []
+      user.workspaces?.filter((w) => w?.role?.toLowerCase() === "owner") || []
     );
-  }, [my_workspaces]);
+  }, [user?.workspaces]);
 
   const headerColumns = useMemo(() => {
     if (visibleColumns === "all") return columns;
@@ -79,15 +82,14 @@ const PageMyWorkspace = () => {
 
   const filteredItems = useMemo(() => {
     let filteredWorkspaces =
-      my_workspaces_sort?.filter(
-        (item) => item !== null && item !== undefined
-      ) || [];
+      myWorkspaces?.filter((item) => item !== null && item !== undefined) || [];
 
     if (hasSearchFilter) {
       filteredWorkspaces = filteredWorkspaces.filter((item) =>
         item.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
+
     if (statusFilter !== "all") {
       filteredWorkspaces = filteredWorkspaces.filter((item) => {
         return statusFilter === "normal" ? !item.deleted_at : item.deleted_at;
@@ -95,7 +97,7 @@ const PageMyWorkspace = () => {
     }
 
     return filteredWorkspaces;
-  }, [my_workspaces_sort, filterValue, statusFilter]);
+  }, [myWorkspaces, filterValue, statusFilter]);
 
   const pages = Math.ceil(filteredItems.length / rowsPerPage) || 1;
 
@@ -179,7 +181,7 @@ const PageMyWorkspace = () => {
           return cellValue;
       }
     },
-    [my_workspaces_sort]
+    [myWorkspaces]
   );
 
   const onNextPage = useCallback(() => {
@@ -299,7 +301,7 @@ const PageMyWorkspace = () => {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-default-400 text-small">
-            Tổng cộng {my_workspaces_sort?.length} Không gian làm việc
+            Tổng cộng {myWorkspaces?.length} Không gian làm việc
           </span>
           <label className="flex items-center text-default-400 text-small">
             Hàng trên mỗi trang:
@@ -321,7 +323,7 @@ const PageMyWorkspace = () => {
     visibleColumns,
     onSearchChange,
     onRowsPerPageChange,
-    my_workspaces_sort,
+    myWorkspaces,
     hasSearchFilter,
   ]);
 

@@ -1,36 +1,41 @@
 "use client";
 import { MessagesSquare } from "lucide-react";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useSelector, useDispatch } from "react-redux";
 import { useMemo, useRef, useState } from "react";
-import { Avatar, Button, Textarea, CircularProgress } from "@nextui-org/react";
+import { Avatar, Button, Textarea } from "@nextui-org/react";
 import { useOnClickOutside } from "usehooks-ts";
-import { createComment } from "@/services/commentApi";
+
+import { CloseIcon } from "@/components/Icon/CloseIcon";
+import { createCommentApi } from "@/services/commentApi";
 import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 import CommentItem from "./comment";
+
+const { createCommentInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
 
 const CommentCard = () => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   const [isComment, setIsComment] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] = useState("");
   const inputRef = useRef(null);
   const formRef = useRef();
   const btnRef = useRef();
+
   const comments = useMemo(() => {
-    if (!card || !Array.isArray(card.comments)) {
+    if (!Array.isArray(card?.comments)) {
       return [];
     }
 
-    return [...card.comments].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-  }, [card.comments]);
+    return card.comments
+      .slice()
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [card?.comments]);
 
-  const validateContent = (value) => /^.{0,200}$/.test(value);
+  const validateContent = (value) => /^.{6,200}$/.test(value);
 
   const isInvalid = useMemo(() => {
     if (content === "") return false;
@@ -41,45 +46,59 @@ const CommentCard = () => {
     setIsComment(true);
     setTimeout(() => {
       inputRef.current?.focus();
-    }, 0);
+    });
   };
 
   const disableEditing = () => {
     setIsComment(false);
+    setContent("");
   };
 
   const onKeyDown = (e) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-    if (e.key === "Enter") {
-      btnRef.current.click();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      btnRef.current?.click();
     }
   };
 
   useOnClickOutside(formRef, disableEditing);
 
   const onSubmit = async (e) => {
+    if (isInvalid) return;
     e.preventDefault();
     try {
-      if (!isLoading) {
-        setIsLoading(true);
+      await toast
+        .promise(
+          async () =>
+            await createCommentApi({
+              content: content,
+              card_id: card.id,
+              user_id: user.id,
+            }),
+          { pending: "Đang bình luận..." }
+        )
+        .then((res) => {
+          const { data } = res;
 
-        const { status, data } = await createComment({
-          content: content,
-          card_id: card.id,
-          user_id: user.id,
+          dispatch(createCommentInCard(data));
+          dispatch(
+            updateCardInBoard({
+              id: card.id,
+              column_id: card.column_id,
+              comments: [data, ...card.comments],
+            })
+          );
+          toast.success("Bình luận thành công!");
+        })
+        .catch((error) => {
+          console.log(error);
         });
-
-        if (200 <= status && status <= 299) {
-          dispatch(cardSlice.actions.createComment(data));
-          toast.success("Comment thành công");
-        }
-      }
     } catch (error) {
       console.log(error);
     } finally {
-      setIsLoading(false);
       setIsComment(false);
       setContent("");
     }
@@ -111,7 +130,7 @@ const CommentCard = () => {
               <form
                 ref={formRef}
                 onSubmit={onSubmit}
-                className="w-full flex flex-col gap-2"
+                className="w-full flex flex-col gap-2 cursor-pointer"
               >
                 <Textarea
                   placeholder="Viết bình luận..."
@@ -128,29 +147,31 @@ const CommentCard = () => {
                   isInvalid={isInvalid}
                   color={isInvalid && "danger"}
                   errorMessage={
-                    isInvalid && "Bạn đã nhập quá 200 ký tự được cho phép"
+                    isInvalid &&
+                    "Nội dung phải có ít nhất 6 ký tự và không được vượt quá 200 ký tự."
                   }
                   onChange={(e) => setContent(e.target.value)}
                   onKeyDown={onKeyDown}
                   size="xs"
                 />
-                <div className="flex items-center gap-x-2">
+                <div className="flex items-center gap-x-2 ">
                   <Button
-                    isDisabled={isInvalid || content === "" || isLoading}
+                    isDisabled={isInvalid || content === ""}
                     type="submit"
                     size="sm"
                     radius="lg"
                     color="primary"
-                    className="interceptor-loading"
+                    className="interceptor-loading cursor-pointer"
                     ref={btnRef}
                   >
-                    {isLoading ? <CircularProgress /> : "Lưu"}
+                    Bình luận
                   </Button>
-                  {!isLoading && (
-                    <span onClick={disableEditing}>
-                      <CloseIcon size={20} />
-                    </span>
-                  )}
+                  <span
+                    className="interceptor-loading"
+                    onClick={disableEditing}
+                  >
+                    <CloseIcon size={20} />
+                  </span>
                 </div>
               </form>
             ) : (

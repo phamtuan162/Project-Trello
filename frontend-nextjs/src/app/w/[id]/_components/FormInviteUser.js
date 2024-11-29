@@ -19,7 +19,8 @@ import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { searchUser } from "@/services/userApi";
 
-const { inviteUser, updateActivitiesInWorkspace } = workspaceSlice.actions;
+const { inviteUserInWorkspace, updateActivitiesInWorkspace } =
+  workspaceSlice.actions;
 
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
@@ -122,7 +123,9 @@ const FormInviteUser = ({ rolesUser }) => {
         )
         .then((res) => {
           const { activity } = res;
-          dispatch(inviteUser({ user: userInvite, role: selectedRole }));
+          dispatch(
+            inviteUserInWorkspace({ user: userInvite, role: selectedRole })
+          );
           dispatch(updateActivitiesInWorkspace(activity));
 
           // socket.emit("sendNotification", {

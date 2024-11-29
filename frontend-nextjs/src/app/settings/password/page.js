@@ -24,7 +24,7 @@ const PagePassword = () => {
       return;
     }
     try {
-      toast
+      await toast
         .promise(
           async () =>
             await changePasswordApi(user.id, {

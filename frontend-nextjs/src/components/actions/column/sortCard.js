@@ -16,7 +16,7 @@ import { columnSlice } from "@/stores/slices/columnSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
 
 const { updateBoard } = boardSlice.actions;
-const { updateColumn } = columnSlice.actions;
+const { updateColumns } = columnSlice.actions;
 
 const options = [
   { order: "createdAtDesc", label: "Ngày tạo (Gần Nhất Trước)" },
@@ -46,24 +46,20 @@ const SortCard = ({ children, column }) => {
   const [selectedKeys, setSelectedKeys] = useState(
     new Set([column.order || "asc"])
   );
-  const board = useSelector((state) => state.board.board);
-  const columns = useSelector((state) => state.column.columns);
 
   const handleColumnUpdate = async (sortedColumn, order) => {
-    const updatedColumns = columns.map((col) =>
-      col.id === column.id ? sortedColumn : col
-    );
-
     try {
-      const { status, data } = await updateColumnDetail(column.id, {
+      const updatedColumns = board.columns.map((col) =>
+        col.id === column.id ? sortedColumn : col
+      );
+
+      dispatch(updateBoard({ columns: updatedColumns }));
+      dispatch(updateColumns(updatedColumns));
+
+      await updateColumnDetail(column.id, {
         order,
         cardOrderIds: sortedColumn.cardOrderIds,
       });
-
-      if (200 <= status && status <= 299) {
-        dispatch(updateBoard({ ...board, columns: updatedColumns }));
-        dispatch(updateColumn(updatedColumns));
-      }
     } catch (err) {
       console.log(err);
     }

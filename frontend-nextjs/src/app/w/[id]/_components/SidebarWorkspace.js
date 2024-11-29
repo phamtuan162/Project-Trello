@@ -9,7 +9,7 @@ import { ChevronDown, Plus } from "lucide-react";
 import WorkspaceMenu from "./WorkspaceMenu";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 const { updateWorkspace } = workspaceSlice.actions;
 const SidebarWorkspace = ({ workspaceOptions }) => {
   const dispatch = useDispatch();
@@ -19,21 +19,24 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const socket = useSelector((state) => state.socket.socket);
-  const [boards, setBoards] = useState([]);
+  const [boards, setBoards] = useState(workspace?.boards || []);
+
   useEffect(() => {
     if (workspace?.boards) {
       setBoards(workspace.boards);
     }
-  }, [workspace]);
+  }, [workspace?.boards]);
+
   useEffect(() => {
     const handleGetWorkspaceUpdated = (data) => {
       const workspaceUpdated = data;
-      if (!workspaceUpdated.id || !workspace.id) {
+
+      if (!workspaceUpdated?.id || !workspace?.id) {
         return;
       }
+
       dispatch(
         updateWorkspace({
-          ...workspace,
           name: workspaceUpdated.name,
           desc: workspaceUpdated.desc,
         })
@@ -149,7 +152,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
           </div>
           <FormPopoverBoard
             placement={"top-right"}
-            workspaces={user.workspaces}
+            workspaces={user?.workspaces}
           >
             <div className="flex p-1.5 hover:bg-default-100 rounded-lg justify-center lg:justify-start items-center gap-2 text-sm  cursor-pointer">
               <Plus size={16} />

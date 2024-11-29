@@ -2,18 +2,20 @@
 import { useMemo } from "react";
 import { Copy, Trash, ArrowRight } from "lucide-react";
 import { Button } from "@nextui-org/react";
+import { useSelector } from "react-redux";
+
 import MoveCard from "@/components/actions/card/moveCard";
 import CopyCard from "@/components/actions/card/copyCard";
 import DeleteCard from "@/components/actions/card/deleteCard";
-import { useSelector } from "react-redux";
+
 const ActionsCard = () => {
   const user = useSelector((state) => state.user.user);
 
   const isAdminOrOwner = useMemo(() => {
-    return (
-      user.role.toLowerCase() === "admin" || user.role.toLowerCase() === "owner"
-    );
-  }, [user]);
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   const actions = useMemo(() => {
     return [
       {
@@ -63,6 +65,7 @@ const ActionsCard = () => {
       },
     ].filter(Boolean);
   }, [isAdminOrOwner]);
+
   return (
     <div className="space-y-2 mt-6" key={"actions"}>
       <p className="text-xs font-medium" style={{ color: "#44546f" }}>

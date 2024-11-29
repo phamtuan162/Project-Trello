@@ -9,12 +9,13 @@ const {
   Attachment,
   Workspace,
   Comment,
+  UserCard,
 } = require("../../../models/index");
 const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
 const { format } = require("date-fns");
-const workspace = require("../../../models/workspace");
+const { streamUpload } = require("../../../utils/cloudinary");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -48,7 +49,11 @@ module.exports = {
           { model: Comment, as: "comments" },
           { model: Attachment, as: "attachments" },
           { model: Activity, as: "activities" },
-          { model: User, as: "users" },
+          {
+            model: User,
+            as: "users",
+            attributes: { exclude: ["password"] }, // Loại trừ trường password
+          },
           { model: Column, as: "column" },
           {
             model: Work,
@@ -59,6 +64,7 @@ module.exports = {
               include: {
                 model: User,
                 as: "user",
+                attributes: { exclude: ["password"] }, // Loại trừ trường password
               },
             },
           },
@@ -96,11 +102,17 @@ module.exports = {
       const body = await schema.validate(req.body, {
         abortEarly: false,
       });
-      const column = await Column.findByPk(req.body.column_id);
-      const workspace = await Workspace.findByPk(req.body.workspace_id);
+      const [column, workspace] = await Promise.all([
+        Column.findByPk(req.body.column_id),
+        Workspace.findByPk(req.body.workspace_id),
+      ]);
+
       if (!column || !workspace) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found column or workspace" });
       }
+
       const card = await Card.create(body);
 
       let updatedCardOrderIds = [];
@@ -110,9 +122,11 @@ module.exports = {
       } else {
         updatedCardOrderIds = column.cardOrderIds.concat(card.id);
       }
+
       await column.update({
         cardOrderIds: updatedCardOrderIds,
       });
+
       await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -130,14 +144,14 @@ module.exports = {
         data: new CardTransformer(card),
       });
     } catch (e) {
-      // const errors = Object.fromEntries(
-      //   e?.inner.map(({ path, message }) => [path, message])
-      // );
+      const errors = Object.fromEntries(
+        e?.inner.map(({ path, message }) => [path, message])
+      );
       console.log(e);
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
-        e,
+        errors,
       });
     }
     res.status(response.status).json(response);
@@ -146,6 +160,9 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const method = req.method;
+    const file = req.file;
+    console.log(file);
+
     const rules = {};
 
     if (req.body.title) {
@@ -159,10 +176,17 @@ module.exports = {
         abortEarly: false,
       });
       const card = await Card.findByPk(id);
+
       if (!card) {
         return res.status(404).json({ status: 404, message: "Not found card" });
       }
-      await card.update(body);
+
+      if (file) {
+        const resultUpload = await streamUpload(file.buffer, "cardCovers");
+        await card.update({ background: resultUpload.secure_url });
+      } else {
+        await card.update(body);
+      }
 
       if (req.body.status) {
         await Activity.create({
@@ -179,6 +203,7 @@ module.exports = {
               : "đã đánh dấu ngày hết hạn là chưa hoàn thành",
         });
       }
+
       const cardUpdate = await Card.findByPk(id, {
         include: [
           { model: User, as: "users" },
@@ -192,6 +217,8 @@ module.exports = {
         data: new CardTransformer(cardUpdate),
       });
     } catch (e) {
+      console.log(file);
+
       const errors = Object.fromEntries(
         e?.inner.map(({ path, message }) => [path, message])
       );
@@ -210,27 +237,55 @@ module.exports = {
 
     try {
       const card = await Card.findByPk(id);
-      const column = await Column.findByPk(card.column_id);
-      if (!card || !column) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+
+      if (!card) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found card " });
       }
 
-      const title = card.title;
+      const column = await Column.findByPk(card.column_id);
+
+      if (!column) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found column" });
+      }
+
+      const board = await Column.findByPk(column.board_id);
+
+      if (!board) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found board" });
+      }
+
+      const { title } = card;
+
+      await UserCard.destroy({
+        where: {
+          card_id: card.id,
+        },
+        force: true,
+      });
+
       await card.destroy();
-      await Activity.create({
+
+      const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
-        card_id: card.id,
         title: title,
-        action: "delete",
+        action: "delete_card",
+        column_id: column.id,
         workspace_id: user.workspace_id_active,
-        desc: `đã xóa thẻ ${card.title} khỏi danh sách ${column.title}`,
+        desc: `đã xóa thẻ ${card.title} khỏi danh sách ${column.title} trong bảng ${board.title}`,
       });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
+        activity,
       });
     } catch (error) {
       Object.assign(response, {
@@ -245,19 +300,25 @@ module.exports = {
     const { id } = req.params;
     const { user_id } = req.body;
     const response = {};
+
+    if (!user_id || !id) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
     const card = await Card.findByPk(id);
+
     if (!card) {
       return res.status(404).json({ status: 404, message: "Not found card" });
     }
-    if (!user_id) {
-      return res.status(400).json({ status: 400, message: "Bad request" });
-    }
+
     const user = await User.findByPk(user_id);
 
     if (!user) {
       return res.status(404).json({ status: 404, message: "Not found user" });
     }
+
     await card.addUser(user);
+
     await Activity.create({
       user_id: userMain.id,
       userName: userMain.name,
@@ -269,16 +330,25 @@ module.exports = {
       desc:
         +userMain.id === +user_id ? `đã tham gia` : `đã thêm ${user.name} vào`,
     });
-    const cardAssignedUser = await Card.findByPk(id, {
+
+    const cardUpdated = await Card.findByPk(card.id, {
       include: [
-        { model: User, as: "users" },
-        { model: Activity, as: "activities" },
+        {
+          model: User,
+          as: "users",
+          attributes: { exclude: ["password"] }, // Loại trừ trường password
+        },
+        {
+          model: Activity,
+          as: "activities",
+        },
       ],
     });
+
     Object.assign(response, {
       status: 200,
       message: "Success",
-      card: new CardTransformer(cardAssignedUser),
+      cardUpdated,
     });
     res.status(response.status).json(response);
   },
@@ -287,60 +357,88 @@ module.exports = {
     const { id } = req.params;
     const { user_id } = req.body;
     const response = {};
-    const card = await Card.findByPk(id);
-    if (!card) {
-      return res.status(404).json({ status: 404, message: "Not found card" });
-    }
-    if (!user_id) {
+
+    if (!user_id || !id) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
-    const user = await User.findByPk(user_id);
 
-    if (!user) {
-      return res.status(404).json({ status: 404, message: "Not found user" });
+    try {
+      const card = await Card.findByPk(id);
+      if (!card) {
+        return res.status(404).json({ status: 404, message: "Not found card" });
+      }
+
+      const user = await User.findByPk(user_id);
+
+      if (!user) {
+        return res.status(404).json({ status: 404, message: "Not found user" });
+      }
+
+      await card.removeUser(user);
+
+      const activity = await Activity.create({
+        user_id: userMain.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        card_id: card.id,
+        title: card.title,
+        action: "un_assign_user",
+        workspace_id: userMain.workspace_id_active,
+        desc:
+          +userMain.id === +user_id
+            ? `đã rời khỏi`
+            : `đã loại ${user.name} khỏi`,
+      });
+
+      const cardUpdated = await Card.findByPk(card.id, {
+        include: [
+          {
+            model: User,
+            as: "users",
+            attributes: { exclude: ["password"] }, // Loại trừ trường password
+          },
+          {
+            model: Activity,
+            as: "activities",
+          },
+        ],
+      });
+
+      Object.assign(response, {
+        status: 200,
+        message: "Success",
+        cardUpdated,
+      });
+    } catch (error) {
+      console.log(error);
+
+      Object.assign(response, {
+        status: 500,
+        message: "Sever error",
+      });
     }
 
-    await card.removeUser(user);
-    await Activity.create({
-      user_id: userMain.id,
-      userName: userMain.name,
-      userAvatar: userMain.avatar,
-      card_id: card.id,
-      title: card.title,
-      action: "un_assign_user",
-      workspace_id: userMain.workspace_id_active,
-      desc:
-        +userMain.id === +user_id ? `đã rời khỏi` : `đã loại ${user.name} khỏi`,
-    });
-    const cardAssignedUser = await Card.findByPk(id, {
-      include: [
-        { model: User, as: "users" },
-        { model: Activity, as: "activities" },
-      ],
-    });
-    Object.assign(response, {
-      status: 200,
-      message: "Success",
-      card: new CardTransformer(cardAssignedUser),
-    });
     res.status(response.status).json(response);
   },
   copyCard: async (req, res) => {
     const user = req.user.dataValues;
-    const { keptItems, user_id, matchBoard, overColumn, card } = req.body;
+    const { keptItems, matchBoard, overColumn, card } = req.body;
     const response = {};
+
+    if (!overColumn.cardOrderIds || !card) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
     try {
-      if (!keptItems || !user_id || !overColumn.cardOrderIds || !card) {
-        return res.status(400).json({ status: 400, message: "Bad request" });
-      }
       const column = await Column.findByPk(overColumn.id);
 
       if (!column) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found column" });
       }
 
       const cardNew = await Card.create({
-        id: card.id,
         workspace_id: card.workspace_id,
         column_id: card.column_id,
         title: card.title,
@@ -350,6 +448,7 @@ module.exports = {
         endDateTime: card.endDateTime,
         status: "pending",
       });
+
       if (cardNew && keptItems.length > 0) {
         await Promise.all(
           keptItems.map(async (keptItem) => {
@@ -357,32 +456,38 @@ module.exports = {
             switch (itemType) {
               case "users":
                 const usersToAdd = matchBoard
-                  ? card.users.map((user) => user.id)
-                  : [user_id];
-                usersToAdd.sort((a, b) =>
-                  a === user_id ? -1 : b === user_id ? 1 : 0
-                );
+                  ? card.users
+                  : card.users.filter((u) => u === user.id);
 
-                await Promise.all(
-                  usersToAdd.map(async (userId) => {
-                    const userInstance = await User.findByPk(userId);
-                    await cardNew.addUser(userInstance);
-                    await Activity.create({
-                      user_id: user.id,
-                      userName: user.name,
-                      userAvatar: user.avatar,
-                      card_id: cardNew.id,
-                      title: cardNew.title,
-                      action: "assign_user",
-                      workspace_id: user.workspace_id_active,
-                      desc:
-                        +userId === +user_id
-                          ? "đã tham gia thẻ này"
-                          : `đã thêm ${userInstance.name} vào thẻ này`,
-                    });
-                    return userInstance;
-                  })
-                );
+                if (usersToAdd?.length > 0) {
+                  const usersInstance = await Promise.all(
+                    usersToAdd.map(async ({ id, name }) => {
+                      const userInstance = await User.findByPk(id);
+
+                      return userInstance;
+                    })
+                  );
+                  await cardNew.addUsers(usersInstance);
+
+                  await Promise.all(
+                    usersToAdd.map(async ({ id, name }) => {
+                      const activity = await Activity.create({
+                        user_id: user.id,
+                        userName: user.name,
+                        userAvatar: user.avatar,
+                        card_id: cardNew.id,
+                        title: cardNew.title,
+                        action: "assign_user",
+                        workspace_id: user.workspace_id_active,
+                        desc:
+                          +id === +user.id
+                            ? "đã tham gia thẻ này"
+                            : `đã thêm ${name} vào thẻ này`,
+                      });
+                      return activity;
+                    })
+                  );
+                }
 
                 break;
               case "works":
@@ -398,8 +503,8 @@ module.exports = {
                           const missionNew = await Mission.create({
                             name: mission.name,
                             work_id: workNew.id,
-                            workspace_id: user.workspace_id_active,
-                            user_id: matchBoard ? mission.user_id : user_id,
+                            workspace_id: mission.workspace_id,
+                            user_id: matchBoard ? mission.user_id : null,
                             status: "pending",
                             endDateTime: mission.endDateTime,
                           });
@@ -417,7 +522,6 @@ module.exports = {
                     const attachmentNew = await Attachment.create({
                       fileName: attachment.fileName,
                       path: attachment.path,
-
                       card_id: cardNew.id,
                       user_id: attachment.user_id,
                     });
@@ -429,17 +533,15 @@ module.exports = {
               case "comments":
                 await Promise.all(
                   card.comments.map(async (comment) => {
-                    const activity = await Activity.create({
-                      user_id: user.id,
-                      userName: user.name,
-                      userAvatar: user.avatar,
+                    const commentInstance = await Comment.create({
+                      isEdit: comment.isEdit,
+                      userName: comment.userName,
+                      userAvatar: comment.userAvatar,
+                      user_id: comment.user_id,
                       card_id: cardNew.id,
-                      title: comment.content,
-                      action: "copy_comment",
-                      workspace_id: user.workspace_id_active,
-                      desc: `đã sao chép bình luận của ${comment.userName} từ thẻ ${card.title}`,
+                      content: comment.content,
                     });
-                    return activity;
+                    return commentInstance;
                   })
                 );
                 break;
@@ -451,12 +553,19 @@ module.exports = {
         );
       }
 
-      await column.update({ cardOrderIds: overColumn.cardOrderIds });
+      const cardOrderIds = overColumn.cardOrderIds.map((id) =>
+        id === card.id ? cardNew.id : id
+      );
+
+      await column.update({ cardOrderIds: cardOrderIds });
+
       const oldColumn =
         +card.column_id === +overColumn.id
           ? overColumn
           : await Column.findByPk(card.column_id);
+
       const board = !matchBoard && (await Board.findByPk(overColumn.board_id));
+
       await Activity.create({
         user_id: user.id,
         userName: user.name,
@@ -467,11 +576,39 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã sao chép thẻ này từ ${card.title} trong danh sách ${
           oldColumn.title
-        } ${!matchBoard ? board.title : ""}`,
+        } ${!matchBoard ? `của bảng ${board.title}` : ""}`,
+      });
+
+      const cardCopy = await Card.findByPk(cardNew.id, {
+        include: [
+          { model: Comment, as: "comments" },
+          { model: Attachment, as: "attachments" },
+          { model: Activity, as: "activities" },
+          {
+            model: User,
+            as: "users",
+            attributes: { exclude: ["password"] }, // Loại trừ trường password
+          },
+          { model: Column, as: "column" },
+          {
+            model: Work,
+            as: "works",
+            include: {
+              model: Mission,
+              as: "missions",
+              include: {
+                model: User,
+                as: "user",
+                attributes: { exclude: ["password"] }, // Loại trừ trường password
+              },
+            },
+          },
+        ],
       });
       Object.assign(response, {
         status: 200,
         message: "Success",
+        data: cardCopy,
       });
     } catch (error) {
       console.log(error);
@@ -488,20 +625,25 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const { endDateTime, startDateTime } = req.body;
+
     const response = {};
     try {
       const card = await Card.findByPk(id);
+
       if (!card) {
         return res.status(404).json({ status: 404, message: "Not found" });
       }
+
       await card.update(req.body);
 
+      let activity = null;
       if (endDateTime) {
         const endDateTimeUpdate = format(
           new Date(card.endDateTime),
           "'Ngày' d 'tháng' M 'lúc' H:mm"
         );
-        await Activity.create({
+
+        activity = await Activity.create({
           user_id: user.id,
           userName: user.name,
           userAvatar: user.avatar,
@@ -515,7 +657,7 @@ module.exports = {
         });
       }
       if (endDateTime === null) {
-        await Activity.create({
+        activity = await Activity.create({
           user_id: user.id,
           userName: user.name,
           userAvatar: user.avatar,
@@ -526,16 +668,11 @@ module.exports = {
           desc: `đã bỏ ngày hết hạn của thẻ này`,
         });
       }
-      const cardUpdate = await Card.findByPk(id, {
-        include: [
-          { model: User, as: "users" },
-          { model: Activity, as: "activities" },
-        ],
-      });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: new CardTransformer(cardUpdate),
+        activity,
       });
     } catch (error) {
       Object.assign(response, {

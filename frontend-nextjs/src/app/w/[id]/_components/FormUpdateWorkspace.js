@@ -4,11 +4,14 @@ import { Textarea, Button } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { isEqual } from "lodash";
+
 import { updateWorkspaceApi } from "@/services/workspaceApi";
+import { userSlice } from "@/stores/slices/userSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";
 
 const { updateWorkspace } = workspaceSlice.actions;
+const { updateWorkspaceInUser } = userSlice.actions;
 
 const FormUpdateWorkspace = ({ workspace }) => {
   const dispatch = useDispatch();
@@ -48,18 +51,25 @@ const FormUpdateWorkspace = ({ workspace }) => {
       toast.info("Thay đổi không khác gì trước");
       return;
     }
-
-    const form = {};
-    if (name !== workspace.name) form.name = name;
-    if (desc !== workspace.desc) form.desc = desc;
-
     try {
-      toast
+      const form = {};
+
+      if (name !== workspace.name) form.name = name;
+      if (desc !== workspace.desc) form.desc = desc;
+
+      await toast
         .promise(async () => await updateWorkspaceApi(workspace.id, form), {
           pending: "Đang cập nhật...",
         })
         .then((res) => {
           dispatch(updateWorkspace(form));
+
+          if (form.name) {
+            dispatch(
+              updateWorkspaceInUser({ id: workspace.id, name: form.name })
+            );
+          }
+
           toast.success("Cập nhật thành công");
           // socket.emit("updateWorkspace", {
           //   userActionId: user.id,

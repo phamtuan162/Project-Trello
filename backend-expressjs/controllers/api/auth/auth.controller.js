@@ -294,18 +294,14 @@ module.exports = {
             model: Workspace,
             as: "workspaces",
             paranoid: false,
-            include: {
-              model: Board,
-              as: "boards",
-            },
+            // include: {
+            //   model: Board,
+            //   as: "boards",
+            // },
           },
           {
             model: Provider,
             as: "providers",
-          },
-          {
-            model: Notification,
-            as: "notifications",
           },
         ],
 

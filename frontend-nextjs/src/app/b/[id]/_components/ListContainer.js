@@ -69,7 +69,7 @@ export function ListContainer({
 
   useEffect(() => {
     setOrderedColumns(board?.columns || []);
-  }, [board]);
+  }, [board?.columns]);
 
   const findColumnByCardId = (cardId) => {
     return orderedColumns.find((column) =>

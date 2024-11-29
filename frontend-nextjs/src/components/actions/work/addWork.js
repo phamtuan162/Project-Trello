@@ -1,49 +1,74 @@
 "use client";
 import { useSelector, useDispatch } from "react-redux";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
   Input,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
+import { toast } from "react-toastify";
+
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createWorkApi } from "@/services/workspaceApi";
-import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
-const { updateCard } = cardSlice.actions;
+import { boardSlice } from "@/stores/slices/boardSlice";
+
+const { createWorkInCard, updateActivityInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const AddWork = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   const HandleChange = (e) => {
     setTitle(e.target.value);
   };
+
   const HandleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    createWorkApi({ card_id: card.id, title: title }).then((data) => {
-      if (data.status === 200) {
-        const cardUpdate = {
-          ...card,
-          works: data.data.works,
-          activities: data.data.activities,
-        };
-        dispatch(updateCard(cardUpdate));
-        setIsLoading(false);
+
+    if (title === "") {
+      toast.info("Chưa nhập tiêu đề!");
+      return;
+    }
+    await toast
+      .promise(
+        async () => await createWorkApi({ card_id: card.id, title: title }),
+        { pending: "Đang thêm..." }
+      )
+      .then((res) => {
+        const { work, activity } = res;
+
+        dispatch(createWorkInCard(work));
+
+        dispatch(updateActivityInCard(activity));
+
+        dispatch(
+          updateCardInBoard({
+            id: card.id,
+            column_id: card.column_id,
+            works: [work, ...card.works],
+            activities: [activity, ...card.activities],
+          })
+        );
+        toast.success("Thêm work thành công");
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
         setIsOpen(false);
-      } else {
-        const error = data.error;
-        toast.error(error);
-        setIsLoading(false);
-      }
-      setTitle("");
-    });
+      });
   };
   return (
     <Popover
@@ -85,14 +110,10 @@ const AddWork = ({ children }) => {
           <Button
             type="submit"
             color="primary"
-            className="mt-2"
-            isDisabled={
-              (user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner") ||
-              isLoading
-            }
+            className="mt-2 interceptor-loading"
+            isDisabled={!checkRole}
           >
-            {isLoading ? <CircularProgress /> : "Thêm"}
+            Thêm
           </Button>
         </form>
       </PopoverContent>

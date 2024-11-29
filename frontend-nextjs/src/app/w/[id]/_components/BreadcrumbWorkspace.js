@@ -8,6 +8,7 @@ import { useMemo } from "react";
 const BreadcrumbWorkspace = ({ options }) => {
   const pathname = usePathname();
   const workspace = useSelector((state) => state.workspace.workspace);
+
   const optionsSorted = useMemo(() => {
     if (!options || options.length === 0) {
       return null;

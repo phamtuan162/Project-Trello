@@ -1,8 +1,6 @@
 "use client";
 import { Button } from "@nextui-org/button";
 export function BoardTitleForm({ board }) {
-  const [isEditing, setIsEditing] = useRef(null);
-
   return (
     <Button
       variant="transparent"

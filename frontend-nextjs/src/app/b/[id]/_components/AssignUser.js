@@ -7,49 +7,62 @@ import {
   Input,
   User,
 } from "@nextui-org/react";
-import { SearchIcon, UserPlus } from "lucide-react";
+import { Activity, SearchIcon, UserPlus } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { assignUserApi, unAssignUserApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+
+import { assignUserApi, unAssignUserApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+
 const { updateCard } = cardSlice.actions;
-const { updateBoard } = boardSlice.actions;
-const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
+const { updateCardInBoard } = boardSlice.actions;
+
+const AssignUser = ({
+  children,
+  isAssign,
+  setIsAssign,
+  card,
+  placement = "right",
+}) => {
   const dispatch = useDispatch();
   const [keyword, setKeyWord] = useState("");
   const [isSelect, setIsSelect] = useState(false);
   const workspace = useSelector((state) => state.workspace.workspace);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
-  const card = useSelector((state) => state.card.card);
+  const cardActive = useSelector((state) => state.card.card);
   const socket = useSelector((state) => state.socket.socket);
 
   const hasSearchFilter = Boolean(keyword);
-  const userNotAssignCard = useMemo(() => {
-    if (!workspace || !workspace.users || !cardUpdate.users) {
-      return [];
-    }
 
-    const assignedUserIds = cardUpdate.users.map((user) => user.id);
-    return workspace.users.filter((user) => !assignedUserIds.includes(user.id));
-  }, [workspace, cardUpdate]);
+  const userNotAssignCard = useMemo(() => {
+    // Kiểm tra xem workspace và cardUpdate có dữ liệu không
+    if (!workspace?.users || !card?.users) return [];
+
+    // Tạo một Set chứa các user.id đã được gán
+    const assignedUserIds = new Set(card.users.map((user) => user.id));
+
+    // Trả về những người dùng trong workspace chưa được gán vào card
+    return workspace.users.filter((user) => !assignedUserIds.has(user.id));
+  }, [workspace?.users, card?.users]);
 
   const filteredItems = useMemo(() => {
-    let filteredUsers =
-      userNotAssignCard.filter((item) => item !== null && item !== undefined) ||
-      [];
+    // Nếu không có người dùng nào chưa được gán, trả về mảng trống
+    if (!userNotAssignCard.length) return [];
 
-    if (hasSearchFilter) {
-      filteredUsers = filteredUsers.filter(
-        (item) =>
-          item.name.toLowerCase().includes(keyword.toLowerCase()) ||
-          item.email.toLowerCase().includes(keyword.toLowerCase())
-      );
-    }
+    // Nếu không có bộ lọc tìm kiếm, trả về danh sách người dùng chưa được gán
+    if (!hasSearchFilter || !keyword) return userNotAssignCard;
 
-    return filteredUsers;
-  }, [userNotAssignCard, keyword]);
+    // Nếu có bộ lọc tìm kiếm, lọc người dùng theo từ khóa
+    const lowerCaseKeyword = keyword.toLowerCase();
+
+    return userNotAssignCard.filter(
+      (item) =>
+        item?.name?.toLowerCase().includes(lowerCaseKeyword) ||
+        item?.email?.toLowerCase().includes(lowerCaseKeyword)
+    );
+  }, [userNotAssignCard, keyword, hasSearchFilter]);
 
   const notifyUser = (
     userAssign,
@@ -59,74 +72,89 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     workspaceName
   ) => {
     if (+userAssign.id !== +user.id) {
-      socket.emit("sendNotification", {
-        user_id: userAssign.id,
-        userName: user.name,
-        userAvatar: user.avatar,
-        type: messageType,
-        content:
-          messageType === "assign_user_card"
-            ? `đã thêm bạn vào thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`
-            : `đã loại bạn khỏi thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`,
-      });
+      // socket.emit("sendNotification", {
+      //   user_id: userAssign.id,
+      //   userName: user.name,
+      //   userAvatar: user.avatar,
+      //   type: messageType,
+      //   content:
+      //     messageType === "assign_user_card"
+      //       ? `đã thêm bạn vào thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`
+      //       : `đã loại bạn khỏi thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`,
+      // });
     }
   };
 
   const HandleSelectUserAssigned = async (userAssign) => {
     if (isSelect) return;
-
-    if (
-      user.role.toLowerCase() !== "admin" &&
-      user.role.toLowerCase() !== "owner"
-    ) {
-      toast.error("Bạn không đủ quyền thực hiện thao tác này");
-      setIsAssign(false);
-      return;
-    }
-
-    if (userAssign.role.toLowerCase() === "guest") {
-      toast.error("Người này là khách không không thêm vào được");
-      setIsAssign(false);
-      return;
-    }
-
-    if (cardUpdate.users.length === 4) {
-      toast.error("Tối đa 5 thành viên");
-      return;
-    }
-
-    setIsSelect(true);
-
     try {
-      const data = await assignUserApi(cardUpdate.id, {
-        user_id: userAssign.id,
-      });
-
-      if (data.status === 200) {
-        const cardUpdateNew = data.card;
-
-        dispatch(
-          updateCard({
-            ...cardUpdate,
-            activities: cardUpdateNew.activities,
-            users: cardUpdateNew.users,
-          })
-        );
-        notifyUser(
-          userAssign,
-          "assign_user_card",
-          card.title,
-          board.title,
-          workspace.name
-        );
-
-        setKeyWord("");
-        toast.success("Người dùng đã được thêm thành công");
-      } else {
-        toast.error(data.error);
+      if (
+        user.role.toLowerCase() !== "admin" &&
+        user.role.toLowerCase() !== "owner"
+      ) {
+        toast.error("Bạn không đủ quyền thực hiện thao tác này");
+        setIsAssign(false);
+        return;
       }
+
+      if (userAssign.role.toLowerCase() === "guest") {
+        toast.error("Người này là khách không không thêm vào được");
+        setIsAssign(false);
+        return;
+      }
+
+      if (card.users.length === 4) {
+        toast.error("Tối đa 5 thành viên");
+        return;
+      }
+
+      setIsSelect(true);
+
+      await toast
+        .promise(
+          async () =>
+            await assignUserApi(card.id, {
+              user_id: userAssign.id,
+            }),
+          { pending: "Đang thêm thành viên..." }
+        )
+        .then((res) => {
+          const { cardUpdated } = res;
+
+          if (cardActive) {
+            dispatch(
+              updateCard({
+                users: cardUpdated.users,
+                Activities: cardUpdated.activities,
+              })
+            );
+          }
+
+          dispatch(
+            updateCardInBoard({
+              id: card.id,
+              column_id: card.column_id,
+              users: cardUpdated.users,
+              activities: cardUpdated.activities,
+            })
+          );
+
+          notifyUser(
+            userAssign,
+            "assign_user_card",
+            card.title,
+            board.title,
+            workspace.name
+          );
+
+          toast.success("Thành viên này đã được thêm thành công");
+          setKeyWord("");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi thêm người dùng");
+      console.log(error);
     } finally {
       setIsSelect(false);
     }
@@ -138,116 +166,130 @@ const AssignUser = ({ children, isAssign, setIsAssign, cardUpdate }) => {
     setIsSelect(true);
 
     try {
-      const data = await unAssignUserApi(cardUpdate.id, {
-        user_id: userAssign.id,
-      });
+      await toast
+        .promise(
+          async () =>
+            await unAssignUserApi(card.id, {
+              user_id: userAssign.id,
+            }),
+          { pending: "Đang loại bỏ thành viên..." }
+        )
+        .then((res) => {
+          const { cardUpdated } = res;
+          console.log(cardUpdated.users);
 
-      if (data.status === 200) {
-        const cardUpdateNew = data.card;
-        dispatch(
-          updateCard({
-            ...cardUpdate,
-            activities: cardUpdateNew.activities,
-            users: cardUpdateNew.users,
-          })
-        );
-        notifyUser(
-          userAssign,
-          "unassign_user_card",
-          card.title,
-          board.title,
-          workspace.name
-        );
+          if (cardActive) {
+            dispatch(
+              updateCard({
+                users: cardUpdated.users,
+                Activities: cardUpdated.activities,
+              })
+            );
+          }
 
-        setKeyWord("");
-        toast.success("Người dùng đã được loại bỏ thành công");
-      } else {
-        toast.error(data.error);
-      }
+          dispatch(
+            updateCardInBoard({
+              id: card.id,
+              column_id: card.column_id,
+              users: cardUpdated.users,
+              activities: cardUpdated.activities,
+            })
+          );
+          notifyUser(
+            userAssign,
+            "unassign_user_card",
+            card.title,
+            board.title,
+            workspace.name
+          );
+
+          setKeyWord("");
+          toast.success("Thành viên đã được loại bỏ thành công");
+        });
     } catch (error) {
-      toast.error("Đã xảy ra lỗi khi loại bỏ người dùng");
+      console.log(error);
     } finally {
       setIsSelect(false);
     }
   };
 
   const usersCard = useMemo(() => {
-    if (cardUpdate?.users?.length > 0) {
-      return (
-        <div className=" p-2 max-h-[200px] overflow-x-auto">
-          <p className="font-medium text-xs">Thành viên trong Thẻ</p>
-          {cardUpdate.users.map((user) => (
-            <div
-              key={user.id}
-              className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 "
-              onClick={() => HandleUnAssignedCard(user)}
+    if (!card?.users?.length) return null;
+
+    return (
+      <div className=" p-2 max-h-[200px] overflow-x-auto">
+        <p className="font-medium text-xs">Thành viên trong Thẻ</p>
+        {card.users.map((user) => (
+          <div
+            key={user.id}
+            className=" rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 interceptor-loading"
+            onClick={() => HandleUnAssignedCard(user)}
+          >
+            <User
+              avatarProps={{
+                radius: "full",
+                size: "sm",
+                src: user.avatar,
+                color: "secondary",
+                name: user.name.charAt(0).toUpperCase(),
+              }}
+              classNames={{
+                description: "text-default-500",
+              }}
+              description={user.email}
+              name={user.name}
             >
-              <User
-                avatarProps={{
-                  radius: "full",
-                  size: "sm",
-                  src: user.avatar,
-                  color: "secondary",
-                  name: user.name.charAt(0).toUpperCase(),
-                }}
-                classNames={{
-                  description: "text-default-500",
-                }}
-                description={user.email}
-                name={user.name}
-              >
-                {user.email}
-              </User>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  }, [cardUpdate]);
+              {user.email}
+            </User>
+          </div>
+        ))}
+      </div>
+    );
+  }, [card?.users]);
 
   const usersSearchCard = useMemo(() => {
-    if (filteredItems.length > 0) {
-      return (
-        <div>
-          <p className="font-medium text-xs">Thành viên trong Bảng</p>
+    if (filteredItems?.length === 0) return null;
 
-          {filteredItems.map((user) => (
-            <div
-              key={user.id}
-              className=" rounded-lg p-1 px-3 cursor-pointer mt-1   hover:bg-default-300"
-              onClick={() => HandleSelectUserAssigned(user)}
+    return (
+      <div>
+        <p className="font-medium text-xs">
+          Thành viên trong Không gian làm việc
+        </p>
+
+        {filteredItems.map((user) => (
+          <div
+            key={user.id}
+            className=" rounded-lg p-1 px-3 cursor-pointer mt-1   hover:bg-default-300  interceptor-loading"
+            onClick={() => HandleSelectUserAssigned(user)}
+          >
+            <User
+              avatarProps={{
+                radius: "full",
+                size: "sm",
+                src: user.avatar,
+                color: "secondary",
+                name: user.name.charAt(0).toUpperCase(),
+              }}
+              classNames={{
+                description: "text-default-500",
+              }}
+              name={user.name}
+              description={user.email}
             >
-              <User
-                avatarProps={{
-                  radius: "full",
-                  size: "sm",
-                  src: user.avatar,
-                  color: "secondary",
-                  name: user.name.charAt(0).toUpperCase(),
-                }}
-                classNames={{
-                  description: "text-default-500",
-                }}
-                name={user.name}
-                description={user.email}
-              >
-                {user.email}
-              </User>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
+              {user.email}
+            </User>
+          </div>
+        ))}
+      </div>
+    );
   }, [filteredItems]);
 
   return (
     <Popover
       onClose={() => setKeyWord("")}
       isOpen={isAssign}
-      onOpenChange={(assign) => setIsAssign(assign)}
-      placement="right"
+      onOpenChange={setIsAssign}
+      placement={placement}
       classNames={{
         base: ["before:bg-default-200 px-0"],
         content: ["p-0 -translate-x-12  w-[280px] "],

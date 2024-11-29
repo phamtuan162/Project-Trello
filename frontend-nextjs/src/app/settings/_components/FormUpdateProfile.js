@@ -17,19 +17,19 @@ const FormUpdateProfile = ({ user }) => {
   });
 
   const handleUpdateProfile = async (formData) => {
-    const updates = Object.keys(form).reduce((acc, field) => {
-      const value = formData.get(field);
-      if (user[field] !== value) acc[field] = value;
-      return acc;
-    }, {});
-
-    if (Object.keys(updates).length === 0) {
-      toast.info("Không có thay đổi nào để cập nhật");
-      return;
-    }
-
     try {
-      toast
+      const updates = Object.keys(form).reduce((acc, field) => {
+        const value = formData.get(field);
+        if (user[field] !== value) acc[field] = value;
+        return acc;
+      }, {});
+
+      if (Object.keys(updates).length === 0) {
+        toast.info("Không có thay đổi nào để cập nhật");
+        return;
+      }
+
+      await toast
         .promise(async () => updateProfile(user.id, updates), {
           pending: "Đang cập nhật...",
         })

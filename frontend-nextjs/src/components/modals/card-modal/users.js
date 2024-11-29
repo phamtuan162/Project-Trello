@@ -2,15 +2,24 @@
 import { useSelector } from "react-redux";
 import { AvatarGroup, Avatar } from "@nextui-org/react";
 import { Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+
 import AssignUser from "@/app/b/[id]/_components/AssignUser";
-import { useState } from "react";
+
 const UserCard = () => {
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   const [isAssign, setIsAssign] = useState(false);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   if (card?.users?.length == 0) {
-    return;
+    return null;
   }
+
   return (
     <div className="flex flex-col">
       <p
@@ -31,9 +40,10 @@ const UserCard = () => {
             />
           ))}
         </AvatarGroup>
-        {(user?.role?.toLowerCase() === "admin" ||
-          user?.role?.toLowerCase() === "owner") && (
+        {checkRole && (
           <AssignUser
+            card={card}
+            placement="left"
             cardUpdate={card}
             isAssign={isAssign}
             setIsAssign={setIsAssign}

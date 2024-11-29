@@ -4,13 +4,18 @@ import { useState, useMemo, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { formatDistanceToNow } from "date-fns";
 import vi from "date-fns/locale/vi";
-import { Avatar, Button, Textarea, CircularProgress } from "@nextui-org/react";
+import { Avatar, Button, Textarea } from "@nextui-org/react";
+import { toast } from "react-toastify";
+
 import DeleteComment from "@/components/actions/comment/deleteComment";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { updateCommentApi } from "@/services/commentApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { toast } from "react-toastify";
-const { updateComment } = cardSlice.actions;
+import { boardSlice } from "@/stores/slices/boardSlice";
+
+const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const CommentItem = ({ comment }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
@@ -19,15 +24,14 @@ const CommentItem = ({ comment }) => {
   const inputRef = useRef(null);
   const formRef = useRef();
   const btnRef = useRef();
-  const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [content, setContent] = useState("oke");
 
   const userComment = useMemo(() => {
     return workspace?.users?.find((u) => +u.id === +comment.user_id) || null;
-  }, [workspace.users]);
+  }, [workspace?.users]);
 
-  const check = useMemo(() => {
+  const canEditComment = useMemo(() => {
     return user.id && userComment?.id && +user.id === +userComment.id;
   }, [userComment]);
 
@@ -50,7 +54,7 @@ const CommentItem = ({ comment }) => {
   const validateContent = (value) => /^.{0,200}$/.test(value);
 
   const isInvalid = useMemo(() => {
-    if (inputRef.current && inputRef.current.value) {
+    if (inputRef.current && inputRef.currefnt.value) {
       const value = inputRef.current.value;
       if (value === "") return false;
       return !validateContent(value);
@@ -75,29 +79,53 @@ const CommentItem = ({ comment }) => {
     if (e.key === "Escape") {
       disableEditing();
     }
-    if (e.key === "Enter") {
-      btnRef.current.click();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      btnRef.current?.click();
     }
   };
   useOnClickOutside(formRef, disableEditing);
 
   const onSubmit = async () => {
+    if (isInvalid) return;
     try {
-      if (!isInvalid) {
-        setIsLoading(true);
-        const { status } = await updateCommentApi(comment.id, {
-          content: content,
-        });
+      await toast
+        .promise(
+          async () =>
+            await updateCommentApi(comment.id, {
+              content: content,
+            }),
+          { pending: "Đang chỉnh sửa..." }
+        )
+        .then((res) => {
+          const commentsUpdate = card.comments.map((c) => {
+            if (c.id === comment.id)
+              return { ...comment, content: content, isEdit: true };
+            return c;
+          });
 
-        if (200 <= status && status <= 299) {
-          dispatch(updateComment({ id: comment.id, content: content }));
+          dispatch(
+            updateCard({
+              comments: commentsUpdate,
+            })
+          );
+
+          dispatch(
+            updateCardInBoard({
+              id: card.id,
+              column_id: card.column_id,
+              comments: commentsUpdate,
+            })
+          );
+
           toast.success("Chỉnh sửa comment thành công");
-        }
-      }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
-      setIsLoading(false);
       setIsEdit(false);
     }
   };
@@ -140,7 +168,7 @@ const CommentItem = ({ comment }) => {
             />
             <div className="flex items-center gap-x-2">
               <Button
-                isDisabled={isInvalid || content === "" || isLoading}
+                isDisabled={isInvalid || content === ""}
                 type="submit"
                 size="sm"
                 radius="lg"
@@ -148,13 +176,11 @@ const CommentItem = ({ comment }) => {
                 className="interceptor-loading"
                 ref={btnRef}
               >
-                {isLoading ? <CircularProgress /> : "Lưu"}
+                Lưu
               </Button>
-              {!isLoading && (
-                <span onClick={disableEditing}>
-                  <CloseIcon size={20} />
-                </span>
-              )}
+              <span className="interceptor-loading" onClick={disableEditing}>
+                <CloseIcon size={20} />
+              </span>
             </div>
           </form>
         ) : (
@@ -176,7 +202,7 @@ const CommentItem = ({ comment }) => {
               {comment?.content}
             </p>
             <div className="flex text-xs ml-2">
-              {check && (
+              {canEditComment && (
                 <span
                   className=" cursor-pointer"
                   onClick={() => enableEditing()}

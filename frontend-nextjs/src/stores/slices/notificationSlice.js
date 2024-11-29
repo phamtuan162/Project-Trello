@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { fetchNotification } from "../middleware/fetchNotification";
 
 const initialState = {
   notifications: [],
@@ -13,5 +14,21 @@ export const notificationSlice = createSlice({
         ? action.payload
         : [action.payload];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchNotification.pending, (state) => {
+        state.status = "pending";
+      })
+      .addCase(fetchNotification.fulfilled, (state, action) => {
+        if (Array.isArray(action.payload)) {
+          state.notifications = action.payload;
+        } else {
+          state.notifications = [action.payload];
+        }
+      })
+      .addCase(fetchNotification.rejected, (state) => {
+        state.status = "error";
+      });
   },
 });

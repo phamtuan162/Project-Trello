@@ -1,8 +1,10 @@
 "use client";
 import { ActivityIcon } from "lucide-react";
 import { useSelector } from "react-redux";
-import ActivityItem from "./activity-item";
 import { useMemo } from "react";
+
+import ActivityItem from "./activity-item";
+
 const ActivityCard = () => {
   const card = useSelector((state) => state.card.card);
   const activities = useMemo(() => {
@@ -10,12 +12,12 @@ const ActivityCard = () => {
       return [];
     }
 
-    const sortedActivities = [...card.activities];
-    sortedActivities.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    return sortedActivities;
-  }, [card]);
+    const result = card.activities
+      .filter((activity) => activity !== null)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return result;
+  }, [card?.activities]);
 
   return (
     <div className="flex flex-col gap-1">

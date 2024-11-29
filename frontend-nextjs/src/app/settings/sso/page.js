@@ -1,25 +1,30 @@
 "use client";
-import { useState } from "react";
 import { Switch, cn } from "@nextui-org/react";
 import { useSelector } from "react-redux";
 import { GoogleIcon } from "@/components/Icon/GoogleIcon";
 import { GithubIcon } from "@/components/Icon/GithubIcon";
+import { useMemo } from "react";
+
+const listSso = [
+  {
+    label: "Google",
+    desc: "Đăng nhập một lần bằng Google",
+    icon: <GoogleIcon size={28} />,
+  },
+  {
+    label: "Github",
+    desc: "Đăng nhập một lần bằng Github",
+    icon: <GithubIcon size={28} />,
+  },
+];
+
 const PageSSO = () => {
   const user = useSelector((state) => state.user.user);
-  const providers = useSelector((state) => state.provider.providers);
-  console.log(user, providers);
-  const listSso = [
-    {
-      label: "Google",
-      desc: "Đăng nhập một lần bằng Google",
-      icon: <GoogleIcon size={28} />,
-    },
-    {
-      label: "Github",
-      desc: "Đăng nhập một lần bằng Github",
-      icon: <GithubIcon size={28} />,
-    },
-  ];
+  const providers = useMemo(() => {
+    if (!user?.providers) return null;
+
+    return user.providers;
+  }, [user?.providers]);
 
   return (
     <div className="mt-6">
@@ -31,8 +36,8 @@ const PageSSO = () => {
         <div className="mt-3" key={index}>
           <Switch
             isSelected={
-              providers?.length > 0
-                ? providers?.some(
+              providers
+                ? providers.some(
                     (provider) => provider.name === sso.label.toLowerCase()
                   )
                 : false
@@ -57,7 +62,7 @@ const PageSSO = () => {
               {sso.icon}
               <div className="flex flex-col gap-1">
                 <p className="text-medium">
-                  {sso.label}: {user.name}
+                  {sso.label}: {user?.name}
                 </p>
                 <p className="text-tiny text-default-400">{sso.desc}</p>
               </div>

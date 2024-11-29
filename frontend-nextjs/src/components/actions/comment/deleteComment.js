@@ -4,43 +4,53 @@ import {
   PopoverTrigger,
   PopoverContent,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
-import { useMemo, useState } from "react";
-import { cardSlice } from "@/stores/slices/cardSlice";
-import { deleteCommentApi } from "@/services/commentApi";
+import { useState } from "react";
 import { toast } from "react-toastify";
-const { deleteComment } = cardSlice.actions;
+
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { deleteCommentApi } from "@/services/commentApi";
+
+const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const DeleteComment = ({ comment, children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
-  const user = useSelector((state) => state.user.user);
-  const workspace = useSelector((state) => state.workspace.workspace);
-  const userComment = useMemo(() => {
-    return (
-      workspace?.users?.find((user) => +user.id === +comment.user_id) || null
-    );
-  }, [workspace.users]);
 
   const HandleDeleteComment = async () => {
-    setIsLoading(true);
-
     try {
-      // Gọi API để xóa comment
-      const { status } = await deleteCommentApi(comment.id);
+      await toast
+        .promise(async () => await deleteCommentApi(comment.id), {
+          pending: "Đang xóa...",
+        })
+        .then((res) => {
+          const commentsUpdate = card.comments.filter(
+            (c) => c.id !== comment.id
+          );
 
-      if (status >= 200 && status <= 299) {
-        dispatch(deleteComment({ id: comment.id }));
-        toast.success("Xóa comment thành công");
-      }
+          dispatch(updateCard({ comments: commentsUpdate }));
+
+          dispatch(
+            updateCardInBoard({
+              id: card.id,
+              column_id: card.column_id,
+              comments: commentsUpdate,
+            })
+          );
+          toast.success("Xóa comment thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
-      setIsLoading(false);
+      setIsOpen(false);
     }
   };
 
@@ -83,10 +93,9 @@ const DeleteComment = ({ comment, children }) => {
               type="button"
               className="w-full h-[40px] mt-2 interceptor-loading"
               color="danger"
-              isDisabled={isLoading}
               onClick={() => HandleDeleteComment()}
             >
-              {isLoading ? <CircularProgress /> : "Xóa bình luận"}
+              Xóa bình luận
             </Button>
           </div>
         </div>

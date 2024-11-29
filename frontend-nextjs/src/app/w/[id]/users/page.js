@@ -31,6 +31,7 @@ import capitalize from "@/utils/capitalize";
 import { useParams } from "next/navigation";
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "role", "status", "actions"];
+
 const columns = [
   { name: "ID", uid: "id", sortable: true },
   { name: "NAME", uid: "name", sortable: true },
@@ -65,15 +66,17 @@ const roles = [
     desc: "Quyền truy cập vào Không gian công cộng, Tài liệu và Trang tổng quan.",
   },
 ];
-const { updateActivitiesInWorkspace, updateStatusUser, decentRoleUser } =
-  workspaceSlice.actions;
+
+const {
+  updateActivitiesInWorkspace,
+  updateStatusUserInWorkspace,
+  decentRoleUserInWorkspace,
+} = workspaceSlice.actions;
 
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
-
   const userActive = useSelector((state) => state.user.user);
-
   const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
   const [filterValue, setFilterValue] = useState("");
@@ -89,25 +92,27 @@ export default function PageWorkspaceUsers() {
   });
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    if (!socket || workspace?.users?.length === 0) return;
+  // useEffect(() => {
+  //   if (!socket || workspace?.users?.length === 0) return;
 
-    const handleUserOnline = (data) => {
-      if (!data?.id) return;
-      for (const item of workspace.users) {
-        if (item.id === data.id) {
-          if (item.isOnline === data.isOnline) return;
-        }
-      }
-      dispatch(updateStatusUser({ payload: data }));
-    };
+  //   const handleUserOnline = (data) => {
+  //     if (!data?.id) return;
 
-    socket.on("getUserOnline", handleUserOnline);
+  //     for (const item of workspace.users) {
+  //       if (item.id === data.id) {
+  //         if (item.isOnline === data.isOnline) return;
+  //       }
+  //     }
 
-    return () => {
-      socket.off("getUserOnline", handleUserOnline);
-    };
-  }, [socket]);
+  //     dispatch(updateStatusUserInWorkspace({ payload: data }));
+  //   };
+
+  //   socket.on("getUserOnline", handleUserOnline);
+
+  //   return () => {
+  //     socket.off("getUserOnline", handleUserOnline);
+  //   };
+  // }, [socket]);
 
   const sortedUsers = useMemo(() => {
     if (!workspace?.users) return [];
@@ -123,7 +128,7 @@ export default function PageWorkspaceUsers() {
 
       return priorityA - priorityB;
     });
-  }, [workspace.users]);
+  }, [workspace?.users]);
 
   const rolesUser = useMemo(() => {
     if (!userActive?.role) return roles;
@@ -140,7 +145,7 @@ export default function PageWorkspaceUsers() {
     return roles.filter(
       (role) => !excludedRoles.includes(role.value.toLowerCase())
     );
-  }, [userActive.role]);
+  }, [userActive?.role]);
 
   const hasSearchFilter = Boolean(filterValue);
 
@@ -204,7 +209,7 @@ export default function PageWorkspaceUsers() {
       }
 
       try {
-        toast
+        await toast
           .promise(
             async () =>
               await await decentRoleApi(id, {
@@ -215,7 +220,7 @@ export default function PageWorkspaceUsers() {
           )
           .then((res) => {
             const { activity } = res;
-            dispatch(decentRoleUser({ id: user.id, role: roleNew }));
+            dispatch(decentRoleUserInWorkspace({ id: user.id, role: roleNew }));
             dispatch(updateActivitiesInWorkspace(activity));
             toast.success("Cập nhật role thành công");
 

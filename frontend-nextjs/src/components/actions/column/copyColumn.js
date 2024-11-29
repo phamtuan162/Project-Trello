@@ -10,13 +10,14 @@ import {
   Button,
 } from "@nextui-org/react";
 import { X } from "lucide-react";
-import { boardSlice } from "@/stores/slices/boardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
 import { toast } from "react-toastify";
+
+import { boardSlice } from "@/stores/slices/boardSlice";
 import { copyColumnApi } from "@/services/workspaceApi";
 import { mapOrder } from "@/utils/sorts";
+
 const { updateBoard } = boardSlice.actions;
-const { updateColumn } = columnSlice.actions;
+
 const CopyColumn = ({ children, column }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -30,44 +31,60 @@ const CopyColumn = ({ children, column }) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      let filteredCards = column.cards.filter(
-        (card) => !card.FE_PlaceholderCard
+      let columnUpdate;
+
+      const isPlaceholderExist = column.cards.some(
+        (card) => card.FE_PlaceholderCard
       );
 
-      const isPlaceholderExist = filteredCards.length < column.cards.length;
-
-      const columnUpdated = isPlaceholderExist
-        ? {
-            ...column,
-            cards: filteredCards,
-            cardOrderIds: filteredCards.map((card) => card.id),
-          }
-        : column;
-
-      const { data, status } = await copyColumnApi({
-        column: columnUpdated,
-        board_id: board.id,
-        title: title,
-      });
-      if (200 <= status && status <= 299) {
-        let columnUpdate = data;
-        columnUpdate.cards = mapOrder(
-          columnUpdate.cards,
-          columnUpdate.cardOrderIds,
-          "id"
+      if (isPlaceholderExist) {
+        let filteredCards = column.cards.filter(
+          (card) => !card.FE_PlaceholderCard
         );
 
-        dispatch(
-          updateBoard({
-            ...board,
-            columns: [columnUpdate, ...board.columns],
-          })
-        );
-        toast.success("Sao chép danh sách thành công");
-
-        setIsOpen(false);
-        dispatch(updateColumn(newBoard.columns));
+        columnUpdate = {
+          ...column,
+          cards: filteredCards,
+          cardOrderIds: filteredCards.map((card) => card.id),
+        };
+      } else {
+        columnUpdate = column;
       }
+
+      await toast
+        .promise(
+          async () =>
+            await copyColumnApi({
+              column: columnUpdate,
+              board_id: board.id,
+              title: title,
+            }),
+          {
+            pending: "Đang sao chép...",
+          }
+        )
+        .then((res) => {
+          const { data: columnUpdate } = res;
+
+          columnUpdate.cards = mapOrder(
+            columnUpdate.cards,
+            columnUpdate.cardOrderIds,
+            "id"
+          );
+          const columnsUpdate = [columnUpdate, ...board.columns];
+
+          dispatch(
+            updateBoard({
+              columns: columnsUpdate,
+            })
+          );
+          toast.success("Sao chép danh sách thành công");
+
+          setIsOpen(false);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
       console.log(error);
     } finally {
@@ -77,7 +94,7 @@ const CopyColumn = ({ children, column }) => {
 
   return (
     <Popover
-      placement="right"
+      placement="left"
       showArrow
       isOpen={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
@@ -128,7 +145,7 @@ const CopyColumn = ({ children, column }) => {
             />
             <Button
               type="submit"
-              className="w-full h-[40px] mt-2"
+              className="w-full h-[40px] mt-2 interceptor-loading"
               color="primary"
               isDisabled={
                 (user?.role?.toLowerCase() !== "admin" &&

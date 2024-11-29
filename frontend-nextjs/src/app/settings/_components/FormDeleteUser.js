@@ -42,7 +42,7 @@ const FormDeleteUser = (user) => {
 
   const HandleDeleteAccount = async () => {
     try {
-      toast
+      await toast
         .promise(async () => await deleteUser({ email: email, id: user.id }), {
           pending: "Đang xóa...",
         })

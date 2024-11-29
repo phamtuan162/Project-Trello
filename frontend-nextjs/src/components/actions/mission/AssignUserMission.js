@@ -10,130 +10,171 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "react-toastify";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { SearchIcon, Check } from "lucide-react";
+
+import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateMissionApi } from "@/services/workspaceApi";
 import { missionSlice } from "@/stores/slices/missionSlice";
-const { updateMission } = missionSlice.actions;
-const { updateCard } = cardSlice.actions;
+import { cloneDeep } from "lodash";
+
+const { createMissionInMissions, deleteMissionInMissions } =
+  missionSlice.actions;
+const { updateMissionInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const AssignUserMission = ({ children, mission }) => {
   const dispatch = useDispatch();
-  const missions = useSelector((state) => state.mission.missions);
   const [isOpen, setIsOpen] = useState(false);
   const [keyword, setKeyWord] = useState("");
   const card = useSelector((state) => state.card.card);
   const workspace = useSelector((state) => state.workspace.workspace);
   const userMain = useSelector((state) => state.user.user);
+
   const CheckUserSearch = (userId) => {
     const check = filteredItems.some((item) => +item.id === +userId);
     return check;
   };
+
   const hasSearchFilter = Boolean(keyword);
 
   const userNotAssignCard = useMemo(() => {
-    if (!workspace || !workspace.users || !card.users) {
-      return [];
-    }
+    if (!workspace?.users || !card?.users) return [];
 
-    const assignedUserIds = card.users.map((user) => user.id);
-    return workspace.users.filter((user) => !assignedUserIds.includes(user.id));
-  }, [workspace, card]);
+    const assignedUserIds = new Set(card.users.map(({ id }) => id));
+    return workspace.users.filter(({ id }) => !assignedUserIds.has(id));
+  }, [workspace?.users, card?.users]);
 
   const filteredItems = useMemo(() => {
-    let filteredUsers =
-      workspace?.users?.filter((item) => item !== null && item !== undefined) ||
-      [];
+    let filteredUsers = workspace?.users?.filter(Boolean) || [];
 
-    if (hasSearchFilter) {
+    if (hasSearchFilter && keyword) {
+      const normalizedKeyword = keyword.toLowerCase();
       filteredUsers = filteredUsers.filter(
-        (item) =>
-          item.name.toLowerCase().includes(keyword.toLowerCase()) ||
-          item.email.toLowerCase().includes(keyword.toLowerCase())
+        ({ name, email }) =>
+          name.toLowerCase().includes(normalizedKeyword) ||
+          email.toLowerCase().includes(normalizedKeyword)
       );
     }
 
     return filteredUsers;
-  }, [workspace, keyword]);
+  }, [workspace?.users, keyword]);
 
-  const HandleSelectUserAssigned = async (userAssigned) => {
+  const AssignUser = async (userAssigned) => {
     if (userAssigned?.role?.toLowerCase() === "guest") {
       toast.error("Người này là khách không chỉ định được!");
-
       setIsOpen(false);
       return;
     }
-    if (+mission.user_id === +userAssigned.id) {
-      CancelUser(userAssigned);
-      return;
-    }
-    const userIdUpdate =
-      +userAssigned.id === +mission.user_id ? null : userAssigned.id;
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.map((item) => {
-          if (+item.id === +mission.id) {
-            return {
-              ...mission,
-              user_id: userIdUpdate,
-              user: userIdUpdate ? userAssigned : item.user,
-            };
-          }
-          return item;
-        });
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
-    updateMissionApi(mission.id, { user_id: userIdUpdate }).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateCard(updatedCard));
-        if (+userAssigned.id === +userMain.id) {
-          const updateMissions =
-            missions.length > 0 ? [mission, ...missions] : [mission];
-          dispatch(updateMission(updateMissions));
+
+    await toast
+      .promise(
+        async () =>
+          await updateMissionApi(mission.id, { user_id: userAssigned.id }),
+        { pending: "Đang thêm thành viên..." }
+      )
+      .then((res) => {
+        const works = cloneDeep(card.works);
+        const work = works.find((w) => w.id === mission.work_id);
+        const missionUpdate = work?.missions.find((m) => m.id === mission.id);
+
+        if (missionUpdate) {
+          missionUpdate.user = userAssigned;
+          missionUpdate.user_id = userAssigned.id;
         }
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
-    });
+
+        dispatch(
+          updateMissionInCard({
+            id: mission.id,
+            work_id: mission.work_id,
+            user: userAssigned,
+            user_id: userAssigned.id,
+          })
+        );
+
+        dispatch(
+          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
+        );
+
+        if (userAssigned.id === userMain.id) {
+          dispatch(
+            createMissionInMissions({
+              ...mission,
+              user: userAssigned,
+              user_id: userAssigned.id,
+            })
+          );
+        }
+
+        toast.success("Thêm thành viên thành công");
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsOpen(false);
+      });
   };
 
-  const CancelUser = async () => {
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.map((item) => {
-          if (+item.id === +mission.id) {
-            return {
-              ...mission,
-              user_id: null,
-              user: null,
-            };
-          }
-          return mission;
-        });
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
-    updateMissionApi(mission.id, { user_id: null }).then((data) => {
-      if (data.status === 200) {
-        dispatch(updateCard(updatedCard));
-        if (+userAssigned.id === +userMain.id) {
-          const updateMissions = missions.filter(
-            (item) => +item.id !== +mission.id
-          );
-          dispatch(updateMission(updateMissions));
+  const CancelUser = async (userAssigned) => {
+    if (!userAssigned) return;
+
+    await toast
+      .promise(
+        async () => await updateMissionApi(mission.id, { user_id: null }),
+        { pending: "Đang loại bỏ thành viên..." }
+      )
+      .then((res) => {
+        const works = cloneDeep(card.works);
+        const work = works.find((w) => w.id === mission.work_id);
+
+        const missionUpdate = work?.missions.find((m) => m.id === mission.id);
+
+        if (missionUpdate) {
+          missionUpdate.user = null;
+          missionUpdate.user_id = null;
         }
-        setKeyWord("");
+
+        dispatch(
+          updateMissionInCard({
+            id: mission.id,
+            work_id: mission.work_id,
+            user_id: null,
+            user: null,
+          })
+        );
+
+        dispatch(
+          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
+        );
+
+        if (userAssigned.id === userMain.id) {
+          dispatch(deleteMissionInMissions({ id: mission.id }));
+        }
+
+        toast.success("Loại bỏ thành viên thành công1");
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsOpen(false);
+      });
+  };
+
+  const HandleSelectUserAssigned = async (userAssigned) => {
+    try {
+      if (+mission.user_id === +userAssigned.id) {
+        CancelUser(userAssigned);
       } else {
-        const error = data.error;
-        toast.error(error);
+        AssignUser(userAssigned);
       }
-    });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setKeyWord("");
+    }
   };
 
   return (
@@ -193,7 +234,7 @@ const AssignUserMission = ({ children, mission }) => {
                     <div
                       onClick={() => HandleSelectUserAssigned(user)}
                       key={user.id}
-                      className={`flex items-center justify-between rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 ${
+                      className={`flex interceptor-loading items-center justify-between rounded-lg p-1 px-3 cursor-pointer mt-2 hover:bg-default-300 ${
                         !CheckUserSearch(user.id) && "hidden"
                       }`}
                     >
@@ -258,9 +299,9 @@ const AssignUserMission = ({ children, mission }) => {
 
           <Button
             type="button"
-            className="bg-default-200 w-full mt-2 font-medium text-sm"
+            className="bg-default-200 w-full mt-2 font-medium text-sm interceptor-loading"
             isDisabled={!mission?.user}
-            onClick={() => CancelUser()}
+            onClick={() => CancelUser(mission?.user)}
           >
             Loại bỏ thành viên
           </Button>

@@ -11,32 +11,23 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { userSlice } from "@/stores/slices/userSlice";
-import { myWorkspacesSlice } from "@/stores/slices/myWorkspacesSlice";
 import { restoreWorkspaceApi } from "@/services/workspaceApi";
-const { restoreMyWorkspaces } = userSlice.actions;
-const { updateMyWorkspaces } = myWorkspacesSlice.actions;
+
+const { restoreWorkspaceInUser } = userSlice.actions;
+
 const RestoreWorkspace = ({ workspace, children }) => {
   const dispatch = useDispatch();
-  const my_workspaces = useSelector(
-    (state) => state.my_workspaces.my_workspaces
-  );
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleRestoreWorkspace = async () => {
     try {
-      toast
+      await toast
         .promise(async () => await restoreWorkspaceApi(workspace.id), {
           pending: "Đang khôi phục...",
         })
         .then(() => {
-          const workspacesUpdated = my_workspaces.map((w) => {
-            if (+w.id === +workspace.id) {
-              return { ...w, deleted_at: null };
-            }
-            return w;
-          });
-          dispatch(updateMyWorkspaces(workspacesUpdated));
-          dispatch(restoreMyWorkspaces(workspace));
+          dispatch(restoreWorkspaceInUser(workspace));
           toast.success("Khôi phục Không gian làm việc thành công");
         });
     } catch (error) {
@@ -76,10 +67,8 @@ const RestoreWorkspace = ({ workspace, children }) => {
             style={{ color: "#44546f" }}
           >
             <p className="text-xs mt-1">
-              Khi bạn khôi phục một Không gian làm việc, tất cả các thông tin và
-              hoạt động liên quan đến Không gian làm việc đó sẽ được khôi phục
-              hoặc kích hoạt lại. Điều này bao gồm các thành viên, nhiệm vụ,
-              hoạt động , bảng làm việc và các công việc.
+              Khôi phục Không gian làm việc sẽ khôi phục toàn bộ thông tin,
+              thành viên, nhiệm vụ, hoạt động, và bảng liên quan.
             </p>
             <Button
               onClick={() => handleRestoreWorkspace()}

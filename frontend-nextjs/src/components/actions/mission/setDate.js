@@ -13,31 +13,31 @@ import {
   isToday,
   parse,
   startOfToday,
-  setHours,
-  setMinutes,
   addDays,
   compareAsc,
 } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
   Button,
-  Checkbox,
   Input,
-  CheckboxGroup,
-  CircularProgress,
 } from "@nextui-org/react";
+import { toast } from "react-toastify";
+import { cloneDeep } from "lodash";
+
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { toast } from "react-toastify";
-import { Message } from "@/components/Message/Message";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
+import { validateHourMinute, truncateTimeFromDate } from "@/utils/formatTime";
 import { updateMissionApi } from "@/services/workspaceApi";
-const { updateCard } = cardSlice.actions;
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+
+const { updateMissionInCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+const { updateMissionInMissions } = missionSlice.actions;
+
 let colStartClasses = [
   "",
   "col-start-2",
@@ -47,37 +47,27 @@ let colStartClasses = [
   "col-start-6",
   "col-start-7",
 ];
-function truncateTimeFromDate(date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(" ");
 }
-const validateHourMinute = (hour, minute) => {
-  return (
-    parseInt(hour) >= 0 &&
-    parseInt(hour) <= 23 &&
-    parseInt(minute) >= 0 &&
-    parseInt(minute) <= 59
-  );
-};
+
 const SetDate = ({ children, mission }) => {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
-  let today = startOfToday();
 
+  let today = startOfToday();
+  const [isOpen, setIsOpen] = useState(false);
   let [selectedDay, setSelectedDay] = useState(
-    mission.endDateTime || addDays(today, 1)
+    mission?.endDateTime ? new Date(mission?.endDateTime) : addDays(today, 1)
   );
-  const [checkFocus, setCheckFocus] = useState("");
+
   let [currentMonth, setCurrentMonth] = useState(format(today, "MMM-yyyy"));
   let firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
 
-  const [endDateTime, setEndDateTime] = useState(
-    mission.endDateTime ? new Date(mission.endDateTime) : addDays(today, 1)
-  );
   const [isSelectEndTime, setIsSelectEndTime] = useState(true);
+
   const inputRefEnd = useRef(null);
   const inputRefEndHour = useRef(null);
 
@@ -85,6 +75,7 @@ const SetDate = ({ children, mission }) => {
     start: firstDayCurrentMonth,
     end: endOfMonth(firstDayCurrentMonth),
   });
+
   function previousMonth() {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: -1 });
     setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"));
@@ -94,131 +85,186 @@ const SetDate = ({ children, mission }) => {
     let firstDayNextMonth = add(firstDayCurrentMonth, { months: 1 });
     setCurrentMonth(format(firstDayNextMonth, "MMM-yyyy"));
   }
-  useEffect(() => {
-    if (checkFocus === "end") {
-      if (compareAsc(selectedDay, today) === -1) {
-        setEndDateTime(addDays(today, 1));
-      }
-      {
-        setEndDateTime(selectedDay);
-      }
-    }
-  }, [selectedDay]);
 
-  const UpdateDate = async (formData) => {
-    setIsLoading(true);
-    const endDate = formData.get("endTime");
-    const endDateHour = formData.get("endTimeHour");
-
-    // Kiểm tra ngày/tháng/năm không hợp lệ
-
-    let endDateTimeUpdate = endDateTime
-      ? parse(endDate, "dd/MM/yyyy", new Date())
-      : endDateTime;
-    if (endDateTimeUpdate && !isValid(endDateTimeUpdate)) {
-      setMessage("Ngày tháng năm không hợp lệ!");
+  const CancelDate = async () => {
+    if (!mission.endDateTime) {
+      toast.error("Không có ngày hết hạn nên không thể gỡ bỏ!");
       return;
     }
 
-    // Kiểm tra giờ/phút không hợp lệ
-    if (endDateTimeUpdate && endDateHour) {
-      const [hour, minute] = endDateHour.split(":");
-
-      if (!validateHourMinute(hour, minute)) {
-        setMessage("Giờ phút không hợp lệ!");
-        inputRefEndHour.current.focus();
-        return;
-      }
-      endDateTimeUpdate.setHours(hour);
-      endDateTimeUpdate.setMinutes(minute);
-    }
-
-    // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
-    if (endDateTimeUpdate && compareAsc(endDateTimeUpdate, new Date()) === -1) {
-      setMessage("Ngày hết hạn phải lớn hơn thời gian hiện tại!");
-      return;
-    }
-    const updatedWorks = card.works.map((work) => {
-      if (+work.id === +mission.work_id) {
-        const updatedMissions = work.missions.map((item) => {
-          if (+item.id === +mission.id) {
-            return {
-              ...item,
-              endDateTime: endDateTimeUpdate.getTime(),
-            };
-          }
-          return item;
-        });
-        return { ...work, missions: updatedMissions };
-      }
-      return work;
-    });
-    const updatedCard = { ...card, works: updatedWorks };
     try {
-      const data = await updateMissionApi(mission.id, {
-        endDateTime: endDateTimeUpdate,
-      });
+      await toast
+        .promise(
+          async () =>
+            await updateMissionApi(mission.id, {
+              endDateTime: null,
+            }),
+          { pending: "Đang gỡ bỏ..." }
+        )
+        .then((res) => {
+          const works = cloneDeep(card.works);
 
-      const { status, data: updatedData } = data;
-      if (status === 200) {
-        dispatch(updateCard(updatedCard));
-        setIsLoading(false);
+          const work = works.find((w) => w.id === mission.work_id);
 
-        setIsOpen(false);
-        setMessage("");
-      }
-      setIsLoading(false);
+          const missionUpdate = work?.missions.find((m) => m.id === mission.id);
+
+          if (mission) {
+            missionUpdate.endDateTime = null;
+          }
+
+          dispatch(
+            updateMissionInCard({
+              id: mission.id,
+              work_id: mission.work_id,
+              endDateTime: null,
+            })
+          );
+
+          dispatch(
+            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
+          );
+
+          if (mission.user_id === user.id) {
+            dispatch(
+              updateMissionInMissions({ id: mission.id, endDateTime: null })
+            );
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
       console.log(error);
     }
   };
 
-  const CancelDate = async () => {
+  const UpdateDate = async (e) => {
+    e.preventDefault();
     try {
-      setIsLoading(true);
+      // Kiểm tra ngày/tháng/năm không hợp lệ
+      let endDateTimeUpdate = selectedDay;
 
-      const updatedWorks = card.works.map((work) => {
-        if (+work.id === +mission.work_id) {
-          const updatedMissions = work.missions.map((item) => {
-            if (+item.id === +mission.id) {
-              return {
-                ...item,
-                endDateTime: null,
-              };
-            }
-            return item;
-          });
-          return { ...work, missions: updatedMissions };
-        }
-        return work;
-      });
-      const updatedCard = { ...card, works: updatedWorks };
-      const data = await updateMissionApi(mission.id, {
-        endDateTime: null,
-      });
-
-      const { status, data: updatedData } = data;
-      if (status === 200) {
-        dispatch(updateCard(updatedCard));
-        setIsLoading(false);
-
-        setIsOpen(false);
+      if (!endDateTimeUpdate) {
+        CancelDate();
+        return;
       }
-      setIsLoading(false);
+
+      if (endDateTimeUpdate && !isValid(endDateTimeUpdate)) {
+        toast.error("Ngày tháng năm không hợp lệ!");
+        return;
+      }
+
+      if (
+        endDateTimeUpdate &&
+        isEqual(endDateTimeUpdate, new Date(mission.endDateTime))
+      ) {
+        toast.error("Ngày kết thúc không thay đổi.");
+        return;
+      }
+
+      // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
+      if (
+        endDateTimeUpdate &&
+        compareAsc(endDateTimeUpdate, new Date()) === -1
+      ) {
+        toast.error("Ngày hết hạn phải lớn hơn thời gian hiện tại!");
+        return;
+      }
+
+      await toast
+        .promise(
+          async () =>
+            await updateMissionApi(mission.id, {
+              endDateTime: endDateTimeUpdate,
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          const works = cloneDeep(card.works);
+
+          const work = works.find((w) => w.id === mission.work_id);
+
+          const missionUpdate = work?.missions.find((m) => m.id === mission.id);
+
+          if (missionUpdate) {
+            missionUpdate.endDateTime = endDateTimeUpdate.toISOString();
+          }
+
+          dispatch(
+            updateMissionInCard({
+              id: mission.id,
+              work_id: mission.work_id,
+              endDateTime: endDateTimeUpdate.toISOString(),
+            })
+          );
+
+          dispatch(
+            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
+          );
+
+          if (mission.user_id === user.id) {
+            dispatch(
+              updateMissionInMissions({
+                id: mission.id,
+                endDateTime: endDateTimeUpdate.toISOString(),
+              })
+            );
+          }
+
+          toast.success("Cập nhật thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleTimeChange = (e) => {
+    const endDateHour = e.target.value;
+
+    if (!endDateHour) {
+      toast.error("Giờ phút không hợp lệ!");
+      return;
+    }
+
+    const endDateTimeUpdate = new Date(selectedDay);
+
+    // Tách giờ và phút
+    const [hour, minute] = endDateHour.split(":");
+
+    // Kiểm tra giờ và phút có hợp lệ không
+    if (!validateHourMinute(hour, minute)) {
+      toast.error("Giờ phút không hợp lệ!");
+      return;
+    }
+
+    // Chuyển giờ và phút thành số trước khi sử dụng setHours và setMinutes
+    const hourNumber = parseInt(hour, 10);
+    const minuteNumber = parseInt(minute, 10);
+
+    // Cập nhật giờ phút vào đối tượng Date
+    endDateTimeUpdate.setHours(hourNumber, minuteNumber);
+
+    // Cập nhật state
+    setSelectedDay(endDateTimeUpdate);
   };
 
   const HandleReset = async () => {
-    setIsOpen(false);
-    setCheckFocus("");
-    setMessage("");
-    setSelectedDay(mission.endDateTime || addDays(today, 1));
-    setEndDateTime(
-      mission.endDateTime ? new Date(mission.endDateTime) : addDays(today, 1)
+    if (isOpen) setIsOpen(false);
+    setSelectedDay(
+      mission?.endDateTime ? new Date(mission?.endDateTime) : addDays(today, 1)
     );
+    setIsSelectEndTime(true);
   };
+
   return (
     <Popover
       placement="right"
@@ -241,7 +287,8 @@ const SetDate = ({ children, mission }) => {
           <div className="flex justify-between items-center relative w-full pt-2">
             <h1 className="grow text-center ">Sửa ngày hết hạn</h1>
             <Button
-              className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto "
+              onClick={() => HandleReset()}
+              className="interceptor-loading min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto "
               variant="ghost"
             >
               <CloseIcon />
@@ -289,11 +336,6 @@ const SetDate = ({ children, mission }) => {
                           type="button"
                           onClick={() => {
                             setSelectedDay(day);
-                            if (checkFocus === "end") {
-                              inputRefEnd.current.focus();
-                            } else {
-                              inputRefEnd.current.focus();
-                            }
                           }}
                           className={classNames(
                             isEqual(day, selectedDay) && "text-blue-500  ",
@@ -321,7 +363,7 @@ const SetDate = ({ children, mission }) => {
 
                             isEqual(
                               truncateTimeFromDate(day),
-                              truncateTimeFromDate(new Date(endDateTime))
+                              truncateTimeFromDate(new Date(selectedDay))
                             ) && "font-semibold bg-blue-100 text-indigo-400",
                             "mx-auto flex h-8 w-full items-center justify-center rounded-md"
                           )}
@@ -338,9 +380,7 @@ const SetDate = ({ children, mission }) => {
             </div>
           </div>
 
-          <form action={UpdateDate}>
-            <Message message={message} />
-
+          <form onSubmit={UpdateDate}>
             <div className="w-full mt-2">
               <p className="text-xs font-medium">Ngày hết hạn</p>
               <div className=" flex gap-1 items-center">
@@ -352,81 +392,60 @@ const SetDate = ({ children, mission }) => {
                     const isChecked = e.target.checked;
                     setIsSelectEndTime(isChecked);
                     if (!isChecked) {
-                      setEndDateTime(null);
+                      setSelectedDay(null);
                     } else {
-                      setEndDateTime(
-                        mission.endDateTime
-                          ? new Date(mission.endDateTime)
+                      setSelectedDay(
+                        mission?.endDateTime
+                          ? new Date(mission?.endDateTime)
                           : addDays(today, 1)
                       );
                     }
-                    inputRefEnd.current.focus();
                   }}
                 />
 
                 <Input
                   ref={inputRefEnd}
-                  type="text"
+                  type="datetime"
                   size="xs"
                   name="endTime"
                   variant={isSelectEndTime ? "bordered" : ""}
-                  readOnly={isSelectEndTime ? false : true}
+                  readOnly={!isSelectEndTime}
                   value={
-                    isSelectEndTime && endDateTime
-                      ? isValid(endDateTime)
-                        ? format(endDateTime, "dd/MM/yyyy")
-                        : endDateTime
+                    isSelectEndTime
+                      ? format(selectedDay, "dd/MM/yyyy")
                       : "N/T/NNNN"
                   }
-                  onChange={(e) => {
-                    setEndDateTime(e.target.value);
-                  }}
                   className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
-                  onFocus={() => setCheckFocus("end")}
                 />
                 <Input
                   ref={inputRefEndHour}
-                  type="text"
+                  type="time"
                   size="xs"
                   name="endTimeHour"
                   variant={isSelectEndTime ? "bordered" : ""}
-                  readOnly={isSelectEndTime ? false : true}
-                  defaultValue={
-                    isSelectEndTime && endDateTime
-                      ? isValid(endDateTime)
-                        ? format(endDateTime, "HH:mm")
-                        : "00:00"
-                      : "G:pp"
+                  readOnly={!isSelectEndTime}
+                  value={
+                    isSelectEndTime ? format(selectedDay, "HH:mm") : "GG:pp"
                   }
-                  onChange={(e) => {
-                    inputRefEndHour.current.value = e.target.value;
-                  }}
-                  className={`w-[80px] focus-visible:outline-0  p-1 rounded-md`}
-                  onFocus={() => {
-                    setCheckFocus("end");
-                    if (inputRefEndHour.current.value === "") {
-                      inputRefEndHour.current.value = "00:00";
-                    }
-                  }}
+                  className={`w-auto focus-visible:outline-0  p-1 rounded-md`}
+                  onChange={handleTimeChange}
                 />
               </div>
             </div>
 
             <Button
-              isDisabled={isLoading}
               type="submit"
               color="primary"
-              className="w-full mt-3 font-medium"
+              className="w-full mt-3 font-medium interceptor-loading"
             >
-              {isLoading ? <CircularProgress /> : "Lưu"}
+              Lưu
             </Button>
             <Button
-              isDisabled={isLoading}
               onClick={CancelDate}
               type="button"
-              className="w-full mt-1 bg-gray-200  font-medium"
+              className="w-full mt-1 bg-gray-200  font-medium interceptor-loading"
             >
-              {isLoading ? <CircularProgress /> : "Gỡ bỏ"}
+              Gỡ bỏ
             </Button>
           </form>
         </div>

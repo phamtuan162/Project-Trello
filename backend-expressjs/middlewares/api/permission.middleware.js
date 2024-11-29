@@ -14,6 +14,13 @@ module.exports = (permission) => {
           workspace_id: workspace_id ? workspace_id : user.workspace_id_active,
         },
       });
+
+      if (!user_workspace_role) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found user_workspace_role" });
+      }
+
       const role = await Role.findOne({
         where: {
           id: user_workspace_role.role_id,
@@ -23,18 +30,20 @@ module.exports = (permission) => {
           as: "permissions",
         },
       });
-      const permissions = [];
-      if (role.permissions.length) {
-        role.permissions.forEach((permission) => {
-          !permissions.includes(permission.value) &&
-            permissions.push(permission.value);
-        });
-      }
-      //Kiểm tra 1 quyền cụ thể
-      req.can = (value) => {
-        return permissions.includes(value);
-      };
 
+      if (!role) {
+        return res.status(404).json({ status: 404, message: "Not found role" });
+      }
+
+      // Lấy tất cả quyền từ role.permissions vào mảng `permissions` mà không cần kiểm tra trùng lặp
+      const permissions = Array.from(
+        new Set(role.permissions.map((permission) => permission.value))
+      );
+
+      // Kiểm tra 1 quyền cụ thể
+      req.can = (value) => permissions.includes(value);
+
+      // Nếu quyền đã tồn tại, tiếp tục xử lý
       if (permissions.includes(permission)) {
         return next();
       }

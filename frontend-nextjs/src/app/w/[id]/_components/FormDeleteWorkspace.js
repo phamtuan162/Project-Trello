@@ -11,17 +11,29 @@ import {
   CircularProgress,
 } from "@nextui-org/react";
 import { useState, useRef } from "react";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+
+import Loading from "@/components/Loading/Loading";
 import { Message } from "@/components/Message/Message";
 import { deleteWorkspaceApi } from "@/services/workspaceApi";
-import { toast } from "react-toastify";
-import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { userSlice } from "@/stores/slices/userSlice";
+import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
+import { fetchMission } from "@/stores/middleware/fetchMission";
+
+const { deleteWorkspaceInUser } = userSlice.actions;
+
 const FormDeleteWorkspace = ({ workspace }) => {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [message, setMessage] = useState(
-    "Bằng cách xóa không gian làm việc này, bạn sẽ xóa tất cả các bảng và dự án.Tất cả dữ liệu và tín dụng thanh toán của bạn sẽ bị mất."
+    "Xóa không gian làm việc sẽ xóa toàn bộ bảng, dự án và dữ liệu liên quan. Sau khi xóa, bạn sẽ được chuyển đến một không gian khác mà bạn sở hữu hoặc tham gia."
   );
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [isDelete, setIsDelete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const user = useSelector((state) => state.user.user);
   const nameRef = useRef(null);
 
@@ -42,15 +54,42 @@ const FormDeleteWorkspace = ({ workspace }) => {
         return;
       }
 
-      console.log(1);
-
-      setIsDelete(true);
-
-      toast
+      await toast
         .promise(async () => await deleteWorkspaceApi(workspace.id), {
           pending: "Đang xóa...",
         })
-        .then((res) => {
+        .then(async (res) => {
+          const { data } = res;
+
+          setIsLoading(true);
+
+          toast.success(
+            "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
+          );
+
+          await Promise.all([
+            dispatch(
+              deleteWorkspaceInUser({
+                user: {
+                  role: data.role,
+                  workspace_id_active: data.workspace_id_active,
+                },
+                workspace: { id: workspace.id },
+              })
+            ),
+            // Fetch workspace, missions  of user
+
+            dispatch(fetchWorkspace(data.workspace_id_active)),
+            dispatch(
+              fetchMission({
+                user_id: data.id,
+                workspace_id: data.workspace_id_active,
+              })
+            ),
+          ]);
+
+          router.push(`/w/${data.workspace_id_active}/home`);
+
           // const users = workspace.users.filter(
           //   (item) => +item.id !== +user.id && item.isOnline
           // );
@@ -64,11 +103,6 @@ const FormDeleteWorkspace = ({ workspace }) => {
           //     content: `đã xóa Không gian làm việc ${workspace.name}`,
           //   });
           // });
-
-          toast.success(
-            "Xóa thành công! Vui lòng chờ một chút để chuyển đến Không gian khác."
-          );
-          document.location.href = "/";
         })
         .catch((error) => {
           console.log(error);
@@ -79,9 +113,15 @@ const FormDeleteWorkspace = ({ workspace }) => {
     } catch (error) {
       console.log(error);
     } finally {
-      setIsDelete(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
     }
   };
+
+  if (isLoading) {
+    return <Loading backgroundColor={"white"} zIndex={"100"} />;
+  }
 
   return (
     <div className="pt-8 w-full border-t-1 border-solid border-default-400">
@@ -129,7 +169,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
                 <p className="mt-2">
                   Vui lòng nhập lại
                   <span className="font-bold text-sm mx-1 ">
-                    {workspace.name}
+                    {workspace?.name}
                   </span>
                   để xác nhận
                 </p>
@@ -149,22 +189,20 @@ const FormDeleteWorkspace = ({ workspace }) => {
               <ModalFooter>
                 <div className="flex w-full justify-end gap-3 mt-4">
                   <Button
-                    isDisabled={isDelete}
                     onPress={onClose}
                     type="button"
                     className="rounded-lg text-md font-medium text-white interceptor-loading   flex items-center justify-center py-2"
                     color="primary"
                   >
-                    {isDelete ? <CircularProgress size={16} /> : " Hủy bỏ"}
+                    Hủy bỏ
                   </Button>
                   <Button
                     onClick={() => HandleDeleteWorkspace()}
-                    isDisabled={isDelete}
                     type="submit"
                     className="rounded-lg text-md font-medium text-white  interceptor-loading flex items-center justify-center py-2"
                     color="danger"
                   >
-                    {isDelete ? <CircularProgress size={16} /> : " Xóa bỏ"}
+                    Xóa bỏ
                   </Button>
                 </div>
               </ModalFooter>

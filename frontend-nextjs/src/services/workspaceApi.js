@@ -1,5 +1,3 @@
-import { client } from "@/services/clientUtils";
-import Cookies from "js-cookie";
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
 /** Workspace */
 export const getWorkspace = async (query = {}) => {
@@ -12,7 +10,7 @@ export const getWorkspace = async (query = {}) => {
 };
 // export const getWorkspaceActive = async (query = {}) => {
 //   const queryString = new URLSearchParams(query).toString();
-//   const { response, data } = await client.get(`/workspace?${queryString}`);
+//   const { response, data } = await authorizedAxiosInstance.get(`/workspace?${queryString}`);
 //   if (data.status === 200) {
 //     return data.data;
 //   }
@@ -46,7 +44,7 @@ export const restoreWorkspaceApi = async (workspaceId) => {
   return data;
 };
 
-export const switchWorkspace = async (workspaceId, body) => {
+export const switchWorkspaceApi = async (workspaceId, body) => {
   const { data } = await authorizedAxiosInstance.put(
     `/workspace/change-workspace/${workspaceId}`,
     body
@@ -115,8 +113,12 @@ export const getBoard = async (workspaceId) => {
   return data;
 };
 
-export const getBoardDetail = async (boardId) => {
-  const { data } = await authorizedAxiosInstance.get(`/board/${boardId}`);
+export const getBoardDetail = async (boardId, query = {}) => {
+  const queryString = new URLSearchParams(query).toString();
+
+  const { data } = await authorizedAxiosInstance.get(
+    `/board/${boardId}?${queryString}`
+  );
 
   return data;
 };
@@ -156,7 +158,7 @@ export const moveCardToDifferentBoardAPI = async (body) => {
 
 /** Column */
 
-export const createColumn = async (body) => {
+export const createColumnApi = async (body) => {
   const { response, data } = await authorizedAxiosInstance.post(
     `/column`,
     body
@@ -207,187 +209,124 @@ export const createCard = async (body) => {
 };
 
 export const getCardDetail = async (cardId) => {
-  const { response, data } = await authorizedAxiosInstance.get(
-    `/card/${cardId}`
-  );
+  const { data } = await authorizedAxiosInstance.get(`/card/${cardId}`);
   return data;
 };
 
 export const updateCardApi = async (cardId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
-    `/card/${cardId}`,
-    body,
-    access_token
-  );
-  if (response.ok || data.error) {
-    return data;
-  }
+  const { data } = await authorizedAxiosInstance.put(`/card/${cardId}`, body);
+  return data;
 };
 
 export const DateCardApi = async (cardId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/card/date-card/${cardId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const assignUserApi = async (cardId, body) => {
-  const access_token = Cookies.get("access_token");
-  const { response, data } = await client.post(
+  const { data } = await authorizedAxiosInstance.post(
     `/card/assign-user/${cardId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const unAssignUserApi = async (cardId, body) => {
-  const access_token = Cookies.get("access_token");
-  const { response, data } = await client.put(
+  const { data } = await authorizedAxiosInstance.put(
     `/card/un-assign-user/${cardId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const copyCardWithBoardApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(
+  const { response, data } = await authorizedAxiosInstance.post(
     `/card/copy-card`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const deleteCardApi = async (cardId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.delete(
-    `/card/${cardId}`,
-    access_token
+  const { response, data } = await authorizedAxiosInstance.delete(
+    `/card/${cardId}`
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 /** Work */
 export const createWorkApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(`/work`, body, access_token);
-  if (response.ok || data.error) {
-    return data;
-  }
+  const { response, data } = await authorizedAxiosInstance.post(`/work`, body);
+  return data;
 };
 
 export const updateWorkApi = async (workId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/work/${workId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const deleteWorkApi = async (workId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.delete(
-    `/work/${workId}`,
-    access_token
+  const { response, data } = await authorizedAxiosInstance.delete(
+    `/work/${workId}`
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 /** Mission */
 
 export const getMissionsApi = async (query = {}) => {
   const queryString = new URLSearchParams(query).toString();
-  const { response, data } = await client.get(`/mission?${queryString}`);
+  const { response, data } = await authorizedAxiosInstance.get(
+    `/mission?${queryString}`
+  );
   return data;
 };
 
 export const createMissionApi = async (body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(`/mission`, body, access_token);
-  if (response.ok || data.error) {
-    return data;
-  }
+  const { response, data } = await authorizedAxiosInstance.post(
+    `/mission`,
+    body
+  );
+  return data;
 };
 
 export const updateMissionApi = async (missionId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/mission/${missionId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const deleteMissionApi = async (missionId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.delete(
-    `/mission/${missionId}`,
-    access_token
+  const { response, data } = await authorizedAxiosInstance.delete(
+    `/mission/${missionId}`
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const transferCardApi = async (missionId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.post(
+  const { response, data } = await authorizedAxiosInstance.post(
     `/mission/transfer-card/${missionId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 /** Attachment */
 
 export const attachmentFileApi = async (cardId, formData) => {
-  const access_token = Cookies.get("access_token");
-
   const result = await fetch(
     `http://localhost:3001/api/v1/card/uploads-file/${cardId}`,
     {
       method: "POST",
       body: formData,
       headers: {
-        Authorization: `Bearer ${access_token}`,
+        Authorization: `Beare}`,
       },
     }
   );
@@ -417,45 +356,16 @@ export const downloadFileApi = async (attachmentId) => {
 };
 
 export const updateFileApi = async (attachmentId, body) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.put(
+  const { response, data } = await authorizedAxiosInstance.put(
     `/attachment/${attachmentId}`,
-    body,
-    access_token
+    body
   );
-  if (response.ok || data.error) {
-    return data;
-  }
+  return data;
 };
 
 export const deleteFileApi = async (attachmentId) => {
-  const access_token = Cookies.get("access_token");
-
-  const { response, data } = await client.delete(
-    `/attachment/${attachmentId}`,
-    access_token
+  const { response, data } = await authorizedAxiosInstance.delete(
+    `/attachment/${attachmentId}`
   );
-  if (response.ok || data.error) {
-    return data;
-  }
-};
-/* Notification */
-export const markAsReadNotification = async (body) => {
-  const { response, data } = await client.put(
-    `/notification/mark-as-read`,
-    body
-  );
-  if (response.ok) {
-    return data;
-  }
-};
-export const clickNotification = async (body) => {
-  const { response, data } = await client.put(
-    `/notification/click-notify`,
-    body
-  );
-  if (response.ok) {
-    return data;
-  }
+  return data;
 };
