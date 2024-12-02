@@ -25,16 +25,23 @@ import {
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
 
-const { updateBoard } = boardSlice.actions;
-const { updateCard } = cardSlice.actions;
+const {
+  deleteCardInBoard,
+  updateColumnInBoard,
+  updateBoard,
+  updateActivitiesOfCardInBoard,
+} = boardSlice.actions;
+const { clearAndHideCard, updateCard, updateActivityInCard } =
+  cardSlice.actions;
 
 const MoveCard = ({ children }) => {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const card = useSelector((state) => state.card.card);
   const workspace = useSelector((state) => state.workspace.workspace);
+
+  const [isOpen, setIsOpen] = useState(false);
   const [boardMove, setBoardMove] = useState(board);
   const [valueColumn, setValueColumn] = useState(card?.column_id);
   const [valueCardIndex, setValueCardIndex] = useState(card?.id);
@@ -48,10 +55,13 @@ const MoveCard = ({ children }) => {
     const currentColumn = boardMove?.columns.find(
       (column) => +column.id === +valueColumn
     );
+
     return currentColumn?.cardOrderIds || [];
   }, [valueColumn, boardMove?.columns]);
 
   const onSelectBoard = async (boardIdSelect) => {
+    if (!boardIdSelect || boardIdSelect === boardMove.id) return;
+
     if (+boardIdSelect === +board.id) {
       if (+boardIdSelect !== +boardMove.id) {
         HandleReset();
@@ -61,7 +71,7 @@ const MoveCard = ({ children }) => {
 
     try {
       await toast
-        .promise(getBoardDetail(boardIdSelect, { isCard: false }), {
+        .promise(getBoardDetail(boardIdSelect, { isCard: true }), {
           pending: "Đang lấy column trong board này...",
         })
         .then((res) => {
@@ -79,7 +89,7 @@ const MoveCard = ({ children }) => {
             "id"
           );
 
-          boardData.columns.forEach((column) => {
+          BoardNew.columns.forEach((column) => {
             if (isEmpty(column.cards)) {
               column.cards = [generatePlaceholderCard(column)];
               column.cardOrderIds = [generatePlaceholderCard(column).id];
@@ -99,150 +109,139 @@ const MoveCard = ({ children }) => {
   };
 
   const moveCardWithinColumn = async (
-    newBoard,
     newColumns,
     columnIndex,
     oldCardIndex,
     newCardIndex
   ) => {
-    try {
-      const updatedColumn = { ...newColumns[columnIndex] };
-      const dndOrderedCards = arrayMove(
-        updatedColumn.cards,
-        oldCardIndex,
-        newCardIndex
-      );
-      const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
-      updatedColumn.cards = dndOrderedCards;
-      updatedColumn.cardOrderIds = dndOrderedCardIds;
-      newColumns[columnIndex] = updatedColumn;
-      newBoard.columns = newColumns;
+    const updatedColumn = { ...newColumns[columnIndex] };
 
-      const { status } = await updateColumnDetail(valueColumn, {
-        cardOrderIds: dndOrderedCardIds,
+    const dndOrderedCards = arrayMove(
+      updatedColumn.cards,
+      oldCardIndex,
+      newCardIndex
+    );
+
+    const dndOrderedCardIds = dndOrderedCards.map((card) => card.id);
+
+    updatedColumn.cards = dndOrderedCards;
+    updatedColumn.cardOrderIds = dndOrderedCardIds;
+
+    await toast
+      .promise(
+        async () =>
+          await updateColumnDetail(valueColumn, {
+            cardOrderIds: dndOrderedCardIds,
+          }),
+        { pending: "Đang di chuyển" }
+      )
+      .then((res) => {
+        dispatch(updateColumnInBoard(updatedColumn));
+      })
+      .catch((error) => {
+        console.log(error);
       });
-      if (200 <= status && status <= 299) {
-        dispatch(updateBoard(newBoard));
-        dispatch(updateColumns(newColumns));
-        setValueCardIndex(card.id);
-      }
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   const moveCardToDifferentColumn = async (
-    newBoard,
     nextColumns,
     nextActiveColumn,
     nextOverColumn,
     newCardIndex
   ) => {
-    try {
-      if (nextActiveColumn) {
-        nextActiveColumn.cards = nextActiveColumn.cards.filter(
-          (item) => item.id !== card.id
-        );
-        if (isEmpty(nextActiveColumn.cards)) {
-          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
-        }
-        nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
-          (item) => item.id
-        );
+    if (nextActiveColumn) {
+      nextActiveColumn.cards = nextActiveColumn.cards.filter(
+        (item) => item.id !== card.id
+      );
+      if (isEmpty(nextActiveColumn.cards)) {
+        nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
       }
+      nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
+        (item) => item.id
+      );
+    }
 
-      if (nextOverColumn) {
-        nextOverColumn.cards = nextOverColumn.cards.filter(
-          (item) => item.id !== card.id
-        );
-        const rebuild_activeDraggingCardData = {
-          ...card,
-          column_id: nextOverColumn.id,
-        };
-        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-          newCardIndex,
-          0,
-          rebuild_activeDraggingCardData
-        );
-        nextOverColumn.cards = nextOverColumn.cards.filter(
-          (card) => !card.FE_PlaceholderCard
-        );
-        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
-          (card) => card.id
-        );
-      }
+    if (nextOverColumn) {
+      nextOverColumn.cards = nextOverColumn.cards.filter(
+        (item) => item.id !== card.id
+      );
+      const rebuild_activeDraggingCardData = {
+        ...card,
+        column_id: nextOverColumn.id,
+      };
+      nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+        newCardIndex,
+        0,
+        rebuild_activeDraggingCardData
+      );
+      nextOverColumn.cards = nextOverColumn.cards.filter(
+        (card) => !card.FE_PlaceholderCard
+      );
+      nextOverColumn.cardOrderIds = nextOverColumn.cards.map((card) => card.id);
+    }
 
-      const dndOrderedColumnsIds = nextColumns.map((c) => c.id);
-      newBoard.columns = [...nextColumns];
-      newBoard.columnOrderIds = dndOrderedColumnsIds;
-      dispatch(updateBoard(newBoard));
+    await toast
+      .promise(
+        async () =>
+          await moveCardToDifferentColumnAPI({
+            card_id: card.id,
+            prevColumnId: nextActiveColumn.id,
+            nextColumn: nextOverColumn,
+          }),
+        { pending: "Đang di chuyển..." }
+      )
+      .then((res) => {
+        const { activity } = res;
+        dispatch(updateCard({ column_id: nextOverColumn.id }));
 
-      const updatedColumns = newBoard.columns.map((column) => {
-        if (
-          typeof column.cardOrderIds[0] === "string" &&
-          column.cardOrderIds[0].indexOf("placeholder-card") !== -1
-        ) {
-          return { ...column, cardOrderIds: [], cards: [] };
-        }
-        return column;
-      });
+        dispatch(updateActivityInCard(activity));
 
-      const updatedBoard = { ...newBoard, columns: updatedColumns };
+        dispatch(updateBoard({ columns: nextColumns }));
 
-      const { status } = await moveCardToDifferentColumnAPI({
-        updateBoard: updatedBoard,
-        card_id: card.id,
-        prevColumnId: nextActiveColumn.id,
-        nextColumnId: nextOverColumn.id,
-      });
-      if (200 <= status && status <= 299) {
         dispatch(
-          updateCard({
-            ...card,
-            column_id: nextOverColumn.id,
-            column: nextOverColumn,
-            activities: [data.data, ...card.activities],
+          updateActivitiesOfCardInBoard({
+            card_id: card.id,
+            column_id: card.column_id,
+            activity,
           })
         );
-        dispatch(updateColumns(updatedColumns));
-        setValueCardIndex(card.id);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   const moveCardWithinBoard = async () => {
     try {
-      const newBoard = { ...board };
-      const newColumns = [...newBoard.columns];
+      const newColumns = cloneDeep(board.columns);
+
       const columnIndex = newColumns.findIndex(
         (column) => column.id === +valueColumn
       );
+
       const oldCardIndex = cardsCurrent.findIndex((item) => item === +card.id);
+
       const newCardIndex = cardsCurrent.findIndex(
         (item) => item === +valueCardIndex
       );
 
       if (+valueColumn === +card.column_id) {
         await moveCardWithinColumn(
-          newBoard,
           newColumns,
           columnIndex,
           oldCardIndex,
           newCardIndex
         );
       } else {
-        const nextColumns = cloneDeep(columns);
-        const nextOverColumn = nextColumns.find(
+        const nextOverColumn = newColumns.find(
           (column) => column.id === +valueColumn
         );
-        const nextActiveColumn = nextColumns.find(
+        const nextActiveColumn = newColumns.find(
           (column) => column.id === card.column_id
         );
+
         await moveCardToDifferentColumn(
-          newBoard,
-          nextColumns,
+          newColumns,
           nextActiveColumn,
           nextOverColumn,
           newCardIndex
@@ -254,87 +253,81 @@ const MoveCard = ({ children }) => {
   };
 
   const moveCardToDifferentBoard = async () => {
-    try {
-      const boardActive = { ...board };
-      const newCardIndex = cardsCurrent.findIndex(
-        (item) => item === +valueCardIndex
-      );
-      const activeColumns = cloneDeep(board.columns);
-      const overColumns = cloneDeep(columns);
+    const newCardIndex = cardsCurrent.findIndex(
+      (item) => item === +valueCardIndex
+    );
 
-      const nextOverColumn = overColumns.find(
-        (column) => column.id === +valueColumn
-      );
-      const nextActiveColumn = activeColumns.find(
-        (column) => column.id === card.column_id
-      );
+    const activeColumns = cloneDeep(board.columns);
+    const overColumns = cloneDeep(boardMove.columns);
 
-      if (nextActiveColumn) {
-        nextActiveColumn.cards = nextActiveColumn.cards.filter(
-          (item) => item.id !== card.id
-        );
+    const nextOverColumn = overColumns.find((c) => c.id === +valueColumn);
 
-        if (isEmpty(nextActiveColumn.cards)) {
-          nextActiveColumn.cards = [generatePlaceholderCard(nextActiveColumn)];
-        }
+    const nextActiveColumn = activeColumns.find((c) => c.id === card.column_id);
 
-        nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
-          (item) => item.id
-        );
-      }
-
-      if (nextOverColumn) {
-        nextOverColumn.cards = nextOverColumn.cards.filter(
-          (item) => item.id !== card.id
-        );
-        const rebuild_activeDraggingCardData = {
-          ...card,
-          column_id: nextOverColumn.id,
-        };
-        nextOverColumn.cards = nextOverColumn.cards.toSpliced(
-          newCardIndex,
-          0,
-          rebuild_activeDraggingCardData
-        );
-        nextOverColumn.cardOrderIds = nextOverColumn.cards.map(
-          (card) => card.id
-        );
-      }
-
-      const dndOrderedColumnsIdsActive = activeColumns.map((c) => c.id);
-      boardActive.columns = [...activeColumns];
-      boardActive.columnOrderIds = dndOrderedColumnsIdsActive;
-      dispatch(updateBoard(boardActive));
-
-      const nextActiveColumnCopy = { ...nextActiveColumn };
-      nextActiveColumnCopy.cards = nextActiveColumnCopy.cards.filter(
-        (item) => !item.FE_PlaceholderCard
-      );
-      nextActiveColumnCopy.cardOrderIds = nextActiveColumnCopy.cards.map(
-        (card) => card.id
+    if (nextActiveColumn) {
+      nextActiveColumn.cards = nextActiveColumn.cards.filter(
+        (item) => item.id !== card.id
       );
 
-      const { status } = await moveCardToDifferentBoardAPI({
-        user_id: user.id,
-        card_id: card.id,
-        activeColumn: nextActiveColumnCopy,
-        overColumn: nextOverColumn,
-      });
-      if (200 <= status && status <= 299) {
-        dispatch(updateColumns(boardActive.columns));
-        setValueCardIndex(card.id);
-      }
-    } catch (error) {
-      console.log(error);
+      nextActiveColumn.cardOrderIds = nextActiveColumn.cards.map(
+        (item) => item.id
+      );
     }
+
+    if (nextOverColumn) {
+      nextOverColumn.cards = nextOverColumn.cards.filter(
+        (item) => item.id !== card.id
+      );
+
+      const rebuild_activeDraggingCardData = {
+        ...card,
+        column_id: nextOverColumn.id,
+      };
+      nextOverColumn.cards = nextOverColumn.cards.toSpliced(
+        newCardIndex,
+        0,
+        rebuild_activeDraggingCardData
+      );
+
+      nextOverColumn.cards = nextOverColumn.cards.filter(
+        (c) => !c.FE_PlaceholderCard
+      );
+
+      nextOverColumn.cardOrderIds = nextOverColumn.cards.map((card) => card.id);
+    }
+
+    await toast
+      .promise(
+        async () =>
+          await moveCardToDifferentBoardAPI({
+            card_id: card.id,
+            activeColumn: nextActiveColumn,
+            overColumn: nextOverColumn,
+          }),
+        { pending: "Đang di chuyển..." }
+      )
+      .then((res) => {
+        dispatch(deleteCardInBoard({ id: card.id, column_id: card.column_id }));
+        dispatch(clearAndHideCard());
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
-    if (+boardMove.id === +board.id) {
-      await moveCardWithinBoard();
-    } else {
-      await moveCardToDifferentBoard();
+
+    try {
+      if (+boardMove.id === +board.id) {
+        await moveCardWithinBoard();
+      } else {
+        await moveCardToDifferentBoard();
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsOpen(false);
     }
   };
 
@@ -443,10 +436,7 @@ const MoveCard = ({ children }) => {
             type="submit"
             color="primary"
             className="mt-2 interceptor-loading"
-            isDisabled={
-              user?.role?.toLowerCase() !== "admin" &&
-              user?.role?.toLowerCase() !== "owner"
-            }
+            isDisabled={!checkRole}
           >
             Di chuyển
           </Button>

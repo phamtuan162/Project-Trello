@@ -53,9 +53,12 @@ export const boardSlice = createSlice({
 
       if (column) {
         column.cards = column.cards.filter((c) => c.id !== incomingCard.id);
-        column.cardOrderIds = column.cardOrderIds.filter(
-          (c) => c !== incomingCard.id
-        );
+
+        if (isEmpty(column.cards)) {
+          column.cards = [generatePlaceholderCard(column)];
+        }
+
+        column.cardOrderIds = column.cards.map((c) => c.id);
       }
     },
 
@@ -77,6 +80,23 @@ export const boardSlice = createSlice({
       }
     },
 
+    updateActivitiesOfCardInBoard: (state, action) => {
+      const { card_id, column_id, activity } = action.payload;
+
+      const column = state.board.columns.find((c) => c.id === column_id);
+
+      if (column) {
+        const card = column.cards.find((c) => c.id === card_id);
+
+        if (card) {
+          if (Array.isArray(card.activities)) {
+            card.activities.push(activity);
+          } else {
+            card.activities = [activity];
+          }
+        }
+      }
+    },
     updateColumnInBoard: (state, action) => {
       const incomingColumn = action.payload;
 
@@ -98,16 +118,13 @@ export const boardSlice = createSlice({
       incomingColumn.cards = [placeholderCard];
       incomingColumn.cardOrderIds = [placeholderCard.id];
 
-      if (
-        Array.isArray(state.board.columns) &&
-        Array.isArray(state.board.columnOrderIds)
-      ) {
+      if (Array.isArray(state.board.columns)) {
         state.board.columns.push(incomingColumn);
-        state.board.columnOrderIds.push(incomingColumn.id);
       } else {
         state.board.columns = [incomingColumn];
-        state.board.columnOrderIds = [incomingColumn.id];
       }
+
+      state.board.columnOrderIds = state.board.column.map((c) => c.id);
     },
 
     copyColumnInBoard: (state, action) => {

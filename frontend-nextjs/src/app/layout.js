@@ -4,10 +4,12 @@ import ProviderRedux from "@/stores/Providers";
 import Header from "@/components/Header/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 export const metadata = {
   title: "ProManage ",
   description: "Manage Project",
 };
+
 export default function RootLayout({ children, params }) {
   return (
     <html lang="en" className="dark">

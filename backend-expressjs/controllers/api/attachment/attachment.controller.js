@@ -53,21 +53,26 @@ module.exports = {
     }
     const schema = object(rules);
     const response = {};
+
     const attachment = await Attachment.findByPk(id);
+
     if (!attachment) {
       return res.status(404).json({ status: 404, message: "Not found" });
     }
+
     try {
       let body = await schema.validate(req.body, {
         abortEarly: false,
       });
+
       await attachment.update(body);
+
       Object.assign(response, {
         status: 200,
         message: "Success",
         data: attachment,
       });
-    } catch (error) {
+    } catch (e) {
       const errors = Object.fromEntries(
         e?.inner.map(({ path, message }) => [path, message])
       );
@@ -83,14 +88,14 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
-    const attachment = await Attachment.findByPk(id);
-    const card = await Card.findByPk(attachment.card_id);
-
-    if (!attachment || !card) {
-      return res.status(404).json({ status: 404, message: "Not found" });
-    }
-
     try {
+      const attachment = await Attachment.findByPk(id);
+      const card = await Card.findByPk(attachment.card_id);
+
+      if (!attachment || !card) {
+        return res.status(404).json({ status: 404, message: "Not found" });
+      }
+
       const fileName = attachment.fileName;
       const filePathOld =
         "public" + attachment.path.slice(attachment.path.indexOf("/uploads"));

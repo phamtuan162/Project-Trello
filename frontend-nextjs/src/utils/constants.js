@@ -1,10 +1,10 @@
-let apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
+const buildMode = process.env.NEXT_PUBLIC_BUILD_MODE;
 
-if (process.env.BUILD_MODE === "dev") {
-  apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
+let apiRoot = "";
+if (buildMode === "dev") {
+  apiRoot = "http://localhost:3001";
+} else if (buildMode === "production") {
+  apiRoot = "https://backend-expressjs-swart.vercel.app";
 }
 
-if (process.env.BUILD_MODE === "production") {
-  apiRoot = "https://backend-expressjs-swart.vercel.app/api/v1";
-}
 export const API_ROOT = apiRoot;

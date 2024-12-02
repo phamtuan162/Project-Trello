@@ -320,23 +320,13 @@ export const transferCardApi = async (missionId, body) => {
 /** Attachment */
 
 export const attachmentFileApi = async (cardId, formData) => {
-  const result = await fetch(
-    `http://localhost:3001/api/v1/card/uploads-file/${cardId}`,
-    {
-      method: "POST",
-      body: formData,
-      headers: {
-        Authorization: `Beare}`,
-      },
-    }
+  const { data } = await authorizedAxiosInstance.post(
+    `/card/uploads-file/${cardId}`,
+    formData
   );
-
-  const data = await result.json(); // Lấy dữ liệu từ kết quả fetch
-
-  if (result.ok || data.error) {
-    return data;
-  }
+  return data;
 };
+
 export const downloadFileApi = async (attachmentId) => {
   try {
     const res = await axios.get(

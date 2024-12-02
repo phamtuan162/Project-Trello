@@ -29,15 +29,14 @@ import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
 import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import FormCreateWorkspace from "../Form/FormCreateWorkspace";
-import { socketSlice } from "@/stores/slices/socket";
 import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import { clickNotification } from "@/services/notifyApi";
 import SearchWorkspace from "./SearchWorkspace";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
 import { fetchProfileUser } from "@/stores/middleware/fetchProfileUser";
+import { socket } from "@/socket";
 
-const { updateSocket } = socketSlice.actions;
 const { updateNotification } = notificationSlice.actions;
 
 const Header = () => {
@@ -45,7 +44,6 @@ const Header = () => {
     (state) => state.notification.notifications
   );
   const missions = useSelector((state) => state.mission.missions);
-  const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -130,13 +128,6 @@ const Header = () => {
     },
   ];
 
-  // useEffect(() => {
-  //   if (!socket) {
-  //     const newSocket = io("http://localhost:3001");
-  //     dispatch(updateSocket(newSocket));
-  //   }
-  // }, []);
-
   useEffect(() => {
     const isLogin = Cookies.get("isLogin");
 
@@ -147,6 +138,8 @@ const Header = () => {
         const data = await dispatch(fetchProfileUser()).unwrap();
 
         if (data) {
+          socket.emit("newUser", user.id);
+
           // Fetch workspace, missions , workspace of user
           await Promise.all([
             dispatch(fetchNotification({ user_id: data.id })),
@@ -177,7 +170,7 @@ const Header = () => {
       }
     };
 
-    if (isLogin === "true" && !workspace?.id && !user?.id) {
+    if (isLogin === "true" && !user?.id) {
       fetchUserProfile();
     }
   }, [pathname]);

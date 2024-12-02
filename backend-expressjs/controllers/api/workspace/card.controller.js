@@ -15,7 +15,7 @@ const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
 const { format } = require("date-fns");
-const { streamUpload } = require("../../../utils/cloudinary");
+// const { streamUpload } = require("../../../utils/cloudinary");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -161,7 +161,6 @@ module.exports = {
     const { id } = req.params;
     const method = req.method;
     const file = req.file;
-    console.log(file);
 
     const rules = {};
 
@@ -687,16 +686,25 @@ module.exports = {
   uploads: async (req, res) => {
     const { id } = req.params;
     const user = req.user.dataValues;
-    const { name } = req.body;
     const file = req.file;
-    const path = `http://localhost:3001/uploads/${file.filename}`;
+    const { name } = req.body;
     const response = {};
+    const path = `http://localhost:3001/uploads/${file.filename}`;
+
+    if (!file) {
+      return res.status(400).json({ status: 400, message: "Bad request" });
+    }
+
     try {
       const card = await Card.findByPk(id);
 
       if (!card) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        return res.status(404).json({ status: 404, message: "Not found card" });
       }
+
+      // const resultUpload = await streamUpload(file.buffer, "attachmentFiles");
+      // console.log(resultUpload);
+
       const attachment = await Attachment.create({
         user_id: user.id,
         path: path,
@@ -704,7 +712,7 @@ module.exports = {
         fileName: name,
       });
 
-      await Activity.create({
+      const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
@@ -712,22 +720,18 @@ module.exports = {
         title: card.title,
         action: "attachment_file",
         workspace_id: user.workspace_id_active,
-        desc: `đã đính kèm tập tin ${name} vào thẻ này`,
-      });
-
-      const cardUpdate = await Card.findByPk(id, {
-        include: [
-          { model: Activity, as: "activities" },
-          { model: Attachment, as: "attachments" },
-        ],
+        desc: `đã đính kèm tập tin ${resultUpload.name} vào thẻ này`,
       });
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: cardUpdate,
+        attachment,
+        activity,
       });
     } catch (error) {
+      console.log(error);
+
       Object.assign(response, {
         status: 500,
         message: "Server error",

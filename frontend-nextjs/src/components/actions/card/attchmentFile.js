@@ -3,44 +3,94 @@ import { useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
-import { attachmentFileApi } from "@/services/workspaceApi";
-import { cardSlice } from "@/stores/slices/cardSlice";
 import { toast } from "react-toastify";
+
+import { attachmentFileApi } from "@/services/workspaceApi";
+import { boardSlice } from "@/stores/slices/boardSlice";
+import { cardSlice } from "@/stores/slices/cardSlice";
+import { cloneDeep } from "lodash";
+
 const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
 
 const AttachmentFile = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
+  const board = useSelector((state) => state.board.board);
+
   const inputRef = useRef();
 
   const HandleUploadFile = async (e) => {
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("name", file.name);
-
     try {
-      const data = await attachmentFileApi(card.id, formData);
+      const file = e.target.files[0];
 
-      if (data.status === 200) {
-        const cardUpdate = {
-          ...card,
-          activities: data.data.activities,
-          attachments: data.data.attachments,
-        };
-        dispatch(updateCard(cardUpdate));
-        setIsOpen(false);
-      } else {
-        const error = data.error;
-        toast.error(error);
+      if (!file) {
+        toast.error("Chưa chọn tệp đính kèm!");
+        return;
       }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("name", file.name);
+
+      await toast
+        .promise(async () => await attachmentFileApi(card.id, formData), {
+          pending: "Đang đính kèm tệp...",
+        })
+        .then((res) => {
+          const { attachment, activity } = res;
+
+          const columns = cloneDeep(board.columns);
+
+          const column = columns.find((c) => c.id === card.column_id);
+
+          const cardUpdate = column?.cards.find((c) => c.id === card.id);
+
+          if (cardUpdate) {
+            if (Array.isArray(cardUpdate.attachments)) {
+              cardUpdate.attachments.push(attachment);
+            } else {
+              cardUpdate.attachments = [attachment];
+            }
+
+            if (Array.isArray(cardUpdate.activities)) {
+              cardUpdate.activities.push(activity);
+            } else {
+              cardUpdate.activities = [activity];
+            }
+
+            dispatch(
+              updateCard({
+                id: cardUpdate.id,
+                activities: cardUpdate.activities,
+                attachments: cardUpdate.attachments,
+              })
+            );
+
+            dispatch(
+              updateCardInBoard({
+                id: cardUpdate.id,
+                column_id: cardUpdate.column_id,
+                activities: cardUpdate.activities,
+                attachments: cardUpdate.attachments,
+              })
+            );
+
+            toast.success("Đính kèm file thành công!");
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     } catch (error) {
-      toast.error("An error occurred while uploading the file.");
+      console.log(error);
     } finally {
-      inputRef.current.value = "";
+      setIsOpen(false);
+      e.target.value = "";
     }
   };
+
   return (
     <Popover
       placement="right"
@@ -88,7 +138,7 @@ const AttachmentFile = ({ children }) => {
             />
             <label
               htmlFor="upl_file"
-              className="bg-default-100 hover:bg-default-200 cursor-pointer  rounded-lg text-sm font-medium  mt-4   flex items-center justify-center py-2 px-6 relative z-50 data-[hover=true]:opacity-100"
+              className="interceptor-loading bg-default-100 hover:bg-default-200 cursor-pointer  rounded-lg text-sm font-medium  mt-4   flex items-center justify-center py-2 px-6 relative z-50 data-[hover=true]:opacity-100"
             >
               Chọn tệp
             </label>

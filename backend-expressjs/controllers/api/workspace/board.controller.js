@@ -226,7 +226,7 @@ module.exports = {
     const response = {};
 
     // Kiểm tra các dữ liệu nhận được
-    if (!nextColumnNew || !card_id || !prevColumnId) {
+    if (!nextColumnNew.cardOrderIds || !card_id || !prevColumnId) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 

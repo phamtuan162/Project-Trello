@@ -25,13 +25,10 @@ const { inviteUserInWorkspace, updateActivitiesInWorkspace } =
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.user);
-  const socket = useSelector((state) => state.socket.socket);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isInvite, setIsInvite] = useState(false);
   const [role, setRole] = useState(new Set(["member"]));
   const [isSearch, setIsSearch] = useState(false);
-  const [searchResultsValid, setSearchResultsValid] = useState(true);
-  const [searchError, setSearchError] = useState(false); // Trạng thái lỗi tìm kiếm
   const [isLoading, setIsLoading] = useState(false);
   const [usersSearch, setUsersSearch] = useState([]);
   const [userInvite, setUserInvite] = useState(null);
@@ -46,12 +43,11 @@ const FormInviteUser = ({ rolesUser }) => {
     if (!user) return false;
     const role = user.role?.toLowerCase();
     return role === "admin" || role === "owner";
-  }, [user.role]);
+  }, [user?.role]);
 
   const handleSearchUser = useCallback(
     debounce(async (inputKeyword) => {
       setIsLoading(true);
-      setSearchError(false); // Reset lỗi tìm kiếm
       try {
         const { data, status } = await searchUser({
           keyword: inputKeyword,
@@ -60,16 +56,14 @@ const FormInviteUser = ({ rolesUser }) => {
         if (200 <= status && status <= 299) {
           const users = data;
           setUsersSearch(users);
-          setSearchResultsValid(users.length > 0);
         } else {
           setUsersSearch([]);
-          setSearchResultsValid(false);
         }
       } catch (error) {
-        setSearchError(true);
-        console.log("Search error:", error);
+        console.log(error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }, 2000),
     []
   );
@@ -80,25 +74,21 @@ const FormInviteUser = ({ rolesUser }) => {
     };
   }, [handleSearchUser]);
 
-  const handleInputChange = useCallback((e) => {
-    const inputKeyword = e.target.value.trim();
-    setKeyWord(inputKeyword);
-
-    if (inputKeyword.length >= 2) {
+  useEffect(() => {
+    if (keyword.length.trim() >= 2) {
       setIsSearch(true);
-      handleSearchUser(inputKeyword);
+      handleSearchUser(keyword);
     } else {
       setIsSearch(false);
       setUsersSearch([]);
-      setSearchResultsValid(true);
-      setSearchError(false);
     }
-  }, []);
+  }, [keyword]);
 
   const handleInviteUser = async (e) => {
     e.preventDefault();
 
     if (!userInvite) return;
+
     try {
       const isUserInvited = workspace?.users?.some(
         (user) => user.id === userInvite.id
@@ -218,7 +208,7 @@ const FormInviteUser = ({ rolesUser }) => {
                     className="text-sm rounded-md focus-visible:outline-0 w-full"
                     size="xs"
                     value={keyword}
-                    onChange={handleInputChange}
+                    onChange={(e) => setKeyWord(e.target.value)}
                     startContent={
                       userInvite && (
                         <Avatar
@@ -256,13 +246,13 @@ const FormInviteUser = ({ rolesUser }) => {
                           "0px 8px 12px #091E4226, 0px 0px 1px #091E424F",
                       }}
                     >
+                      <p className="hidden last:block text-xs  text-center text-muted-foreground">
+                        Không tìm thấy người dùng nào
+                      </p>
                       {isLoading ? (
                         <CircularProgress size={18} />
-                      ) : searchError ? (
-                        "Đã xảy ra lỗi trong quá trình tìm kiếm."
-                      ) : searchResultsValid ? (
-                        usersSearch.length > 0 &&
-                        usersSearch.map((userSearch) => (
+                      ) : (
+                        usersSearch?.map((userSearch) => (
                           <div
                             key={userSearch.id}
                             className="mt-2 hover:bg-default-300 rounded-lg p-1 px-3 cursor-pointer"
@@ -284,8 +274,6 @@ const FormInviteUser = ({ rolesUser }) => {
                             </User>
                           </div>
                         ))
-                      ) : (
-                        "Có vẻ như người đó không phải là thành viên của Trello. Thêm địa chỉ email của họ để mời họ"
                       )}
                     </div>
                   )}

@@ -11,12 +11,11 @@ import {
 import { ListContainer } from "./_components/ListContainer";
 import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
-import { cardSlice } from "@/stores/slices/cardSlice";
 import { CardModal } from "@/components/modals/card-modal";
 import { fetchBoard } from "@/stores/middleware/fetchBoard";
 
-const { updateActivityInCard } = cardSlice.actions;
-const { updateBoard } = boardSlice.actions;
+const { updateBoard, updateColumnInBoard, updateActivitiesOfCardInBoard } =
+  boardSlice.actions;
 
 export default function BoardIdPage() {
   const dispatch = useDispatch();
@@ -58,18 +57,13 @@ export default function BoardIdPage() {
     columnId
   ) => {
     try {
-      const updatedColumns = board.columns.map((column) => {
-        if (column.id === columnId) {
-          return {
-            ...column,
-            cards: dndOrderedCards,
-            cardOrderIds: dndOrderedCardIds,
-          };
-        }
-        return column;
-      });
-
-      dispatch(updateBoard({ columns: updatedColumns }));
+      dispatch(
+        updateColumnInBoard({
+          id: columnId,
+          cards: dndOrderedCards,
+          cardOrderIds: dndOrderedCardIds,
+        })
+      );
 
       await updateColumnDetail(columnId, {
         cardOrderIds: dndOrderedCardIds,
@@ -86,12 +80,9 @@ export default function BoardIdPage() {
     dndOrderedColumns
   ) => {
     try {
-      const columnOrderIdsUpdate = dndOrderedColumns.map((c) => c.id);
-
       dispatch(
         updateBoard({
           columns: dndOrderedColumns,
-          columnOrderIds: columnOrderIdsUpdate,
         })
       );
 
@@ -103,9 +94,13 @@ export default function BoardIdPage() {
         prevColumnId: prevColumnId,
       });
 
-      if (200 <= status && status <= 299) {
-        dispatch(updateActivityInCard(activity));
-      }
+      dispatch(
+        updateActivitiesOfCardInBoard({
+          card_id: activity.card_id,
+          column_id: nextColumnId,
+          activity,
+        })
+      );
     } catch (error) {
       console.log(error);
     }

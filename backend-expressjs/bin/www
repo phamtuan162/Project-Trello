@@ -54,16 +54,20 @@ const getUser = (userId) => {
 io.on("connection", (socket) => {
   socket.on("newUser", async (userId) => {
     const user = await User.findByPk(userId);
+
     if (!user) {
       return null;
     }
+
     addNewUser(userId, user.workspace_id_active, socket.id);
     const users = onlineUsers.filter((user) => user.socketId !== socket.id);
     const userOnl = await User.findByPk(userId);
+
     if (userOnl) {
       await userOnl.update({ isOnline: true });
     }
-    if (users.length > 0 && userOnl) {
+
+    if (users?.length > 0 && userOnl) {
       for (const user of users) {
         io.to(user.socketId).emit("getUserOnline", userOnl);
       }

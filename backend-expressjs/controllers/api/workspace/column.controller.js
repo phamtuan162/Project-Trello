@@ -283,46 +283,40 @@ module.exports = {
   },
 
   moveCardDiffBoard: async (req, res) => {
-    const { user_id, card_id, activeColumn, overColumn } = req.body;
+    const { card_id, activeColumn, overColumn } = req.body;
     const response = {};
 
-    if (
-      !user_id ||
-      !card_id ||
-      !overColumn.cardOrderIds ||
-      !activeColumn.cardOrderIds
-    ) {
+    if (!card_id || !overColumn.cardOrderIds || !activeColumn.cardOrderIds) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
     try {
-      const card = await Card.findByPk(card_id, {
-        include: {
-          model: User,
-          as: "users",
-        },
-      });
+      const card = await Card.findByPk(card_id);
+
       if (!card) {
         return res.status(404).json({ status: 404, message: "Not found Card" });
       }
 
-      const columnOfActive = await Column.findByPk(activeColumn.id);
-      const columnOfOver = await Column.findByPk(overColumn.id);
+      const [columnOfActive, columnOfOver] = await Promise.all([
+        Column.findByPk(activeColumn.id),
+        Column.findByPk(overColumn.id),
+      ]);
 
       if (!columnOfActive || !columnOfOver) {
         return res
           .status(404)
-          .json({ status: 404, message: "Not found Column" });
+          .json({ status: 404, message: "Not found Column active or over" });
       }
 
       await card.update({ column_id: columnOfOver.id });
-      if (card.users) {
-        for (const user of card.users) {
-          if (+user.id !== +user_id) {
-            await card.removeUser(user);
-          }
-        }
-      }
+
+      await UserCard.destroy({
+        where: {
+          card_id: card.id,
+        },
+        force: true,
+      });
+
       await Promise.all([
         columnOfActive.update({ cardOrderIds: activeColumn.cardOrderIds }),
         columnOfOver.update({ cardOrderIds: overColumn.cardOrderIds }),
@@ -333,6 +327,8 @@ module.exports = {
         message: "Success",
       });
     } catch (error) {
+      console.log(error);
+
       Object.assign(response, {
         status: 500,
         message: "Sever error",

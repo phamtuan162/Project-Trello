@@ -65,3 +65,5 @@ export const interceptorLoadingElements = (calling) => {
     }
   }
 };
+
+// Hàm tiện ích để đảm bảo mảng trước khi push

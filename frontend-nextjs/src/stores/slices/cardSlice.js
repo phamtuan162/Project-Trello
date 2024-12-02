@@ -99,6 +99,18 @@ export const cardSlice = createSlice({
         }
       }
     },
+
+    attachmentFileInCard: (state, action) => {
+      const incomingAttachment = action.payload;
+
+      if (incomingAttachment) {
+        if (Array.isArray(work.attachments)) {
+          state.card.attachments.push(incomingAttachment);
+        } else {
+          state.card.attachments = [incomingAttachment];
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder

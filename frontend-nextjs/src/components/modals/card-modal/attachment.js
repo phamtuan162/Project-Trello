@@ -3,9 +3,11 @@ import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import vi from "date-fns/locale/vi";
 import { Avatar } from "@nextui-org/react";
-import axios from "axios";
+import authorizedAxiosInstance from "@/utils/authorizedAxios";
+
 import EditNameFile from "@/components/actions/card/editNameFile";
 import DeleteFile from "@/components/actions/card/deleteFile";
+
 const isImagePath = (path) => {
   const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp"];
   const extension = path.slice(path.lastIndexOf("."));
@@ -16,14 +18,17 @@ const getFileExtension = (fileName) => {
   const extension = parts[parts.length - 1];
   return extension;
 };
+
 const AttachmentItem = ({ attachment }) => {
   const downloadFile = async (id) => {
     try {
-      const res = await axios.get(
-        `http://localhost:3001/api/v1/attachment/download/${id}`,
+      const res = await authorizedAxiosInstance.get(
+        `/attachment/download/${id}`,
         { responseType: "blob" }
       );
+
       const blob = new Blob([res.data], { type: res.data.type });
+
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
       link.download = `${attachment.fileName}`;
