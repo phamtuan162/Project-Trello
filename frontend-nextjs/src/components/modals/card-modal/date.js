@@ -35,6 +35,7 @@ const DateCard = ({ checkRole }) => {
       )
       .then((res) => {
         dispatch(updateCard({ status: statusCard }));
+
         dispatch(
           updateCardInBoard({
             id: card.id,
@@ -89,12 +90,12 @@ const DateCard = ({ checkRole }) => {
               </span>
             ) : (
               <>
-                {card.status === "expired" && (
+                {card?.status === "expired" && (
                   <span className="px-1 rounded-sm h-[20px] bg-red-700 text-white font-medium text-xs flex items-center">
                     Hết hạn
                   </span>
                 )}
-                {card.status === "up_expired" && (
+                {card?.status === "up_expired" && (
                   <span className="px-1 rounded-sm h-[20px] bg-yellow-400 text-white font-medium text-xs flex items-center">
                     Sắp hết hạn
                   </span>

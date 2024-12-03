@@ -8,12 +8,15 @@ import {
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useMemo, useState, useRef } from "react";
+import { CheckIcon, X } from "lucide-react";
+
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import NotificationItem from "./notification-item";
-import { CheckIcon, X } from "lucide-react";
 import { markAsReadNotification } from "@/services/notifyApi";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
-const { updateNotification } = notificationSlice.actions;
+import { socket } from "@/socket";
+
+const { updateNotification, createNotification } = notificationSlice.actions;
 
 const Notification = ({ children, handleClickNotify }) => {
   const dispatch = useDispatch();
@@ -22,7 +25,6 @@ const Notification = ({ children, handleClickNotify }) => {
   const [loading, setLoading] = useState(false);
   const [offset, setOffset] = useState(0);
 
-  const socket = useSelector((state) => state.socket.socket);
   const user = useSelector((state) => state.user.user);
 
   // Thêm ref cho phần tử cuối cùng để theo dõi khi cuộn đến cuối
@@ -76,20 +78,18 @@ const Notification = ({ children, handleClickNotify }) => {
   //     }
   //   };
   // }, [filteredNotifications, loading]);
-  // useEffect(() => {
-  //   const handleGetNotification = (data) => {
-  //     const notificationsUpdate = [data, ...notifications];
-  //     dispatch(updateNotification(notificationsUpdate));
-  //   };
 
-  //   if (socket) {
-  //     socket.on("getNotification", handleGetNotification);
+  useEffect(() => {
+    const handleGetNotification = (data) => {
+      dispatch(createNotification(data));
+    };
 
-  //     return () => {
-  //       socket.off("getNotification", handleGetNotification);
-  //     };
-  //   }
-  // }, [socket]);
+    socket.on("getNotification", handleGetNotification);
+
+    return () => {
+      socket.off("getNotification", handleGetNotification);
+    };
+  }, [dispatch]);
 
   const handleMarkAsReadNotification = async () => {
     if (!notifications.length) return;

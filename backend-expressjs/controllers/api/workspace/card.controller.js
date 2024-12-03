@@ -15,7 +15,8 @@ const { object, string } = require("yup");
 const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
 const { format } = require("date-fns");
-// const { streamUpload } = require("../../../utils/cloudinary");
+const { getFileType } = require("../../../utils/getFileType");
+const { streamUploadFile } = require("../../../utils/cloudinary");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -687,9 +688,7 @@ module.exports = {
     const { id } = req.params;
     const user = req.user.dataValues;
     const file = req.file;
-    const { name } = req.body;
     const response = {};
-    const path = `http://localhost:3001/uploads/${file.filename}`;
 
     if (!file) {
       return res.status(400).json({ status: 400, message: "Bad request" });
@@ -702,14 +701,19 @@ module.exports = {
         return res.status(404).json({ status: 404, message: "Not found card" });
       }
 
-      // const resultUpload = await streamUpload(file.buffer, "attachmentFiles");
-      // console.log(resultUpload);
+      const fileType = getFileType(file.originalname);
+
+      const resultUpload = await streamUploadFile(
+        file.buffer,
+        "attachmentFiles",
+        fileType
+      );
 
       const attachment = await Attachment.create({
         user_id: user.id,
-        path: path,
+        path: resultUpload.secure_url,
         card_id: card.id,
-        fileName: name,
+        fileName: file.originalname,
       });
 
       const activity = await Activity.create({

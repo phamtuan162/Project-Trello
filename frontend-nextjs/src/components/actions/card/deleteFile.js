@@ -6,45 +6,56 @@ import {
   PopoverContent,
   PopoverTrigger,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { toast } from "react-toastify";
+
+import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 import { deleteFileApi } from "@/services/workspaceApi";
+
 const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const DeleteFile = ({ children, attachment }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
 
   const HandleDeleteFile = async () => {
-    setIsLoading(true);
-
     try {
-      const data = await deleteFileApi(attachment.id);
+      await toast
+        .promise(async () => await deleteFileApi(attachment.id), {
+          pending: "Đang xóa...",
+        })
+        .then((res) => {
+          const { activity } = res;
 
-      if (data.status === 200) {
-        const attachmentsUpdate = card.attachments.filter(
-          (item) => +item.id !== +attachment.id
-        );
-        const cardUpdate = {
-          ...card,
-          attachments: attachmentsUpdate,
-          activities: [data.data, ...card.activities],
-        };
-        dispatch(updateCard(cardUpdate));
-        setIsOpen(false);
-      } else {
-        const error = data.error;
-        toast.error(error);
-      }
+          const attachmentsUpdate = card.attachments.filter(
+            (item) => +item.id !== +attachment.id
+          );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            attachments: attachmentsUpdate,
+            activities: [activity, ...card.activities],
+          };
+
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          toast.success("Xóa thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
-      toast.error("An error occurred while deleting the file.");
-    } finally {
-      setIsLoading(false);
+      console.log(error);
     }
   };
 
@@ -83,14 +94,13 @@ const DeleteFile = ({ children, attachment }) => {
               onClick={() => HandleDeleteFile()}
               type="button"
               color="danger"
-              className="mt-2 w-full"
+              className="mt-2 w-full interceptor-loading"
               isDisabled={
-                (user?.role?.toLowerCase() !== "admin" &&
-                  user?.role?.toLowerCase() !== "owner") ||
-                isLoading
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
               }
             >
-              {isLoading ? <CircularProgress /> : "Xóa"}
+              Xóa
             </Button>
           </div>
         </div>

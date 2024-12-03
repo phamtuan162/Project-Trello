@@ -39,8 +39,10 @@ module.exports = {
     if (!attachment) {
       return next(new Error("No attachment found"));
     }
+
     const filePath =
       "public" + attachment.path.slice(attachment.path.indexOf("/uploads"));
+
     res.download(filePath);
   },
   update: async (req, res) => {
@@ -51,6 +53,7 @@ module.exports = {
     if (req.body.name) {
       rules.name = string().required("Chưa nhập tên file");
     }
+
     const schema = object(rules);
     const response = {};
 
@@ -90,20 +93,23 @@ module.exports = {
     const response = {};
     try {
       const attachment = await Attachment.findByPk(id);
+
+      if (!attachment) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found attachment " });
+      }
       const card = await Card.findByPk(attachment.card_id);
 
-      if (!attachment || !card) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+      if (!card) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found  card" });
       }
 
       const fileName = attachment.fileName;
-      const filePathOld =
-        "public" + attachment.path.slice(attachment.path.indexOf("/uploads"));
-      await attachment.destroy();
 
-      if (fs.existsSync(filePathOld)) {
-        fs.unlinkSync(filePathOld);
-      }
+      await attachment.destroy();
 
       const activity = await Activity.create({
         user_id: user.id,
@@ -115,10 +121,11 @@ module.exports = {
         workspace_id: user.workspace_id_active,
         desc: `đã xóa tập tin đính kèm ${fileName} khỏi thẻ này`,
       });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
-        data: activity,
+        activity,
       });
     } catch (error) {
       Object.assign(response, {

@@ -294,10 +294,6 @@ module.exports = {
             model: Workspace,
             as: "workspaces",
             paranoid: false,
-            // include: {
-            //   model: Board,
-            //   as: "boards",
-            // },
           },
           {
             model: Provider,
@@ -315,6 +311,8 @@ module.exports = {
       }
 
       await user.update({ isOnline: true });
+
+      user.dataValues.isOnline = true;
 
       const user_workspace_role = await UserWorkspaceRole.findOne({
         where: { user_id: id, workspace_id: user.workspace_id_active },

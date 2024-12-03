@@ -10,9 +10,9 @@ export default function pageCallback() {
   const router = useRouter();
   const handleLogin = async (query) => {
     try {
-      const { status } = await loginGoogleCallbackApi(query);
+      const { device_id_current, status } = await loginGoogleCallbackApi(query);
       if (200 <= status && status <= 200) {
-        setLocalStorage("device_id_current", data.device_id_current);
+        setLocalStorage("device_id_current", device_id_current);
         toast.success("Đăng nhập thành công");
         Cookies.set("isLogin", true, { expires: 14 });
         router.push("/");

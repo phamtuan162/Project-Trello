@@ -32,7 +32,6 @@ const AttachmentFile = ({ children }) => {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("name", file.name);
 
       await toast
         .promise(async () => await attachmentFileApi(card.id, formData), {

@@ -26,5 +26,17 @@ const streamUpload = (fileBuffer, folderName) => {
     streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
-
-module.exports = { streamUpload };
+const streamUploadFile = (fileBuffer, folderName, fileType) => {
+  return new Promise((resolve, reject) => {
+    // Tạo 1 cái luồng stream upload lên cloudinary
+    const stream = cloudinaryV2.uploader.upload_stream(
+      { resource_type: fileType, folder: folderName },
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
+module.exports = { streamUpload, streamUploadFile };

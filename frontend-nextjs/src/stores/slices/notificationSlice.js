@@ -14,6 +14,13 @@ export const notificationSlice = createSlice({
         ? action.payload
         : [action.payload];
     },
+    createNotification: (state, action) => {
+      if (Array.isArray(state.notifications)) {
+        state.notifications.unshift(action.payload);
+      } else {
+        state.notifications = [action.payload];
+      }
+    },
   },
   extraReducers: (builder) => {
     builder

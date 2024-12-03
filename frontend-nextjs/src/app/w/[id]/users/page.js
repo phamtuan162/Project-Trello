@@ -22,13 +22,14 @@ import {
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon } from "lucide-react";
 import { toast } from "react-toastify";
+import { useParams } from "next/navigation";
 
 import FormInviteUser from "../_components/FormInviteUser";
 import LeaveWorkspace from "./LeaveWorkspace";
 import { decentRoleApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import capitalize from "@/utils/capitalize";
-import { useParams } from "next/navigation";
+import { socket } from "@/socket";
 
 const INITIAL_VISIBLE_COLUMNS = ["name", "email", "role", "status", "actions"];
 
@@ -69,15 +70,14 @@ const roles = [
 
 const {
   updateActivitiesInWorkspace,
-  updateStatusUserInWorkspace,
   decentRoleUserInWorkspace,
+  updateStatusUserInWorkspace,
 } = workspaceSlice.actions;
 
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
   const userActive = useSelector((state) => state.user.user);
-  const socket = useSelector((state) => state.socket.socket);
   const { id } = useParams();
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState(new Set([]));
@@ -92,27 +92,23 @@ export default function PageWorkspaceUsers() {
   });
   const [page, setPage] = useState(1);
 
-  // useEffect(() => {
-  //   if (!socket || workspace?.users?.length === 0) return;
+  useEffect(() => {
+    const getStatusUser = (data) => {
+      console.log(data);
 
-  //   const handleUserOnline = (data) => {
-  //     if (!data?.id) return;
+      if (!data) return;
 
-  //     for (const item of workspace.users) {
-  //       if (item.id === data.id) {
-  //         if (item.isOnline === data.isOnline) return;
-  //       }
-  //     }
+      dispatch(
+        updateStatusUserInWorkspace({ id: data.id, isOnline: data.isOnline })
+      );
+    };
 
-  //     dispatch(updateStatusUserInWorkspace({ payload: data }));
-  //   };
+    socket.on("getStatusUser", getStatusUser);
 
-  //   socket.on("getUserOnline", handleUserOnline);
-
-  //   return () => {
-  //     socket.off("getUserOnline", handleUserOnline);
-  //   };
-  // }, [socket]);
+    return () => {
+      socket.off("getStatusUser", getStatusUser);
+    };
+  }, [dispatch]);
 
   const sortedUsers = useMemo(() => {
     if (!workspace?.users) return [];

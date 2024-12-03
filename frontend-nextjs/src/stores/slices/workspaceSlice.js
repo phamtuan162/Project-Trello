@@ -33,12 +33,10 @@ export const workspaceSlice = createSlice({
     },
 
     inviteUserInWorkspace: (state, action) => {
-      const { user, role } = action.payload;
-
-      if (Array.isArray(state.workspace.user)) {
-        state.workspace.users.push({ ...user, role });
+      if (Array.isArray(state.workspace.users)) {
+        state.workspace.users.push(action.payload);
       } else {
-        state.workspace.users = [...user, role];
+        state.workspace.users = [action.payload];
       }
     },
 

@@ -14,6 +14,7 @@ import {
   cancelUserWorkspaceApi,
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { socket } from "@/socket";
 
 const { cancelUserInWorkspace, updateActivitiesInWorkspace } =
   workspaceSlice.actions;
@@ -22,7 +23,6 @@ const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
   const workspace = useSelector((state) => state.workspace.workspace);
   const userActive = useSelector((state) => state.user.user);
-  const socket = useSelector((state) => state.socket.socket);
   const [isOpen, setIsOpen] = useState(false);
   const [removeLinks, setRemoveLinks] = useState(false);
 
@@ -47,7 +47,7 @@ const LeaveWorkspace = ({ user }) => {
           }
         )
         .then((res) => {
-          const { activity } = res;
+          const { activity, notification } = res;
           if (isSelfAction) {
             toast.success(
               "Rời đi thành công. Bạn sẽ chuyển đến Không gian làm việc khác."
@@ -58,7 +58,20 @@ const LeaveWorkspace = ({ user }) => {
             dispatch(cancelUserInWorkspace(user));
             dispatch(updateActivitiesInWorkspace(activity));
             toast.success("Loại bỏ thành viên thành công");
+
+            socket.emit("sendNotification", {
+              user_id: user.id,
+              notification,
+            });
           }
+
+          socket.emit("removeUser", {
+            userAction: {
+              id: userActive.id,
+              workspace_id_active: userActive.workspace_id_active,
+            },
+            userRemove: isSelfAction ? userActive : user,
+          });
         })
         .catch((error) => {
           console.log(error);

@@ -18,6 +18,7 @@ import { Message } from "@/components/Message/Message";
 import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { searchUser } from "@/services/userApi";
+import { socket } from "@/socket";
 
 const { inviteUserInWorkspace, updateActivitiesInWorkspace } =
   workspaceSlice.actions;
@@ -47,24 +48,21 @@ const FormInviteUser = ({ rolesUser }) => {
 
   const handleSearchUser = useCallback(
     debounce(async (inputKeyword) => {
-      setIsLoading(true);
       try {
-        const { data, status } = await searchUser({
+        const { data: usersSearch, status } = await searchUser({
           keyword: inputKeyword,
           limit: 4,
         });
         if (200 <= status && status <= 299) {
-          const users = data;
-          setUsersSearch(users);
-        } else {
-          setUsersSearch([]);
+          setUsersSearch(usersSearch);
         }
       } catch (error) {
         console.log(error);
+        setUsersSearch([]);
       } finally {
         setIsLoading(false);
       }
-    }, 2000),
+    }, 1000),
     []
   );
 
@@ -75,7 +73,8 @@ const FormInviteUser = ({ rolesUser }) => {
   }, [handleSearchUser]);
 
   useEffect(() => {
-    if (keyword.length.trim() >= 2) {
+    if (keyword?.length >= 2 && !userInvite) {
+      setIsLoading(true);
       setIsSearch(true);
       handleSearchUser(keyword);
     } else {
@@ -112,27 +111,28 @@ const FormInviteUser = ({ rolesUser }) => {
           { pending: "Đang thêm ..." }
         )
         .then((res) => {
-          const { activity } = res;
+          const { activity, notification } = res;
           dispatch(
-            inviteUserInWorkspace({ user: userInvite, role: selectedRole })
+            inviteUserInWorkspace({ ...userInvite, role: selectedRole })
           );
           dispatch(updateActivitiesInWorkspace(activity));
 
-          // socket.emit("sendNotification", {
-          //   user_id: userInvite.id,
-          //   userName: user.name,
-          //   userAvatar: user.avatar,
-          //   type: "invite_user",
-          //   content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${selectedRole}`,
-          // });
+          socket.emit("sendNotification", {
+            user_id: userInvite.id,
+            notification,
+          });
+
+          socket.emit("inviteUser", {
+            userInvite: {
+              id: user.id,
+              workspace_id_active: user.workspace_id_active,
+            },
+            userInvited: { ...userInvite, role: selectedRole },
+          });
 
           toast.success("Mời người dùng vào Không gian làm việc thành công");
-          resetForm();
 
-          // socket.emit("inviteUser", {
-          //   userInviteId: user.id,
-          //   userInvitedId: userInvite.id,
-          // });
+          resetForm();
         })
         .catch((error) => {
           console.log(error);
@@ -249,6 +249,7 @@ const FormInviteUser = ({ rolesUser }) => {
                       <p className="hidden last:block text-xs  text-center text-muted-foreground">
                         Không tìm thấy người dùng nào
                       </p>
+
                       {isLoading ? (
                         <CircularProgress size={18} />
                       ) : (

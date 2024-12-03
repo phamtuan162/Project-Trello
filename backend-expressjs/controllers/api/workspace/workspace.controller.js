@@ -1,20 +1,17 @@
 const {
   Workspace,
   Board,
-  Column,
   Card,
   User,
   Role,
   UserWorkspaceRole,
   Activity,
-  Work,
   Mission,
-  Comment,
   UserCard,
-  Sequelize,
+  Notification,
 } = require("../../../models/index");
 const { object, string, date } = require("yup");
-const { Op, where } = require("sequelize");
+const { Op } = require("sequelize");
 const WorkspaceTransformer = require("../../../transformers/workspace/workspace.transformer");
 const moment = require("moment");
 
@@ -396,10 +393,21 @@ module.exports = {
         desc: `đã thêm ${user.name} vào Không gian làm việc này`,
       });
 
+      const notification = await Notification.create({
+        user_id: user.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        type: "invite_user",
+        content: `đã mời bạn vào Không gian làm việc ${workspace.name} với tư cách ${role}`,
+        status: "unread",
+        onClick: false,
+      });
+
       Object.assign(response, {
         status: 200,
         message: "Success",
         activity,
+        notification,
       });
     } catch (error) {
       console.log(error);
@@ -612,9 +620,19 @@ module.exports = {
         desc: `đã loại bỏ ${user.name} khỏi Không gian làm việc này`,
       });
 
+      const notification = await Notification.create({
+        user_id: user.id,
+        userName: userMain.name,
+        userAvatar: userMain.avatar,
+        type: "invite_user",
+        content: `đã loại bỏ bạn khỏi Không gian làm việc ${workspace.name} `,
+        status: "unread",
+        onClick: false,
+      });
+
       return res
         .status(200)
-        .json({ status: 200, message: "Success", activity });
+        .json({ status: 200, message: "Success", activity, notification });
     } catch (error) {
       console.log(error);
 

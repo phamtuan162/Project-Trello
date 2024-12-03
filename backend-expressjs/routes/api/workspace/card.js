@@ -25,7 +25,7 @@ router.post("/copy-card", authMiddleware, cardController.copyCard);
 router.post(
   "/uploads-file/:id",
   authMiddleware,
-  multerMiddleware,
+  multerAttachmentMiddleware.attachment.single("file"),
   cardController.uploads
 );
 router.put(

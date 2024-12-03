@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import vi from "date-fns/locale/vi";
 import { Avatar } from "@nextui-org/react";
 import authorizedAxiosInstance from "@/utils/authorizedAxios";
+import axios from "axios";
 
 import EditNameFile from "@/components/actions/card/editNameFile";
 import DeleteFile from "@/components/actions/card/deleteFile";
@@ -13,6 +14,7 @@ const isImagePath = (path) => {
   const extension = path.slice(path.lastIndexOf("."));
   return imageExtensions.includes(extension.toLowerCase());
 };
+
 const getFileExtension = (fileName) => {
   const parts = fileName.split(".");
   const extension = parts[parts.length - 1];
@@ -20,19 +22,24 @@ const getFileExtension = (fileName) => {
 };
 
 const AttachmentItem = ({ attachment }) => {
-  const downloadFile = async (id) => {
+  const downloadRawFile = async () => {
     try {
-      const res = await authorizedAxiosInstance.get(
-        `/attachment/download/${id}`,
-        { responseType: "blob" }
-      );
+      // Sử dụng axios để tải file với responseType là 'blob'
+      const response = await axios.get(attachment.path, {
+        responseType: "blob",
+      });
 
-      const blob = new Blob([res.data], { type: res.data.type });
+      // Tạo blob từ dữ liệu trả về
+      const blob = response.data;
 
+      // Tạo liên kết để tải file về
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      link.download = `${attachment.fileName}`;
+      link.download = `${attachment.fileName}`; // Đặt tên file khi tải về
+
+      // Kích hoạt tải file
       link.click();
+      window.URL.revokeObjectURL(link.href); // Dọn dẹp sau khi tải xong
     } catch (error) {
       console.log(error);
     }
@@ -66,10 +73,7 @@ const AttachmentItem = ({ attachment }) => {
             })}
           </span>
           <span className="attachment-thumbnail-details-title-options  ">
-            <a
-              className="underline"
-              onClick={() => downloadFile(attachment.id)}
-            >
+            <a className="underline" onClick={() => downloadRawFile()}>
               Tải xuống
             </a>
           </span>{" "}

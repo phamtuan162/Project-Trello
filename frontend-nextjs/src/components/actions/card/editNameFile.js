@@ -7,18 +7,20 @@ import {
   PopoverTrigger,
   Input,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
-import { CloseIcon } from "@/components/Icon/CloseIcon";
-import { createWorkApi } from "@/services/workspaceApi";
 import { toast } from "react-toastify";
+
+import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateFileApi } from "@/services/workspaceApi";
+
 const { updateCard } = cardSlice.actions;
+const { updateCardInBoard } = boardSlice.actions;
+
 const EditNameFile = ({ children, attachment }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState(attachment.fileName);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
@@ -29,30 +31,40 @@ const EditNameFile = ({ children, attachment }) => {
 
   const HandleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      const data = await updateFileApi(attachment.id, { fileName: name });
+      await toast
+        .promise(
+          async () => await updateFileApi(attachment.id, { fileName: name }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          const { data } = res;
 
-      if (data.status === 200) {
-        const attachmentUpdates = card.attachments.map((attachment) =>
-          +attachment.id === +data.data.id ? data.data : attachment
-        );
+          const attachmentUpdates = card.attachments.map((attachment) =>
+            +attachment.id === +data.id ? data : attachment
+          );
 
-        const cardUpdate = {
-          ...card,
-          attachments: attachmentUpdates,
-        };
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            attachments: attachmentUpdates,
+          };
 
-        dispatch(updateCard(cardUpdate));
-        setIsOpen(false);
-      } else {
-        toast.error(data.error);
-      }
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          toast.success("Cập nhật thành công");
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
     } catch (error) {
-      toast.error("An error occurred while updating the file.");
-    } finally {
-      setIsLoading(false);
+      console.log(error);
     }
   };
 
@@ -96,14 +108,13 @@ const EditNameFile = ({ children, attachment }) => {
           <Button
             type="submit"
             color="primary"
-            className="mt-2"
+            className="mt-2 interceptor-loading"
             isDisabled={
-              (user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner") ||
-              isLoading
+              user?.role?.toLowerCase() !== "admin" &&
+              user?.role?.toLowerCase() !== "owner"
             }
           >
-            {isLoading ? <CircularProgress /> : "Cập nhật"}
+            Cập nhật
           </Button>
         </form>
       </PopoverContent>

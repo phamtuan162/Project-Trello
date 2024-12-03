@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import workspace from "../models/workspace.js";
+
 /**
  * Module dependencies.
  */
@@ -48,74 +50,74 @@ const removeUser = (socketId) => {
 const getUser = (userId) => {
   return onlineUsers.find((user) => +user.id === +userId);
 };
+
+const updateUser = (incomingUser) => {
+  const user = onlineUsers.find((u) => +u.id === +incomingUser.id);
+
+  if (user) {
+    Object.key(incomingUser).forEach(([key]) => {
+      if (key !== "id") user[key] = incomingUser[key];
+    });
+  }
+};
 /**
  * Listen on provided port, on all network interfaces.
  */
+console.log(onlineUsers);
+
 io.on("connection", (socket) => {
-  socket.on("newUser", async (userId) => {
-    const user = await User.findByPk(userId);
+  socket.on("newUser", (userOnl) => {
+    if (!userOnl) return;
 
-    if (!user) {
-      return null;
-    }
+    // Thêm người dùng mới vào danh sách online
+    addNewUser(userOnl.id, userOnl.workspace_id_active, socket.id);
 
-    addNewUser(userId, user.workspace_id_active, socket.id);
-    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
-    const userOnl = await User.findByPk(userId);
-
-    if (userOnl) {
-      await userOnl.update({ isOnline: true });
-    }
-
-    if (users?.length > 0 && userOnl) {
-      for (const user of users) {
-        io.to(user.socketId).emit("getUserOnline", userOnl);
-      }
-    }
+    // Phát sự kiện thông báo trạng thái người dùng
+    socket.broadcast.emit("getStatusUser", userOnl);
   });
+
   socket.on("inviteUser", async (body) => {
-    const { userInviteId, userInvitedId } = body;
-    const userInvited = await User.findByPk(userInvitedId, {
-      include: {
-        model: Workspace,
-        as: "workspaces",
-        include: { model: Board, as: "boards" },
-      },
-    });
-    const userInvite = await User.findByPk(userInviteId);
-    if (!userInvited || !userInvite) {
-      return;
-    }
+    const { userInvite, userInvited } = body;
+
+    if (!userInvited || !userInvite) return;
 
     const usersWorkspace = onlineUsers.filter(
       (user) =>
-        (+user.workspaceId === +userInvite.workspace_id_active &&
-          +user.id !== +userInvite.id) ||
-        +user.id === +userInvited.id
+        +user.workspaceId === +userInvite.workspace_id_active &&
+        +user.id !== +userInvite.id
     );
 
-    if (usersWorkspace.length > 0) {
-      for (const user of usersWorkspace) {
-        io.to(user.socketId).emit("getUserWorkspace", {
-          user: userInvited,
-          type: "invite_user",
-        });
-      }
+    const userInvitedOnl = getUser(userInvited.id);
+
+    if (usersWorkspace.length) {
+      const socketIds = usersWorkspace.map((user) => user.socketId);
+
+      io.to(socketIds).emit("getUserWorkspace", {
+        user: userInvited,
+        type: "invite_user",
+      });
+    }
+
+    if (userInvitedOnl) {
+      const workspace = await Workspace.findByPk(
+        userInvite.workspace_id_active
+      );
+
+      workspace.dataValues.role = userInvited.role;
+
+      io.to(userInvitedOnl.socketId).emit("getUserWorkspace", {
+        workspace,
+        user: userInvited,
+        type: "invite_user",
+      });
     }
   });
+
   socket.on("removeUser", async (body) => {
-    const { userActionId, userRemoveId } = body;
-    const userRemove = await User.findByPk(userRemoveId, {
-      include: {
-        model: Workspace,
-        as: "workspaces",
-        include: { model: Board, as: "boards" },
-      },
-    });
-    const userAction = await User.findByPk(userActionId);
-    if (!userRemove || !userAction) {
-      return;
-    }
+    const { userAction, userRemove } = body;
+
+    if (!userRemove || !userAction) return;
+
     const usersWorkspace = onlineUsers.filter(
       (user) =>
         (+user.workspaceId === +userAction.workspace_id_active &&
@@ -123,13 +125,14 @@ io.on("connection", (socket) => {
         +user.id === +userRemove.id
     );
 
-    if (usersWorkspace.length > 0) {
-      for (const user of usersWorkspace) {
-        io.to(user.socketId).emit("getUserWorkspace", {
-          user: userRemove,
-          type: "remove_user",
-        });
-      }
+    if (usersWorkspace.length) {
+      const socketIds = usersWorkspace.map((user) => user.socketId);
+
+      io.to(socketIds).emit("getUserWorkspace", {
+        workspace: { id: userAction.workspace_id_active },
+        user: userRemove,
+        type: "remove_user",
+      });
     }
   });
   socket.on("updateWorkspace", async (body) => {
@@ -150,115 +153,82 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("sendNotification", async (body) => {
-    const { user_id } = body;
+    const { user_id, notification } = body;
+
+    if (!user_id || !notification) return;
+
     const receiver = getUser(user_id);
 
-    const notification = await Notification.create({
-      ...body,
-      status: "unread",
-      onClick: false,
-    });
     if (receiver) {
       io.to(receiver.socketId).emit("getNotification", notification);
     }
   });
 
-  socket.on("logout", async (body) => {
-    const user_id = body;
-    const userOff = onlineUsers.find((user) => +user.id === +user_id);
-    const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
+  socket.on("logout", async () => {
+    const userOff = onlineUsers.find((user) => user.socketId === socket.id);
 
-    if (userUpdate) {
-      await userUpdate.update({ isOnline: false });
-    }
+    if (!userOff) return;
 
-    const users = onlineUsers.filter((user) => +user.id !== +user_id);
-
-    if (users.length > 0) {
-      users.forEach((user) => {
-        io.to(user.socketId).emit("getUserOnline", userUpdate);
-      });
-    }
-
-    if (userOff?.board_id && onlineUsers.length > 1) {
-      onlineUsers.forEach((user) => {
-        if (+user.board_id === +userOff.board_id && +user.id !== userOff.id) {
-          const usersVisit = onlineUsers.filter(
-            (item) =>
-              +item.board_id === +userOff.board_id && +item.id !== userOff.id
-          );
-          io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
-        }
-      });
-    }
-
+    // Cập nhật trạng thái người dùng và xóa khỏi danh sách online
     removeUser(socket.id);
+
+    // Thông báo trạng thái người dùng offline
+    socket.broadcast.emit("getStatusUser", { id: userOff.id, isOnline: false });
+
+    // Xử lý nếu người dùng đang ở trong board
+    if (userOff.board_id) {
+      const usersInBoard = onlineUsers.filter(
+        (user) => user.board_id === userOff.board_id
+      );
+
+      if (usersInBoard.length) {
+        const socketIds = usersInBoard.map((user) => user.socketId);
+        io.to(socketIds).emit("getUserVisitBoard", usersInBoard);
+      }
+    }
   });
 
   socket.on("visitBoard", async (body) => {
     const { board_id, user_id } = body;
-    const receiver = getUser(user_id);
 
-    if (user_id && board_id && receiver) {
-      const user = onlineUsers.find(
-        (user) => +user.id === +user_id && +user.board_id === +board_id
-      );
+    if (!board_id || !user_id) return;
 
-      if (!user) {
-        const users = onlineUsers.filter(
-          (item) => +item.board_id === +board_id || +item.id === +user_id
-        );
+    updateUser({ id: user_id, board_id });
 
-        const usersOnline = onlineUsers.map((user) => {
-          if (+user.id === +user_id) {
-            io.to(user.socketId).emit("getUserVisitBoard", users);
-            return { ...user, board_id: board_id };
-          }
-          if (+user.board_id === +board_id) {
-            io.to(user.socketId).emit("getUserVisitBoard", users);
-          }
-          if (+user.board_id === +receiver.board_id) {
-            const usersVisit = onlineUsers.filter(
-              (item) =>
-                +item.board_id === +receiver.board_id && +item.id !== +user_id
-            );
-            io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
-          }
-          return user;
-        });
+    const usersVisitBoard = onlineUsers.filter(
+      (user) => +user.board_id === +board_id
+    );
 
-        onlineUsers = usersOnline;
-      }
+    if (usersVisitBoard.length) {
+      const socketIds = usersVisitBoard.map((user) => user.socketId);
+
+      io.to(socketIds).emit("getUserVisitBoard", usersVisitBoard);
     }
   });
 
   socket.on("disconnect", async () => {
     const userOff = onlineUsers.find((user) => user.socketId === socket.id);
-    const userUpdate = userOff?.id ? await User.findByPk(userOff.id) : null;
 
-    if (userUpdate) {
-      await userUpdate.update({ isOnline: false });
-    }
-
-    const users = onlineUsers.filter((user) => user.socketId !== socket.id);
-
-    users.forEach((user) => {
-      io.to(user.socketId).emit("getUserOnline", userUpdate);
-    });
-
-    if (userOff?.board_id && onlineUsers.length > 1) {
-      onlineUsers.forEach((user) => {
-        if (+user.board_id === +userOff.board_id && +user.id !== +userOff.id) {
-          const usersVisit = onlineUsers.filter(
-            (item) =>
-              +item.board_id === +userOff.board_id && +item.id !== +userOff.id
-          );
-          io.to(user.socketId).emit("getUserVisitBoard", usersVisit);
-        }
-      });
-    }
-
+    if (!userOff) return;
+    const boardId = userOff.board_id || null;
+    // Cập nhật trạng thái người dùng và xóa khỏi danh sách online
+    await User.update({ isOnline: false }, { where: { id: userOff.id } });
     removeUser(socket.id);
+
+    // Thông báo trạng thái người dùng offline
+    socket.broadcast.emit("getStatusUser", { id: userOff.id, isOnline: false });
+
+    // Xử lý nếu người dùng đang ở trong board
+    if (boardId) {
+      const usersInBoard = onlineUsers.filter(
+        (user) => user.board_id === boardId
+      );
+
+      if (usersInBoard.length) {
+        const socketIds = usersInBoard.map((user) => user.socketId);
+        io.to(socketIds).emit("getUserVisitBoard", usersInBoard);
+      }
+    }
   });
 });
 server.listen(port);
