@@ -345,6 +345,8 @@ module.exports = {
         data: user,
       });
     } catch (error) {
+      console.log(error);
+
       Object.assign(response, {
         status: 500,
         message: "Sever error",

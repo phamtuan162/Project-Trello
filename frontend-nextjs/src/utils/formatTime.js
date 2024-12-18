@@ -81,3 +81,17 @@ export const validateHourMinute = (hour, minute) => {
 export function truncateTimeFromDate(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
+
+export function getStatusByDate(date) {
+  if (!date) return "normal"; // Không có ngày, trạng thái mặc định
+
+  const now = new Date();
+  const targetDate = new Date(date);
+
+  if (now > targetDate) return "expired"; // Đã hết hạn
+
+  const daysDifference = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)); // Tính số ngày còn lại
+  if (daysDifference <= 2) return "up_expired"; // Gần hết hạn (trong vòng 2 ngày)
+
+  return "normal"; // Trạng thái bình thường
+}

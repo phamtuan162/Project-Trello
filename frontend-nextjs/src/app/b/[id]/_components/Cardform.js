@@ -15,46 +15,14 @@ export function CardForm({ column }) {
   const dispatch = useDispatch();
   const textareaRef = useRef(null);
   const btnAddRef = useRef(null);
-  const formRef = useRef(null);
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
   const [isEditing, setIsEditing] = useState(false);
-  const isHandlingClick = useRef(false);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
-
-    const handleClickOutside = async (event) => {
-      // Nếu đang xử lý click trước đó thì bỏ qua sự kiện này
-      if (isHandlingClick.current) return;
-
-      // Đánh dấu là đang xử lý click
-      isHandlingClick.current = true;
-
-      if (formRef.current && !formRef.current.contains(event.target)) {
-        const title = textareaRef.current.value.trim();
-        if (title === "") {
-          setIsEditing(false);
-        } else {
-          btnAddRef.current.click();
-        }
-      }
-
-      // Sau khi xử lý xong, reset flag
-      setTimeout(() => {
-        isHandlingClick.current = false;
-      }, 300); // Tạm dừng 300ms trước khi chấp nhận click tiếp theo
-    };
-
-    // Đăng ký event listener
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      // Hủy bỏ event listener khi component unmount hoặc isEditing thay đổi
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [isEditing]);
 
   const createNewCard = async () => {
@@ -106,13 +74,14 @@ export function CardForm({ column }) {
   }
 
   return isEditing ? (
-    <div className="p-2 pb-0" ref={formRef}>
+    <div className="p-2 pb-0">
       <Textarea
         placeholder="Nhập tiêu đề cho thẻ..."
         ref={textareaRef}
         className="text-lg"
         maxRows={1}
         onKeyDown={handleKeyDown}
+        onBlur={() => setIsEditing(false)}
       />
 
       <div className="flex items-center gap-x-2 mt-2">

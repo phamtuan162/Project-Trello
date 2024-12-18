@@ -19,22 +19,15 @@ export function Card({ card }) {
   const user = useSelector((state) => state.user.user);
 
   const missions = useMemo(() => {
-    const extractMissions = (works) => {
-      let allMissions = [];
-      works.forEach((work) => {
+    const extractMissions = (works) =>
+      works.reduce((allMissions, work) => {
         if (Array.isArray(work.missions)) {
-          allMissions = [...allMissions, ...work.missions];
+          allMissions.push(...work.missions);
         }
-        if (work.works) {
-          allMissions = [...allMissions, ...extractMissions(work.works)];
-        }
-      });
-      return allMissions;
-    };
+        return allMissions;
+      }, []);
 
-    if (!card || !card.works) {
-      return [];
-    }
+    if (!card?.works) return [];
 
     return extractMissions(card.works);
   }, [card?.works]);
@@ -65,11 +58,9 @@ export function Card({ card }) {
   const [isEdit, setIsEdit] = useState(false);
   const [isAssign, setIsAssign] = useState(false);
 
-  const checkRoleBoard = useMemo(() => {
-    return (
-      user?.role?.toLowerCase() === "admin" ||
-      user?.role?.toLowerCase() === "owner"
-    );
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
   }, [user?.role]);
 
   const backgroundCard = useMemo(() => {
@@ -120,7 +111,7 @@ export function Card({ card }) {
   }, [card?.startDateTime, card?.endDateTime]);
 
   const missionsCard = useMemo(() => {
-    if (missions?.length > 0) {
+    if (missions?.length) {
       return (
         <div
           className={`text-xs mt-1  inline-flex items-center gap-1  ${
@@ -136,7 +127,7 @@ export function Card({ card }) {
   }, [missions, missionSuccess]);
 
   const attachmentsCard = useMemo(() => {
-    if (card?.attachments?.length > 0) {
+    if (card?.attachments?.length) {
       return (
         <div className="flex gap-1 items-center">
           <Paperclip size={12} /> {card.attachments.length}
@@ -147,7 +138,7 @@ export function Card({ card }) {
   }, [card.attachments]);
 
   const commentsCard = useMemo(() => {
-    if (card?.comments?.length > 0) {
+    if (card?.comments?.length) {
       return (
         <div className="flex gap-1 items-center">
           <MessageCircle size={12} /> {card.comments.length}
@@ -158,7 +149,7 @@ export function Card({ card }) {
   }, [card?.comments]);
 
   const usersCard = useMemo(() => {
-    if (card?.users?.length > 0) {
+    if (card?.users?.length) {
       return (
         <AvatarGroup max={2} className="justify-end group-avatar-1 mt-1.5">
           {card.users.map((user) => (
@@ -188,7 +179,7 @@ export function Card({ card }) {
       ref={setNodeRef}
       style={dndKitCardStyles}
       {...attributes}
-      {...(checkRoleBoard ? listeners : {})}
+      {...(checkRole ? listeners : {})}
       onClick={SetCardActive}
       role="button"
       onMouseEnter={() => setIsEdit(true)}
@@ -201,7 +192,7 @@ export function Card({ card }) {
           {card?.title}
           <div
             className={`${
-              !isEdit || !checkRoleBoard ? "hidden" : ""
+              !isEdit || !checkRole ? "hidden" : ""
             } absolute right-2 -top-1 z-50 `}
           >
             <AssignUser

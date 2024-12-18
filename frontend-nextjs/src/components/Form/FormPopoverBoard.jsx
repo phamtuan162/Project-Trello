@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -9,7 +9,6 @@ import {
   Button,
   Select,
   SelectItem,
-  CircularProgress,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
@@ -18,29 +17,28 @@ import FormPicker from "./FormPicker";
 import { CloseIcon } from "../Icon/CloseIcon";
 import { createBoard } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
-import { boardSlice } from "@/stores/slices/boardSlice";
 
 const { createBoardInWorkspace } = workspaceSlice.actions;
-const { setBoardCurrent } = boardSlice.actions;
 
 export default function FormPopoverBoard({
   children,
-  workspaces,
   placement = "top",
-  open,
   length,
   ...props
 }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const closeRef = useRef(null);
-  const [isOpen, setIsOpen] = useState(open);
-  const [isCreate, setIsCreate] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
 
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
+
   const onSubmit = async (formData) => {
-    setIsCreate(true);
     const image = formData.get("image");
     const workspace_id = formData.get("workspace");
     const title = formData.get("title");
@@ -60,7 +58,6 @@ export default function FormPopoverBoard({
           const { data, activity } = res;
 
           dispatch(createBoardInWorkspace({ board: data, activity: activity }));
-          dispatch(setBoardCurrent(data));
 
           toast.success("Tạo bảng thành công");
 
@@ -75,8 +72,6 @@ export default function FormPopoverBoard({
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsCreate(false);
     }
   };
 
@@ -87,7 +82,13 @@ export default function FormPopoverBoard({
         length >= 4 ? "-translate-y-[60px]" : ""
       } `}
       isOpen={isOpen}
-      onOpenChange={(open) => setIsOpen(open)}
+      onOpenChange={(open) => {
+        if (checkRole) {
+          setIsOpen(open);
+        } else {
+          toast.info("Bạn không đủ quyền thực hiện hành động này!");
+        }
+      }}
       {...props}
     >
       <PopoverTrigger>
@@ -173,15 +174,12 @@ export default function FormPopoverBoard({
             </div>
 
             <Button
-              isDisabled={
-                user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner"
-              }
+              isDisabled={!checkRole}
               color="primary"
               type="submit"
               className="w-full interceptor-loading"
             >
-              {isCreate ? <CircularProgress size="sm" /> : "Tạo mới"}
+              Tạo mới
             </Button>
           </form>
         )}

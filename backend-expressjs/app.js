@@ -30,7 +30,10 @@ const cors = require("cors");
 const corsOptions = {
   origin: (origin, callback) => {
     // Kiểm tra nếu origin có trong whitelist, cho phép hoặc từ chối
-    if (whitelist.includes(origin) || !origin) {
+    if (
+      whitelist.includes(origin) ||
+      (!origin && process.env.NODE_ENV === "development")
+    ) {
       // Nếu origin hợp lệ hoặc không có origin (ví dụ, đối với các yêu cầu từ localhost)
       callback(null, true);
     } else {
@@ -47,6 +50,17 @@ var app = express();
 app.use(helmet());
 app.use(compression());
 app.use(cors(corsOptions));
+
+// Middleware xóa cache HTTP
+app.use((req, res, next) => {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 
 // const session = require("express-session");
 // const RedisStore = require("connect-redis")(session);

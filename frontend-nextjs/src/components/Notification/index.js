@@ -35,7 +35,7 @@ const Notification = ({ children, handleClickNotify }) => {
   );
 
   const filteredNotifications = useMemo(() => {
-    if (!notifications || notifications.length === 0) return [];
+    if (!notifications?.length) return [];
 
     return notifications
       .filter(({ status }) => {
@@ -81,6 +81,8 @@ const Notification = ({ children, handleClickNotify }) => {
 
   useEffect(() => {
     const handleGetNotification = (data) => {
+      if (!data) return;
+
       dispatch(createNotification(data));
     };
 

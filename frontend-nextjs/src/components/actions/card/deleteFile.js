@@ -13,6 +13,7 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { deleteFileApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -35,6 +36,7 @@ const DeleteFile = ({ children, attachment }) => {
           const attachmentsUpdate = card.attachments.filter(
             (item) => +item.id !== +attachment.id
           );
+
           const cardUpdate = {
             id: card.id,
             column_id: card.column_id,
@@ -47,6 +49,8 @@ const DeleteFile = ({ children, attachment }) => {
           dispatch(updateCardInBoard(cardUpdate));
 
           toast.success("Xóa thành công");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

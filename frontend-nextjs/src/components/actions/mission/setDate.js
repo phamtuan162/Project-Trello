@@ -68,9 +68,6 @@ const SetDate = ({ children, mission }) => {
 
   const [isSelectEndTime, setIsSelectEndTime] = useState(true);
 
-  const inputRefEnd = useRef(null);
-  const inputRefEndHour = useRef(null);
-
   let days = eachDayOfInterval({
     start: firstDayCurrentMonth,
     end: endOfMonth(firstDayCurrentMonth),
@@ -123,6 +120,8 @@ const SetDate = ({ children, mission }) => {
           dispatch(
             updateCardInBoard({ id: card.id, column_id: card.column_id, works })
           );
+
+          toast.success("Gỡ bỏ thành công");
 
           if (mission.user_id === user.id) {
             dispatch(
@@ -230,11 +229,6 @@ const SetDate = ({ children, mission }) => {
   const handleTimeChange = (e) => {
     const endDateHour = e.target.value;
 
-    if (!endDateHour) {
-      toast.error("Giờ phút không hợp lệ!");
-      return;
-    }
-
     const endDateTimeUpdate = new Date(selectedDay);
 
     // Tách giờ và phút
@@ -258,7 +252,7 @@ const SetDate = ({ children, mission }) => {
   };
 
   const HandleReset = async () => {
-    if (isOpen) setIsOpen(false);
+    setIsOpen(false);
     setSelectedDay(
       mission?.endDateTime ? new Date(mission?.endDateTime) : addDays(today, 1)
     );
@@ -404,7 +398,6 @@ const SetDate = ({ children, mission }) => {
                 />
 
                 <Input
-                  ref={inputRefEnd}
                   type="datetime"
                   size="xs"
                   name="endTime"
@@ -418,7 +411,6 @@ const SetDate = ({ children, mission }) => {
                   className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
                 />
                 <Input
-                  ref={inputRefEndHour}
                   type="time"
                   size="xs"
                   name="endTimeHour"

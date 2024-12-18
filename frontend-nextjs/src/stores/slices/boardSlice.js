@@ -3,6 +3,7 @@ import { fetchBoard } from "../middleware/fetchBoard";
 import { mapOrder } from "@/utils/sorts";
 import { isEmpty } from "lodash";
 import { generatePlaceholderCard } from "@/utils/formatters";
+import { socket } from "@/socket";
 const initialState = {
   board: {},
   status: "idle",
@@ -13,6 +14,10 @@ export const boardSlice = createSlice({
   reducers: {
     setBoardCurrent: (state, action) => {
       state.board = action.payload;
+    },
+    clearBoard: (state, action) => {
+      socket.emit("outBoard", state.board.id);
+      state.board = null;
     },
     updateBoard: (state, action) => {
       // state.board = action.payload;
@@ -41,6 +46,8 @@ export const boardSlice = createSlice({
           column.cards.push(incomingCard);
           column.cardOrderIds.push(incomingCard.id);
         }
+
+        socket.emit("updateBoard", state.board);
       }
     },
 
@@ -59,6 +66,8 @@ export const boardSlice = createSlice({
         }
 
         column.cardOrderIds = column.cards.map((c) => c.id);
+
+        socket.emit("updateBoard", state.board);
       }
     },
 
@@ -108,6 +117,8 @@ export const boardSlice = createSlice({
         Object.entries(incomingColumn).forEach(([key, value]) => {
           if (value !== undefined && key !== "id") column[key] = value;
         });
+
+        socket.emit("updateBoard", state.board);
       }
     },
 
@@ -124,7 +135,9 @@ export const boardSlice = createSlice({
         state.board.columns = [incomingColumn];
       }
 
-      state.board.columnOrderIds = state.board.column.map((c) => c.id);
+      state.board.columnOrderIds = state.board.columns.map((c) => c.id);
+
+      socket.emit("updateBoard", state.board);
     },
 
     copyColumnInBoard: (state, action) => {
@@ -138,6 +151,17 @@ export const boardSlice = createSlice({
 
       state.board.columns.push(incomingColumn);
       state.board.columnOrderIds.push(incomingColumn.id);
+
+      socket.emit("updateBoard", state.board);
+    },
+    deleteColumnInBoard: (state, action) => {
+      if (action.payload) {
+        state.board.columns = state.board.columns.filter(
+          (c) => +c.id !== +action.payload
+        );
+        state.board.columnOrderIds = state.board.columns.map((c) => c.id);
+        socket.emit("updateBoard", state.board);
+      }
     },
   },
   extraReducers: (builder) => {
@@ -153,8 +177,9 @@ export const boardSlice = createSlice({
 
           board.columns.forEach((column) => {
             if (isEmpty(column.cards)) {
-              column.cards = [generatePlaceholderCard(column)];
-              column.cardOrderIds = [generatePlaceholderCard(column).id];
+              const placeholderCard = generatePlaceholderCard(column);
+              column.cards = [placeholderCard];
+              column.cardOrderIds = [placeholderCard.id];
             } else {
               column.cards = mapOrder(column.cards, column.cardOrderIds, "id");
             }

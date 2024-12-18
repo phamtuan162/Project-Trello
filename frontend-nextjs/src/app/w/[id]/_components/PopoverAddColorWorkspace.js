@@ -14,6 +14,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { userSlice } from "@/stores/slices/userSlice";
+import { socket } from "@/socket";
+import tinycolor from "tinycolor2";
 
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateWorkspaceInUser } = userSlice.actions;
@@ -33,34 +35,34 @@ const colors = [
   "#fbdba7",
 ];
 
-const PopoverAddColorWorkspace = ({ workspace }) => {
-  const user = useSelector((state) => state.user.user);
-  const dispatch = useDispatch();
-  const [colorWorkspace, setColorWorkspace] = useState("");
+// Chuyển đổi tất cả màu sang dạng #RRGGBB
+const normalizedColors = colors.map(
+  (color) => tinycolor(color).toHexString().toUpperCase() // Chuyển sang dạng #RRGGBB
+);
 
-  useEffect(() => {
-    if (workspace?.color) {
-      setColorWorkspace(workspace.color);
-    }
-  }, [workspace.color]);
+const PopoverAddColorWorkspace = ({ workspace }) => {
+  const dispatch = useDispatch();
+  const [colorWorkspace, setColorWorkspace] = useState(workspace?.color || "");
 
   const addColorWorkspace = async () => {
+    if (workspace.color === colorWorkspace) {
+      toast.info("Màu không thay đổi.");
+      return;
+    }
+    let form = { color: colorWorkspace };
+
     try {
       await toast
-        .promise(
-          async () =>
-            await updateWorkspaceApi(workspace.id, {
-              color: colorWorkspace,
-            }),
-          { pending: "Đang cập nhật..." }
-        )
+        .promise(async () => await updateWorkspaceApi(workspace.id, form), {
+          pending: "Đang cập nhật...",
+        })
         .then((res) => {
-          dispatch(updateWorkspace({ color: colorWorkspace }));
-          dispatch(
-            updateWorkspaceInUser({ id: workspace.id, color: colorWorkspace })
-          );
+          dispatch(updateWorkspace(form));
+          dispatch(updateWorkspaceInUser({ id: workspace.id, ...form }));
 
           toast.success("Thay đổi màu không gian làm việc thành công");
+
+          socket.emit("updateWorkspace", form);
         })
         .catch((error) => {
           console.log(error);
@@ -93,7 +95,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
             Màu không gian làm việc
           </span>
           <div className="flex items-center w-full  mt-3 flex-wrap">
-            {colors.map((color, index) => (
+            {normalizedColors.map((color, index) => (
               <div key={index}>
                 <Input
                   type="radio"
@@ -101,7 +103,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
                   name="color-workspace"
                   value={color}
                   id={color}
-                  onChange={(e) => setColorWorkspace(e.target.value)}
+                  onChange={(e) => setColorWorkspace(e.toast.value)}
                 />
                 <label
                   htmlFor={color}
@@ -121,7 +123,7 @@ const PopoverAddColorWorkspace = ({ workspace }) => {
           </div>
 
           <Button
-            isDisabled={colorWorkspace === ""}
+            isDisabled={!colorWorkspace}
             onClick={addColorWorkspace}
             type="button"
             className="interceptor-loading rounded-lg h-[40px] mt-4 w-full flex items-center justify-center border-1 border-solid border-secondary-400 bg-white text-secondary-400 hover:bg-secondary-400 hover:text-white"

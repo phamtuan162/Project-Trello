@@ -8,21 +8,21 @@ import {
   Avatar,
   User,
 } from "@nextui-org/react";
-import ThemeSwitcher from "./ThemeSwitcher";
-import { logoutApi } from "@/services/authApi";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
-export function UserMenu({ user }) {
-  const socket = useSelector((state) => state.socket.socket);
+import { socket } from "@/socket";
 
+import ThemeSwitcher from "./ThemeSwitcher";
+import { logoutApi } from "@/services/authApi";
+
+export function UserMenu({ user }) {
   const router = useRouter();
   const handleLogOut = async () => {
     toast.warning("Vui lòng click vào đây nếu bạn muốn đăng xuất? ", {
       onClick: async () => {
         try {
           await logoutApi(user.id);
-          // socket.emit("logout", user.id);
+          socket.emit("logout");
         } catch (error) {
           console.log(error);
         }

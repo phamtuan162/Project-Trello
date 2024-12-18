@@ -18,7 +18,7 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
     const updatedColumns = board?.columns?.map((column) => {
       if (column?.cards?.length > 0) {
         const updatedCards = column.cards.map((item) =>
-          +item.id === +card.id ? card : item
+          +item.id === +card?.id ? card : item
         );
         return { ...column, cards: updatedCards };
       }

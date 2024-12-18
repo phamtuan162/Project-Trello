@@ -14,10 +14,12 @@ import {
   cancelUserWorkspaceApi,
 } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { userSlice } from "@/stores/slices/userSlice";
 import { socket } from "@/socket";
 
 const { cancelUserInWorkspace, updateActivitiesInWorkspace } =
   workspaceSlice.actions;
+const { updateWorkspaceInUser } = userSlice.actions;
 
 const LeaveWorkspace = ({ user }) => {
   const dispatch = useDispatch();
@@ -57,6 +59,12 @@ const LeaveWorkspace = ({ user }) => {
           } else {
             dispatch(cancelUserInWorkspace(user));
             dispatch(updateActivitiesInWorkspace(activity));
+            dispatch(
+              updateWorkspaceInUser({
+                id: workspace.id,
+                total_user: +workspace.users.length - 1,
+              })
+            );
             toast.success("Loại bỏ thành viên thành công");
 
             socket.emit("sendNotification", {

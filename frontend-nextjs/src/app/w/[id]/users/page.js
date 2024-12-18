@@ -94,9 +94,8 @@ export default function PageWorkspaceUsers() {
 
   useEffect(() => {
     const getStatusUser = (data) => {
-      console.log(data);
-
       if (!data) return;
+      console.log(data);
 
       dispatch(
         updateStatusUserInWorkspace({ id: data.id, isOnline: data.isOnline })
@@ -204,6 +203,14 @@ export default function PageWorkspaceUsers() {
         return;
       }
 
+      const notification = {
+        user_id: user.id,
+        userName: userActive.name,
+        userAvatar: userActive.avatar,
+        type: "cancel_user",
+        content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
+      };
+
       try {
         await toast
           .promise(
@@ -211,6 +218,7 @@ export default function PageWorkspaceUsers() {
               await await decentRoleApi(id, {
                 user_id: user.id,
                 role: roleNew,
+                notification,
               }),
             { pending: "Đang cập nhật..." }
           )
@@ -220,13 +228,10 @@ export default function PageWorkspaceUsers() {
             dispatch(updateActivitiesInWorkspace(activity));
             toast.success("Cập nhật role thành công");
 
-            // socket.emit("sendNotification", {
-            //   user_id: user.id,
-            //   userName: userActive.name,
-            //   userAvatar: userActive.avatar,
-            //   type: "cancel_user",
-            //   content: `đã thay đổi tư cách của bạn thành ${roleNew} trong Không gian làm việc ${workspace.name}`,
-            // });
+            socket.emit("sendNotification", {
+              user_id: user.id,
+              notification,
+            });
           })
           .catch((error) => {
             console.log(error);

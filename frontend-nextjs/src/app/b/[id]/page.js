@@ -27,10 +27,13 @@ export default function BoardIdPage() {
   const { id: boardId } = useParams();
 
   useEffect(() => {
-    if ((!board || +boardId !== +board?.id) && user?.id && workspace?.id) {
+    if (!boardId || !user?.id || !workspace?.id) return;
+
+    // Chỉ gọi dispatch nếu board chưa được tải hoặc board id không khớp với boardId
+    if (!board?.id) {
       dispatch(fetchBoard({ boardId, router }));
     }
-  }, [user, workspace]);
+  }, [boardId, user, workspace]);
 
   const moveColumns = async (dndOrderedColumns) => {
     try {
@@ -88,7 +91,7 @@ export default function BoardIdPage() {
 
       const nextColumn = dndOrderedColumns.find((c) => c.id === nextColumnId);
 
-      const { activity, status } = await moveCardToDifferentColumnAPI({
+      const { activity } = await moveCardToDifferentColumnAPI({
         nextColumn: nextColumn,
         card_id: currentCardId,
         prevColumnId: prevColumnId,
@@ -106,7 +109,7 @@ export default function BoardIdPage() {
     }
   };
 
-  if (!board.id || +board.id !== +boardId) {
+  if (!board?.id || +board?.id !== +boardId) {
     return <Loading />;
   }
 

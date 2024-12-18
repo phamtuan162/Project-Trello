@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState, Suspense } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSelector } from "react-redux";
 import {
   Input,
@@ -32,7 +32,7 @@ export default function PageBoards({ params }) {
     return workspace.boards
       .filter((b) => b.workspace_id)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-  }, [workspace.boards]);
+  }, [workspace?.boards]);
 
   const filteredItems = useMemo(() => {
     let filteredBoards = [...boards];

@@ -10,13 +10,14 @@ const {
   Workspace,
   Comment,
   UserCard,
+  Notification,
 } = require("../../../models/index");
 const { object, string } = require("yup");
-const { Op } = require("sequelize");
 const CardTransformer = require("../../../transformers/workspace/card.transformer");
 const { format } = require("date-fns");
 const { getFileType } = require("../../../utils/getFileType");
 const { streamUploadFile } = require("../../../utils/cloudinary");
+const { extractErrors } = require("../../../utils/errorUtils");
 module.exports = {
   index: async (req, res) => {
     const { order = "asc", sort = "id", q, column_id } = req.query;
@@ -182,7 +183,7 @@ module.exports = {
       }
 
       if (file) {
-        const resultUpload = await streamUpload(file.buffer, "cardCovers");
+        const resultUpload = await streamUploadFile(file.buffer, "cardCovers");
         await card.update({ background: resultUpload.secure_url });
       } else {
         await card.update(body);
@@ -217,11 +218,9 @@ module.exports = {
         data: new CardTransformer(cardUpdate),
       });
     } catch (e) {
-      console.log(file);
+      console.log(e);
 
-      const errors = Object.fromEntries(
-        e?.inner.map(({ path, message }) => [path, message])
-      );
+      const errors = extractErrors(e);
       Object.assign(response, {
         status: 400,
         message: "Bad Request",
@@ -298,28 +297,27 @@ module.exports = {
   assignUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
-    const { user_id } = req.body;
+    const { user_id, notification: body } = req.body;
     const response = {};
 
-    if (!user_id || !id) {
+    if (!user_id || !body) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
-    const card = await Card.findByPk(id);
+    const [card, user] = await Promise.all([
+      Card.findByPk(id),
+      User.findByPk(user_id),
+    ]);
 
-    if (!card) {
-      return res.status(404).json({ status: 404, message: "Not found card" });
-    }
-
-    const user = await User.findByPk(user_id);
-
-    if (!user) {
-      return res.status(404).json({ status: 404, message: "Not found user" });
+    if (!user || !card) {
+      return res
+        .status(404)
+        .json({ status: 404, message: "Not found user or card" });
     }
 
     await card.addUser(user);
 
-    await Activity.create({
+    const activity = await Activity.create({
       user_id: userMain.id,
       userName: userMain.name,
       userAvatar: userMain.avatar,
@@ -331,47 +329,36 @@ module.exports = {
         +userMain.id === +user_id ? `đã tham gia` : `đã thêm ${user.name} vào`,
     });
 
-    const cardUpdated = await Card.findByPk(card.id, {
-      include: [
-        {
-          model: User,
-          as: "users",
-          attributes: { exclude: ["password"] }, // Loại trừ trường password
-        },
-        {
-          model: Activity,
-          as: "activities",
-        },
-      ],
-    });
+    const notificationNew = await Notification.create(body);
 
     Object.assign(response, {
       status: 200,
       message: "Success",
-      cardUpdated,
+      activity,
+      notification: notificationNew,
     });
     res.status(response.status).json(response);
   },
   unAssignUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
-    const { user_id } = req.body;
+    const { user_id, notification: body } = req.body;
     const response = {};
 
-    if (!user_id || !id) {
+    if (!user_id || !body) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
     try {
-      const card = await Card.findByPk(id);
-      if (!card) {
-        return res.status(404).json({ status: 404, message: "Not found card" });
-      }
+      const [card, user] = await Promise.all([
+        Card.findByPk(id),
+        User.findByPk(user_id),
+      ]);
 
-      const user = await User.findByPk(user_id);
-
-      if (!user) {
-        return res.status(404).json({ status: 404, message: "Not found user" });
+      if (!user || !card) {
+        return res
+          .status(404)
+          .json({ status: 404, message: "Not found user or card" });
       }
 
       await card.removeUser(user);
@@ -390,24 +377,13 @@ module.exports = {
             : `đã loại ${user.name} khỏi`,
       });
 
-      const cardUpdated = await Card.findByPk(card.id, {
-        include: [
-          {
-            model: User,
-            as: "users",
-            attributes: { exclude: ["password"] }, // Loại trừ trường password
-          },
-          {
-            model: Activity,
-            as: "activities",
-          },
-        ],
-      });
+      const notificationNew = await Notification.create(body);
 
       Object.assign(response, {
         status: 200,
         message: "Success",
-        cardUpdated,
+        activity,
+        notification: notificationNew,
       });
     } catch (error) {
       console.log(error);

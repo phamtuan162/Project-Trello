@@ -1,10 +1,12 @@
 "use client";
-import { Column } from "./Column";
-import { ListForm } from "./ListForm";
+
 import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
+
+import { Column } from "./Column";
+import { ListForm } from "./ListForm";
 
 export function ListColumn({ columns }) {
   return (

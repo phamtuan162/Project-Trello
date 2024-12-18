@@ -14,6 +14,7 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateFileApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -56,6 +57,8 @@ const EditNameFile = ({ children, attachment }) => {
           dispatch(updateCardInBoard(cardUpdate));
 
           toast.success("Cập nhật thành công");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

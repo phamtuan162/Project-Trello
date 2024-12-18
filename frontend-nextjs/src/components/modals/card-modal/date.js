@@ -6,11 +6,12 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-import FormDate from "@/components/Form/FormDate";
+import SetDateCard from "@/components/actions/card/setDateCard";
 import { cn } from "@/lib/utils";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { getStatusByDate } from "@/utils/formatTime";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -19,28 +20,23 @@ const DateCard = ({ checkRole }) => {
   const dispatch = useDispatch();
   const card = useSelector((state) => state.card.card);
 
-  const [isSelected, setIsSelected] = useState(card?.status === "success");
+  const statusCard = Boolean(card?.status === "success");
 
   const HandleChangeStatusDate = async (selected) => {
-    setIsSelected(selected);
-
-    const statusCard = selected ? "success" : card.status;
+    const status = selected ? "success" : getStatusByDate(card.endDateTime);
 
     await toast
-      .promise(
-        async () => await updateCardApi(card.id, { status: statusCard }),
-        {
-          pending: "Đang cập nhật...",
-        }
-      )
+      .promise(async () => await updateCardApi(card.id, { status }), {
+        pending: "Đang cập nhật...",
+      })
       .then((res) => {
-        dispatch(updateCard({ status: statusCard }));
+        dispatch(updateCard({ status }));
 
         dispatch(
           updateCardInBoard({
             id: card.id,
             column_id: card.column_id,
-            status: statusCard,
+            status,
           })
         );
         toast.success("Cập nhật thành công");
@@ -62,8 +58,8 @@ const DateCard = ({ checkRole }) => {
       <div className="items-center flex gap-2 cursor-pointer text-xs grow font-medium">
         {checkRole && (
           <Checkbox
-            isSelected={isSelected}
-            value={isSelected}
+            isSelected={statusCard}
+            value={statusCard}
             onValueChange={(selected) => HandleChangeStatusDate(selected)}
             classNames={{
               base: cn("inline-flex max-w-md w-3  bg-content1 m-0 p-0 mr-2"),
@@ -71,7 +67,7 @@ const DateCard = ({ checkRole }) => {
           ></Checkbox>
         )}
 
-        <FormDate>
+        <SetDateCard>
           <Button
             className="items-center flex p-1 h-full  px-2 bg-gray-200 text-xs font-medium"
             style={{ color: "#172b4d" }}
@@ -84,7 +80,7 @@ const DateCard = ({ checkRole }) => {
             )}
             {card?.endDateTime &&
               format(card?.endDateTime, "d 'tháng' M 'lúc' HH':'mm")}
-            {isSelected ? (
+            {statusCard ? (
               <span className="px-1 rounded-sm h-[20px] bg-green-700 text-white font-medium text-xs flex items-center">
                 Hoàn tất
               </span>
@@ -105,7 +101,7 @@ const DateCard = ({ checkRole }) => {
 
             <ChevronDown size={15} />
           </Button>
-        </FormDate>
+        </SetDateCard>
       </div>
     </div>
   );

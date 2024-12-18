@@ -14,58 +14,52 @@ import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 
 import { deleteBoard } from "@/services/workspaceApi";
 import { useRouter } from "next/navigation";
+import { socket } from "@/socket";
 
-const { updateWorkspace } = workspaceSlice.actions;
+const { deleteBoardInWorkspace, updateActivitiesInWorkspace } =
+  workspaceSlice.actions;
 
 const DeleteBoard = ({ children }) => {
   const dispatch = useDispatch();
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const workspace = useSelector((state) => state.workspace.workspace);
 
-  const handleDeleteColumn = async () => {
-    setIsLoading(true);
-
+  const handleDeleteBoard = async () => {
     try {
       await toast
         .promise(async () => await deleteBoard(board.id), {
           pending: "Đang xóa...",
         })
-        .then(() => {
-          const boardsUpdate =
-            workspace?.boards?.filter((item) => +item.id !== +board.id) || [];
+        .then((res) => {
+          const { activity } = res;
 
-          dispatch(updateWorkspace({ boards: boardsUpdate }));
+          if (activity) {
+            dispatch(updateActivitiesInWorkspace(activity));
+          }
+
+          dispatch(deleteBoardInWorkspace(board.id));
 
           router.push(`/w/${board.workspace_id}/boards`);
           toast.success("Xóa thành công");
-          //   const users = workspace.users.filter(
-          //     (item) => +item.id !== +user.id
-          //   );
 
-          //   if (users.length > 0)
-          //     for (const userItem of users) {
-          //       socket.emit("sendNotification", {
-          //         user_id: userItem.id,
-          //         userName: user.name,
-          //         userAvatar: user.avatar,
-          //         type: "delete_board",
-          //         content: `đã xóa Bảng ${board.title} ra khỏi Không gian làm việc ${workspace.name} `,
-          //       });
-          //     }
+          socket.emit("deleteBoard", {
+            board_id: board.id,
+            workspace_id: workspace.id,
+          });
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
   return (
@@ -86,7 +80,7 @@ const DeleteBoard = ({ children }) => {
               className="w-full text-center font-medium text-xs"
               style={{ color: "#44546f" }}
             >
-              Xóa danh sách thẻ
+              Xóa bảng làm việc
             </p>
             <button
               onClick={() => setIsOpen(false)}
@@ -110,13 +104,12 @@ const DeleteBoard = ({ children }) => {
               className="w-full h-[40px] mt-2 interceptor-loading"
               color="danger"
               isDisabled={
-                (user?.role?.toLowerCase() !== "admin" &&
-                  user?.role?.toLowerCase() !== "owner") ||
-                isLoading
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
               }
-              onClick={() => handleDeleteColumn()}
+              onClick={handleDeleteBoard}
             >
-              {isLoading ? <CircularProgress /> : "Xóa bảng"}
+              Xóa Bảng
             </Button>
           </div>
         </div>

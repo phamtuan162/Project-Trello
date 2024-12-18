@@ -1,5 +1,7 @@
 "use client";
 import { useSelector } from "react-redux";
+import { useParams } from "next/navigation";
+
 import Chart1 from "./Chart1";
 import Chart2 from "./Chart2";
 import Chart3 from "./Chart3";
@@ -8,7 +10,6 @@ import Chart5 from "./Chart5";
 import Chart6 from "./Chart6";
 
 import Loading from "@/components/Loading/Loading";
-import { useParams } from "next/navigation";
 
 const typeCharts = [
   {
@@ -80,7 +81,7 @@ export default function dashboardPage() {
     }
   };
 
-  if (!board.id || +board.id !== +boardId) {
+  if (!board?.id || +board?.id !== +boardId) {
     return <Loading />;
   }
 

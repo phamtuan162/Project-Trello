@@ -9,24 +9,22 @@ import {
 import { useState, useRef, useMemo } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
+import { Copy, Trash, ArrowRight, ArrowUpDown } from "lucide-react";
+import { useSelector } from "react-redux";
+
 import MoveColumn from "@/components/actions/column/moveColumn";
 import CopyColumn from "@/components/actions/column/copyColumn";
 import SortCard from "@/components/actions/column/sortCard";
 import DeleteColumn from "@/components/actions/column/deleteColumn";
-import { Copy, Trash, ArrowRight, ArrowUpDown } from "lucide-react";
-import { useSelector } from "react-redux";
+
 export function ListOptions({ column }) {
-  const closeRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const user = useSelector((state) => state.user.user);
 
-  const isAdminOrOwner = useMemo(() => {
-    if (!user) return null;
-
-    const role = user.role.toLowerCase();
-
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
     return role === "admin" || role === "owner";
-  }, [user.role]);
+  }, [user?.role]);
 
   const options = useMemo(
     () =>
@@ -42,7 +40,7 @@ export function ListOptions({ column }) {
             </CopyColumn>
           ),
         },
-        isAdminOrOwner && {
+        checkRole && {
           label: "Xóa danh sách",
           component: (
             <DeleteColumn column={column}>
@@ -76,7 +74,7 @@ export function ListOptions({ column }) {
           ),
         },
       ].filter(Boolean),
-    [isAdminOrOwner]
+    [checkRole]
   );
   return (
     <Popover
@@ -96,8 +94,7 @@ export function ListOptions({ column }) {
             <h1 className="grow text-center text-sm font-medium">Thao tác</h1>
             <Button
               className="min-w-3 rounded-lg bg-white hover:bg-default-300 text-xs p-1 absolute right-1 top-2 h-auto"
-              onClick={() => setIsOpen(!isOpen)}
-              ref={closeRef}
+              onClick={() => setIsOpen(false)}
             >
               <CloseIcon />
             </Button>

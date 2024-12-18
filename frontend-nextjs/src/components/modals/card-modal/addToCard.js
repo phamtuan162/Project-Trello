@@ -8,13 +8,13 @@ import { toast } from "react-toastify";
 import AssignUser from "@/app/b/[id]/_components/AssignUser";
 import { SquareCheck } from "@/components/Icon/SquareCheck";
 import FormBackground from "@/components/Form/FormBackground";
-import FormDate from "@/components/Form/FormDate";
 import { updateCardApi } from "@/services/workspaceApi";
 import AddWork from "@/components/actions/work/addWork";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import AttachmentFile from "@/components/actions/card/attchmentFile";
 import { singleFileValidator } from "@/utils/validators";
+import SetDateCard from "@/components/actions/card/setDateCard";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -126,7 +126,7 @@ const AddToCard = () => {
       label: "Ngày",
       icon: <Clock size={16} />,
       component: (
-        <FormDate>
+        <SetDateCard>
           <Button
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}
@@ -134,7 +134,7 @@ const AddToCard = () => {
             <Clock size={16} />
             Ngày
           </Button>
-        </FormDate>
+        </SetDateCard>
       ),
     },
     {

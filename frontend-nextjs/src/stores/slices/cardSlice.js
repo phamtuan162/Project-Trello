@@ -31,6 +31,11 @@ export const cardSlice = createSlice({
       } else {
         state.card.activities = [action.payload];
       }
+
+      socket.emit("updateCard", {
+        id: state.card.id,
+        activities: state.card.activities,
+      });
     },
     updateCard: (state, action) => {
       if (action.payload) {
@@ -46,6 +51,11 @@ export const cardSlice = createSlice({
       } else {
         state.card.comments = [action.payload];
       }
+
+      socket.emit("updateCard", {
+        id: state.card.id,
+        comments: state.card.comments,
+      });
     },
 
     createWorkInCard: (state, action) => {
@@ -54,6 +64,11 @@ export const cardSlice = createSlice({
       } else {
         state.card.works = [action.payload];
       }
+
+      socket.emit("updateCard", {
+        id: state.card.id,
+        works: state.card.works,
+      });
     },
     updateWorkInCard: (state, action) => {
       const incomingWork = action.payload;
@@ -63,6 +78,11 @@ export const cardSlice = createSlice({
       if (work) {
         Object.entries(incomingWork).forEach(([key, value]) => {
           if (value !== undefined && key !== "id") work[key] = value;
+        });
+
+        socket.emit("updateCard", {
+          id: state.card.id,
+          works: state.card.works,
         });
       }
     },
@@ -80,6 +100,11 @@ export const cardSlice = createSlice({
         } else {
           work.missions = [incomingMission];
         }
+
+        socket.emit("updateCard", {
+          id: state.card.id,
+          works: state.card.works,
+        });
       }
     },
     updateMissionInCard: (state, action) => {
@@ -96,6 +121,11 @@ export const cardSlice = createSlice({
           Object.entries(incomingMission).forEach(([key, value]) => {
             if (value !== undefined && key !== "id") mission[key] = value;
           });
+
+          socket.emit("updateCard", {
+            id: state.card.id,
+            works: state.card.works,
+          });
         }
       }
     },
@@ -109,6 +139,11 @@ export const cardSlice = createSlice({
         } else {
           state.card.attachments = [incomingAttachment];
         }
+
+        socket.emit("updateCard", {
+          id: state.card.id,
+          attachments: state.card.attachments,
+        });
       }
     },
   },

@@ -11,15 +11,17 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+
 import FormBackground from "@/components/Form/FormBackground";
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import DeleteBoard from "@/components/actions/board/deleteBoard";
-import { useDispatch, useSelector } from "react-redux";
+import { socket } from "@/socket";
+
 const { updateBoard } = boardSlice.actions;
 
-export function BoardOptions({}) {
-  const socket = useSelector((state) => state.socket.socket);
+export default function BoardOptions() {
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -46,11 +48,16 @@ export function BoardOptions({}) {
         )
         .then((res) => {
           dispatch(updateBoard({ background: image }));
+
           toast.success("Cập nhật ảnh nền thành công");
-          setIsOpen(false);
+
+          socket.emit("updateBoard", { background: image });
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
         });
     } catch (error) {
       console.log(error);

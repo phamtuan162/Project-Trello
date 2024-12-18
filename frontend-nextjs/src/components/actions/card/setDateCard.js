@@ -14,11 +14,8 @@ import {
   isToday,
   parse,
   startOfToday,
-  startOfWeek,
-  subDays,
   addDays,
   compareAsc,
-  addWeeks,
 } from "date-fns";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
@@ -29,13 +26,14 @@ import {
   Checkbox,
   Input,
 } from "@nextui-org/react";
+import { toast } from "react-toastify";
 
-import { CloseIcon } from "../Icon/CloseIcon";
+import { CloseIcon } from "../../Icon/CloseIcon";
 import { DateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { validateHourMinute, truncateTimeFromDate } from "@/utils/formatTime";
-import { toast } from "react-toastify";
+import { socket } from "@/socket";
 
 let colStartClasses = [
   "",
@@ -51,38 +49,38 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-const { updateCard, updateActivityInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
-const FormDate = ({ children }) => {
+const SetDateCard = ({ children }) => {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
   const user = useSelector((state) => state.user.user);
   let today = startOfToday();
 
+  const [isOpen, setIsOpen] = useState(false);
+
   let [selectedDay, setSelectedDay] = useState(today);
-  const [checkFocus, setCheckFocus] = useState("");
+
+  const [checkFocus, setCheckFocus] = useState("end");
   let [currentMonth, setCurrentMonth] = useState(format(today, "MMM-yyyy"));
   let firstDayCurrentMonth = parse(currentMonth, "MMM-yyyy", new Date());
 
   const [startDateTime, setStartDateTime] = useState(
-    card?.startDateTime ? new Date(card.startDateTime) : addDays(today, 1)
+    card?.startDateTime ? new Date(card.startDateTime) : null
   );
 
   const [endDateTime, setEndDateTime] = useState(
-    card?.endDateTime
-      ? new Date(card.endDateTime)
-      : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
+    card?.endDateTime ? new Date(card.endDateTime) : addDays(today, 2)
   );
 
   const [isSelectEndTime, setIsSelectEndTime] = useState(true);
   const [isSelectStartTime, setIsSelectStartTime] = useState(
-    card?.startDateTime && true
+    Boolean(card?.startDateTime)
   );
+
   const inputRefStart = useRef(null);
   const inputRefEnd = useRef(null);
-  const inputRefEndHour = useRef(null);
 
   const checkRole = useMemo(() => {
     const role = user?.role?.toLowerCase();
@@ -105,113 +103,15 @@ const FormDate = ({ children }) => {
   }
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (checkFocus === "start") {
-      if (endDateTime && compareAsc(selectedDay, endDateTime) === 1) {
-        setEndDateTime(addDays(selectedDay, 1));
-      }
       setStartDateTime(selectedDay);
     }
     if (checkFocus === "end") {
-      if (startDateTime && compareAsc(selectedDay, startDateTime) === -1) {
-        setStartDateTime(subDays(selectedDay, 1));
-      }
       setEndDateTime(selectedDay);
     }
   }, [selectedDay]);
-
-  const UpdateDate = async (formData) => {
-    try {
-      const startDate = formData.get("startTime");
-      const endDate = formData.get("endTime");
-      const endDateHour = formData.get("endTimeHour");
-
-      // Kiểm tra ngày/tháng/năm không hợp lệ
-      const startDateTimeUpdate = startDateTime
-        ? parse(startDate, "dd/MM/yyyy", new Date())
-        : startDateTime;
-      let endDateTimeUpdate = endDateTime
-        ? parse(endDate, "dd/MM/yyyy", new Date())
-        : endDateTime;
-
-      if (
-        (startDateTimeUpdate && !isValid(startDateTimeUpdate)) ||
-        (endDateTimeUpdate && !isValid(endDateTimeUpdate))
-      ) {
-        toast.error("Ngày tháng năm không hợp lệ!");
-        return;
-      }
-
-      // Kiểm tra giờ/phút không hợp lệ
-      if (endDateTimeUpdate && endDateHour) {
-        const [hour, minute] = endDateHour.split(":");
-        if (!validateHourMinute(hour, minute)) {
-          toast.error("Giờ phút không hợp lệ!");
-          inputRefEndHour.current.focus();
-          return;
-        }
-        endDateTimeUpdate.setHours(hour);
-        endDateTimeUpdate.setMinutes(minute);
-      }
-
-      // Kiểm tra ngày đầu phải lớn hơn thời gian hiện tại
-      if (
-        startDateTimeUpdate &&
-        compareAsc(startDateTimeUpdate, new Date()) === -1
-      ) {
-        toast.error("Ngày bắt đầu phải lớn hơn thời gian hiện tại!");
-        return;
-      }
-
-      // Kiểm tra ngày cuối phải lớn hơn ngày đầu
-      if (
-        endDateTimeUpdate &&
-        compareAsc(startDateTimeUpdate, endDateTimeUpdate) === 1
-      ) {
-        toast.error("Ngày kết thúc phải lớn hơn ngày đầu!");
-        return;
-      }
-
-      await toast
-        .promise(
-          async () =>
-            await DateCardApi(card.id, {
-              startDateTime: startDateTimeUpdate,
-              endDateTime: endDateTimeUpdate,
-              status: "pending",
-            }),
-          { pending: "Đang cập nhật..." }
-        )
-        .then((res) => {
-          const { activity } = res;
-
-          const cardUpdate = {
-            id: card.id,
-            column_id: card.column_id,
-            startDateTime: startDateTimeUpdate,
-            endDateTime: endDateTimeUpdate,
-            status: "pending",
-          };
-
-          dispatch(updateCard(cardUpdate));
-
-          if (activity) {
-            updateActivityInCard(activity);
-          }
-
-          dispatch(updateCardInBoard(cardUpdate));
-
-          toast.success("Cập nhật thành công");
-        })
-        .catch((error) => {
-          console.log(error);
-        })
-        .finally(() => {
-          setIsOpen(false);
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const CancelDate = async () => {
     try {
@@ -223,12 +123,12 @@ const FormDate = ({ children }) => {
               endDateTime: null,
               status: null,
             }),
-          { pending: "Đang hủy bỏ..." }
+          { pending: "Đang gỡ bỏ..." }
         )
         .then((res) => {
           const { activity } = res;
 
-          const cardUpdate = {
+          let cardUpdate = {
             id: card.id,
             column_id: card.column_id,
             startDateTime: null,
@@ -236,15 +136,17 @@ const FormDate = ({ children }) => {
             status: null,
           };
 
-          dispatch(updateCard(cardUpdate));
-
           if (activity) {
-            updateActivityInCard(activity);
+            cardUpdate.activities = [activity, ...card.activities];
           }
+
+          dispatch(updateCard(cardUpdate));
 
           dispatch(updateCardInBoard(cardUpdate));
 
-          toast.success("Hủy bỏ thành công");
+          toast.success("Gỡ bỏ thành công");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);
@@ -257,19 +159,128 @@ const FormDate = ({ children }) => {
     }
   };
 
+  const UpdateDate = async (e) => {
+    e.preventDefault();
+
+    if (!startDateTime && !endDateTime) {
+      CancelDate();
+      return;
+    }
+
+    try {
+      if (startDateTime && !isValid(startDateTime)) {
+        toast.error("Ngày bắt đầu không hợp lệ!");
+        return;
+      }
+
+      if (endDateTime && !isValid(endDateTime)) {
+        toast.error("Ngày kết thúc không hợp lệ!");
+        return;
+      }
+
+      if (startDateTime && compareAsc(startDateTime, new Date()) === -1) {
+        // Kiểm tra ngày bắt đầu phải lớn hơn thời gian hiện tại
+        toast.error("Ngày bắt đầu phải lớn hơn thời gian hiện tại!");
+        return;
+      }
+
+      // Kiểm tra ngày kết thúc phải lớn hơn thời gian hiện tại
+      if (endDateTime && compareAsc(endDateTime, new Date()) === -1) {
+        toast.error("Ngày kết thúc phải lớn hơn ngày bắt đầu!");
+        return;
+      }
+
+      // Kiểm tra ngày kết thúc phải lớn hơn ngày bắt đầu
+      if (
+        endDateTime &&
+        startDateTime &&
+        compareAsc(startDateTime, endDateTime) === 1
+      ) {
+        toast.error("Ngày kết thúc phải lớn hơn ngày bắt đầu!");
+        return;
+      }
+
+      await toast
+        .promise(
+          async () =>
+            await DateCardApi(card.id, {
+              startDateTime: startDateTime,
+              endDateTime: endDateTime,
+              status: "normal",
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then((res) => {
+          const { activity } = res;
+
+          let cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            startDateTime: startDateTime,
+            endDateTime: endDateTime,
+            status: "normal",
+          };
+
+          if (activity) {
+            cardUpdate.activities = [activity, ...card.activities];
+          }
+
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          toast.success("Cập nhật thành công");
+
+          socket.emit("updateCard", cardUpdate);
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleTimeChange = (e) => {
+    const endDateHour = e.target.value;
+
+    const endDateTimeUpdate = new Date(endDateTime);
+
+    // Tách giờ và phút
+    const [hour, minute] = endDateHour.split(":");
+
+    // Kiểm tra giờ và phút có hợp lệ không
+    if (!validateHourMinute(hour, minute)) {
+      toast.error("Giờ phút không hợp lệ!");
+      return;
+    }
+
+    // Chuyển giờ và phút thành số trước khi sử dụng setHours và setMinutes
+    const hourNumber = parseInt(hour, 10);
+    const minuteNumber = parseInt(minute, 10);
+
+    // Cập nhật giờ phút vào đối tượng Date
+    endDateTimeUpdate.setHours(hourNumber, minuteNumber);
+
+    // Cập nhật state
+    setEndDateTime(endDateTimeUpdate);
+  };
+
   const HandleReset = async () => {
-    setCheckFocus("");
-    setSelectedDay(card.startDateTime || card.endDateTime || today);
+    setIsOpen(false);
+    setSelectedDay(today);
     setStartDateTime(card.startDateTime ? new Date(card.startDateTime) : null);
     setEndDateTime(
-      card.endDateTime
-        ? new Date(card.endDateTime)
-        : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
+      card.endDateTime ? new Date(card.endDateTime) : addDays(today, 2)
     );
+    setCheckFocus("end");
   };
   return (
     <Popover
-      placement="right"
+      placement="left"
       isOpen={isOpen}
       onClose={HandleReset}
       onOpenChange={(open) => setIsOpen(open)}
@@ -281,7 +292,7 @@ const FormDate = ({ children }) => {
             <h1 className="grow text-center ">Ngày</h1>
             <Button
               className="min-w-3 rounded-lg border-0 hover:bg-default-300  p-1 absolute right-0 h-auto "
-              onClick={() => HandleReset()}
+              onClick={HandleReset}
               variant="ghost"
             >
               <CloseIcon />
@@ -329,13 +340,6 @@ const FormDate = ({ children }) => {
                           type="button"
                           onClick={() => {
                             setSelectedDay(day);
-                            if (checkFocus === "start") {
-                              inputRefStart.current.focus();
-                            } else if (checkFocus === "end") {
-                              inputRefEnd.current.focus();
-                            } else {
-                              inputRefEnd.current.focus();
-                            }
                           }}
                           className={classNames(
                             isEqual(day, selectedDay) && "text-blue-500  ",
@@ -388,7 +392,7 @@ const FormDate = ({ children }) => {
             </div>
           </div>
 
-          <form action={UpdateDate}>
+          <form onSubmit={UpdateDate}>
             <div className="w-full mt-3">
               <p className="text-xs font-medium">Ngày bắt đầu</p>
               <div className=" flex gap-2 ">
@@ -398,14 +402,15 @@ const FormDate = ({ children }) => {
                     setIsSelectStartTime(isSelect);
                     if (!isSelect) {
                       setStartDateTime(null);
+                      if (endDateTime) inputRefEnd.current.focus();
                     } else {
                       setStartDateTime(
                         card.startDateTime
                           ? new Date(card.startDateTime)
                           : today
                       );
+                      inputRefStart.current.focus();
                     }
-                    inputRefStart.current.focus();
                   }}
                 ></Checkbox>
                 <Input
@@ -416,14 +421,11 @@ const FormDate = ({ children }) => {
                   variant={isSelectStartTime ? "bordered" : ""}
                   readOnly={!isSelectStartTime}
                   value={
-                    isSelectStartTime && startDateTime
-                      ? isValid(startDateTime)
-                        ? format(startDateTime, "dd/MM/yyyy")
-                        : startDateTime
+                    isSelectEndTime && startDateTime
+                      ? format(startDateTime, "dd/MM/yyyy")
                       : "N/T/NNNN"
                   }
                   className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
-                  onChange={(e) => setStartDateTime(e.target.value)}
                   onFocus={() => setCheckFocus("start")}
                 />
               </div>
@@ -437,14 +439,15 @@ const FormDate = ({ children }) => {
                     setIsSelectEndTime(isSelect);
                     if (!isSelect) {
                       setEndDateTime(null);
+                      if (startDateTime) inputRefStart.current.focus();
                     } else {
                       setEndDateTime(
                         card.endDateTime
                           ? new Date(card.endDateTime)
-                          : addWeeks(startOfWeek(today, { weekStartsOn: 1 }), 1)
+                          : addDays(today, 2)
                       );
+                      inputRefEnd.current.focus();
                     }
-                    inputRefEnd.current.focus();
                   }}
                 ></Checkbox>
                 <Input
@@ -453,12 +456,10 @@ const FormDate = ({ children }) => {
                   size="xs"
                   name="endTime"
                   variant={isSelectEndTime ? "bordered" : ""}
-                  readOnly={isSelectEndTime ? false : true}
+                  readOnly={!isSelectEndTime}
                   value={
                     isSelectEndTime && endDateTime
-                      ? isValid(endDateTime)
-                        ? format(endDateTime, "dd/MM/yyyy")
-                        : endDateTime
+                      ? format(endDateTime, "dd/MM/yyyy")
                       : "N/T/NNNN"
                   }
                   onChange={(e) => {
@@ -468,29 +469,16 @@ const FormDate = ({ children }) => {
                   onFocus={() => setCheckFocus("end")}
                 />
                 <Input
-                  ref={inputRefEndHour}
-                  type="text"
+                  type="time"
                   size="xs"
                   name="endTimeHour"
                   variant={isSelectEndTime ? "bordered" : ""}
                   readOnly={!isSelectEndTime}
-                  defaultValue={
-                    isSelectEndTime && endDateTime
-                      ? isValid(endDateTime)
-                        ? format(endDateTime, "HH:mm")
-                        : "00:00"
-                      : "G:pp"
+                  value={
+                    isSelectEndTime ? format(endDateTime, "HH:mm") : "GG:pp"
                   }
-                  onChange={(e) => {
-                    inputRefEndHour.current.value = e.target.value;
-                  }}
-                  className={`w-[120px] focus-visible:outline-0  p-1 rounded-md`}
-                  onFocus={() => {
-                    setCheckFocus("end");
-                    if (inputRefEndHour.current.value === "") {
-                      inputRefEndHour.current.value = "00:00";
-                    }
-                  }}
+                  className={`w-auto focus-visible:outline-0  p-1 rounded-md`}
+                  onChange={handleTimeChange}
                 />
               </div>
             </div>
@@ -498,7 +486,7 @@ const FormDate = ({ children }) => {
             <Button
               type="submit"
               color="primary"
-              className="w-full mt-3"
+              className="w-full mt-3 interceptor-loading"
               isDisabled={!checkRole}
             >
               Lưu
@@ -506,7 +494,7 @@ const FormDate = ({ children }) => {
             <Button
               onClick={() => CancelDate()}
               type="button"
-              className="w-full mt-1 bg-gray-200"
+              className="w-full mt-1 bg-gray-200 interceptor-loading"
               isDisabled={!checkRole}
             >
               Gỡ bỏ
@@ -518,4 +506,4 @@ const FormDate = ({ children }) => {
   );
 };
 
-export default FormDate;
+export default SetDateCard;

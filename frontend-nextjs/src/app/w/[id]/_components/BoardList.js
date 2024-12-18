@@ -23,12 +23,7 @@ export function BoardList({ boards }) {
           </Link>
         ))}
 
-        <FormPopoverBoard
-          workspaces={user?.workspaces}
-          placement={"right"}
-          open={false}
-          length={boards?.length}
-        >
+        <FormPopoverBoard placement={"right"} length={boards?.length}>
           <div
             role="button"
             className="aspect-video relative h-full w-full bg-muted rounded-sm flex bg-default-300 flex-col gap-y-1 items-center justify-center hover:opacity-75 transition"

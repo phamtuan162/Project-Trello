@@ -1,10 +1,13 @@
 "use client";
-import { Card } from "./Card";
-import { cn } from "@/lib/utils";
+
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+
+import { Card } from "./Card";
+import { cn } from "@/lib/utils";
+
 export function ListCard({ cards }) {
   return (
     <ol

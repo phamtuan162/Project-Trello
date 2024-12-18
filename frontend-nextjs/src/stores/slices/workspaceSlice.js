@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetchWorkspace } from "../middleware/fetchWorkspace";
+import { socket } from "@/socket";
 const initialState = {
   workspace: {},
   status: "idle",
@@ -10,6 +11,9 @@ export const workspaceSlice = createSlice({
   reducers: {
     selectWorkspace: (state, action) => {
       state.workspace = action.payload;
+      socket.emit("changeWorkspace", {
+        workspace_id_active: state.workspace.id,
+      });
     },
     updateWorkspace: (state, action) => {
       if (action.payload) {
@@ -31,6 +35,13 @@ export const workspaceSlice = createSlice({
         });
       }
     },
+    deleteBoardInWorkspace: (state, action) => {
+      if (action.payload) {
+        state.workspace.boards = state.workspace.boards.filter(
+          (b) => +b.id !== +action.payload
+        );
+      }
+    },
 
     inviteUserInWorkspace: (state, action) => {
       if (Array.isArray(state.workspace.users)) {
@@ -38,6 +49,8 @@ export const workspaceSlice = createSlice({
       } else {
         state.workspace.users = [action.payload];
       }
+
+      state.workspace.total_user = state.workspace.users.length;
     },
 
     cancelUserInWorkspace: (state, action) => {
@@ -46,6 +59,8 @@ export const workspaceSlice = createSlice({
       );
 
       state.workspace.users = usersUpdate;
+
+      state.workspace.total_user = state.workspace.users.length;
     },
 
     decentRoleUserInWorkspace: (state, action) => {
@@ -58,6 +73,10 @@ export const workspaceSlice = createSlice({
       if (user) {
         user.role = incomingUser.role;
       }
+
+      socket.emit("updateWorkspace", {
+        users: state.workspace.users,
+      });
     },
 
     updateActivitiesInWorkspace: (state, action) => {
@@ -68,6 +87,10 @@ export const workspaceSlice = createSlice({
       } else {
         state.workspace.activities = [activity];
       }
+
+      socket.emit("updateWorkspace", {
+        activities: state.workspace.activities,
+      });
     },
 
     updateStatusUserInWorkspace: (state, action) => {
@@ -96,6 +119,11 @@ export const workspaceSlice = createSlice({
       } else {
         state.workspace.activities = [activity];
       }
+
+      socket.emit("updateWorkspace", {
+        boards: state.workspace.boards,
+        activities: state.workspace.activities,
+      });
     },
   },
   extraReducers: (builder) => {

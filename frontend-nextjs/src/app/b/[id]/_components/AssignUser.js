@@ -7,13 +7,14 @@ import {
   Input,
   User,
 } from "@nextui-org/react";
-import { Activity, SearchIcon, UserPlus } from "lucide-react";
+import { SearchIcon, UserPlus } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 import { assignUserApi, unAssignUserApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -27,12 +28,16 @@ const AssignUser = ({
 }) => {
   const dispatch = useDispatch();
   const [keyword, setKeyWord] = useState("");
-  const [isSelect, setIsSelect] = useState(false);
+
   const workspace = useSelector((state) => state.workspace.workspace);
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
   const cardActive = useSelector((state) => state.card.card);
-  const socket = useSelector((state) => state.socket.socket);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
 
   const hasSearchFilter = Boolean(keyword);
 
@@ -64,34 +69,9 @@ const AssignUser = ({
     );
   }, [userNotAssignCard, keyword, hasSearchFilter]);
 
-  const notifyUser = (
-    userAssign,
-    messageType,
-    cardTitle,
-    boardTitle,
-    workspaceName
-  ) => {
-    if (+userAssign.id !== +user.id) {
-      // socket.emit("sendNotification", {
-      //   user_id: userAssign.id,
-      //   userName: user.name,
-      //   userAvatar: user.avatar,
-      //   type: messageType,
-      //   content:
-      //     messageType === "assign_user_card"
-      //       ? `đã thêm bạn vào thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`
-      //       : `đã loại bạn khỏi thẻ ${cardTitle} thuộc bảng ${boardTitle} của Không gian làm việc ${workspaceName}`,
-      // });
-    }
-  };
-
   const HandleSelectUserAssigned = async (userAssign) => {
-    if (isSelect) return;
     try {
-      if (
-        user.role.toLowerCase() !== "admin" &&
-        user.role.toLowerCase() !== "owner"
-      ) {
+      if (!checkRole) {
         toast.error("Bạn không đủ quyền thực hiện thao tác này");
         setIsAssign(false);
         return;
@@ -99,7 +79,6 @@ const AssignUser = ({
 
       if (userAssign.role.toLowerCase() === "guest") {
         toast.error("Người này là khách không không thêm vào được");
-        setIsAssign(false);
         return;
       }
 
@@ -108,108 +87,130 @@ const AssignUser = ({
         return;
       }
 
-      setIsSelect(true);
+      const notification = {
+        user_id: userAssign.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        type: "assign_user_card",
+        content: `đã thêm bạn vào thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name}`,
+        status: "unread",
+        onClick: false,
+      };
 
       await toast
         .promise(
           async () =>
             await assignUserApi(card.id, {
               user_id: userAssign.id,
+              notification,
             }),
           { pending: "Đang thêm thành viên..." }
         )
         .then((res) => {
-          const { cardUpdated } = res;
+          const { activity, notification: notificationNew } = res;
 
-          if (cardActive) {
-            dispatch(
-              updateCard({
-                users: cardUpdated.users,
-                Activities: cardUpdated.activities,
-              })
-            );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            users: [userAssign, ...card.users],
+            activities: [activity, ...card.users],
+          };
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          if (cardActive && cardActive.id === card.id) {
+            dispatch(updateCard(cardUpdate));
           }
 
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              users: cardUpdated.users,
-              activities: cardUpdated.activities,
-            })
-          );
-
-          notifyUser(
-            userAssign,
-            "assign_user_card",
-            card.title,
-            board.title,
-            workspace.name
-          );
-
           toast.success("Thành viên này đã được thêm thành công");
-          setKeyWord("");
+
+          socket.emit("updateCard", cardUpdate);
+
+          if (notificationNew) {
+            socket.emit("sendNotification", {
+              user_id: userAssign.id,
+
+              notification: notificationNew,
+            });
+          }
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setKeyWord("");
+          setIsAssign(false);
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsSelect(false);
     }
   };
 
   const HandleUnAssignedCard = async (userAssign) => {
-    if (isSelect || !userAssign) return;
-
-    setIsSelect(true);
+    if (!userAssign) return;
 
     try {
+      if (!checkRole) {
+        toast.error("Bạn không đủ quyền thực hiện thao tác này");
+        setIsAssign(false);
+        return;
+      }
+
+      const notification = {
+        user_id: userAssign.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        type: "unassign_user_card",
+        content: `đã loại bạn khỏi thẻ ${card.title} thuộc bảng ${board.title} của Không gian làm việc ${workspace.name}`,
+        status: "unread",
+        onClick: false,
+      };
+
       await toast
         .promise(
           async () =>
             await unAssignUserApi(card.id, {
               user_id: userAssign.id,
+              notification,
             }),
           { pending: "Đang loại bỏ thành viên..." }
         )
         .then((res) => {
-          const { cardUpdated } = res;
-          console.log(cardUpdated.users);
+          const { activity, notification: notificationNew } = res;
 
-          if (cardActive) {
-            dispatch(
-              updateCard({
-                users: cardUpdated.users,
-                Activities: cardUpdated.activities,
-              })
-            );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            users: card.users.filter((u) => u.id !== userAssign.id),
+            activities: [activity, ...card.activities],
+          };
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          if (cardActive && cardActive.id === card.id) {
+            dispatch(updateCard(cardUpdate));
           }
 
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              users: cardUpdated.users,
-              activities: cardUpdated.activities,
-            })
-          );
-          notifyUser(
-            userAssign,
-            "unassign_user_card",
-            card.title,
-            board.title,
-            workspace.name
-          );
-
-          setKeyWord("");
           toast.success("Thành viên đã được loại bỏ thành công");
+
+          socket.emit("updateCard", cardUpdate);
+
+          if (notificationNew) {
+            socket.emit("sendNotification", {
+              user_id: userAssign.id,
+              notification: notificationNew,
+            });
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsAssign(false);
+          setKeyWord("");
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsSelect(false);
     }
   };
 

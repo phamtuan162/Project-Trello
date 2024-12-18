@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { userSlice } from "@/stores/slices/userSlice";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
 import { fetchMission } from "@/stores/middleware/fetchMission";
+import { socket } from "@/socket";
 
 const { deleteWorkspaceInUser } = userSlice.actions;
 
@@ -53,6 +54,13 @@ const FormDeleteWorkspace = ({ workspace }) => {
         toast.warning("Bạn chỉ có duy nhất workspace này nên không thể xóa!");
         return;
       }
+
+      const notification = {
+        userName: user.name,
+        userAvatar: user.avatar,
+        type: "delete_workspace",
+        content: `đã xóa Không gian làm việc ${workspace.name}`,
+      };
 
       await toast
         .promise(async () => await deleteWorkspaceApi(workspace.id), {
@@ -90,19 +98,14 @@ const FormDeleteWorkspace = ({ workspace }) => {
 
           router.push(`/w/${data.workspace_id_active}/home`);
 
-          // const users = workspace.users.filter(
-          //   (item) => +item.id !== +user.id && item.isOnline
-          // );
+          socket("deleteWorkspace", {
+            workspace_id_new: data.workspace_id_active,
+          });
 
-          // users.forEach((userItem) => {
-          //   socket.emit("sendNotification", {
-          //     user_id: userItem.id,
-          //     userName: user.name,
-          //     userAvatar: user.avatar,
-          //     type: "delete_workspace",
-          //     content: `đã xóa Không gian làm việc ${workspace.name}`,
-          //   });
-          // });
+          for (const item of workspace.users) {
+            if (item.id === user.id) return;
+            socket.emit("sendNotification", { user_id: item.id, notification });
+          }
         })
         .catch((error) => {
           console.log(error);
@@ -115,7 +118,7 @@ const FormDeleteWorkspace = ({ workspace }) => {
     } finally {
       setTimeout(() => {
         setIsLoading(false);
-      }, 2000);
+      }, 1000);
     }
   };
 

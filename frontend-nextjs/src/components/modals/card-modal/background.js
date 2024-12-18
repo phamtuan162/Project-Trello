@@ -83,7 +83,7 @@ const BackgroundCard = () => {
   return (
     <div
       className="card-background-modal w-full min-h-[200px] h-[160px] overflow-hidden bg-no-repeat relative bg-cover bg-origin-content p-0 bg-center rounded-t-md"
-      style={{ backgroundImage: `url(${card.background})` }}
+      style={{ backgroundImage: card?.background && `url(${card.background})` }}
     >
       <div className=" flex items-center justify-end absolute w-full p-2 bottom-0">
         <FormBackground

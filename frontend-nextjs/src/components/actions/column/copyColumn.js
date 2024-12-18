@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { copyColumnApi } from "@/services/workspaceApi";
 import { mapOrder } from "@/utils/sorts";
+import { socket } from "@/socket";
 
 const { updateBoard } = boardSlice.actions;
 
@@ -22,14 +23,12 @@ const CopyColumn = ({ children, column }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const textareaRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [title, setTitle] = useState(column.title);
+  const [title, setTitle] = useState(column?.title || "");
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     try {
       let columnUpdate;
 
@@ -80,15 +79,16 @@ const CopyColumn = ({ children, column }) => {
           );
           toast.success("Sao chép danh sách thành công");
 
-          setIsOpen(false);
+          socket.emit("updateBoard", { columns: columnsUpdate });
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -148,12 +148,11 @@ const CopyColumn = ({ children, column }) => {
               className="w-full h-[40px] mt-2 interceptor-loading"
               color="primary"
               isDisabled={
-                (user?.role?.toLowerCase() !== "admin" &&
-                  user?.role?.toLowerCase() !== "owner") ||
-                isLoading
+                user?.role?.toLowerCase() !== "admin" &&
+                user?.role?.toLowerCase() !== "owner"
               }
             >
-              {isLoading ? <CircularProgress /> : "Tạo danh sách"}
+              Tạo danh sách
             </Button>
           </form>
         </div>

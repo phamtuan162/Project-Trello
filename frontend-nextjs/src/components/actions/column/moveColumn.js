@@ -23,6 +23,7 @@ import { getBoardDetail } from "@/services/workspaceApi";
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { socket } from "@/socket";
 
 const { updateBoard } = boardSlice.actions;
 const { updateActivitiesInWorkspace } = workspaceSlice.actions;
@@ -125,12 +126,21 @@ const MoveColumn = ({ children, column }) => {
             columnOrderIds: boardActive.columnOrderIds,
           })
         );
+
         dispatch(updateActivitiesInWorkspace(activity));
+
         toast.success("Di chuyển danh sách thẻ thành công");
-        setIsOpen(false);
+
+        socket.emit("updateBoard", {
+          columns: boardActive.columns,
+          columnOrderIds: boardActive.columnOrderIds,
+        });
       })
       .catch((error) => {
         console.log(error);
+      })
+      .finally(() => {
+        setIsOpen(false);
       });
   };
 
@@ -157,10 +167,17 @@ const MoveColumn = ({ children, column }) => {
           })
         );
         toast.success("Di chuyển danh sách thẻ thành công");
-        setIsOpen(false);
+
+        socket.emit("updateBoard", {
+          columns: newColumns,
+          columnOrderIds: newColumnOrderIds,
+        });
       })
       .catch((error) => {
         console.log(error);
+      })
+      .finally(() => {
+        setIsOpen(false);
       });
   };
 

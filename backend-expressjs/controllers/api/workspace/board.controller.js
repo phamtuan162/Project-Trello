@@ -341,7 +341,7 @@ module.exports = {
         await board.destroy({ force: true });
       }
 
-      await Activity.create({
+      const activity = await Activity.create({
         user_id: user.id,
         userName: user.name,
         userAvatar: user.avatar,
@@ -354,6 +354,7 @@ module.exports = {
       Object.assign(response, {
         status: 200,
         message: "Success",
+        activity,
       });
     } catch (error) {
       console.log(error);

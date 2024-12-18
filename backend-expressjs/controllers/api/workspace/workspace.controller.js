@@ -61,8 +61,16 @@ module.exports = {
   },
 
   find: async (req, res) => {
+    const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
+
+    if (!id) {
+      return res.status(400).json({
+        status: 400,
+        message: "Bad request",
+      });
+    }
 
     try {
       const workspace = await Workspace.findByPk(id, {
@@ -86,7 +94,26 @@ module.exports = {
       });
 
       if (!workspace) {
-        return res.status(404).json({ status: 404, message: "Not found" });
+        const userNew = await findByPk(user.id, {
+          include: { model: Workspace, as: "workspaces" },
+        });
+
+        if (userNew.workspaces) {
+          await userNew.update({
+            workspace_id_active: userNew.workspaces[0].id,
+          });
+          return res.status(404).json({
+            status: 404,
+            message:
+              "Không tìm thấy workspace này, tự động chuyển đến workspace khác.",
+            workspace_id: userNew.workspaces[0].id,
+          });
+        }
+
+        return res.status(400).json({
+          status: 400,
+          message: "Bạn không tham gia hay sở hữu không gian nào",
+        });
       }
 
       if (workspace?.users?.length > 0) {
@@ -259,8 +286,23 @@ module.exports = {
     const user = req.user.dataValues;
     const { id } = req.params;
     const response = {};
+
     try {
-      const workspace = await Workspace.findByPk(id);
+      const userNew = await User.findByPk(user.id, {
+        include: { model: Workspace, as: "workspaces" },
+      });
+
+      if (userNew?.workspaces?.length <= 1) {
+        return res.status(400).json({
+          status: 400,
+          message:
+            "Bạn chỉ sở hữu 1 không gian làm việc này nên không xóa được",
+        });
+      }
+
+      const workspace = await Workspace.findByPk(id, {
+        include: { model: User, as: "users" },
+      });
 
       if (!workspace) {
         return res
@@ -268,37 +310,58 @@ module.exports = {
           .json({ status: 404, message: "Not found workspace" });
       }
 
+      const usersWorkspace = workspace.users;
+
       await workspace.destroy();
 
       const users = await User.findAll({
         where: { workspace_id_active: id },
-        include: [{ model: Workspace, as: "workspaces" }],
-        order: [[{ model: Workspace, as: "workspaces" }, "updated_at", "desc"]],
-        limit: 1,
+        include: [
+          {
+            model: Workspace,
+            as: "workspaces",
+            order: [["updated_at", "desc"]],
+          },
+        ],
       });
 
       let activeWorkspaceId;
 
-      if (users?.length > 0) {
-        const userUpdates = users.map((u) => {
-          if (u.workspaces.length > 0) {
-            const latestWorkspace = u.workspaces[0];
-            if (u.id === user.id) activeWorkspaceId = latestWorkspace.id;
-            return u.update(
-              { workspace_id_active: latestWorkspace.id },
-              { where: { id: u.id } }
-            );
-          }
-        });
-
-        // Chạy tất cả các update song song
-        await Promise.all(userUpdates);
+      if (users?.length) {
+        await Promise.all(
+          users.map(async (u) => {
+            if (u?.workspaces) {
+              const latestWorkspace = u.workspaces[0];
+              if (u.id === user.id) activeWorkspaceId = latestWorkspace.id;
+              await User.update(
+                { workspace_id_active: latestWorkspace.id },
+                { where: { id: u.id } }
+              );
+            }
+          })
+        );
       }
+
       if (!activeWorkspaceId) {
         return res.status(400).json({
           status: 400,
           message: "This is not the active workspace of the user",
         });
+      }
+
+      if (usersWorkspace.length) {
+        const notification = {
+          userName: user.name,
+          userAvatar: user.avatar,
+          type: "delete_workspace",
+          content: `đã xóa Không gian làm việc ${workspace.name}`,
+        };
+
+        await Promise.all(
+          usersWorkspace
+            .filter((u) => u.id !== user.id)
+            .map((u) => Notification.create({ user_id: u.id, ...notification }))
+        );
       }
 
       const user_workspace_role = await UserWorkspaceRole.findOne({
@@ -341,7 +404,9 @@ module.exports = {
     try {
       const [user, workspace] = await Promise.all([
         User.findByPk(user_id),
-        Workspace.findByPk(workspace_id),
+        Workspace.findByPk(workspace_id, {
+          include: [{ model: User, as: "users" }],
+        }),
       ]);
 
       if (!user || !workspace) {
@@ -382,6 +447,8 @@ module.exports = {
         }
         await user_workspace_role.restore();
       }
+
+      await workspace.update({ total_user: +workspace.users.length + 1 });
 
       const activity = await Activity.create({
         user_id: userMain.id,
@@ -430,20 +497,25 @@ module.exports = {
     }
 
     try {
-      const [user, workspace] = Promise.all([
+      const [user, workspace] = await Promise.all([
         User.findByPk(user_id, {
           include: {
             model: Workspace,
             as: "workspaces",
-            required: false, // Thực hiện LEFT JOIN thay vì INNER JOIN
+            required: false,
+
             where: {
               id: { [Op.ne]: workspace_id },
             },
             order: [["updated_at", "desc"]],
-            limit: 1,
           },
         }),
-        Workspace.findByPk(workspace_id),
+        Workspace.findByPk(workspace_id, {
+          include: {
+            model: User,
+            as: "users",
+          },
+        }),
       ]);
 
       if (!workspace || !user) {
@@ -500,10 +572,8 @@ module.exports = {
           { where: { workspace_id, user_id } }
         );
       }
-      await Mission.update(
-        { user_id: null },
-        { where: { workspace_id, user_id } }
-      );
+
+      await workspace.update({ total_user: +workspace.users.length - 1 });
 
       const activity = await Activity.create({
         user_id: user.id,
@@ -537,28 +607,35 @@ module.exports = {
     }
 
     try {
-      const workspace = await Workspace.findByPk(workspace_id);
+      const [user, workspace] = await Promise.all([
+        User.findByPk(user_id, {
+          include: [
+            {
+              model: Workspace,
+              as: "workspaces",
+              required: false, // LEFT JOIN
+              where: {
+                id: { [Op.ne]: workspace_id },
+              },
+              order: [["updated_at", "desc"]],
+            },
+          ],
+        }),
+        Workspace.findByPk(workspace_id, {
+          include: [
+            {
+              model: User,
+              as: "users",
+            },
+          ],
+        }),
+      ]);
+      console.log(user);
 
-      if (!workspace) {
+      if (!workspace || !user) {
         return res
           .status(404)
-          .json({ status: 404, message: "Not found workspace " });
-      }
-
-      const user = await User.findByPk(user_id, {
-        include: {
-          model: Workspace,
-          as: "workspaces",
-          require: false,
-          where: { id: { [Op.ne]: workspace_id } }, // loại trừ workspace_id
-          order: [["updated_at", "desc"]],
-        },
-      });
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({ status: 404, message: "Not found user " });
+          .json({ status: 404, message: "Not found workspace or user" });
       }
 
       const user_workspace_role = await UserWorkspaceRole.findOne({
@@ -573,7 +650,7 @@ module.exports = {
 
       if (
         user?.workspace_id_active === workspace_id &&
-        user?.workspaces?.length > 0
+        user?.workspaces?.length
       ) {
         await user.update({ workspace_id_active: user.workspaces[0].id });
       }
@@ -609,6 +686,8 @@ module.exports = {
           { where: { workspace_id, user_id } }
         );
       }
+
+      await workspace.update({ total_user: +workspace.users.length - 1 });
 
       const activity = await Activity.create({
         user_id: userMain.id,
@@ -684,9 +763,9 @@ module.exports = {
   decentRoleUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
-    const { user_id, role } = req.body;
+    const { user_id, role, notification } = req.body;
     const response = {};
-    if (!user_id || !role) {
+    if (!user_id || !role || !notification) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
     const user = await User.findByPk(user_id);
@@ -723,10 +802,12 @@ module.exports = {
       desc: `đã chuyển chức vụ ${user.name} thành ${roleInstance.name} trong Không gian làm việc này`,
     });
 
+    await Notification.create(notification);
+
     Object.assign(response, {
       status: 200,
       message: "Success",
-      data: activity,
+      activity,
     });
     res.status(response.status).json(response);
   },

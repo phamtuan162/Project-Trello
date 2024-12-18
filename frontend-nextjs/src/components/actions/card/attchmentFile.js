@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { attachmentFileApi } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
-import { cloneDeep } from "lodash";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -17,7 +17,6 @@ const AttachmentFile = ({ children }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const card = useSelector((state) => state.card.card);
-  const board = useSelector((state) => state.board.board);
 
   const inputRef = useRef();
 
@@ -40,44 +39,20 @@ const AttachmentFile = ({ children }) => {
         .then((res) => {
           const { attachment, activity } = res;
 
-          const columns = cloneDeep(board.columns);
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            attachments: [attachment, ...card.activities],
+            activities: [activity, ...card.activities],
+          };
 
-          const column = columns.find((c) => c.id === card.column_id);
+          dispatch(updateCard(cardUpdate));
 
-          const cardUpdate = column?.cards.find((c) => c.id === card.id);
+          dispatch(updateCardInBoard(cardUpdate));
 
-          if (cardUpdate) {
-            if (Array.isArray(cardUpdate.attachments)) {
-              cardUpdate.attachments.push(attachment);
-            } else {
-              cardUpdate.attachments = [attachment];
-            }
+          toast.success("Đính kèm file thành công!");
 
-            if (Array.isArray(cardUpdate.activities)) {
-              cardUpdate.activities.push(activity);
-            } else {
-              cardUpdate.activities = [activity];
-            }
-
-            dispatch(
-              updateCard({
-                id: cardUpdate.id,
-                activities: cardUpdate.activities,
-                attachments: cardUpdate.attachments,
-              })
-            );
-
-            dispatch(
-              updateCardInBoard({
-                id: cardUpdate.id,
-                column_id: cardUpdate.column_id,
-                activities: cardUpdate.activities,
-                attachments: cardUpdate.attachments,
-              })
-            );
-
-            toast.success("Đính kèm file thành công!");
-          }
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

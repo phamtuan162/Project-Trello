@@ -65,6 +65,8 @@ const TitleModal = () => {
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
+      event.preventDefault();
+
       inputRef.current.blur();
     }
   };

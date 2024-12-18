@@ -7,16 +7,14 @@ import {
   Listbox,
   ListboxItem,
 } from "@nextui-org/react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useCallback, useState } from "react";
-import { toast } from "react-toastify";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { boardSlice } from "@/stores/slices/boardSlice";
-import { columnSlice } from "@/stores/slices/columnSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateBoard } = boardSlice.actions;
-const { updateColumns } = columnSlice.actions;
 
 const options = [
   { order: "createdAtDesc", label: "Ngày tạo (Gần Nhất Trước)" },
@@ -54,12 +52,12 @@ const SortCard = ({ children, column }) => {
       );
 
       dispatch(updateBoard({ columns: updatedColumns }));
-      dispatch(updateColumns(updatedColumns));
 
       await updateColumnDetail(column.id, {
         order,
         cardOrderIds: sortedColumn.cardOrderIds,
       });
+      socket.emit("updateBoard", { columns: updatedColumns });
     } catch (err) {
       console.log(err);
     }

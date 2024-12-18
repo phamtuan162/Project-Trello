@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Select,
   SelectItem,
@@ -12,16 +12,18 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
-import { debounce } from "@/utils/debounce";
+import { useDebounceFn } from "@/hooks/useDebounce";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { Message } from "@/components/Message/Message";
 import { inviteUserApi } from "@/services/workspaceApi";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { userSlice } from "@/stores/slices/userSlice";
 import { searchUser } from "@/services/userApi";
 import { socket } from "@/socket";
 
 const { inviteUserInWorkspace, updateActivitiesInWorkspace } =
   workspaceSlice.actions;
+const { updateWorkspaceInUser } = userSlice.actions;
 
 const FormInviteUser = ({ rolesUser }) => {
   const dispatch = useDispatch();
@@ -31,9 +33,10 @@ const FormInviteUser = ({ rolesUser }) => {
   const [role, setRole] = useState(new Set(["member"]));
   const [isSearch, setIsSearch] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [keyWord, setKeyWord] = useState("");
+
   const [usersSearch, setUsersSearch] = useState([]);
   const [userInvite, setUserInvite] = useState(null);
-  const [keyword, setKeyWord] = useState("");
   const [message, setMessage] = useState(
     `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
       workspace.users ? workspace.users.length : "1"
@@ -46,42 +49,36 @@ const FormInviteUser = ({ rolesUser }) => {
     return role === "admin" || role === "owner";
   }, [user?.role]);
 
-  const handleSearchUser = useCallback(
-    debounce(async (inputKeyword) => {
-      try {
-        const { data: usersSearch, status } = await searchUser({
-          keyword: inputKeyword,
-          limit: 4,
-        });
-        if (200 <= status && status <= 299) {
-          setUsersSearch(usersSearch);
-        }
-      } catch (error) {
-        console.log(error);
-        setUsersSearch([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 1000),
-    []
-  );
-
-  useEffect(() => {
-    return () => {
-      handleSearchUser.cancel(); // Hủy bỏ debounce nếu component unmount
-    };
-  }, [handleSearchUser]);
-
-  useEffect(() => {
-    if (keyword?.length >= 2 && !userInvite) {
-      setIsLoading(true);
-      setIsSearch(true);
-      handleSearchUser(keyword);
-    } else {
+  const handleSearchUser = async (keyword) => {
+    if (keyword.length <= 2 || userInvite) {
       setIsSearch(false);
       setUsersSearch([]);
+      return;
     }
-  }, [keyword]);
+
+    try {
+      setIsLoading(true);
+      setIsSearch(true);
+
+      const { data: usersSearch } = await searchUser({
+        keyword: keyword,
+        limit: 4,
+      });
+
+      setUsersSearch(usersSearch || []);
+    } catch (error) {
+      console.log(error);
+      setUsersSearch([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const debounceSearchUser = useDebounceFn(handleSearchUser, 1000);
+
+  useEffect(() => {
+    debounceSearchUser(keyWord);
+  }, [keyWord]);
 
   const handleInviteUser = async (e) => {
     e.preventDefault();
@@ -116,6 +113,12 @@ const FormInviteUser = ({ rolesUser }) => {
             inviteUserInWorkspace({ ...userInvite, role: selectedRole })
           );
           dispatch(updateActivitiesInWorkspace(activity));
+          dispatch(
+            updateWorkspaceInUser({
+              id: workspace.id,
+              total_user: +workspace.users.length + 1,
+            })
+          );
 
           socket.emit("sendNotification", {
             user_id: userInvite.id,
@@ -150,10 +153,11 @@ const FormInviteUser = ({ rolesUser }) => {
 
   const resetForm = () => {
     setIsInvite(false);
-    setUserInvite(null);
-    setKeyWord("");
-    setUsersSearch([]);
     setIsSearch(false);
+    setUserInvite(null);
+    setUsersSearch([]);
+    setKeyWord("");
+    setRole(new Set(["member"]));
     setMessage(
       `Không gian làm việc tối đa 10 người. Không gian làm việc hiện tại có ${
         workspace.users ? workspace.users.length : "1"
@@ -200,15 +204,16 @@ const FormInviteUser = ({ rolesUser }) => {
                 <div className="grow relative">
                   <Input
                     variant="bordered"
-                    type="text"
+                    type="search"
                     isRequired
                     name="keyword"
                     id="keyword"
-                    placeholder="Địa chỉ email hoặc tên..."
+                    placeholder="Nhập tên hoặc email..."
                     className="text-sm rounded-md focus-visible:outline-0 w-full"
                     size="xs"
-                    value={keyword}
+                    isDisabled={userInvite}
                     onChange={(e) => setKeyWord(e.target.value)}
+                    value={keyWord}
                     startContent={
                       userInvite && (
                         <Avatar
@@ -229,6 +234,7 @@ const FormInviteUser = ({ rolesUser }) => {
                           onClick={() => {
                             setUserInvite(null);
                             setKeyWord("");
+                            setRole(new Set(["member"]));
                           }}
                         >
                           <CloseIcon size={16} />

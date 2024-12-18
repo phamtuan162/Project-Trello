@@ -9,13 +9,13 @@ import { updateWorkspaceApi } from "@/services/workspaceApi";
 import { userSlice } from "@/stores/slices/userSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import PopoverAddColorWorkspace from "./PopoverAddColorWorkspace";
+import { socket } from "@/socket";
 
 const { updateWorkspace } = workspaceSlice.actions;
 const { updateWorkspaceInUser } = userSlice.actions;
 
 const FormUpdateWorkspace = ({ workspace }) => {
   const dispatch = useDispatch();
-  const socket = useSelector((state) => state.socket.socket);
   const user = useSelector((state) => state.user.user);
   const [form, setForm] = useState({
     name: workspace?.name || "",
@@ -71,10 +71,8 @@ const FormUpdateWorkspace = ({ workspace }) => {
           }
 
           toast.success("Cập nhật thành công");
-          // socket.emit("updateWorkspace", {
-          //   userActionId: user.id,
-          //   workspace_id: workspace.id,
-          // });
+
+          socket.emit("updateWorkspace", form);
         })
         .catch((error) => {
           console.log(error);

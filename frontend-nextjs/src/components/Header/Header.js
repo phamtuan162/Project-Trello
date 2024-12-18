@@ -15,6 +15,7 @@ import {
   NavbarMenuToggle,
   Tooltip,
   Badge,
+  avatar,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 
@@ -32,15 +33,23 @@ import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
+import { boardSlice } from "@/stores/slices/boardSlice";
 import { clickNotification } from "@/services/notifyApi";
 import SearchWorkspace from "./SearchWorkspace";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
 import { fetchProfileUser } from "@/stores/middleware/fetchProfileUser";
+
 import { socket } from "@/socket";
 
 const { updateNotification } = notificationSlice.actions;
 const { createWorkspaceInUser, updateUser } = userSlice.actions;
-const { inviteUserInWorkspace, cancelUserInWorkspace } = workspaceSlice.actions;
+const {
+  inviteUserInWorkspace,
+  cancelUserInWorkspace,
+  updateWorkspace,
+  deleteBoardInWorkspace,
+} = workspaceSlice.actions;
+const { clearBoard } = boardSlice.actions;
 
 const Header = () => {
   const notifications = useSelector(
@@ -49,12 +58,16 @@ const Header = () => {
   const { id } = useParams();
   const router = useRouter();
   const pathname = usePathname();
+
   const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const board = useSelector((state) => state.board.board);
+
+  const isLogin = Cookies.get("isLogin");
 
   const notificationsClick = useMemo(() => {
     return notifications?.filter((notification) => !notification.onClick);
@@ -130,98 +143,145 @@ const Header = () => {
     },
   ];
 
-  useEffect(() => {
-    const isLogin = Cookies.get("isLogin");
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch profile user
+      const data = await dispatch(fetchProfileUser()).unwrap();
 
-    const fetchUserProfile = async () => {
-      try {
-        // Fetch profile user
-        setIsLoading(true);
-        const data = await dispatch(fetchProfileUser()).unwrap();
+      if (!data) return;
 
-        if (data) {
-          socket.emit("newUser", {
-            id: data.id,
-            workspace_id_active: data.workspace_id_active,
-            isOnline: data.isOnline,
-          });
+      socket.emit("newUser", {
+        id: data.id,
+        workspace_id_active: data.workspace_id_active,
+        isOnline: data.isOnline,
+        name: data.name,
+        avatar: data.avatar,
+      });
 
-          // Fetch workspace, missions , workspace of user
-          await Promise.all([
-            dispatch(fetchNotification({ user_id: data.id })),
-            dispatch(fetchWorkspace(data.workspace_id_active)),
-            dispatch(
-              fetchMission({
-                user_id: data.id,
-                workspace_id: data.workspace_id_active,
-              })
-            ),
-          ]);
+      // Fetch notifications, workspace and mission
+      await Promise.all([
+        dispatch(fetchNotification({ user_id: data.id })),
+        dispatch(
+          fetchWorkspace(data.workspace_id_active),
+          dispatch(
+            fetchMission({
+              user_id: data.id,
+              workspace_id: data.workspace_id_active,
+            })
+          )
+        ),
+      ]);
 
-          // Redirect to active workspace if current path does not matches
-          if (
-            pathname.startsWith(`/w/${id}`) &&
-            id !== data.workspace_id_active
-          ) {
-            const currentURL = window.location.href.replace(
-              id.toString(),
-              data.workspace_id_active.toString()
-            );
-            router.push(currentURL);
-          }
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.log(error);
+      // Redirect to active workspace if current path does not matches
+      if (pathname.startsWith(`/w/${id}`) && id !== data?.workspace_id_active) {
+        const currentURL = window.location.href.replace(
+          id.toString(),
+          data.workspace_id_active.toString()
+        );
+        router.push(currentURL);
       }
-    };
 
+      setIsLoading(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
     if (isLogin === "true" && !user?.id) {
       fetchUserProfile();
     }
+
+    if (board?.id && !pathname.includes(`b/${board.id}`)) {
+      dispatch(clearBoard());
+    }
   }, [pathname]);
 
+  const handleUsersWorkspace = (data) => {
+    if (!data) return;
+
+    const { type, user: userUpdate, workspace: workspaceUpdate } = data;
+
+    const actionType = type.toLowerCase().trim();
+
+    switch (actionType) {
+      case "invite_user":
+        if (userUpdate.id === user.id && workspaceUpdate) {
+          dispatch(createWorkspaceInUser(workspaceUpdate));
+        } else {
+          dispatch(inviteUserInWorkspace(userUpdate));
+        }
+        break;
+
+      case "remove_user":
+        if (+user.id === +userUpdate.id) {
+          if (+workspace.id === +workspaceUpdate.id) {
+            toast.info("Bạn đã bị loại bỏ ra khỏi không gian làm việc này");
+            setTimeout(() => (window.location.href = "/"), 1000);
+          } else {
+            const workspacesUpdate = user.workspaces.filter(
+              (w) => w.id !== workspaceUpdate.id
+            );
+            dispatch(updateUser({ workspaces: workspacesUpdate }));
+          }
+        } else {
+          dispatch(cancelUserInWorkspace(userUpdate));
+        }
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  const handleResultDeleteWorkspace = async ({ workspace_id }) => {
+    if (!workspace_id || !user.workspaces.some((w) => w.id === workspace_id))
+      return;
+
+    if (workspace.id === workspace_id) {
+      toast.info(
+        "Không gian làm việc này đã bị xóa, bạn sẽ được chuyển đến nơi khác."
+      );
+      setTimeout(() => (window.location.href = "/"), 1000);
+      return;
+    }
+
+    const updatedWorkspaces = user.workspaces.filter(
+      (w) => w.id !== workspace_id
+    );
+    dispatch(updateUser({ workspaces: updatedWorkspaces }));
+  };
+
+  const handleResultDeleteBoard = async ({ board_id }) => {
+    if (!board_id) return;
+
+    dispatch(deleteBoardInWorkspace(board_id));
+
+    if (window.location.pathname.startsWith(`/b/${board_id}`)) {
+      toast.info("Bảng này đã bị xóa, bạn sẽ được chuyển về trang chính.");
+      router.push(`/w/${workspace.id}/boards`);
+    }
+  };
+
+  const handleGetWorkspaceUpdated = (data) => {
+    if (!data) return;
+
+    dispatch(updateWorkspace(data));
+  };
+
   useEffect(() => {
-    const handleUsersWorkspace = (data) => {
-      if (!data) return;
-
-      const { type, user: userUpdate, workspace: workspaceUpdate } = data;
-
-      const actionType = type.toLowerCase().trim();
-
-      switch (actionType) {
-        case "invite_user":
-          if (userUpdate.id === user.id && workspaceUpdate) {
-            dispatch(createWorkspaceInUser(workspaceUpdate));
-          } else {
-            dispatch(inviteUserInWorkspace(userUpdate));
-          }
-          break;
-
-        case "remove_user":
-          if (+user.id === +userUpdate.id) {
-            if (+workspace.id === +workspaceUpdate.id) {
-              toast.info("Bạn đã bị loại bỏ ra khỏi không gian làm việc này");
-              setTimeout(() => (window.location.href = "/"), 1000);
-            } else {
-              const updatedWorkspaces = user.workspaces.filter(
-                (w) => w.id !== workspaceUpdate.id
-              );
-              dispatch(updateUser({ workspaces: updatedWorkspaces }));
-            }
-          } else {
-            dispatch(cancelUserInWorkspace(userUpdate));
-          }
-          break;
-
-        default:
-          break;
-      }
-    };
-
     socket.on("getUserWorkspace", handleUsersWorkspace);
+    socket.on("resultDeleteWorkspace", handleResultDeleteWorkspace);
+    socket.on("resultDeleteBoard", handleResultDeleteBoard);
+    socket.on("getWorkspaceUpdated", handleGetWorkspaceUpdated);
 
-    return () => socket.off("getUserWorkspace", handleUsersWorkspace);
+    return () => {
+      socket.off("getUserWorkspace", handleUsersWorkspace);
+      socket.off("resultDeleteWorkspace", handleResultDeleteWorkspace);
+      socket.off("resultDeleteBoard", handleResultDeleteBoard);
+      socket.off("getWorkspaceUpdated", handleGetWorkspaceUpdated);
+    };
   }, [dispatch]);
 
   if (isLoading) {

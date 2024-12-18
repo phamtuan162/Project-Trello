@@ -1,56 +1,20 @@
 "use client";
 import { Avatar } from "@nextui-org/react";
-import { useRouter, usePathname, useParams } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
-import { BoardIcon } from "@/components/Icon/BoardIcon";
+import { useRouter, usePathname } from "next/navigation";
+import { useSelector } from "react-redux";
+import { ChevronDown, Plus } from "lucide-react";
+
 import { HelpOutlineIcon } from "@/components/Icon/HelpOutlineIcon";
 import { BoardsAction } from "./BoardsAction";
-import { ChevronDown, Plus } from "lucide-react";
 import WorkspaceMenu from "./WorkspaceMenu";
-import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
-import { useEffect, useMemo, useState } from "react";
-const { updateWorkspace } = workspaceSlice.actions;
+
 const SidebarWorkspace = ({ workspaceOptions }) => {
-  const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { id: workspaceId } = useParams();
   const user = useSelector((state) => state.user.user);
   const workspace = useSelector((state) => state.workspace.workspace);
-  const socket = useSelector((state) => state.socket.socket);
-  const [boards, setBoards] = useState(workspace?.boards || []);
 
-  useEffect(() => {
-    if (workspace?.boards) {
-      setBoards(workspace.boards);
-    }
-  }, [workspace?.boards]);
-
-  useEffect(() => {
-    const handleGetWorkspaceUpdated = (data) => {
-      const workspaceUpdated = data;
-
-      if (!workspaceUpdated?.id || !workspace?.id) {
-        return;
-      }
-
-      dispatch(
-        updateWorkspace({
-          name: workspaceUpdated.name,
-          desc: workspaceUpdated.desc,
-        })
-      );
-    };
-
-    if (socket) {
-      socket.on("getWorkspaceUpdated", handleGetWorkspaceUpdated);
-
-      return () => {
-        socket.off("getWorkspaceUpdated", handleGetWorkspaceUpdated);
-      };
-    }
-  }, [socket]);
   return (
     <div
       className="  h-full dark-border  lg:w-64 shrink-0  flex max-w-[250px]  flex-col"
@@ -117,39 +81,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
         </div>
 
         <div className="p-2 px-4">
-          <BoardsAction setBoards={setBoards} boards={boards} />
-          {boards?.slice(0, 3).map((board) => (
-            <div
-              onClick={() => router.push(`/b/${board.id}`)}
-              key={board.id}
-              className="lg:flex gap-2 p-1.5 items-center justify-center  lg:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 hidden"
-            >
-              <Avatar
-                src={board?.background}
-                radius="md"
-                size="sm"
-                className="h-6 w-6 text-indigo-700 bg-indigo-100"
-                name={board?.title?.charAt(0).toUpperCase()}
-              />
-              <div className="flex items-center gap-2">
-                <p className="lg:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
-                  {board?.title}
-                </p>
-              </div>
-            </div>
-          ))}
-          <div
-            onClick={() => router.push(`/w/${workspaceId}/boards`)}
-            className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center justify-center lg:justify-start gap-2 text-sm  cursor-pointer ${
-              pathname.includes("boards")
-                ? "bg-indigo-100 text-indigo-700"
-                : "hover:bg-default-100"
-            }`}
-          >
-            <BoardIcon size={16} />
-
-            <span className="lg:block hidden">Xem tất cả bảng</span>
-          </div>
+          <BoardsAction />
           <FormPopoverBoard
             placement={"top-right"}
             workspaces={user?.workspaces}

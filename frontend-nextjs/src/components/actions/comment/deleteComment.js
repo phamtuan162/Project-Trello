@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { deleteCommentApi } from "@/services/commentApi";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -33,16 +34,18 @@ const DeleteComment = ({ comment, children }) => {
             (c) => c.id !== comment.id
           );
 
-          dispatch(updateCard({ comments: commentsUpdate }));
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            comments: commentsUpdate,
+          };
 
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              comments: commentsUpdate,
-            })
-          );
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
           toast.success("Xóa comment thành công");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

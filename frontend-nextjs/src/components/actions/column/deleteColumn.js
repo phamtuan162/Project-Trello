@@ -4,54 +4,48 @@ import {
   PopoverTrigger,
   PopoverContent,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "react-toastify";
 
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { deleteColumn } from "@/services/workspaceApi";
 
-const { updateBoard } = boardSlice.actions;
+const { deleteColumnInBoard } = boardSlice.actions;
 
 const DeleteColumn = ({ children, column }) => {
   const dispatch = useDispatch();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const user = useSelector((state) => state.user.user);
-  const board = useSelector((state) => state.board.board);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
 
   const handleDeleteColumn = async () => {
-    setIsLoading(true);
-
     try {
-      const updatedCols = board.columns.filter((c) => c.id !== column.id);
-      const updatedColOrderIds = updatedCols.map((c) => c.id);
-
       await toast
         .promise(async () => await deleteColumn(column.id), {
           pending: "Đang xóa...",
         })
         .then(() => {
-          dispatch(
-            updateBoard({
-              columns: updatedCols,
-              columnOrderIds: updatedColOrderIds,
-            })
-          );
+          dispatch(deleteColumnInBoard(column.id));
+
           toast.success("Bạn đã xóa danh sách này thành công");
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsLoading(false);
     }
   };
   return (
@@ -95,14 +89,10 @@ const DeleteColumn = ({ children, column }) => {
               type="button"
               className="w-full h-[40px] mt-2 interceptor-loading"
               color="danger"
-              isDisabled={
-                (user?.role?.toLowerCase() !== "admin" &&
-                  user?.role?.toLowerCase() !== "owner") ||
-                isLoading
-              }
+              isDisabled={!checkRole}
               onClick={() => handleDeleteColumn()}
             >
-              {isLoading ? <CircularProgress /> : "Xóa danh sách thẻ"}
+              Xóa danh sách thẻ
             </Button>
           </div>
         </div>

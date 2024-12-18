@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { ListOptions } from "./ListOptions";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateColumnInBoard } = boardSlice.actions;
 
@@ -14,6 +15,7 @@ export function ListHeader({ column }) {
   const user = useSelector((state) => state.user.user);
   const inputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(column?.title || "");
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -23,34 +25,31 @@ export function ListHeader({ column }) {
 
   const onUpdateTitle = async () => {
     try {
-      const title = inputRef.current.value.trim();
-
-      if (title.length < 6) {
+      if (value.length < 6) {
         toast.info("Tiêu đề phải dài hơn 6 ký tự!");
         return;
       }
 
-      if (title === column.title.trim()) {
+      if (value === column.title.trim()) {
         setIsEditing(false);
         return;
       }
 
-      dispatch(updateColumnInBoard({ id: column.id, title: title }));
+      dispatch(updateColumnInBoard({ id: column.id, title: value }));
 
       setIsEditing(false);
 
       await updateColumnDetail(column.id, {
-        title: title,
+        title: value,
       });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsEditing(false);
     }
   };
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
+      event.preventDefault();
       inputRef.current.blur();
     }
   };
@@ -64,11 +63,12 @@ export function ListHeader({ column }) {
             name="title"
             id="title"
             required
-            defaultValue={column.title}
+            value={value}
             className="h-full text-lg rounded-md focus-visible:border-sky-600 w-full pl-3"
             style={{ border: "none" }}
             onBlur={() => onUpdateTitle()}
             onKeyDown={handleKeyDown}
+            onChange={(e) => setValue(e.target.value)}
           />
         ) : (
           <span

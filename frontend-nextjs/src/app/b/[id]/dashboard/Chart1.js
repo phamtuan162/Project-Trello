@@ -71,7 +71,7 @@ const Chart1 = ({ typeCharts, times, colors, handleDownload }) => {
               (item) => item.title === column
             );
             columnActive.cards.forEach((card) => {
-              if (card.created_at) {
+              if (card?.created_at) {
                 const created_at = format(
                   new Date(card.created_at),
                   "dd/MM/yyyy"

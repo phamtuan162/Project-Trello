@@ -9,6 +9,9 @@ export const fetchWorkspace = createAsyncThunk(
         return data;
       }
     } catch (error) {
+      if (error?.response?.status === 404 && error?.response?.workspace_id) {
+        window.location.href = `/w/${error.response.workspace_id}/home`;
+      }
       console.log(error);
     }
   }
