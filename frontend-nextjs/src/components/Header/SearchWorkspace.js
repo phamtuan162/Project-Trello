@@ -12,7 +12,6 @@ import { switchWorkspaceApi } from "@/services/workspaceApi";
 import { userSlice } from "@/stores/slices/userSlice";
 import { fetchMission } from "@/stores/middleware/fetchMission";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
-import { socket } from "@/socket";
 
 const { updateUser } = userSlice.actions;
 
@@ -76,9 +75,8 @@ const SearchWorkspace = ({ isLoading, setIsLoading }) => {
 
           // Chuyển hướng sau khi các dữ liệu đã được tải về
           router.push(`/w/${id}/home`);
-          toast.success("Chuyển không gian làm việc thành công");
 
-          socket.emit("changeWorkspace", { workspace_id_active: id });
+          toast.success("Chuyển không gian làm việc thành công");
         })
         .catch((error) => {
           console.log(error);

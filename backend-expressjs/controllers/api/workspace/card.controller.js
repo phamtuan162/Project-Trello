@@ -297,10 +297,10 @@ module.exports = {
   assignUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
-    const { user_id, notification: body } = req.body;
+    const { user_id, notification } = req.body;
     const response = {};
 
-    if (!user_id || !body) {
+    if (!user_id || !notification) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
@@ -329,7 +329,10 @@ module.exports = {
         +userMain.id === +user_id ? `đã tham gia` : `đã thêm ${user.name} vào`,
     });
 
-    const notificationNew = await Notification.create(body);
+    const notificationNew =
+      +userMain.id === +notification?.user_id
+        ? await Notification.create(notification)
+        : null;
 
     Object.assign(response, {
       status: 200,
@@ -342,10 +345,10 @@ module.exports = {
   unAssignUser: async (req, res) => {
     const userMain = req.user.dataValues;
     const { id } = req.params;
-    const { user_id, notification: body } = req.body;
+    const { user_id, notification } = req.body;
     const response = {};
 
-    if (!user_id || !body) {
+    if (!user_id || !notification) {
       return res.status(400).json({ status: 400, message: "Bad request" });
     }
 
@@ -377,7 +380,10 @@ module.exports = {
             : `đã loại ${user.name} khỏi`,
       });
 
-      const notificationNew = await Notification.create(body);
+      const notificationNew =
+        +userMain.id === +notification?.user_id
+          ? await Notification.create(notification)
+          : null;
 
       Object.assign(response, {
         status: 200,

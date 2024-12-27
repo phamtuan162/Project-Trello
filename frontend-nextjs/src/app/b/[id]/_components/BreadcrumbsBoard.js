@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { Breadcrumbs, BreadcrumbItem } from "@nextui-org/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -28,7 +29,7 @@ const BreadcrumbsBoard = () => {
 
   const board = useSelector((state) => state.board.board);
 
-  seEffect(() => {
+  useEffect(() => {
     const currentPath = pathname.includes("dashboard") ? "dashboard" : "board";
     setCurrentPage(currentPath);
   }, [pathname]);
@@ -39,10 +40,8 @@ const BreadcrumbsBoard = () => {
     if (selectedOption) {
       const targetPath = `/b/${board.id}${selectedOption.href}`;
 
-      if (!pathname.includes(targetPath)) {
-        router.push(targetPath);
-        setCurrentPage(key);
-      }
+      router.push(targetPath);
+      setCurrentPage(key);
     }
   };
 

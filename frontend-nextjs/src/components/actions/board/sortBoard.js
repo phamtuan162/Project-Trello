@@ -23,8 +23,12 @@ const statusOptions = [
 ];
 
 const SortBoard = ({ children, setStatusFilter, statusFilter, isAction }) => {
+  if (!isAction) {
+    return null;
+  }
+
   return (
-    <Dropdown isOpen={isAction}>
+    <Dropdown>
       <DropdownTrigger className="hidden sm:flex">{children}</DropdownTrigger>
       <DropdownMenu
         disallowEmptySelection

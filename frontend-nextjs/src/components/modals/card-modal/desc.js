@@ -10,6 +10,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -39,16 +40,19 @@ const DescCardModal = () => {
         }
       )
       .then(async (res) => {
-        dispatch(updateCard({ desc: cardDescription })),
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              desc: cardDescription,
-            })
-          );
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          desc: cardDescription,
+        };
+
+        dispatch(updateCard(cardUpdate));
+
+        dispatch(updateCardInBoard(cardUpdate));
 
         toast.success("Cập nhật thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         setCardDescription(card.desc);

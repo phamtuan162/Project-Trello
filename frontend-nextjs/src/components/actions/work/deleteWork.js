@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { deleteWorkApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -30,19 +31,19 @@ const DeleteWork = ({ work }) => {
         pending: "Đang xóa...",
       })
       .then((res) => {
-        const worksUpdate = card.works.filter((w) => w.id !== work.id);
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works: card.works.filter((w) => w.id !== work.id),
+        };
 
-        dispatch(updateCard({ works: worksUpdate }));
+        dispatch(updateCard(cardUpdate));
 
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            works: worksUpdate,
-          })
-        );
+        dispatch(updateCardInBoard(cardUpdate));
 
         toast.success("Xóa thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);

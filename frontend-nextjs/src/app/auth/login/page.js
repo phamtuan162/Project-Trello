@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@nextui-org/button";
-import {
-  Input,
-  Card,
-  CardBody,
-  Link,
-  CircularProgress,
-} from "@nextui-org/react";
+import { Input, Card, CardBody, Link } from "@nextui-org/react";
 import "../_component/LoginRegister/loginregister.scss";
 import { GithubIcon } from "@/components/Icon/GithubIcon";
 import { GoogleIcon } from "@/components/Icon/GoogleIcon";

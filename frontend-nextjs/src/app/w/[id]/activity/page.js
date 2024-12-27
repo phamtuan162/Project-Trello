@@ -2,10 +2,6 @@
 import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { ChevronDownIcon } from "lucide-react";
-
-import { Message } from "@/components/Message/Message";
-import ActivityList from "./activity-list";
-import Loading from "@/components/Loading/Loading";
 import {
   Input,
   DropdownMenu,
@@ -14,6 +10,10 @@ import {
   DropdownTrigger,
   Button,
 } from "@nextui-org/react";
+
+import { Message } from "@/components/Message/Message";
+import ActivityList from "./activity-list";
+import Loading from "@/components/Loading/Loading";
 
 const statusOptions = [
   { name: "Gần Nhất Trước ↓", uid: "desc" },
@@ -26,7 +26,7 @@ const operateOptions = [
   { name: "Card", uid: "card" },
 ];
 
-export default function pageActivity() {
+export default function PageActivity() {
   const workspace = useSelector((state) => state.workspace.workspace);
   const [filterValue, setFilterValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("desc");
@@ -49,15 +49,17 @@ export default function pageActivity() {
 
     // Bước 3: Lọc theo loại hoạt động (operateFilter)
     if (operateFilter && operateFilter !== "all") {
-      result = result.filter((activity) => {
-        if (operateFilter === "board")
-          return activity.board_id || activity.action.includes(operateFilter);
-        if (operateFilter === "column")
-          return activity.column_id || activity.action.includes(operateFilter);
-        if (operateFilter === "card")
-          return activity.action.includes(operateFilter);
-        return false;
-      });
+      const operateMap = {
+        board: (activity) =>
+          activity?.board_id || activity?.action?.includes(operateFilter),
+        column: (activity) =>
+          activity?.column_id || activity?.action?.includes(operateFilter),
+        card: (activity) => activity?.action?.includes(operateFilter),
+      };
+
+      result = result.filter((activity) =>
+        operateMap[operateFilter.toLowerCase()]?.(activity)
+      );
     }
 
     // Bước 4: Sắp xếp theo thứ tự (statusFilter)
@@ -66,16 +68,16 @@ export default function pageActivity() {
         const dateA = new Date(a.created_at);
         const dateB = new Date(b.created_at);
 
-        if (statusFilter === "asc") return dateA - dateB; // Tăng dần
-        if (statusFilter === "desc") return dateB - dateA; // Giảm dần
+        if (statusFilter.toLowerCase() === "asc") return dateA - dateB; // Tăng dần
+        if (statusFilter.toLowerCase() === "desc") return dateB - dateA; // Giảm dần
         return 0;
       });
     }
 
     return result;
-  }, [workspace.activities, filterValue, statusFilter, operateFilter]);
+  }, [workspace?.activities, filterValue, statusFilter, operateFilter]);
 
-  return workspace.activities ? (
+  return workspace?.activities ? (
     <div className="h-full ">
       <h1 className="text-xl font-medium mt-4">
         Hoạt động không gian làm việc

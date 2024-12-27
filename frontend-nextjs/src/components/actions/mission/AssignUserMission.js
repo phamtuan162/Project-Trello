@@ -18,10 +18,11 @@ import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateMissionApi } from "@/services/workspaceApi";
 import { missionSlice } from "@/stores/slices/missionSlice";
 import { cloneDeep } from "lodash";
+import { socket } from "@/socket";
 
 const { createMissionInMissions, deleteMissionInMissions } =
   missionSlice.actions;
-const { updateMissionInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
 const AssignUserMission = ({ children, mission }) => {
@@ -84,30 +85,29 @@ const AssignUserMission = ({ children, mission }) => {
           missionUpdate.user_id = userAssigned.id;
         }
 
-        dispatch(
-          updateMissionInCard({
-            id: mission.id,
-            work_id: mission.work_id,
-            user: userAssigned,
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works,
+        };
+
+        dispatch(updateCard(cardUpdate));
+
+        dispatch(updateCardInBoard(cardUpdate));
+
+        if (userAssigned?.id === userMain?.id) {
+          dispatch(createMissionInMissions(missionUpdate));
+        } else {
+          socket.emit("assignMission", {
+            type: "assign",
+            missionUpdate,
             user_id: userAssigned.id,
-          })
-        );
-
-        dispatch(
-          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-        );
-
-        if (userAssigned.id === userMain.id) {
-          dispatch(
-            createMissionInMissions({
-              ...mission,
-              user: userAssigned,
-              user_id: userAssigned.id,
-            })
-          );
+          });
         }
 
         toast.success("Thêm thành viên thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);
@@ -136,24 +136,29 @@ const AssignUserMission = ({ children, mission }) => {
           missionUpdate.user_id = null;
         }
 
-        dispatch(
-          updateMissionInCard({
-            id: mission.id,
-            work_id: mission.work_id,
-            user_id: null,
-            user: null,
-          })
-        );
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works,
+        };
 
-        dispatch(
-          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-        );
+        dispatch(updateCard(cardUpdate));
 
-        if (userAssigned.id === userMain.id) {
+        dispatch(updateCardInBoard(cardUpdate));
+
+        if (userAssigned?.id === userMain?.id) {
           dispatch(deleteMissionInMissions({ id: mission.id }));
+        } else {
+          socket.emit("actionMission", {
+            type: "un_assign",
+            missionUpdate,
+            user_id: userAssigned.id,
+          });
         }
 
-        toast.success("Loại bỏ thành viên thành công1");
+        toast.success("Loại bỏ thành viên thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);

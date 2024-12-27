@@ -10,12 +10,15 @@ import EditNameFile from "@/components/actions/card/editNameFile";
 import DeleteFile from "@/components/actions/card/deleteFile";
 
 const isImagePath = (path) => {
+  if (!path) return null;
   const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp"];
   const extension = path.slice(path.lastIndexOf("."));
   return imageExtensions.includes(extension.toLowerCase());
 };
 
 const getFileExtension = (fileName) => {
+  if (!fileName) return null;
+
   const parts = fileName.split(".");
   const extension = parts[parts.length - 1];
   return extension;

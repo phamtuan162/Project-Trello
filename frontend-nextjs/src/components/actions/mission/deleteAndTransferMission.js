@@ -16,6 +16,7 @@ import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { missionSlice } from "@/stores/slices/missionSlice";
 import { transferCardApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard, createCardInBoard } = boardSlice.actions;
@@ -41,14 +42,28 @@ const DeleteAndTransferMission = ({ children, mission }) => {
           work.missions = work.missions.filter((m) => m.id !== mission.id);
         }
 
-        dispatch(updateCard({ id: card.id, works }));
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works,
+        };
 
-        dispatch(
-          updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-        );
+        dispatch(updateCard(cardUpdate));
 
-        if (mission.user_id === user.id) {
-          dispatch(deleteMissionInMissions(mission));
+        dispatch(updateCardInBoard(cardUpdate));
+
+        socket.emit("updateCard", cardUpdate);
+
+        if (mission?.user_id) {
+          if (mission.user_id === user.id) {
+            dispatch(deleteMissionInMissions(mission));
+          } else {
+            socket.emit("actionMission", {
+              type: "delete",
+              missionUpdate: { id: mission.id },
+              user_id: mission.user_id,
+            });
+          }
         }
       })
       .catch((error) => {
@@ -79,16 +94,30 @@ const DeleteAndTransferMission = ({ children, mission }) => {
             work.missions = work.missions.filter((m) => m.id !== mission.id);
           }
 
-          dispatch(updateCard({ id: card.id, works }));
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          };
 
-          dispatch(
-            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-          );
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
+          socket.emit("updateCard", cardUpdate);
 
           dispatch(createCardInBoard(cardCreated));
 
-          if (mission.user_id === user.id) {
-            dispatch(deleteMissionInMissions(mission));
+          if (mission?.user_id) {
+            if (mission.user_id === user.id) {
+              dispatch(deleteMissionInMissions(mission));
+            } else {
+              socket.emit("actionMission", {
+                type: "delete",
+                missionUpdate: { id: mission.id },
+                user_id: mission.user_id,
+              });
+            }
           }
         })
         .catch((error) => {

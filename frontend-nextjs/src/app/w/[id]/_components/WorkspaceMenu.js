@@ -28,7 +28,6 @@ import { userSlice } from "@/stores/slices/userSlice";
 import Loading from "@/components/Loading/Loading";
 import { fetchMission } from "@/stores/middleware/fetchMission";
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
-import { socket } from "@/socket";
 
 const { updateUser } = userSlice.actions;
 
@@ -121,8 +120,6 @@ export default function WorkspaceMenu({
           // Chuyển hướng sau khi các dữ liệu đã được tải về
           router.push(`/w/${id}/home`);
           toast.success("Chuyển không gian làm việc thành công");
-
-          socket.emit("changeWorkspace", { workspace_id_active: id });
         })
         .catch((error) => {
           console.log(error);

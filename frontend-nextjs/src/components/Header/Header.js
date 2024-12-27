@@ -34,6 +34,7 @@ import { notificationSlice } from "@/stores/slices/notificationSlice";
 import { userSlice } from "@/stores/slices/userSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { missionSlice } from "@/stores/slices/missionSlice";
 import { clickNotification } from "@/services/notifyApi";
 import SearchWorkspace from "./SearchWorkspace";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
@@ -50,6 +51,11 @@ const {
   deleteBoardInWorkspace,
 } = workspaceSlice.actions;
 const { clearBoard } = boardSlice.actions;
+const {
+  createMissionInMissions,
+  deleteMissionInMissions,
+  updateMissionInMissions,
+} = missionSlice.actions;
 
 const Header = () => {
   const notifications = useSelector(
@@ -270,17 +276,32 @@ const Header = () => {
     dispatch(updateWorkspace(data));
   };
 
+  const handleGetActionMission = ({ type, missionUpdate }) => {
+    if (!type || !missionUpdate) return;
+
+    const actions = {
+      assign: () => dispatch(createMissionInMissions(missionUpdate)),
+      un_assign: () => dispatch(deleteMissionInMissions(missionUpdate.id)),
+      update: () => dispatch(updateMissionInMissions(missionUpdate)),
+      delete: () => dispatch(deleteMissionInMissions(missionUpdate.id)),
+    };
+
+    actions[type.toLowerCase().trim()]?.();
+  };
+
   useEffect(() => {
     socket.on("getUserWorkspace", handleUsersWorkspace);
     socket.on("resultDeleteWorkspace", handleResultDeleteWorkspace);
     socket.on("resultDeleteBoard", handleResultDeleteBoard);
     socket.on("getWorkspaceUpdated", handleGetWorkspaceUpdated);
+    socket.on("getActionMission", handleGetActionMission);
 
     return () => {
       socket.off("getUserWorkspace", handleUsersWorkspace);
       socket.off("resultDeleteWorkspace", handleResultDeleteWorkspace);
       socket.off("resultDeleteBoard", handleResultDeleteBoard);
       socket.off("getWorkspaceUpdated", handleGetWorkspaceUpdated);
+      socket.off("getActionMission", handleGetActionMission);
     };
   }, [dispatch]);
 

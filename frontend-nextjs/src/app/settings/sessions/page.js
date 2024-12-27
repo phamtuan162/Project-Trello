@@ -9,22 +9,30 @@ import {
   TableCell,
   Button,
 } from "@nextui-org/react";
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
+
 import { getLocalStorage } from "@/utils/localStorage";
 import { formatTimeAgo } from "@/utils/formatTime";
-import { useMemo } from "react";
 
 const PageSessions = () => {
   const user = useSelector((state) => state.user.user);
   const device_id_current = getLocalStorage("device_id_current") || "";
-  const handleLogoutDevice = async () => {};
+
+  const handleLogoutDevice = async (deviceId) => {
+    // Logic thu hồi truy cập từ thiết bị
+    console.log(`Thu hồi truy cập từ thiết bị ${deviceId}`);
+    // Xử lý API hoặc Redux để logout thiết bị tại đây
+  };
+
   const devices = useMemo(() => {
     return (
-      user?.devices.sort(
+      user?.devices?.sort(
         (a, b) => new Date(b.active_time) - new Date(a.active_time)
       ) || []
     );
-  }, [user.devices]);
+  }, [user?.devices]);
+
   return (
     <div className="mt-6">
       <h1 className="text-2xl font-medium mt-2">Phiên</h1>
@@ -32,19 +40,7 @@ const PageSessions = () => {
         Dưới đây là các phiên gần đây của bạn, hãy thu hồi quyền truy cập để
         đăng xuất khỏi thiết bị đó.
       </p>
-      <Table
-        classNames={{
-          th: [
-            "bg-transparent",
-            "text-default-500",
-            "border-b",
-            "border-divider",
-          ],
-        }}
-        removeWrapper
-        aria-label="Example static collection table"
-        className="mt-4"
-      >
+      <Table aria-label="Example static collection table" className="mt-4">
         <TableHeader>
           <TableColumn>HỆ ĐIỀU HÀNH</TableColumn>
           <TableColumn>TRÌNH DUYỆT</TableColumn>
@@ -71,7 +67,7 @@ const PageSessions = () => {
                   <Button
                     type="button"
                     className="rounded-lg h-full py-1.5 text-red-600 bg-red-100 font-medium"
-                    onClick={() => handleLogoutDevice()}
+                    onClick={() => handleLogoutDevice(device.id)}
                   >
                     Thu hồi truy cập
                   </Button>
@@ -84,4 +80,5 @@ const PageSessions = () => {
     </div>
   );
 };
+
 export default PageSessions;

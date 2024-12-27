@@ -1,14 +1,15 @@
 "use client";
-import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Image } from "lucide-react";
 import { toast } from "react-toastify";
 
 import FormBackground from "@/components/Form/FormBackground";
+import { normalizeURL } from "@/utils/normalize";
 import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { singleFileValidator } from "@/utils/validators";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -18,26 +19,30 @@ const BackgroundCard = () => {
   const card = useSelector((state) => state.card.card);
 
   const HandleBackground = async (data) => {
-    let reqData;
-    let isFile;
     try {
-      // Kiểm tra xem dữ liệu là FormData hay e.target.files
+      let reqData;
+      const isFileInput = data?.target?.files;
+
+      // Xử lý dữ liệu FormData hoặc File
       if (data instanceof FormData) {
-        // Trường hợp FormData
         const image = data.get("image");
-        if (image) {
-          reqData = { background: image };
-        } else {
+
+        if (
+          card?.background &&
+          normalizeURL(image) === normalizeURL(card.background)
+        ) {
+          return;
+        }
+
+        if (!image) {
           toast.error("Hình ảnh không hợp lệ.");
           return;
         }
-      } else if (data?.target?.files) {
-        isFile = true;
-        // Trường hợp e.target.files
+        reqData = { background: image };
+      } else if (isFileInput) {
         const file = data.target.files[0];
-
-        // Kiểm tra tính hợp lệ của file
         const validationError = singleFileValidator(file);
+
         if (validationError) {
           toast.error(validationError);
           return;
@@ -52,31 +57,36 @@ const BackgroundCard = () => {
         return;
       }
 
+      // Gửi yêu cầu cập nhật
       await toast
-        .promise(async () => await updateCardApi(card.id, reqData), {
+        .promise(updateCardApi(card.id, reqData), {
           pending: "Đang cập nhật...",
         })
         .then((res) => {
           const { data } = res;
 
-          dispatch(updateCard({ background: data.background }));
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              background: data.background,
-            })
-          );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            background: data.background,
+          };
+
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
           toast.success("Cập nhật thành công");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
-          console.log(error);
+          console.error(error);
         })
         .finally(() => {
-          if (isFile) data.target.value = "";
+          if (isFileInput) data.target.value = "";
         });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 

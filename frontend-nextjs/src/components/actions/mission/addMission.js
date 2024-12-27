@@ -9,8 +9,9 @@ import { cloneDeep } from "lodash";
 import { createMissionApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { socket } from "@/socket";
 
-const { createMissionInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
 const AddMission = ({ work }) => {
@@ -75,23 +76,25 @@ const AddMission = ({ work }) => {
 
           const workUpdate = works.find((w) => w.id === work.id);
 
-          if (workUpdate.missions?.length > 0) {
+          if (workUpdate?.missions?.length) {
             workUpdate.missions.push(missionCreated);
           } else {
             workUpdate.missions = [missionCreated];
           }
 
-          dispatch(createMissionInCard(missionCreated));
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          };
 
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              works,
-            })
-          );
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
 
           toast.success("Thêm mission thành công!");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

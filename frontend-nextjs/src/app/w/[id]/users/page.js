@@ -95,7 +95,6 @@ export default function PageWorkspaceUsers() {
   useEffect(() => {
     const getStatusUser = (data) => {
       if (!data) return;
-      console.log(data);
 
       dispatch(
         updateStatusUserInWorkspace({ id: data.id, isOnline: data.isOnline })

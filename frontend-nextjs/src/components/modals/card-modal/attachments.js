@@ -5,6 +5,9 @@ import AttachmentItem from "./attachment";
 import { useSelector } from "react-redux";
 const AttachmentList = () => {
   const card = useSelector((state) => state.card.card);
+
+  console.log(card?.attachments);
+
   return (
     <div className="flex items-start gap-x-4 w-full">
       <span className="mt-0.5">

@@ -30,10 +30,9 @@ const cors = require("cors");
 const corsOptions = {
   origin: (origin, callback) => {
     // Kiểm tra nếu origin có trong whitelist, cho phép hoặc từ chối
-    if (
-      whitelist.includes(origin) ||
-      (!origin && process.env.NODE_ENV === "development")
-    ) {
+    if (whitelist.includes(origin) || !origin) {
+      // (!origin && process.env.NODE_ENV === "development")
+
       // Nếu origin hợp lệ hoặc không có origin (ví dụ, đối với các yêu cầu từ localhost)
       callback(null, true);
     } else {

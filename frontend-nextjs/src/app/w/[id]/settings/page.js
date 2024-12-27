@@ -1,10 +1,12 @@
 "use client";
 import { useSelector } from "react-redux";
 import { Link } from "@nextui-org/react";
+
 import Loading from "@/components/Loading/Loading";
 import FormDeleteWorkspace from "../_components/FormDeleteWorkspace";
 import FormUpdateWorkspace from "../_components/FormUpdateWorkspace";
-export default function pageWorkspaceSetting() {
+
+export default function PageWorkspaceSetting() {
   const workspace = useSelector((state) => state.workspace.workspace);
 
   return workspace ? (

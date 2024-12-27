@@ -13,6 +13,7 @@ import { boardSlice } from "@/stores/slices/boardSlice";
 import DeleteWork from "@/components/actions/work/deleteWork";
 import AddMission from "@/components/actions/mission/addMission";
 import MissionsWork from "./missions";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -82,21 +83,23 @@ const WorkCard = ({ work }) => {
       })
       .then((res) => {
         const worksUpdate = card.works.map((w) => {
-          if (w.id === work.id) return { ...w, title: title };
+          if (+w.id === +work.id) return { ...w, title: title };
           return w;
         });
 
-        dispatch(updateCard({ works: worksUpdate }));
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works: worksUpdate,
+        };
 
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            works: worksUpdate,
-          })
-        );
+        dispatch(updateCard(cardUpdate));
+
+        dispatch(updateCardInBoard(cardUpdate));
 
         toast.success("Cập nhật thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);

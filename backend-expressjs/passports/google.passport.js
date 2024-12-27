@@ -12,7 +12,7 @@ module.exports = new GoogleStrategy(
     clientID:
       "194272781561-3llf3aiuf1rp1ike0i5dcotlmf1picub.apps.googleusercontent.com",
     clientSecret: "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",
-    callbackURL: "http://localhost:3000/auth/login/google/callback",
+    callbackURL: "https://pro-manage-xi.vercel.app/auth/login/google/callback",
     scope: ["profile", "email"],
   },
   async (accessToken, refreshToken, profile, cb) => {

@@ -42,7 +42,7 @@ const AttachmentFile = ({ children }) => {
           const cardUpdate = {
             id: card.id,
             column_id: card.column_id,
-            attachments: [attachment, ...card.activities],
+            attachments: [attachment, ...card.attachments],
             activities: [activity, ...card.activities],
           };
 
@@ -56,12 +56,13 @@ const AttachmentFile = ({ children }) => {
         })
         .catch((error) => {
           console.log(error);
+        })
+        .finally(() => {
+          setIsOpen(false);
+          e.target.value = "";
         });
     } catch (error) {
       console.log(error);
-    } finally {
-      setIsOpen(false);
-      e.target.value = "";
     }
   };
 

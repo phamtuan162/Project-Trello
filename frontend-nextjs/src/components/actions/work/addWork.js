@@ -14,8 +14,9 @@ import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { createWorkApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { socket } from "@/socket";
 
-const { createWorkInCard, updateActivityInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
 const AddWork = ({ children }) => {
@@ -49,19 +50,18 @@ const AddWork = ({ children }) => {
       .then((res) => {
         const { work, activity } = res;
 
-        dispatch(createWorkInCard(work));
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works: [...card.works, work],
+          activities: [activity, ...card.activities],
+        };
 
-        dispatch(updateActivityInCard(activity));
+        dispatch(updateCard(cardUpdate));
 
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            works: [work, ...card.works],
-            activities: [activity, ...card.activities],
-          })
-        );
+        dispatch(updateCardInBoard(cardUpdate));
         toast.success("Thêm work thành công");
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);

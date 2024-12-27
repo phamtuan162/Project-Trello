@@ -229,6 +229,35 @@ io.on("connection", (socket) => {
       io.to(socketIds).emit("getCardUpdated", form);
     }
   });
+  socket.on("deleteCard", async (form) => {
+    if (!form) return;
+
+    const userAction = getUser(socket.id);
+
+    if (!userAction) return;
+
+    const users = onlineUsers.filter(
+      (user) =>
+        +user.board_id === +userAction.board_id && +user.id !== +userAction.id
+    );
+
+    if (users.length) {
+      const socketIds = users.map((user) => user.socketId);
+
+      io.to(socketIds).emit("resultDeleteCard", form);
+    }
+  });
+
+  socket.on("actionMission", async (form) => {
+    const { type, missionUpdate, user_id } = form;
+    if (!user_id || !missionUpdate || !type) return;
+
+    const userAction = getUser(user_id);
+
+    if (!userAction) return;
+
+    io.to(userAction.socketId).emit("getActionMission", form);
+  });
   socket.on("sendNotification", async (body) => {
     const { user_id, notification } = body;
 

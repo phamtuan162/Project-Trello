@@ -12,6 +12,7 @@ import { updateCardApi } from "@/services/workspaceApi";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { getStatusByDate } from "@/utils/formatTime";
+import { socket } from "@/socket";
 
 const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
@@ -30,16 +31,15 @@ const DateCard = ({ checkRole }) => {
         pending: "Đang cập nhật...",
       })
       .then((res) => {
-        dispatch(updateCard({ status }));
+        const cardUpdate = { id: card.id, column_id: card.column_id, status };
 
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            status,
-          })
-        );
+        dispatch(updateCard(cardUpdate));
+
+        dispatch(updateCardInBoard(cardUpdate));
+
         toast.success("Cập nhật thành công");
+
+        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         setIsSelected(false);

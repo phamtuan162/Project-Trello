@@ -4,15 +4,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { CheckboxGroup } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { isPast } from "date-fns";
+import { cloneDeep } from "lodash";
 
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { missionSlice } from "@/stores/slices/missionSlice";
 import { updateMissionApi } from "@/services/workspaceApi";
 import MissionWork from "./mission";
-import { cloneDeep } from "lodash";
+import { socket } from "@/socket";
 
-const { updateMissionInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 const { updateMissionInMissions } = missionSlice.actions;
 
@@ -53,36 +54,37 @@ const MissionsWork = ({ missions }) => {
       .then((res) => {
         const works = cloneDeep(card.works);
         const work = works.find((w) => w.id === missionSelected.work_id);
-        const mission = work?.missions.find((m) => m.id === missionSelected.id);
+        const mission = work?.missions?.find(
+          (m) => m.id === missionSelected.id
+        );
 
         if (mission) mission.status = statusMission;
 
-        dispatch(
-          updateMissionInCard({
-            id: missionSelected.id,
-            work_id: missionSelected.work_id,
-            status: statusMission,
-          })
-        );
+        const cardUpdate = { id: card.id, column_id: card.column_id, works };
 
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            works,
-          })
-        );
+        dispatch(updateCard(cardUpdate));
 
-        if (missionSelected.user_id === user.id) {
-          dispatch(
-            updateMissionInMissions({
-              id: missionSelected.id,
-              status: statusMission,
-            })
-          );
-        }
+        dispatch(updateCardInBoard(cardUpdate));
 
         toast.success("Cập nhật trạng thái thành công");
+
+        socket.emit("updateCard", cardUpdate);
+
+        if (missionSelected?.user_id) {
+          const missionUpdate = {
+            id: missionSelected.id,
+            status: statusMission,
+          };
+          if (missionSelected.user_id === user.id) {
+            dispatch(updateMissionInMissions(missionUpdate));
+          } else {
+            socket.emit("actionMission", {
+              type: "update",
+              missionUpdate,
+              user_id: missionSelected.user_id,
+            });
+          }
+        }
       })
       .catch((error) => {
         console.log(error);

@@ -22,14 +22,12 @@ const typeCharts = [
     type: "line",
     img: "https://trello.com/assets/1c7f512ac23a684199cc.svg",
     imgFocus: "https://trello.com/assets/19c36f264c9e64ffcdca.svg",
-
     label: "Biểu đồ đường",
   },
   {
     type: "pie",
     img: "https://trello.com/assets/3f8975672b9de5120e32.svg",
     imgFocus: "https://trello.com/assets/19c36f264c9e64ffcdca.svg",
-
     label: "Biểu đồ dạng bánh",
   },
 ];
@@ -57,7 +55,7 @@ const colors = [
   "rgba(30, 144, 255, 0.8)", // Màu xanh dương đậm
 ];
 
-export default function dashboardPage() {
+export default function DashboardPage() {
   const { id: boardId } = useParams();
   const board = useSelector((state) => state.board.board);
 

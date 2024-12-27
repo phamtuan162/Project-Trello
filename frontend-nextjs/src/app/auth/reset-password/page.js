@@ -2,16 +2,14 @@
 import "../_component/LoginRegister/loginregister.scss";
 import { Input, Button, Card, CardBody, Link } from "@nextui-org/react";
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
+
 import { Message } from "../../../components/Message/Message";
 import { EyeFilledIcon } from "../_component/LoginRegister/EyeFilledIcon";
 import { EyeSlashFilledIcon } from "../_component/LoginRegister/EyeSlashFilledIcon ";
 import { resetPasswordApi } from "@/services/authApi";
-import { LockKeyhole } from "lucide-react";
+
 const PageResetPassword = () => {
-  const router = useRouter();
-  const query = window.location.search;
-  console.log(query);
   const [form, setForm] = useState({
     password_new: "",
     password_verify: "",
@@ -23,21 +21,21 @@ const PageResetPassword = () => {
 
   const HandleResetPassword = async (e) => {
     e.preventDefault();
+    const query = window.location.search;
     setMessage(null);
+
     if (password_new !== password_verify) {
       setMessage("Xác nhận mật khẩu chưa trùng với Mật khẩu mới");
       return;
     }
 
     try {
-      const { status, message } = await resetPasswordApi(query, {
+      const { message } = await resetPasswordApi(query, {
         password_new: password_new,
       });
 
-      if (200 <= status && status <= 299) {
-        setTypeMessage("success");
-        setMessage(message);
-      }
+      setTypeMessage("success");
+      setMessage(message);
     } catch (error) {
       if (error.response?.data?.isMessage) {
         setTypeMessage("warning");

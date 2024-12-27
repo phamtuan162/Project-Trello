@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Input, Avatar } from "@nextui-org/react";
-import { Plus } from "lucide-react";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import { usePathname, useRouter } from "next/navigation";
 
-import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
 import { BoardIcon } from "@/components/Icon/BoardIcon";
 import { MoreIcon } from "@/components/Icon/MoreIcon";
 import SortBoard from "@/components/actions/board/sortBoard";
+import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
 
 export function BoardsAction() {
   const router = useRouter();
@@ -92,7 +91,7 @@ export function BoardsAction() {
         </div>
       ) : (
         <div
-          className="w-full mb-1  justify-between items-center lg:flex hidden"
+          className="w-full mb-1  justify-between items-center lg:flex "
           style={{ height: "32px" }}
           onMouseOver={() => setIsAction(true)}
           onMouseOut={() => setIsAction(false)}
@@ -104,36 +103,39 @@ export function BoardsAction() {
             Bảng
           </span>
 
-          <div className={`items-center  ${isAction ? "flex" : "hidden"}`}>
-            <SortBoard
-              setStatusFilter={setStatusFilter}
-              statusFilter={statusFilter}
-              isAction={isAction}
-            >
-              <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
-                <MoreIcon size={14} />
-              </button>
-            </SortBoard>
+          <div className="lg:block hidden cursor-pointer">
+            <div className={`items-center  ${isAction ? "flex" : "hidden"}`}>
+              <SortBoard
+                setStatusFilter={setStatusFilter}
+                statusFilter={statusFilter}
+                isAction={isAction}
+              >
+                <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
+                  <MoreIcon size={14} />
+                </button>
+              </SortBoard>
 
-            <button
-              className="outline-0 p-1 rounded-lg hover:bg-default-100"
-              onClick={() => setIsSearch(!isSearch)}
-            >
-              <Search size={14} />
-            </button>
-            <FormPopoverBoard placement={"top-right"}>
-              <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
-                <Plus size={14} />
+              <button
+                className="outline-0 p-1 rounded-lg hover:bg-default-100"
+                onClick={() => setIsSearch(!isSearch)}
+              >
+                <Search size={14} />
               </button>
-            </FormPopoverBoard>
+              <FormPopoverBoard placement={"top-right"}>
+                <button className="outline-0 p-1 rounded-lg hover:bg-default-100">
+                  <Plus size={14} />
+                </button>
+              </FormPopoverBoard>
+            </div>
           </div>
         </div>
       )}
+
       {filteredItems?.slice(0, 3).map((board) => (
         <div
           onClick={() => router.push(`/b/${board.id}`)}
           key={board.id}
-          className="lg:flex gap-2 p-1.5 items-center justify-center  lg:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 hidden"
+          className="lg:flex gap-2 p-1.5 items-center justify-center  lg:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 "
         >
           <Avatar
             src={board?.background}
@@ -149,6 +151,7 @@ export function BoardsAction() {
           </div>
         </div>
       ))}
+
       <div
         onClick={() => router.push(`/w/${workspace.id}/boards`)}
         className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center justify-center lg:justify-start gap-2 text-sm  cursor-pointer ${

@@ -16,7 +16,7 @@ import {
   addDays,
   compareAsc,
 } from "date-fns";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Popover,
   PopoverTrigger,
@@ -33,8 +33,9 @@ import { boardSlice } from "@/stores/slices/boardSlice";
 import { missionSlice } from "@/stores/slices/missionSlice";
 import { validateHourMinute, truncateTimeFromDate } from "@/utils/formatTime";
 import { updateMissionApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
-const { updateMissionInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 const { updateMissionInMissions } = missionSlice.actions;
 
@@ -109,24 +110,32 @@ const SetDate = ({ children, mission }) => {
             missionUpdate.endDateTime = null;
           }
 
-          dispatch(
-            updateMissionInCard({
-              id: mission.id,
-              work_id: mission.work_id,
-              endDateTime: null,
-            })
-          );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          };
 
-          dispatch(
-            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-          );
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
 
           toast.success("Gỡ bỏ thành công");
 
-          if (mission.user_id === user.id) {
-            dispatch(
-              updateMissionInMissions({ id: mission.id, endDateTime: null })
-            );
+          socket.emit("updateCard", cardUpdate);
+
+          if (mission?.user_id) {
+            if (mission?.user_id === user?.id) {
+              dispatch(
+                updateMissionInMissions({ id: mission.id, endDateTime: null })
+              );
+            } else {
+              socket.emit("actionMission", {
+                type: "update",
+                missionUpdate: { id: mission.id, endDateTime: null },
+                user_id: mission.user_id,
+              });
+            }
           }
         })
         .catch((error) => {
@@ -192,28 +201,39 @@ const SetDate = ({ children, mission }) => {
             missionUpdate.endDateTime = endDateTimeUpdate.toISOString();
           }
 
-          dispatch(
-            updateMissionInCard({
-              id: mission.id,
-              work_id: mission.work_id,
-              endDateTime: endDateTimeUpdate.toISOString(),
-            })
-          );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            works,
+          };
 
-          dispatch(
-            updateCardInBoard({ id: card.id, column_id: card.column_id, works })
-          );
+          dispatch(updateCard(cardUpdate));
 
-          if (mission.user_id === user.id) {
-            dispatch(
-              updateMissionInMissions({
-                id: mission.id,
-                endDateTime: endDateTimeUpdate.toISOString(),
-              })
-            );
-          }
+          dispatch(updateCardInBoard(cardUpdate));
 
           toast.success("Cập nhật thành công");
+
+          socket.emit("updateCard", cardUpdate);
+
+          if (mission?.user_id) {
+            if (mission.user_id === user.id) {
+              dispatch(
+                updateMissionInMissions({
+                  id: mission.id,
+                  endDateTime: missionUpdate.endDateTime,
+                })
+              );
+            } else {
+              socket.emit("actionMission", {
+                type: "update",
+                missionUpdate: {
+                  id: mission.id,
+                  endDateTime: missionUpdate.endDateTime,
+                },
+                user_id: mission.user_id,
+              });
+            }
+          }
         })
         .catch((error) => {
           console.log(error);

@@ -66,8 +66,6 @@ export const boardSlice = createSlice({
         }
 
         column.cardOrderIds = column.cards.map((c) => c.id);
-
-        socket.emit("updateBoard", state.board);
       }
     },
 

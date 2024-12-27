@@ -10,8 +10,8 @@ import {
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { socket } from "@/socket";
 
+import { socket } from "@/socket";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { logoutApi } from "@/services/authApi";
 

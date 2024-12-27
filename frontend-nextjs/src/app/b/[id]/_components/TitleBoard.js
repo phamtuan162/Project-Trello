@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 
 import { updateBoardDetail } from "@/services/workspaceApi";
 import { boardSlice } from "@/stores/slices/boardSlice";
+import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { socket } from "@/socket";
 
 const { updateBoard } = boardSlice.actions;

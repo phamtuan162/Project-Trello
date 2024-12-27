@@ -17,8 +17,9 @@ import AssignUserMission from "@/components/actions/mission/AssignUserMission";
 import SetDate from "@/components/actions/mission/setDate";
 import DeleteAndTransferMission from "@/components/actions/mission/deleteAndTransferMission";
 import { cloneDeep } from "lodash";
+import { socket } from "@/socket";
 
-const { updateMissionInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateMissionInMissions } = missionSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
@@ -74,36 +75,49 @@ const MissionWork = ({ mission, setMissionSelected }) => {
 
         const workUpdate = works.find((w) => w.id === mission.work_id);
 
-        const missionUpdate = workUpdate.missions.find(
+        const missionUpdate = workUpdate?.missions.find(
           (m) => m.id === mission.id
         );
 
-        missionUpdate.name = name;
-
-        dispatch(
-          updateMissionInCard({
-            id: mission.id,
-            work_id: mission.work_id,
-            name: name,
-          })
-        );
-
-        dispatch(
-          updateCardInBoard({
-            id: card.id,
-            column_id: card.column_id,
-            works,
-          })
-        );
-
-        if (mission.user_id === user.id) {
-          dispatch(updateMissionInMissions({ id: mission.id, name: name }));
+        if (missionUpdate) {
+          missionUpdate.name = name;
         }
 
-        setIsEditing(false);
+        const cardUpdate = {
+          id: card.id,
+          column_id: card.column_id,
+          works,
+        };
+
+        dispatch(updateCard(cardUpdate));
+
+        dispatch(updateCardInBoard(cardUpdate));
+
+        toast.success("Cập nhật thành công");
+
+        socket.emit("updateCard", cardUpdate);
+
+        if (mission?.user_id) {
+          const missionUpdate = {
+            id: mission.id,
+            name: name,
+          };
+          if (mission.user_id === user.id) {
+            dispatch(updateMissionInMissions(missionUpdate));
+          } else {
+            socket.emit("actionMission", {
+              type: "update",
+              missionUpdate,
+              user_id: mission.user_id,
+            });
+          }
+        }
       })
       .catch((error) => {
         console.log(error);
+      })
+      .finally(() => {
+        setIsEditing(false);
       });
   };
   return (

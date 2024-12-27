@@ -14,6 +14,7 @@ import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { deleteCardApi } from "@/services/workspaceApi";
+import { socket } from "@/socket";
 
 const { deleteCardInBoard } = boardSlice.actions;
 const { clearAndHideCard } = cardSlice.actions;
@@ -33,14 +34,17 @@ const DeleteCard = ({ children, placement = "right" }) => {
         })
         .then((res) => {
           const { activity } = res;
+          const cardDelete = { id: card.id, column_id: card.column_id };
 
-          dispatch(deleteCardInBoard(card));
+          dispatch(deleteCardInBoard(cardDelete));
 
           dispatch(clearAndHideCard());
 
           dispatch(updateActivitiesInWorkspace(activity));
 
           toast.success("Xóa card thành công");
+
+          socket.emit("deleteCard", cardDelete);
         })
         .catch((error) => {
           console.log(error);

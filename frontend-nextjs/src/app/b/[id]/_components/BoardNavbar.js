@@ -13,10 +13,12 @@ import UsersVisitBoard from "./UsersVisitBoard";
 import BreadcrumbsBoard from "./BreadcrumbsBoard";
 
 import { socket } from "@/socket";
+import { toast } from "react-toastify";
 
-const { updateBoard, updateCardInBoard } = boardSlice.actions;
+const { updateBoard, updateCardInBoard, deleteCardInBoard } =
+  boardSlice.actions;
 const { updateBoardInWorkspace } = workspaceSlice.actions;
-const { updateCard } = cardSlice.actions;
+const { updateCard, clearAndHideCard } = cardSlice.actions;
 
 export default function BoardNavbar() {
   const dispatch = useDispatch();
@@ -31,7 +33,7 @@ export default function BoardNavbar() {
     dispatch(updateBoard(data));
 
     if (data.title) {
-      dispatch(updateBoardInWorkspace({ id: board.id, ...data }));
+      dispatch(updateBoardInWorkspace({ id: boardId, ...data }));
     }
   };
 
@@ -45,13 +47,26 @@ export default function BoardNavbar() {
     }
   };
 
+  const handleResultDeleteCard = (data) => {
+    if (!data) return;
+
+    dispatch(deleteCardInBoard(data));
+
+    if (card && +card?.id === +data?.id) {
+      dispatch(clearAndHideCard());
+      toast.info("Card này đã bị xóa hoặc di chuyển sang board khác");
+    }
+  };
+
   useEffect(() => {
     socket.on("getBoardUpdated", handleBoardUpdated);
     socket.on("getCardUpdated", handleCardUpdated);
+    socket.on("resultDeleteCard", handleResultDeleteCard);
 
     return () => {
       socket.off("getBoardUpdated", handleBoardUpdated);
       socket.off("getCardUpdated", handleCardUpdated);
+      socket.off("resultDeleteCard", handleResultDeleteCard);
     };
   }, [dispatch]);
 

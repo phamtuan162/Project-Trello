@@ -24,15 +24,11 @@ import {
 } from "@/services/workspaceApi";
 import { generatePlaceholderCard } from "@/utils/formatters";
 import { mapOrder } from "@/utils/sorts";
+import { socket } from "@/socket";
 
-const {
-  deleteCardInBoard,
-  updateColumnInBoard,
-  updateBoard,
-  updateActivitiesOfCardInBoard,
-} = boardSlice.actions;
-const { clearAndHideCard, updateCard, updateActivityInCard } =
-  cardSlice.actions;
+const { deleteCardInBoard, updateColumnInBoard, updateBoard } =
+  boardSlice.actions;
+const { clearAndHideCard, updateCard } = cardSlice.actions;
 
 const MoveCard = ({ children }) => {
   const dispatch = useDispatch();
@@ -137,6 +133,7 @@ const MoveCard = ({ children }) => {
       )
       .then((res) => {
         dispatch(updateColumnInBoard(updatedColumn));
+        toast.success("Di chuyển thành công");
       })
       .catch((error) => {
         console.log(error);
@@ -192,19 +189,29 @@ const MoveCard = ({ children }) => {
       )
       .then((res) => {
         const { activity } = res;
-        dispatch(updateCard({ column_id: nextOverColumn.id }));
 
-        dispatch(updateActivityInCard(activity));
+        const cardMove = nextOverColumn.cards[newCardIndex];
+
+        if (cardMove?.activities?.length) {
+          cardMove.activities.unshift(activity);
+        } else {
+          cardMove.activities = [activity];
+        }
+
+        const cardUpdate = {
+          id: card.id,
+          column_id: nextOverColumn.id,
+          activities: cardMove.activities,
+        };
+
+        dispatch(updateCard(cardUpdate));
 
         dispatch(updateBoard({ columns: nextColumns }));
 
-        dispatch(
-          updateActivitiesOfCardInBoard({
-            card_id: card.id,
-            column_id: card.column_id,
-            activity,
-          })
-        );
+        toast.success("Di chuyển thành công");
+
+        socket.emit("updateCard", cardUpdate);
+        socket.emit("updateBoard", { columns: nextColumns });
       })
       .catch((error) => {
         console.log(error);
@@ -307,8 +314,14 @@ const MoveCard = ({ children }) => {
         { pending: "Đang di chuyển..." }
       )
       .then((res) => {
-        dispatch(deleteCardInBoard({ id: card.id, column_id: card.column_id }));
+        const cardDelete = { id: card.id, column_id: card.column_id };
+
+        dispatch(deleteCardInBoard(cardDelete));
         dispatch(clearAndHideCard());
+
+        toast.success("Di chuyển thành công");
+
+        socket.emit("deleteCard", cardDelete);
       })
       .catch((error) => {
         console.log(error);

@@ -11,8 +11,9 @@ import { toast } from "react-toastify";
 import { cardSlice } from "@/stores/slices/cardSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import CommentItem from "./comment";
+import { socket } from "@/socket";
 
-const { createCommentInCard } = cardSlice.actions;
+const { updateCard } = cardSlice.actions;
 const { updateCardInBoard } = boardSlice.actions;
 
 const CommentCard = () => {
@@ -83,15 +84,19 @@ const CommentCard = () => {
         .then((res) => {
           const { data } = res;
 
-          dispatch(createCommentInCard(data));
-          dispatch(
-            updateCardInBoard({
-              id: card.id,
-              column_id: card.column_id,
-              comments: [data, ...card.comments],
-            })
-          );
+          const cardUpdate = {
+            id: card.id,
+            column_id: card.column_id,
+            comments: [data, ...card.comments],
+          };
+
+          dispatch(updateCard(cardUpdate));
+
+          dispatch(updateCardInBoard(cardUpdate));
+
           toast.success("Bình luận thành công!");
+
+          socket.emit("updateCard", cardUpdate);
         })
         .catch((error) => {
           console.log(error);

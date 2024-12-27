@@ -34,6 +34,7 @@ export const cardSlice = createSlice({
 
       socket.emit("updateCard", {
         id: state.card.id,
+        column_id: state.card.column_id,
         activities: state.card.activities,
       });
     },
@@ -54,6 +55,7 @@ export const cardSlice = createSlice({
 
       socket.emit("updateCard", {
         id: state.card.id,
+        column_id: state.card.column_id,
         comments: state.card.comments,
       });
     },
@@ -67,6 +69,7 @@ export const cardSlice = createSlice({
 
       socket.emit("updateCard", {
         id: state.card.id,
+        column_id: state.card.column_id,
         works: state.card.works,
       });
     },
@@ -82,6 +85,7 @@ export const cardSlice = createSlice({
 
         socket.emit("updateCard", {
           id: state.card.id,
+          column_id: state.card.column_id,
           works: state.card.works,
         });
       }
@@ -103,6 +107,7 @@ export const cardSlice = createSlice({
 
         socket.emit("updateCard", {
           id: state.card.id,
+          column_id: state.card.column_id,
           works: state.card.works,
         });
       }
@@ -124,6 +129,7 @@ export const cardSlice = createSlice({
 
           socket.emit("updateCard", {
             id: state.card.id,
+            column_id: state.card.column_id,
             works: state.card.works,
           });
         }
@@ -142,6 +148,7 @@ export const cardSlice = createSlice({
 
         socket.emit("updateCard", {
           id: state.card.id,
+          column_id: state.card.column_id,
           attachments: state.card.attachments,
         });
       }

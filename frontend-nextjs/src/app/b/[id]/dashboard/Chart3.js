@@ -205,7 +205,7 @@ const Chart3 = ({ typeCharts, times, handleDownload }) => {
           {typeCharts.map((typeChart, index) => (
             <div
               onClick={() => handleSelectTypeChart(typeChart.type)}
-              key={index}
+              key={typeChart.type}
               className={`p-1 w-[70px] cursor-pointer border-2 border-solid ${
                 typeChart.type === type
                   ? "border-blue-400"
@@ -235,7 +235,9 @@ const Chart3 = ({ typeCharts, times, handleDownload }) => {
             className="radio "
           >
             {times.map((time) => (
-              <Radio value={time.value}>{time.label}</Radio>
+              <Radio key={time.value} value={time.value}>
+                {time.label}
+              </Radio>
             ))}
           </RadioGroup>
         )}
