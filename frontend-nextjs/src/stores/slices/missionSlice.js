@@ -23,7 +23,7 @@ export const missionSlice = createSlice({
       }
     },
     createMissionInMissions: (state, action) => {
-      if (Array.isArray(state.missions)) {
+      if (Array.isArray(state?.missions)) {
         state.missions.push(action.payload);
       } else {
         state.missions = [action.payload];

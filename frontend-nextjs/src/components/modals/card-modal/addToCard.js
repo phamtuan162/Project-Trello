@@ -97,11 +97,7 @@ const AddToCard = () => {
       label: "Thành viên",
       icon: <User size={16} />,
       component: (
-        <AssignUser
-          cardUpdate={card}
-          setIsAssign={setIsAssign}
-          isAssign={isAssign}
-        >
+        <AssignUser card={card} setIsAssign={setIsAssign} isAssign={isAssign}>
           <Button
             className="w-full justify-start bg-gray-200 font-medium flex items-center text-xs whitespace-normal"
             style={{ color: "#172b4d" }}

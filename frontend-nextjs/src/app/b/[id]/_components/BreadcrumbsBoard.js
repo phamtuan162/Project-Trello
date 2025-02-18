@@ -64,7 +64,7 @@ const BreadcrumbsBoard = () => {
         <BreadcrumbItem
           key={option.key}
           isCurrent={currentPage === option.key}
-          className="option"
+          className="option hidden sm:inline-block"
           startContent={option.icon}
         >
           {option.label}

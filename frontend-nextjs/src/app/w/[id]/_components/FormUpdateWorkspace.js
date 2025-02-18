@@ -1,5 +1,5 @@
 "use client";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Textarea, Button } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -16,7 +16,6 @@ const { updateWorkspaceInUser } = userSlice.actions;
 
 const FormUpdateWorkspace = ({ workspace }) => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.user.user);
   const [form, setForm] = useState({
     name: workspace?.name || "",
     desc: workspace?.desc || "",
@@ -47,15 +46,16 @@ const FormUpdateWorkspace = ({ workspace }) => {
   };
 
   const handleUpdateWorkspace = async () => {
-    if (name === workspace.name && desc === workspace.desc) {
-      toast.info("Thay đổi không khác gì trước");
-      return;
-    }
     try {
       const form = {};
 
-      if (name !== workspace.name) form.name = name;
-      if (desc !== workspace.desc) form.desc = desc;
+      if (!isEqual(name, workspace.name)) form.name = name;
+      if (!isEqual(desc, workspace.desc)) form.desc = desc;
+
+      if (Object.keys(form).length === 0) {
+        toast.info("Thay đổi không khác gì trước");
+        return;
+      }
 
       await toast
         .promise(async () => await updateWorkspaceApi(workspace.id, form), {
@@ -64,23 +64,22 @@ const FormUpdateWorkspace = ({ workspace }) => {
         .then((res) => {
           dispatch(updateWorkspace(form));
 
-          if (form.name) {
-            dispatch(
-              updateWorkspaceInUser({ id: workspace.id, name: form.name })
-            );
-          }
+          dispatch(
+            updateWorkspaceInUser({ id: workspace.id, name: form.name })
+          );
 
           toast.success("Cập nhật thành công");
 
           socket.emit("updateWorkspace", form);
+
+          setForm((prevForm) => ({
+            ...prevForm,
+            isChange: false,
+          }));
         })
         .catch((error) => {
           console.log(error);
-          setForm({
-            name: workspace.name,
-            desc: workspace.desc,
-            isChange: false,
-          });
+          handleReset();
         });
     } catch (error) {
       console.log(error);

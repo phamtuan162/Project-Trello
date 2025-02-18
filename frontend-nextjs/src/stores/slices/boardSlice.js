@@ -101,6 +101,12 @@ export const boardSlice = createSlice({
           } else {
             card.activities = [activity];
           }
+
+          socket.emit("updateCard", {
+            id: card.id,
+            column_id: card.column_id,
+            activities: card.activities,
+          });
         }
       }
     },

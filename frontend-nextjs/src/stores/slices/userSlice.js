@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { fetchProfileUser } from "../middleware/fetchProfileUser";
+import { socket } from "@/socket";
 
 const initialState = {
   user: {},

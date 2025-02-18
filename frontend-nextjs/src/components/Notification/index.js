@@ -4,7 +4,6 @@ import {
   PopoverTrigger,
   PopoverContent,
   Switch,
-  Skeleton,
 } from "@nextui-org/react";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -14,11 +13,12 @@ import { notificationSlice } from "@/stores/slices/notificationSlice";
 import NotificationItem from "./notification-item";
 import { markAsReadNotification } from "@/services/notifyApi";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
+import { clickNotification } from "@/services/notifyApi";
 import { socket } from "@/socket";
 
-const { updateNotification, createNotification } = notificationSlice.actions;
+const { updateNotification } = notificationSlice.actions;
 
-const Notification = ({ children, handleClickNotify }) => {
+const Notification = ({ children, notificationsClick }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(true);
@@ -79,19 +79,22 @@ const Notification = ({ children, handleClickNotify }) => {
   //   };
   // }, [filteredNotifications, loading]);
 
-  useEffect(() => {
-    const handleGetNotification = (data) => {
-      if (!data) return;
+  const handleClickNotify = async () => {
+    try {
+      if (!notificationsClick?.length) return;
 
-      dispatch(createNotification(data));
-    };
+      const notificationsUpdate = notifications.map((notification) => {
+        if (notification.onClick) return notification;
 
-    socket.on("getNotification", handleGetNotification);
+        return { ...notification, onClick: true };
+      });
+      dispatch(updateNotification(notificationsUpdate));
 
-    return () => {
-      socket.off("getNotification", handleGetNotification);
-    };
-  }, [dispatch]);
+      await clickNotification({ user_id: user.id });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleMarkAsReadNotification = async () => {
     if (!notifications.length) return;
@@ -118,9 +121,7 @@ const Notification = ({ children, handleClickNotify }) => {
       showArrow
       isOpen={isOpen}
       onOpenChange={(open) => {
-        if (open) {
-          handleClickNotify();
-        }
+        if (open) handleClickNotify();
         setIsOpen(open);
       }}
       classNames={{

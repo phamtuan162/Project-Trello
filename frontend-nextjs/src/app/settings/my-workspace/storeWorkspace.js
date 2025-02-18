@@ -4,12 +4,12 @@ import {
   PopoverTrigger,
   PopoverContent,
   Button,
-  CircularProgress,
 } from "@nextui-org/react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
+
 import { userSlice } from "@/stores/slices/userSlice";
 import { restoreWorkspaceApi } from "@/services/workspaceApi";
 

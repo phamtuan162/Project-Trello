@@ -9,7 +9,6 @@ import { cardSlice } from "./slices/cardSlice";
 import { boardSlice } from "./slices/boardSlice";
 import { missionSlice } from "./slices/missionSlice";
 import { notificationSlice } from "./slices/notificationSlice";
-import { myWorkspacesSlice } from "./slices/myWorkspacesSlice";
 
 // const persistConfig = {
 //   key: "root",
@@ -38,7 +37,6 @@ import { myWorkspacesSlice } from "./slices/myWorkspacesSlice";
 
 export const store = configureStore({
   reducer: {
-    my_workspaces: myWorkspacesSlice.reducer,
     workspace: workspaceSlice.reducer,
     user: userSlice.reducer,
     card: cardSlice.reducer,

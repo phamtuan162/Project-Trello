@@ -31,6 +31,7 @@ const AssignUserMission = ({ children, mission }) => {
   const [keyword, setKeyWord] = useState("");
   const card = useSelector((state) => state.card.card);
   const workspace = useSelector((state) => state.workspace.workspace);
+  const board = useSelector((state) => state.board.board);
   const userMain = useSelector((state) => state.user.user);
 
   const CheckUserSearch = (userId) => {
@@ -95,6 +96,13 @@ const AssignUserMission = ({ children, mission }) => {
 
         dispatch(updateCardInBoard(cardUpdate));
 
+        toast.success("Thêm thành viên thành công");
+
+        socket.emit("updateCard", cardUpdate);
+
+        missionUpdate.cardTittle = card.title;
+        missionUpdate.board_id = board.id;
+
         if (userAssigned?.id === userMain?.id) {
           dispatch(createMissionInMissions(missionUpdate));
         } else {
@@ -104,10 +112,6 @@ const AssignUserMission = ({ children, mission }) => {
             user_id: userAssigned.id,
           });
         }
-
-        toast.success("Thêm thành viên thành công");
-
-        socket.emit("updateCard", cardUpdate);
       })
       .catch((error) => {
         console.log(error);

@@ -2,16 +2,19 @@
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+
 import MissionRecent from "./missionRecent";
+
 const MissionsRecent = () => {
   const router = useRouter();
   const { id } = useParams();
   const missions = useSelector((state) => state.mission.missions);
 
   const missionsRecent = useMemo(() => {
-    const missionsCopy = missions?.filter((item) => item.card_id) || [];
+    if (!missions?.length) return [];
 
-    return missionsCopy
+    return missions
+      .filter(({ id }) => id)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 5);
   }, [missions]);
@@ -28,7 +31,7 @@ const MissionsRecent = () => {
           <MissionRecent key={mission.id} mission={mission} />
         ))}
 
-        {missions?.length > 3 && (
+        {missions?.length > 5 && (
           <div className="w-full flex justify-center grow items-end">
             <button
               onClick={() => router.push(`/w/${id}/missions`)}

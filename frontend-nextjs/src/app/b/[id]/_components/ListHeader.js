@@ -25,23 +25,35 @@ export function ListHeader({ column }) {
 
   const onUpdateTitle = async () => {
     try {
-      if (value.length < 6) {
+      const title = value.trim();
+
+      if (title.length < 6) {
         toast.info("Tiêu đề phải dài hơn 6 ký tự!");
         return;
       }
 
-      if (value === column.title.trim()) {
+      if (title === column.title.trim()) {
         setIsEditing(false);
         return;
       }
 
-      dispatch(updateColumnInBoard({ id: column.id, title: value }));
-
-      setIsEditing(false);
-
-      await updateColumnDetail(column.id, {
-        title: value,
-      });
+      toast
+        .promise(
+          async () =>
+            await updateColumnDetail(column.id, {
+              title: value,
+            }),
+          { pending: "Đang cập nhật..." }
+        )
+        .then(() => {
+          dispatch(updateColumnInBoard({ id: column.id, title }));
+        })
+        .catch((error) => {
+          console.log(error);
+        })
+        .finally(() => {
+          setIsEditing(false);
+        });
     } catch (error) {
       console.log(error);
     }

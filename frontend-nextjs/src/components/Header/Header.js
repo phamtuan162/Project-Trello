@@ -10,12 +10,10 @@ import {
   NavbarContent,
   NavbarItem,
   Link,
-  Input,
   NavbarMenu,
   NavbarMenuToggle,
   Tooltip,
   Badge,
-  avatar,
 } from "@nextui-org/react";
 import { toast } from "react-toastify";
 
@@ -35,15 +33,17 @@ import { userSlice } from "@/stores/slices/userSlice";
 import { workspaceSlice } from "@/stores/slices/workspaceSlice";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { missionSlice } from "@/stores/slices/missionSlice";
-import { clickNotification } from "@/services/notifyApi";
 import SearchWorkspace from "./SearchWorkspace";
 import { fetchNotification } from "@/stores/middleware/fetchNotification";
 import { fetchProfileUser } from "@/stores/middleware/fetchProfileUser";
 
 import { socket } from "@/socket";
+import useSocketEvents from "@/hooks/useSocketEvents";
 
-const { updateNotification } = notificationSlice.actions;
-const { createWorkspaceInUser, updateUser } = userSlice.actions;
+const { createNotification } = notificationSlice.actions;
+
+const { createWorkspaceInUser, updateUser, updateWorkspaceInUser } =
+  userSlice.actions;
 const {
   inviteUserInWorkspace,
   cancelUserInWorkspace,
@@ -55,6 +55,7 @@ const {
   createMissionInMissions,
   deleteMissionInMissions,
   updateMissionInMissions,
+  updateStatusUserInWorkspace,
 } = missionSlice.actions;
 
 const Header = () => {
@@ -73,26 +74,11 @@ const Header = () => {
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useSelector((state) => state.board.board);
 
-  const isLogin = Cookies.get("isLogin");
-
   const notificationsClick = useMemo(() => {
     return notifications?.filter((notification) => !notification.onClick);
   }, [notifications]);
 
-  const handleClickNotify = async () => {
-    try {
-      if (!notificationsClick?.length) return;
-
-      const notificationsUpdate = notifications.map((notification) => {
-        return { ...notification, onClick: true };
-      });
-      dispatch(updateNotification(notificationsUpdate));
-
-      await clickNotification({ user_id: user.id });
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const isLogin = Cookies.get("isLogin");
 
   const options = [
     {
@@ -119,7 +105,7 @@ const Header = () => {
           shape="circle"
           className="text-sm"
         >
-          <Notification handleClickNotify={handleClickNotify}>
+          <Notification notificationsClick={notificationsClick}>
             <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
               <NotifyIcon />
             </button>
@@ -245,7 +231,7 @@ const Header = () => {
     if (!workspace_id || !user.workspaces.some((w) => w.id === workspace_id))
       return;
 
-    if (workspace.id === workspace_id) {
+    if (+workspace.id === +workspace_id) {
       toast.info(
         "Không gian làm việc này đã bị xóa, bạn sẽ được chuyển đến nơi khác."
       );
@@ -274,6 +260,10 @@ const Header = () => {
     if (!data) return;
 
     dispatch(updateWorkspace(data));
+
+    if (data.name) {
+      dispatch(updateWorkspaceInUser(data));
+    }
   };
 
   const handleGetActionMission = ({ type, missionUpdate }) => {
@@ -288,22 +278,29 @@ const Header = () => {
 
     actions[type.toLowerCase().trim()]?.();
   };
+  const getStatusUser = (data) => {
+    if (!data) return;
 
-  useEffect(() => {
-    socket.on("getUserWorkspace", handleUsersWorkspace);
-    socket.on("resultDeleteWorkspace", handleResultDeleteWorkspace);
-    socket.on("resultDeleteBoard", handleResultDeleteBoard);
-    socket.on("getWorkspaceUpdated", handleGetWorkspaceUpdated);
-    socket.on("getActionMission", handleGetActionMission);
+    dispatch(
+      updateStatusUserInWorkspace({ id: data.id, isOnline: data.isOnline })
+    );
+  };
 
-    return () => {
-      socket.off("getUserWorkspace", handleUsersWorkspace);
-      socket.off("resultDeleteWorkspace", handleResultDeleteWorkspace);
-      socket.off("resultDeleteBoard", handleResultDeleteBoard);
-      socket.off("getWorkspaceUpdated", handleGetWorkspaceUpdated);
-      socket.off("getActionMission", handleGetActionMission);
-    };
-  }, [dispatch]);
+  const handleGetNotification = (data) => {
+    if (!data) return;
+
+    dispatch(createNotification(data));
+  };
+
+  useSocketEvents([
+    { event: "getStatusUser", handler: getStatusUser },
+    { event: "getUserWorkspace", handler: handleUsersWorkspace },
+    { event: "resultDeleteWorkspace", handler: handleResultDeleteWorkspace },
+    { event: "resultDeleteBoard", handler: handleResultDeleteBoard },
+    { event: "getWorkspaceUpdated", handler: handleGetWorkspaceUpdated },
+    { event: "getActionMission", handler: handleGetActionMission },
+    { event: "getNotification", handler: handleGetNotification },
+  ]);
 
   if (isLoading) {
     return <Loading backgroundColor={"white"} zIndex={"100"} />;

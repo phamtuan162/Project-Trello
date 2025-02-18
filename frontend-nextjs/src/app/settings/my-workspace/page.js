@@ -19,8 +19,10 @@ import {
   Pagination,
 } from "@nextui-org/react";
 import { PlusIcon, ChevronDownIcon } from "lucide-react";
+
 import FormCreateWorkspace from "@/components/Form/FormCreateWorkspace";
 import RestoreWorkspace from "./storeWorkspace";
+
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -56,6 +58,7 @@ const PageMyWorkspace = () => {
   );
   const [statusFilter, setStatusFilter] = useState("all");
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
   const [sortDescriptor, setSortDescriptor] = useState({
     column: "name",
     direction: "ascending",
@@ -124,7 +127,6 @@ const PageMyWorkspace = () => {
       return cmp * sortDirection;
     });
   }, [sortDescriptor, items]);
-
   const renderCell = useCallback(
     (item, columnKey) => {
       const cellValue = item[columnKey];

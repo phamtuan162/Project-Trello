@@ -1,11 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  CircularProgress,
   Textarea,
   Button,
 } from "@nextui-org/react";
@@ -21,11 +20,16 @@ const { updateBoard } = boardSlice.actions;
 
 const CopyColumn = ({ children, column }) => {
   const dispatch = useDispatch();
-  const [isOpen, setIsOpen] = useState(false);
   const textareaRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState(column?.title || "");
   const user = useSelector((state) => state.user.user);
   const board = useSelector((state) => state.board.board);
+
+  const checkRole = useMemo(() => {
+    const role = user?.role?.toLowerCase();
+    return role === "admin" || role === "owner";
+  }, [user?.role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,6 +96,12 @@ const CopyColumn = ({ children, column }) => {
     }
   };
 
+  const handleKeyDown = async (event) => {
+    if (event.key === "Enter") {
+      handleSubmit(event);
+    }
+  };
+
   return (
     <Popover
       placement="left"
@@ -141,16 +151,14 @@ const CopyColumn = ({ children, column }) => {
               classNames={{
                 input: "resize-y min-h-[40px] h-[40px]",
               }}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setTitle(e.target.value)}
             />
             <Button
               type="submit"
               className="w-full h-[40px] mt-2 interceptor-loading"
               color="primary"
-              isDisabled={
-                user?.role?.toLowerCase() !== "admin" &&
-                user?.role?.toLowerCase() !== "owner"
-              }
+              isDisabled={!checkRole}
             >
               Tạo danh sách
             </Button>

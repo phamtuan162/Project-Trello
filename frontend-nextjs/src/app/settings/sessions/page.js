@@ -26,10 +26,10 @@ const PageSessions = () => {
   };
 
   const devices = useMemo(() => {
-    return (
-      user?.devices?.sort(
-        (a, b) => new Date(b.active_time) - new Date(a.active_time)
-      ) || []
+    if (!user?.devices) return [];
+
+    return [...user.devices].sort(
+      (a, b) => new Date(b.active_time) - new Date(a.active_time)
     );
   }, [user?.devices]);
 

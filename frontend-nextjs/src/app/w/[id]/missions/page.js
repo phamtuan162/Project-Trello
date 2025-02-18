@@ -22,30 +22,38 @@ export default function MissionsWorkspace() {
 
   const hasSearchFilter = Boolean(filterValue);
 
-  const missionsSort = useMemo(() => {
-    return missionsActive.filter((item) => item.card_id) || [];
-  }, [missionsActive]);
-
   const filteredItems = useMemo(() => {
     let filteredMissions =
-      missionsSort?.filter(
+      missionsActive?.filter(
         (mission) => mission !== null && mission !== undefined
       ) || [];
     if (hasSearchFilter) {
-      const filterBoards = workspace.boards.filter((board) =>
-        board.title.toLowerCase().includes(filterValue.toLowerCase())
+      const lowerFilterValue = filterValue.toLowerCase();
+
+      // Lọc các board thỏa mãn điều kiện
+      const filteredBoardIds = new Set(
+        workspace.boards
+          .filter((board) =>
+            board.title.toLowerCase().includes(lowerFilterValue)
+          )
+          .map((board) => +board.id)
       );
-      filteredMissions = filteredMissions.filter((mission) =>
-        filterBoards.find((board) => +board.id === +mission.board_id)
+
+      // Lọc các mission dựa trên title board và card
+      filteredMissions = filteredMissions.filter(
+        (mission) =>
+          filteredBoardIds.has(+mission.board_id) ||
+          mission?.cardTittle?.toLowerCase().includes(lowerFilterValue)
       );
     }
+
     if (selected !== "all") {
       filteredMissions = filteredMissions.filter(
         (mission) => selected.toLowerCase() === mission.status
       );
     }
     return filteredMissions;
-  }, [missionsSort, filterValue, selected]);
+  }, [missionsActive, filterValue, selected]);
 
   return (
     <div className="h-full ">
@@ -59,7 +67,7 @@ export default function MissionsWorkspace() {
           base: "w-full sm:max-w-[44%] mt-3",
           inputWrapper: "border-1",
         }}
-        placeholder="Tìm kiếm bằng tên Bảng..."
+        placeholder="Tìm kiếm theo tên Bảng hoặc tên Thẻ..."
         size="xs"
         type="search"
         startContent={<SearchIcon className="text-default-300" />}

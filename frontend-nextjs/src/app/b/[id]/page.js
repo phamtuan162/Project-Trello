@@ -13,6 +13,7 @@ import Loading from "@/components/Loading/Loading";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { CardModal } from "@/components/modals/card-modal";
 import { fetchBoard } from "@/stores/middleware/fetchBoard";
+import { socket } from "@/socket";
 
 const { updateBoard, updateColumnInBoard, updateActivitiesOfCardInBoard } =
   boardSlice.actions;
@@ -49,6 +50,11 @@ export default function BoardIdPage() {
       await updateBoardDetail(board.id, {
         columnOrderIds: columnOrderIdsUpdate,
       });
+
+      socket.emit("updateBoard", {
+        columns: dndOrderedColumns,
+        columnOrderIds: columnOrderIdsUpdate,
+      });
     } catch (error) {
       console.log(error);
     }
@@ -83,19 +89,20 @@ export default function BoardIdPage() {
     dndOrderedColumns
   ) => {
     try {
+      const nextColumn = dndOrderedColumns.find((c) => c.id === nextColumnId);
+
       dispatch(
         updateBoard({
           columns: dndOrderedColumns,
         })
       );
 
-      const nextColumn = dndOrderedColumns.find((c) => c.id === nextColumnId);
-
       const { activity } = await moveCardToDifferentColumnAPI({
         nextColumn: nextColumn,
         card_id: currentCardId,
         prevColumnId: prevColumnId,
       });
+      socket.emit("updateBoard", { columns: dndOrderedColumns });
 
       dispatch(
         updateActivitiesOfCardInBoard({

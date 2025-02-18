@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "next/navigation";
+import { toast } from "react-toastify";
 
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { cardSlice } from "@/stores/slices/cardSlice";
@@ -13,7 +14,7 @@ import UsersVisitBoard from "./UsersVisitBoard";
 import BreadcrumbsBoard from "./BreadcrumbsBoard";
 
 import { socket } from "@/socket";
-import { toast } from "react-toastify";
+import useSocketEvents from "@/hooks/useSocketEvents";
 
 const { updateBoard, updateCardInBoard, deleteCardInBoard } =
   boardSlice.actions;
@@ -58,17 +59,11 @@ export default function BoardNavbar() {
     }
   };
 
-  useEffect(() => {
-    socket.on("getBoardUpdated", handleBoardUpdated);
-    socket.on("getCardUpdated", handleCardUpdated);
-    socket.on("resultDeleteCard", handleResultDeleteCard);
-
-    return () => {
-      socket.off("getBoardUpdated", handleBoardUpdated);
-      socket.off("getCardUpdated", handleCardUpdated);
-      socket.off("resultDeleteCard", handleResultDeleteCard);
-    };
-  }, [dispatch]);
+  useSocketEvents([
+    { event: "getBoardUpdated", handler: handleBoardUpdated },
+    { event: "getCardUpdated", handler: handleCardUpdated },
+    { event: "resultDeleteCard", handler: handleResultDeleteCard },
+  ]);
 
   if (!board?.id || +board?.id !== +boardId) {
     return null;

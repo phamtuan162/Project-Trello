@@ -10,7 +10,7 @@ const MissionItem = ({ mission }) => {
   const router = useRouter();
   const workspace = useSelector((state) => state.workspace.workspace);
   const board = useMemo(() => {
-    return workspace?.boards?.find((board) => +mission.board_id === +board.id);
+    return workspace?.boards?.find((board) => +mission?.board_id === +board.id);
   }, [mission]);
   return (
     <li className="flex items-center gap-4 hover:bg-default-100 p-2 rounded-lg cursor-pointer border-1 border-solid border-default-200">
@@ -50,7 +50,7 @@ const MissionItem = ({ mission }) => {
               {workspace?.name}
             </BreadcrumbItem>
             <BreadcrumbItem
-              onClick={() => router.push(`/b/${board.id}`)}
+              onClick={() => board && router.push(`/b/${board.id}`)}
               startContent={
                 <Avatar
                   src={board?.background}
@@ -63,7 +63,9 @@ const MissionItem = ({ mission }) => {
             >
               {board?.title}
             </BreadcrumbItem>
-            <BreadcrumbItem onClick={() => router.push(`/b/${board.id}`)}>
+            <BreadcrumbItem
+              onClick={() => board && router.push(`/b/${board.id}`)}
+            >
               {mission?.cardTittle}
             </BreadcrumbItem>
           </Breadcrumbs>

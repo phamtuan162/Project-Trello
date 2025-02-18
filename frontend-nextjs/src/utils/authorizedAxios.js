@@ -4,7 +4,6 @@ import { interceptorLoadingElements } from "./formatters";
 import { refreshTokenApi } from "@/services/authApi";
 import { logoutApi } from "@/services/authApi";
 import { API_ROOT } from "./constants";
-// const API_ROOT = process.env.NEXT_PUBLIC_API_ROOT;
 
 let authorizedAxiosInstance = axios.create({
   baseURL: `${API_ROOT}/api/v1`,

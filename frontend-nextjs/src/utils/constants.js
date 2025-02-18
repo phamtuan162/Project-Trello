@@ -2,9 +2,9 @@ const buildMode = process.env.NEXT_PUBLIC_BUILD_MODE;
 
 let apiRoot = "";
 if (buildMode === "dev") {
-  apiRoot = "http://localhost:3001";
+  apiRoot = "https://promanage-api.onrender.com";
 } else if (buildMode === "production") {
-  apiRoot = "https://backend-expressjs-swart.vercel.app";
+  apiRoot = "https://promanage-api.onrender.com";
 }
 
 export const API_ROOT = apiRoot;

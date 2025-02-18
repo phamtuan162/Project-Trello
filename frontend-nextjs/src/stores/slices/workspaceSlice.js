@@ -72,17 +72,16 @@ export const workspaceSlice = createSlice({
 
       if (user) {
         user.role = incomingUser.role;
+        socket.emit("updateWorkspace", {
+          users: state.workspace.users,
+        });
       }
-
-      socket.emit("updateWorkspace", {
-        users: state.workspace.users,
-      });
     },
 
     updateActivitiesInWorkspace: (state, action) => {
       const activity = action.payload;
 
-      if (Array.isArray(state.workspace.activities)) {
+      if (Array.isArray(state.workspace?.activities)) {
         state.workspace.activities.push(activity);
       } else {
         state.workspace.activities = [activity];

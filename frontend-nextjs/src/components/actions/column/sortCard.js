@@ -7,12 +7,15 @@ import {
   Listbox,
   ListboxItem,
 } from "@nextui-org/react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useState } from "react";
+
+import { sortCardFunctions } from "@/utils/sorts";
 import { CloseIcon } from "@/components/Icon/CloseIcon";
 import { boardSlice } from "@/stores/slices/boardSlice";
 import { updateColumnDetail } from "@/services/workspaceApi";
 import { socket } from "@/socket";
+import { cloneDeep } from "lodash";
 
 const { updateBoard } = boardSlice.actions;
 
@@ -23,61 +26,49 @@ const options = [
   { order: "endDateTime", label: "Ngày hết hạn" },
 ];
 
-const sortFunctions = {
-  name: (a, b) => a.title.localeCompare(b.title),
-  endDateTime: (a, b) => {
-    if (a.endDateTime && b.endDateTime)
-      return new Date(a.endDateTime) - new Date(b.endDateTime);
-    return a.endDateTime
-      ? -1
-      : b.endDateTime
-      ? 1
-      : a.title.localeCompare(b.title);
-  },
-  createdAtAsc: (a, b) => new Date(a.created_at) - new Date(b.created_at),
-  createdAtDesc: (a, b) => new Date(b.created_at) - new Date(a.created_at),
-};
-
 const SortCard = ({ children, column }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(
-    new Set([column.order || "asc"])
+    new Set([column?.order || "asc"])
   );
+  const board = useSelector((state) => state.board.board);
 
   const handleColumnUpdate = async (sortedColumn, order) => {
+    const columns = cloneDeep(board.columns);
+    const updatedColumns = columns.map((col) =>
+      col.id === column.id ? sortedColumn : col
+    );
+
+    dispatch(updateBoard({ columns: updatedColumns }));
+
     try {
-      const updatedColumns = board.columns.map((col) =>
-        col.id === column.id ? sortedColumn : col
-      );
-
-      dispatch(updateBoard({ columns: updatedColumns }));
-
       await updateColumnDetail(column.id, {
         order,
         cardOrderIds: sortedColumn.cardOrderIds,
       });
       socket.emit("updateBoard", { columns: updatedColumns });
     } catch (err) {
+      dispatch(updateBoard({ columns }));
       console.log(err);
     }
   };
 
-  const sortCards = (order, compareFn) => {
-    const sortedCards = [...column.cards].sort(compareFn);
-    const sortedColumn = {
-      ...column,
-      cards: sortedCards,
-      cardOrderIds: sortedCards.map((card) => card.id),
-    };
-    handleColumnUpdate(sortedColumn, order);
-  };
-
   const handleSort = useCallback(() => {
-    const order = [...selectedKeys][0];
-    const compareFn = sortFunctions[order];
+    try {
+      const order = [...selectedKeys][0];
+      const compareFn = sortCardFunctions[order];
 
-    sortCards(order, compareFn);
+      const sortedCards = [...column.cards].sort(compareFn);
+      const sortedColumn = {
+        ...column,
+        cards: sortedCards,
+        cardOrderIds: sortedCards.map((card) => card.id),
+      };
+      handleColumnUpdate(sortedColumn, order);
+    } catch (error) {
+      console.log(error);
+    }
   }, [selectedKeys]);
 
   return (

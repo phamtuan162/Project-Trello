@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   Select,
@@ -68,11 +68,8 @@ const roles = [
   },
 ];
 
-const {
-  updateActivitiesInWorkspace,
-  decentRoleUserInWorkspace,
-  updateStatusUserInWorkspace,
-} = workspaceSlice.actions;
+const { updateActivitiesInWorkspace, decentRoleUserInWorkspace } =
+  workspaceSlice.actions;
 
 export default function PageWorkspaceUsers() {
   const dispatch = useDispatch();
@@ -91,22 +88,6 @@ export default function PageWorkspaceUsers() {
     direction: "ascending",
   });
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const getStatusUser = (data) => {
-      if (!data) return;
-
-      dispatch(
-        updateStatusUserInWorkspace({ id: data.id, isOnline: data.isOnline })
-      );
-    };
-
-    socket.on("getStatusUser", getStatusUser);
-
-    return () => {
-      socket.off("getStatusUser", getStatusUser);
-    };
-  }, [dispatch]);
 
   const sortedUsers = useMemo(() => {
     if (!workspace?.users) return [];
@@ -239,7 +220,7 @@ export default function PageWorkspaceUsers() {
         console.log(error);
       }
     },
-    [workspace.users]
+    [workspace?.users]
   );
 
   const renderCell = useCallback(

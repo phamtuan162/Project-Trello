@@ -1,9 +1,24 @@
 "use client";
-import ActivityRecent from "./activityRecent";
+import { useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-const ActivitiesRecent = ({ activitiesRecent }) => {
+import { useSelector } from "react-redux";
+
+import ActivityRecent from "./activityRecent";
+
+const ActivitiesRecent = () => {
   const router = useRouter();
   const { id } = useParams();
+  const workspace = useSelector((state) => state.workspace.workspace);
+
+  const activitiesRecent = useMemo(() => {
+    if (!workspace?.activities?.length) return [];
+
+    return workspace.activities
+      .filter(({ id }) => id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 8);
+  }, [workspace?.activities]);
+
   return (
     <div className="border-1 border-solid rounded-lg border-default-200 p-2 px-4 flex flex-col">
       <h2>Hoạt động gần đây</h2>
@@ -11,11 +26,10 @@ const ActivitiesRecent = ({ activitiesRecent }) => {
         <p className="hidden last:block text-xs  text-center text-muted-foreground">
           Không có hoạt động nào gần đây
         </p>
-        {activitiesRecent?.length > 0 &&
-          activitiesRecent.map((activity) => (
-            <ActivityRecent key={activity.id} activity={activity} />
-          ))}
-        {activitiesRecent?.length > 5 && (
+        {activitiesRecent?.map((activity) => (
+          <ActivityRecent key={activity.id} activity={activity} />
+        ))}
+        {workspace?.activities?.length > 8 && (
           <div className="w-full flex justify-center grow items-end">
             <button
               onClick={() => router.push(`/w/${id}/activity`)}

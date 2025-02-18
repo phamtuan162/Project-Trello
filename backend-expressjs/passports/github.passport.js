@@ -11,7 +11,7 @@ module.exports = new GitHubStrategy(
   {
     clientID: "Ov23li9ptRDJxUUMG6uZ",
     clientSecret: "d190d7b3b190db0ca3b7bec622bf6022c94266e6",
-    callbackURL: "http://localhost:3000/auth/login/github/callback",
+    callbackURL: "https://pro-manage-xi.vercel.app/auth/login/github/callback",
   },
   async (accessToken, refreshToken, profile, cb) => {
     try {
