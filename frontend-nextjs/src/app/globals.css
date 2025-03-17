@@ -13,6 +13,12 @@ header {
   max-height: 48px !important;
   padding: 10px auto !important;
 }
+.custom-navbar {
+  height: calc(100vh - 48px) !important;
+  top: 48px !important;
+  border-top: 1px solid #e5e7eb;
+}
+
 .dark nav,
 .dark .dark-border {
   border-color: #cbd5e11a !important;

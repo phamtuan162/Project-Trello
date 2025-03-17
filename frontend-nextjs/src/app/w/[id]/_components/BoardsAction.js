@@ -68,7 +68,7 @@ export function BoardsAction() {
   return (
     <div>
       {isSearch ? (
-        <div className="my-2 lg:block hidden">
+        <div className="my-2 lg:block block sm:hidden">
           <Input
             ref={inputRef}
             onChange={(e) => setFilterValue(e.target.value)}
@@ -91,19 +91,19 @@ export function BoardsAction() {
         </div>
       ) : (
         <div
-          className="w-full mb-1  justify-between items-center lg:flex "
+          className="w-full mb-1  justify-between items-center flex sm:block lg:flex "
           style={{ height: "32px" }}
           onMouseOver={() => setIsAction(true)}
           onMouseOut={() => setIsAction(false)}
         >
           <span
-            className="text-sm font-medium  block"
+            className="text-sm font-medium block cursor-pointer sm:text-center lg:text-start"
             style={{ color: "rgb(101, 111, 125)" }}
           >
             Bảng
           </span>
 
-          <div className="lg:block hidden cursor-pointer">
+          <div className="lg:block sm:hidden cursor-pointer">
             <div className={`items-center  ${isAction ? "flex" : "hidden"}`}>
               <SortBoard
                 setStatusFilter={setStatusFilter}
@@ -135,7 +135,7 @@ export function BoardsAction() {
         <div
           onClick={() => router.push(`/b/${board.id}`)}
           key={board.id}
-          className="lg:flex gap-2 p-1.5 items-center justify-center  lg:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 "
+          className="flex gap-2 sm:gap-0 lg:gap-2 p-1.5 items-center sm:justify-center  lg:justify-start  hover:bg-default-100 rounded-lg w-auto mb-1 "
         >
           <Avatar
             src={board?.background}
@@ -144,17 +144,15 @@ export function BoardsAction() {
             className="h-6 w-6 text-indigo-700 bg-indigo-100"
             name={board?.title?.charAt(0).toUpperCase()}
           />
-          <div className="flex items-center gap-2">
-            <p className="lg:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
-              {board?.title}
-            </p>
-          </div>
+          <p className="lg:block sm:hidden block overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[140px] text-sm ">
+            {board?.title}
+          </p>
         </div>
       ))}
 
       <div
         onClick={() => router.push(`/w/${workspace.id}/boards`)}
-        className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center justify-center lg:justify-start gap-2 text-sm  cursor-pointer ${
+        className={`flex p-1.5 hover:bg-default-100 rounded-lg items-center sm:justify-center lg:justify-start gap-2 sm:gap-0 lg:gap-2 text-sm  cursor-pointer ${
           pathname.includes("boards")
             ? "bg-indigo-100 text-indigo-700"
             : "hover:bg-default-100"
@@ -162,7 +160,7 @@ export function BoardsAction() {
       >
         <BoardIcon size={16} />
 
-        <span className="lg:block hidden">Xem tất cả bảng</span>
+        <span className="lg:block sm:hidden block">Xem tất cả bảng</span>
       </div>
     </div>
   );

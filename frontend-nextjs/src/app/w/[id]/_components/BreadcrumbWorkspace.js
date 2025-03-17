@@ -5,16 +5,18 @@ import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 import { Avatar } from "@nextui-org/react";
 import { useMemo } from "react";
-const BreadcrumbWorkspace = ({ options }) => {
+import { workspaceOptions } from "@/constants/workspaceOptions";
+
+const BreadcrumbWorkspace = () => {
   const pathname = usePathname();
   const workspace = useSelector((state) => state.workspace.workspace);
 
   const optionsSorted = useMemo(() => {
-    if (!options || options.length === 0) {
+    if (!workspaceOptions || workspaceOptions.length === 0) {
       return null;
     }
-    return options.filter((option) => pathname.includes(option.href));
-  }, [options]);
+    return workspaceOptions.filter((option) => pathname.includes(option.href));
+  }, [pathname]);
 
   return (
     <nav className="flex" aria-label="Breadcrumb">
@@ -43,10 +45,12 @@ const BreadcrumbWorkspace = ({ options }) => {
           <li key={index}>
             <div className="flex items-center">
               <ChevronRight size={17} />
-              <span className="ms-1 text-base text-gray-700 flex gap-1 items-center">
+              <div className="ms-1 text-base text-gray-700 flex gap-1 items-center">
                 {optionSorted.icon}
-                {optionSorted.label}
-              </span>
+                <label className="sm:inline-block hidden">
+                  {optionSorted.label}
+                </label>
+              </div>
             </div>
           </li>
         ))}

@@ -8,8 +8,9 @@ import { HelpOutlineIcon } from "@/components/Icon/HelpOutlineIcon";
 import { BoardsAction } from "./BoardsAction";
 import WorkspaceMenu from "./WorkspaceMenu";
 import FormPopoverBoard from "@/components/Form/FormPopoverBoard";
+import { workspaceOptions } from "@/constants/workspaceOptions";
 
-const SidebarWorkspace = ({ workspaceOptions }) => {
+const SidebarWorkspace = () => {
   const router = useRouter();
   const pathname = usePathname();
   const user = useSelector((state) => state.user.user);
@@ -17,13 +18,13 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
 
   return (
     <div
-      className="  h-full dark-border  lg:w-64 shrink-0  flex max-w-[250px]  flex-col"
+      className=" h-full dark-border bg-background  lg:w-64   flex max-w-[250px]  flex-col"
       style={{
         borderRight: "1px solid rgb(232, 234, 237)",
       }}
     >
       <div
-        className="flex p-2 max-h-[70px] dark-border justify-center lg:justify-start "
+        className="flex p-2 max-h-[70px] dark-border sm:justify-center lg:justify-start "
         style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
       >
         <WorkspaceMenu workspace={workspace}>
@@ -40,7 +41,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
               name={workspace?.name?.charAt(0).toUpperCase()}
             />
             <div className="flex items-center gap-2">
-              <p className="lg:block hidden overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[110px]  text-sm ">
+              <p className="lg:block sm:hidden  overflow-hidden whitespace-nowrap text-ellipsis rounded-lg  cursor-pointer max-w-[110px]  text-sm ">
                 {workspace?.name}
               </p>
               <button className="">
@@ -49,10 +50,10 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
             </div>
           </div>
         </WorkspaceMenu>
-        <div className="w-6 h-6 lg:block hidden"></div>
+        <div className="w-6 h-6 lg:block sm:hidden block"></div>
       </div>
       <div
-        className="overflow-y-auto grow dark-border"
+        className="overflow-y-auto sm:grow dark-border"
         style={{
           borderBottom: "1px solid rgb(232, 234, 237)",
         }}
@@ -66,7 +67,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
               onClick={() => router.push(`.${option.href}`)}
               key={index}
               color="foreground"
-              className={`flex  p-2 gap-4 items-center justify-center lg:justify-start  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
+              className={`flex  p-2 gap-4 items-center sm:justify-center lg:justify-start  rounded-lg max-h-[32px] text-md  cursor-pointer  mb-1 ${
                 index > 4 ? "hidden" : ""
               } ${
                 pathname.includes(option.href)
@@ -75,7 +76,7 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
               } `}
             >
               {option.icon}
-              <span className="lg:block hidden">{option.label}</span>
+              <span className="lg:block sm:hidden block">{option.label}</span>
             </div>
           ))}
         </div>
@@ -86,16 +87,19 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
             placement={"top-right"}
             workspaces={user?.workspaces}
           >
-            <div className="flex p-1.5 hover:bg-default-100 rounded-lg justify-center lg:justify-start items-center gap-2 text-sm  cursor-pointer">
+            <div className="flex p-1.5 hover:bg-default-100 rounded-lg sm:justify-center lg:justify-start items-center gap-2 text-sm  cursor-pointer">
               <Plus size={16} />
 
-              <span className="lg:block hidden">Tạo bảng mới</span>
+              <span className="lg:block sm:hidden block">Tạo bảng mới</span>
             </div>
           </FormPopoverBoard>
         </div>
       </div>
 
-      <div className="p-2 flex flex-col lg:flex-row justify-center items-center lg:h-[50px] gap-1 ">
+      <div
+        className="p-2 shrink-0  flex sm:flex-col lg:flex-row justify-center items-center  gap-1 "
+        style={{ borderBottom: "1px solid rgb(232, 234, 237)" }}
+      >
         <button
           onClick={() => router.push(`/w/${workspace.id}/users`)}
           className={`flex gap-1 items-center text-sm py-1.5 flex items-center justify-center rounded-lg hover:bg-default-100 lg:flex-1 w-full`}
@@ -104,14 +108,16 @@ const SidebarWorkspace = ({ workspaceOptions }) => {
             src="https://app-cdn.clickup.com/invite-gradient.d97ffc8ac2bc7a4f39e36f57c5c4f410.svg"
             alt="invite"
           />
-          <span className="invite lg:block hidden">Mời</span>
+          <span className="invite lg:block sm:hidden">Mời</span>
         </button>
-        <span className="lg:w-px w-2/3 h-0.5 rounded-lg lg:h-2/3 bg-default-100"></span>
+        <span className="lg:w-px sm:w-2/3 w-px sm:h-0.5 h-2/3 rounded-lg lg:h-2/3 bg-default-100"></span>
         <button className="flex gap-1 items-center text-sm py-1.5 flex items-center justify-center  rounded-lg  hover:bg-default-100 lg:flex-1 w-full">
           <HelpOutlineIcon />
-          <span className="lg:block hidden"> Giúp đỡ</span>
+          <span className="lg:block sm:hidden "> Giúp đỡ</span>
         </button>
       </div>
+
+      <div className="sm:hidden grow"></div>
     </div>
   );
 };

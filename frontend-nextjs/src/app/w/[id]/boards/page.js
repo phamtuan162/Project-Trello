@@ -11,8 +11,9 @@ import {
   Skeleton,
 } from "@nextui-org/react";
 import { SearchIcon, ChevronDownIcon, User2 } from "lucide-react";
-import { BoardList } from "../_components/BoardList";
 import capitalize from "@/utils/capitalize";
+
+import { BoardList } from "./BoardList";
 
 const statusOptions = [
   { name: "Gần Nhất Trước ↓", uid: "desc" },
@@ -73,10 +74,24 @@ export default function PageBoards({ params }) {
         <Skeleton isLoaded={Boolean(workspace?.boards)}>
           <Suspense fallback={<BoardList.Skeleton />}>
             <div className="flex flex-col gap-4">
-              <div className="flex justify-between gap-3 items-end">
-                <div className="flex gap-2">
+              <div className="flex justify-between gap-3 sm:items-end sm:flex-row flex-col mt-1">
+                <Input
+                  isClearable
+                  classNames={{
+                    base: "w-full sm:max-w-[44%]",
+                    inputWrapper: "border-1",
+                  }}
+                  placeholder="Tìm kiếm các bảng..."
+                  size="xs"
+                  startContent={<SearchIcon className="text-default-300" />}
+                  value={filterValue}
+                  variant="bordered"
+                  onClear={() => setFilterValue("")}
+                  onValueChange={(value) => setFilterValue(value)}
+                />
+                <div className="flex gap-2 ">
                   <Dropdown>
-                    <DropdownTrigger className="hidden sm:flex">
+                    <DropdownTrigger className="x">
                       <Button
                         endContent={
                           <ChevronDownIcon className="text-small" size={16} />
@@ -107,20 +122,6 @@ export default function PageBoards({ params }) {
                     </DropdownMenu>
                   </Dropdown>
                 </div>
-                <Input
-                  isClearable
-                  classNames={{
-                    base: "w-full sm:max-w-[44%]",
-                    inputWrapper: "border-1",
-                  }}
-                  placeholder="Tìm kiếm các bảng..."
-                  size="xs"
-                  startContent={<SearchIcon className="text-default-300" />}
-                  value={filterValue}
-                  variant="bordered"
-                  onClear={() => setFilterValue("")}
-                  onValueChange={(value) => setFilterValue(value)}
-                />
               </div>
             </div>
             <BoardList boards={filteredItems} />

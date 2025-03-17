@@ -197,7 +197,7 @@ const Chart3 = ({ typeCharts, times, handleDownload }) => {
       }}
     >
       <div
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between sm:flex-row flex-col w-full"
         style={{ color: "#172b4d" }}
       >
         <p className="font-bold">Số thẻ mỗi ngày hết hạn</p>

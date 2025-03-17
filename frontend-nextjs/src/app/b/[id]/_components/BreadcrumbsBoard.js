@@ -64,10 +64,10 @@ const BreadcrumbsBoard = () => {
         <BreadcrumbItem
           key={option.key}
           isCurrent={currentPage === option.key}
-          className="option hidden sm:inline-block"
+          className="option "
           startContent={option.icon}
         >
-          {option.label}
+          <span className="hidden sm:inline-block">{option.label}</span>
         </BreadcrumbItem>
       ))}
     </Breadcrumbs>

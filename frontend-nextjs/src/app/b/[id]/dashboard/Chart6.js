@@ -223,7 +223,7 @@ const Chart6 = ({ typeCharts, times, colors, handleDownload }) => {
       }}
     >
       <div
-        className="w-full flex items-center justify-between"
+        className=" flex items-center justify-between sm:flex-row flex-col w-full"
         style={{ color: "#172b4d" }}
       >
         <p className="font-bold">Số tệp đính kèm mỗi thành viên</p>

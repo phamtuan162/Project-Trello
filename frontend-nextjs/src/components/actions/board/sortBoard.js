@@ -29,7 +29,9 @@ const SortBoard = ({ children, setStatusFilter, statusFilter, isAction }) => {
 
   return (
     <Dropdown>
-      <DropdownTrigger className="hidden sm:flex">{children}</DropdownTrigger>
+      <DropdownTrigger className="sm:hidden lg:flex flex">
+        {children}
+      </DropdownTrigger>
       <DropdownMenu
         disallowEmptySelection
         aria-label="status boards"

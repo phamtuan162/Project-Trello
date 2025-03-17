@@ -19,8 +19,8 @@ import { toast } from "react-toastify";
 
 import { fetchWorkspace } from "@/stores/middleware/fetchWorkspace";
 import { fetchMission } from "@/stores/middleware/fetchMission";
+import SidebarWorkspace from "@/app/w/[id]/_components/SidebarWorkspace";
 import Loading from "../Loading/Loading";
-import Sidebar from "../Sidebar/Sidebar";
 import { UserMenu } from "./UserMenu";
 import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
@@ -113,26 +113,26 @@ const Header = () => {
         </Badge>
       ),
     },
-    {
-      label: "Thông tin",
-      icon: <HelpOutlineIcon />,
-      title: "",
-      component: (
-        <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-          <HelpOutlineIcon />
-        </button>
-      ),
-    },
-    {
-      label: "Trình đơn thao tác nhanh",
-      icon: <QuickMenuIcon />,
-      title: "",
-      component: (
-        <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-          <QuickMenuIcon />
-        </button>
-      ),
-    },
+    // {
+    //   label: "Thông tin",
+    //   icon: <HelpOutlineIcon />,
+    //   title: "",
+    //   component: (
+    //     <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+    //       <HelpOutlineIcon />
+    //     </button>
+    //   ),
+    // },
+    // {
+    //   label: "Trình đơn thao tác nhanh",
+    //   icon: <QuickMenuIcon />,
+    //   title: "",
+    //   component: (
+    //     <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
+    //       <QuickMenuIcon />
+    //     </button>
+    //   ),
+    // },
   ];
 
   const fetchUserProfile = async () => {
@@ -308,18 +308,20 @@ const Header = () => {
 
   return (
     <Navbar
-      className=" border-b-1 dark:border-slate-300/10  text-md "
+      className=" border-b-1 dark:border-slate-300/10  text-md h-100 "
       onMenuOpenChange={setIsMenuOpen}
       key={"header"}
     >
-      <NavbarContent style={{ flexGrow: "0" }}>
+      <NavbarContent style={{ flexGrow: "0" }} className="gap-9">
         <NavbarMenuToggle
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-          className="hidden"
+          className={`sm:hidden block ${
+            pathname.includes("/b/") ? "hidden" : ""
+          } `}
         />
         <NavbarBrand>
           <Link onClick={() => router.push(`/w/${workspace.id}/boards`)}>
-            <p className="font-bold text-inherit cursor-pointer">ProManage</p>
+            <p className="font-bold text-inherit cursor-pointer ">ProManage</p>
           </Link>
         </NavbarBrand>
       </NavbarContent>
@@ -362,8 +364,10 @@ const Header = () => {
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarMenu className="sidebar">
-        <Sidebar />
+      <NavbarMenu
+        className={` sidebar p-0 bg-transparent backdrop-blur-none custom-navbar`}
+      >
+        <SidebarWorkspace />
       </NavbarMenu>
     </Navbar>
   );

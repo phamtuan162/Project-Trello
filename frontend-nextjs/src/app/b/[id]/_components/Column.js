@@ -31,7 +31,7 @@ export function Column({ column }) {
 
   return (
     <li
-      className="shrink-0 h-full w-[272px] select-none "
+      className="shrink-0 sm:h-full w-[272px] select-none "
       ref={setNodeRef}
       style={dndKitCommonStyle}
       {...attributes}

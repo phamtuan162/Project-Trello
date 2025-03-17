@@ -8,7 +8,7 @@ export function BoardList({ boards }) {
   const user = useSelector((state) => state.user.user);
   return (
     <div className="space-y-4 mt-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {boards?.map((board) => (
           <Link
             key={board.id}

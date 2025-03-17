@@ -165,7 +165,7 @@ const Chart1 = ({ typeCharts, times, colors, handleDownload }) => {
       }}
     >
       <div
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between sm:flex-row flex-col w-full"
         style={{ color: "#172b4d" }}
       >
         <p className="font-bold">Số thẻ trong mỗi danh sách</p>
