@@ -86,10 +86,10 @@ authorizedAxiosInstance.interceptors.response.use(
       return handleTokenRefresh(originalRequest, user);
     }
 
-    // Hiển thị lỗi chung
-    if (status !== 410 && !data?.isMessage) {
-      toast.error(data?.message || message);
-    }
+    // // Hiển thị lỗi chung
+    // if (status !== 410 && !data?.isMessage) {
+    //   toast.error(data?.message || message);
+    // }
 
     return Promise.reject(error);
   }
