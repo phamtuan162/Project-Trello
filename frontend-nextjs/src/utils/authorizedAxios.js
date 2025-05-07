@@ -1,83 +1,94 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 import { interceptorLoadingElements } from "./formatters";
-import { refreshTokenApi } from "@/services/authApi";
-import { logoutApi } from "@/services/authApi";
+import { refreshTokenApi, logoutApi } from "@/services/authApi";
 import { API_ROOT } from "./constants";
 
-let authorizedAxiosInstance = axios.create({
+const authorizedAxiosInstance = axios.create({
   baseURL: `${API_ROOT}/api/v1`,
+  timeout: 1000 * 60 * 10, // 10 phút timeout
+  withCredentials: true,
 });
 
-authorizedAxiosInstance.defaults.timeout = 1000 * 60 * 10;
-
-authorizedAxiosInstance.defaults.withCredentials = true;
-
+// Store injector function
 let axiosReduceStore;
 export const injectStore = (mainStore) => {
   axiosReduceStore = mainStore;
 };
 
+// Giữ refreshTokenPromise sống trong 5 giây
+let refreshTokenPromise = null;
+let refreshTokenTimeout = null;
+
+function resetRefreshTokenPromise() {
+  refreshTokenPromise = null;
+  clearTimeout(refreshTokenTimeout);
+  refreshTokenTimeout = null;
+}
+
+// Hàm refresh token xử lý chung
+async function handleTokenRefresh(originalRequest, user) {
+  if (!refreshTokenPromise) {
+    refreshTokenPromise = refreshTokenApi()
+      .then(({ access_token }) => access_token)
+      .catch(async (err) => {
+        await logoutApi(user.id);
+        return Promise.reject(err);
+      });
+
+    // Giữ promise trong 5 giây
+    refreshTokenTimeout = setTimeout(resetRefreshTokenPromise, 5000);
+  }
+
+  // Dùng lại token sau khi đã refresh
+  const access_token = await refreshTokenPromise;
+  return authorizedAxiosInstance(originalRequest);
+}
+
+// Request interceptor
 authorizedAxiosInstance.interceptors.request.use(
   (config) => {
     interceptorLoadingElements(true);
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-let refreshTokenPromise = null;
-
+// Response interceptor
 authorizedAxiosInstance.interceptors.response.use(
   (response) => {
     interceptorLoadingElements(false);
-
     return response;
   },
   async (error) => {
+    interceptorLoadingElements(false);
+    const { response, config: originalRequest, message } = error;
     const user = axiosReduceStore?.getState()?.user?.user;
 
-    interceptorLoadingElements(false);
-
-    if (error.response?.status === 403) {
-      await logoutApi(user.id);
+    if (!response) {
+      toast.error("Lỗi không xác định");
+      return Promise.reject(error);
     }
 
-    const originalRequests = error.config;
+    const { status, data } = response;
 
-    if (error.response?.status === 410 && !originalRequests._retry) {
-      originalRequests._retry = true;
-
-      if (!refreshTokenPromise) {
-        refreshTokenPromise = refreshTokenApi()
-          .then((data) => {
-            return data?.access_token;
-          })
-          .catch(async (_error) => {
-            await logoutApi(user.id);
-            return Promise.reject(_error);
-          })
-          .finally(() => {
-            refreshTokenPromise = null;
-          });
-      }
-
-      return refreshTokenPromise.then((access_token) => {
-        return authorizedAxiosInstance(originalRequests);
-      });
+    // Xử lý lỗi 403 - Forbidden
+    if (status === 403) {
+      const errorMessage = data?.message || message;
+      toast.error(`${errorMessage} - Tự động đăng xuất sau 2 giây`);
+      setTimeout(() => logoutApi(user.id), 2000);
+      return;
     }
 
-    let errorMessage = error?.message;
-
-    if (error.response?.data?.message) {
-      errorMessage = error.response?.data?.message;
+    // Xử lý lỗi 410 - Token hết hạn
+    if (status === 410 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      return handleTokenRefresh(originalRequest, user);
     }
 
-    if (error.response?.status !== 410 && !error.response?.data?.isMessage) {
-      toast.error(errorMessage);
+    // Hiển thị lỗi chung
+    if (status !== 410 && !data?.isMessage) {
+      toast.error(data?.message || message);
     }
 
     return Promise.reject(error);

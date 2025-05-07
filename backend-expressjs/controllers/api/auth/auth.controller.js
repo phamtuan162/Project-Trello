@@ -16,9 +16,7 @@ var ip = require("ip");
 const ms = require("ms");
 const UAParser = require("ua-parser-js");
 const sendMail = require("../../../utils/mail");
-const generateToken = () => {
-  return crypto.randomBytes(16).toString("hex");
-};
+
 module.exports = {
   login: async (req, res) => {
     //Lấy body

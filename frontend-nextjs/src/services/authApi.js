@@ -77,8 +77,10 @@ export const logoutApi = async (userId = null) => {
     const { status } = data;
     if (200 <= status && status <= 299) {
       Cookies.set("isLogin", false);
-      toast.success("Đăng xuất thành công");
       window.location.href = "/auth/login";
+      setTimeout(() => {
+        toast.success("Đăng xuất thành công");
+      }, 1000);
     }
   } catch (error) {
     console.log(error);

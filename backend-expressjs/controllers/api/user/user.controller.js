@@ -67,23 +67,25 @@ module.exports = {
         },
         attributes: { exclude: ["password"] },
       });
+
       if (!user) {
-        Object.assign(response, {
+        return Object.assign(response, {
           status: 404,
           message: "Not Found",
         });
-      } else {
-        Object.assign(response, {
-          status: 200,
-          message: "Success",
-          data: user,
-        });
       }
+
+      return Object.assign(response, {
+        status: 200,
+        message: "Success",
+        data: user,
+      });
     } catch (e) {
-      response.status = 500;
-      response.message = "Server Error";
+      return Object.assign(response, {
+        status: 500,
+        message: e,
+      });
     }
-    res.status(response.status).json(response);
   },
   store: async (req, res) => {
     const schema = object({

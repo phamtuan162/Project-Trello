@@ -248,17 +248,23 @@ export default function PageWorkspaceUsers() {
             </User>
           );
         case "role":
-          const isOwner = user?.role?.toLowerCase() === "owner";
-          const isNotAdminOrOwner =
-            userActive?.role?.toLowerCase() !== "admin" &&
-            userActive?.role?.toLowerCase() !== "owner";
+          const userRole = user?.role?.toLowerCase();
+          const userActiveRole = userActive?.role?.toLowerCase();
           const isCurrentUser = +userActive?.id === +user?.id;
 
-          const shouldDisplayText =
-            isOwner || isNotAdminOrOwner || isCurrentUser;
-          return shouldDisplayText ? (
-            <p className="text-bold text-small capitalize">{cellValue}</p>
-          ) : (
+          const shouldDisableSelect =
+            isCurrentUser ||
+            userRole === "owner" ||
+            (userActiveRole !== "admin" && userActiveRole !== "owner") ||
+            (userRole === "admin" && userActiveRole === "admin");
+
+          if (shouldDisableSelect) {
+            return (
+              <p className="text-bold text-small capitalize">{cellValue}</p>
+            );
+          }
+
+          return (
             <Select
               variant="bordered"
               size="xs"

@@ -30,6 +30,7 @@ module.exports = {
     if (isActive) {
       filters.isActive = isActive;
     }
+
     const options = {
       order: [[sort, order]],
       where: filters,

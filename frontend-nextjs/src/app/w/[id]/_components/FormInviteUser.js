@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Select,
   SelectItem,
@@ -65,9 +65,9 @@ const FormInviteUser = ({ rolesUser }) => {
         limit: 4,
       });
 
-      setUsersSearch(usersSearch || []);
+      setUsersSearch(usersSearch);
     } catch (error) {
-      console.log(error);
+      setMessage("Lỗi không mời được người dùng này ");
       setUsersSearch([]);
     } finally {
       setIsLoading(false);
