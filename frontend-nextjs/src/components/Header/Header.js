@@ -22,10 +22,8 @@ import { fetchMission } from "@/stores/middleware/fetchMission";
 import SidebarWorkspace from "@/app/w/[id]/_components/SidebarWorkspace";
 import Loading from "../Loading/Loading";
 import { UserMenu } from "./UserMenu";
-import { HelpOutlineIcon } from "../Icon/HelpOutlineIcon";
 import { AddIcon } from "../Icon/AddIcon";
 import { NotifyIcon } from "../Icon/NotifyIcon";
-import { QuickMenuIcon } from "../Icon/QuickMenuIcon";
 import FormCreateWorkspace from "../Form/FormCreateWorkspace";
 import Notification from "../Notification";
 import { notificationSlice } from "@/stores/slices/notificationSlice";
@@ -113,33 +111,18 @@ const Header = () => {
         </Badge>
       ),
     },
-    // {
-    //   label: "Thông tin",
-    //   icon: <HelpOutlineIcon />,
-    //   title: "",
-    //   component: (
-    //     <button className="focus-visible:outline-0 rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-    //       <HelpOutlineIcon />
-    //     </button>
-    //   ),
-    // },
-    // {
-    //   label: "Trình đơn thao tác nhanh",
-    //   icon: <QuickMenuIcon />,
-    //   title: "",
-    //   component: (
-    //     <button className="rounded-lg  p-1.5 text-gray-400 hover:bg-gray-500 hover:text-white h-auto  flex items-center">
-    //       <QuickMenuIcon />
-    //     </button>
-    //   ),
-    // },
   ];
 
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
-      // Fetch profile user
-      const data = await dispatch(fetchProfileUser()).unwrap();
+
+      // Gọi API lấy thông tin người dùng và hiển thị toast
+      const data = await toast.promise(dispatch(fetchProfileUser()).unwrap(), {
+        pending: "Đang lấy thông tin người dùng...",
+        success: "Lấy thông tin thành công",
+        error: "Lỗi khi lấy thông tin người dùng",
+      });
 
       if (!data) return;
 
@@ -151,32 +134,30 @@ const Header = () => {
         avatar: data.avatar,
       });
 
-      // Fetch notifications, workspace and mission
+      // Gọi đồng thời các API cần thiết khác
       await Promise.all([
         dispatch(fetchNotification({ user_id: data.id })),
+        dispatch(fetchWorkspace(data.workspace_id_active)),
         dispatch(
-          fetchWorkspace(data.workspace_id_active),
-          dispatch(
-            fetchMission({
-              user_id: data.id,
-              workspace_id: data.workspace_id_active,
-            })
-          )
+          fetchMission({
+            user_id: data.id,
+            workspace_id: data.workspace_id_active,
+          })
         ),
       ]);
 
-      // Redirect to active workspace if current path does not matches
-      if (pathname.startsWith(`/w/${id}`) && id !== data?.workspace_id_active) {
+      // Nếu workspace hiện tại không trùng với workspace active thì redirect
+      if (pathname.startsWith(`/w/${id}`) && id !== data.workspace_id_active) {
         const currentURL = window.location.href.replace(
           id.toString(),
           data.workspace_id_active.toString()
         );
         router.push(currentURL);
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
